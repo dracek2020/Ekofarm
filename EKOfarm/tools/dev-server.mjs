@@ -8,7 +8,7 @@ import worker from '../src/worker.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DB = fakeD1();
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json' };
 const ASSETS = {
   async fetch(req) {
     let p = new URL(req.url).pathname;

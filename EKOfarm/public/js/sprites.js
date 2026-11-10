@@ -1,7 +1,7 @@
 // EKOfarm – grafika hry (public/img/<druh>/<jméno>.webp, seznam v assets.js).
 // Druhy: b = budovy a ozdoby (plátno podle šablony), t = dlaždice země a plot, c = plodiny, s = stromy,
 // z = zvířata, m = stroje, p = lidé, i = ikony předmětů.
-import { ASSETS } from './assets.js?v=17';
+import { ASSETS } from './assets.js?v=18';
 
 const assetSets = {};
 for (const k in ASSETS) assetSets[k] = new Set(ASSETS[k]);
@@ -15,7 +15,12 @@ const assetCache = {};
 function assetEl(kind, name) {
   const key = kind + '/' + name;
   let im = assetCache[key];
-  if (!im && typeof Image !== 'undefined') { im = assetCache[key] = new Image(); im.src = assetUrl(kind, name); }
+  if (!im && typeof Image !== 'undefined') {
+    im = assetCache[key] = new Image();
+    // hotovo = načteno, nebo chyba. Nečeká se na im.decode() – v Safari na iPadu umí zůstat viset a hra se pak nespustila.
+    im._done = new Promise(r => { im.onload = im.onerror = () => r(); });
+    im.src = assetUrl(kind, name);
+  }
   return im;
 }
 // načtený obrázek, nebo null (ještě se načítá / neexistuje)
@@ -26,12 +31,13 @@ export function asset(kind, name) {
 }
 // načte grafiku předem; items = [[druh, jméno], …] nebo druhy ['t', 'c', …]; onProgress(hotovo, celkem)
 export function preloadAssets(items, onProgress) {
-  const list = items.flatMap(x => (Array.isArray(x) ? (hasAsset(x[0], x[1]) ? [x] : []) : (ASSETS[x] || []).map(n => [x, n])));
+  const seen = new Set();
+  const list = items.flatMap(x => (Array.isArray(x) ? (hasAsset(x[0], x[1]) ? [x] : []) : (ASSETS[x] || []).map(n => [x, n])))
+    .filter(([k, n]) => !seen.has(k + '/' + n) && seen.add(k + '/' + n));
   let done = 0;
   return Promise.all(list.map(([k, n]) => {
     const im = assetEl(k, n);
-    const ok = im.decode ? im.decode() : new Promise(r => { im.onload = im.onerror = r; });
-    return ok.catch(() => {}).then(() => { done++; if (onProgress) onProgress(done, list.length); });
+    return (im ? im._done : Promise.resolve()).then(() => { done++; if (onProgress) onProgress(done, list.length); });
   }));
 }
 

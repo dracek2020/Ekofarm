@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=17">
+<link rel="stylesheet" href="/css/style.css?v=18">
 </head>
 <body>
 <!--APP-->
@@ -88,18 +88,51 @@
 <div id="toast"></div>
 <div id="loading">Načítám farmu…<noscript> Zapni prosím JavaScript.</noscript></div>
 
+<div id="errBox" hidden onclick="this.hidden=true"></div>
 <script>
-// když se hra kvůli chybě nenačte, ukázat to místo věčného „Načítám…“
+// Když se hra kvůli chybě nenačte, ukáže se to místo věčného „Načítám…“ – i s textem chyby, ať jde poslat.
 function showFatal(msg) {
   var el = document.getElementById('loading');
-  if (!el || el.hidden) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px"><p>Hra se nenačetla.</p><p style="font-size:13px;opacity:.8">' +
+  if (!el || el.hidden) return false;
+  el.innerHTML = '<div style="text-align:center;padding:20px"><p>Hra se nenačetla.</p><p style="font-size:13px;opacity:.85;white-space:pre-wrap">' +
     String(msg).replace(/</g, '&lt;') + '</p><button class="btn" style="max-width:240px;margin:12px auto" onclick="location.reload()">Načíst znovu</button></div>';
+  return true;
 }
-window.addEventListener('error', function (e) { showFatal(e.message || 'Chyba při načítání.'); });
+// chyba za běhu hry: rámeček dole (klepnutím zmizí)
+function showError(msg) {
+  var b = document.getElementById('errBox');
+  if (!b || showError.n >= 3) return;
+  showError.n = (showError.n || 0) + 1;
+  b.hidden = false;
+  b.textContent = (b.textContent ? b.textContent + '\n' : 'Chyba hry – pošli prosím tenhle text (klepnutím zavřeš):\n') + String(msg).slice(0, 300);
+}
+// nenačetl se některý soubor hry: zjistit který (nejčastěji neúplné nasazení)
+function checkFiles() {
+  if (!window.fetch || location.protocol.indexOf('http') !== 0) return;
+  var names = ['main', 'rules', 'assets', 'sprites', 'render', 'objects', 'icons', 'panels', 'api', 'news', 'sfx'], bad = [], left = names.length;
+  names.forEach(function (n) {
+    fetch('/js/' + n + '.js?kontrola=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok || String(r.headers.get('content-type')).indexOf('javascript') < 0) bad.push(n + '.js');
+    }, function () { bad.push(n + '.js'); }).then(function () {
+      if (--left) return;
+      showFatal(bad.length ? 'Na serveru chybí: ' + bad.join(', ') + '.\nNasazení není úplné – rozbal znovu celý zip a spusť npx wrangler deploy.'
+        : 'Soubory na serveru jsou, ale hra se nespustila. Zavři ji a otevři znovu; když to nepomůže, pošli mi tuhle obrazovku.');
+    });
+  });
+}
+window.addEventListener('error', function (e) {
+  var t = e.target;
+  if (t && t !== window && t.tagName) {                            // nenačetl se soubor
+    if (t.tagName !== 'SCRIPT') return;                            // obrázky a styly si hra ohlídá sama
+    if (showFatal('Nenačetl se soubor hry. Zjišťuji který…')) checkFiles();
+    return;
+  }
+  var m = (e.message || 'Chyba') + (e.filename ? ' (' + String(e.filename).split('/').pop().split('?')[0] + ':' + e.lineno + ')' : '');
+  if (!showFatal(m)) showError(m);
+}, true);
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
-setTimeout(function () { showFatal('Načítání trvá moc dlouho. Zkontroluj připojení.'); }, 15000);
+window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=17"></script>
+<script type="module" src="/js/main.js?v=18"></script>
 </body>
 </html>

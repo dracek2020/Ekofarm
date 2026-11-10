@@ -79,5 +79,25 @@ test('všechny panely se vykreslí', () => {
 test('každá surovina, budova, zvíře a stroj má ikonu', async () => {
   const I = await import(`../public/js/icons.js?v=${v}`);
   const need = [...Object.values(R.ITEMS).map(i => i.icon), ...R.BUILDING_LIST.map(b => b.icon), ...R.ANIMAL_LIST.map(a => a.icon), ...R.MACHINE_LIST.map(m => m.icon)];
-  for (const k of need) assert.ok(I.ICONS[k], 'chybí ikona ' + k);
+  const A = await import(`../public/js/assets.js?v=${v}`);
+  for (const k of need) assert.ok(I.ICONS[k] || A.ASSETS.i.includes(k), 'chybí ikona ' + k);
+});
+
+test('v16: grafika – každá budova, plodina, strom, stroj, zvíře a člověk má obrázek', async () => {
+  const A = (await import(`../public/js/assets.js?v=${v}`)).ASSETS;
+  const has = (k, n) => A[k].includes(n);
+  for (const b of R.BUILDING_LIST) {
+    if (b.type === 'bigfield' || b.type === 'orchard') continue;
+    const name = b.id === 'statek' || b.id === 'sklad' ? b.id + '_1' : b.id;
+    assert.ok(has('b', name), 'budova ' + b.id);
+  }
+  for (let L = 1; L <= 10; L++) assert.ok(has('b', 'statek_' + L) && has('b', 'sklad_' + L), 'úroveň ' + L);
+  for (const c of R.CROP_LIST) for (const s of [0, 1, 2]) assert.ok(has('c', `${c.id}_${s}`), `plodina ${c.id}_${s}`);
+  for (const t of R.TREE_LIST) for (const s of ['grow', 'ready', 'dead']) assert.ok(has('s', `${t.id}_${s}`), `strom ${t.id}_${s}`);
+  for (const m of R.MACHINE_LIST.filter(m => ['tractor', 'combine', 'plow', 'seeder', 'baler'].includes(m.type))) for (const s of ['l', 'r']) assert.ok(has('m', `${m.id}_${s}`), `stroj ${m.id}`);
+  for (const a of R.ANIMAL_LIST) assert.ok(has('z', a.id), 'zvíře ' + a.id);
+  for (const n of ['farmar_l', 'farmar_r', 'pomocnik_l', 'pomocnik_r']) assert.ok(has('p', n));
+  for (const n of ['trava_a', 'louka_a', 'cesta_a', 'dlazba', 'pole', 'pole_osete', 'plot_se', 'plot_ne', 'cedule']) assert.ok(has('t', n));
+  for (const n of ['domek_a', 'domek_b', 'domek_c']) assert.ok(has('b', n));
+  for (const c of R.CROP_LIST) assert.ok(has('i', 's_' + c.id), 'semena ' + c.id);
 });

@@ -24,5 +24,7 @@ Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autor
 - Před vydáním ověřit, že název **EKOfarm** není registrovaná ochranná známka pro hry/aplikace (rejstříky ÚPV, EUIPO a obchody s aplikacemi).
 - **v10**: ikony semen (balíček s plodinou), sazenic, tržiště, nových výrobků; kreslení městečka, cesty, domků a tržiště – vše vlastní kód, bez cizích obrázků.
 - **v11**: ikony ryb, medu, rybníka, včelína, udic a jídel; kreslení rybníka, včelína a minihry rybaření – vše vlastní kód.
+- **v12 – grafika budov** (`public/img/b/`: statek 1–10, sklad 1–10, 4 ohrady, 13 výroben): dodal autor hry (vojtech). **Doplnit, čím byla vytvořená a za jakých podmínek** (u AI generátoru ověřit, že podmínky dovolují komerční použití).
+- **v16 – grafika celé hry** (`public/img/t, c, s, b, z, m, p, i`): vygenerovaná autorem hry v ChatGPT (OpenAI) podle zadání `ZADANI_PRO_CHATGPT.md`, upravená (ořez, zmenšení) nástrojem `tools/assets.py`. Podle podmínek OpenAI patří výstupy uživateli; před vydáním ověřit aktuální podmínky.
 
 Tohle je technický přehled, ne právní rada.

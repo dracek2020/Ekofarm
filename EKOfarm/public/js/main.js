@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=17';
-import { preloadAssets, spriteName } from './sprites.js?v=17';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=17';
-import { createBackend, ApiError } from './api.js?v=17';
-import { iconize, ic } from './icons.js?v=17';
-import { NEWS } from './news.js?v=17';
-import { sfx, soundOn, setSound } from './sfx.js?v=17';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=17';
+} from './rules.js?v=18';
+import { preloadAssets, spriteName } from './sprites.js?v=18';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=18';
+import { createBackend, ApiError } from './api.js?v=18';
+import { iconize, ic } from './icons.js?v=18';
+import { NEWS } from './news.js?v=18';
+import { sfx, soundOn, setSound } from './sfx.js?v=18';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=18';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 
 
 const game = {
@@ -41,6 +41,7 @@ const game = {
 };
 const now = () => Date.now() + game.offset;
 window.__eko = game; // pro testy a ladění
+game.ground = groundInfo;
 
 // ---------- canvas ----------
 const canvas = $('game');
@@ -62,6 +63,7 @@ function centerCamera() {
 
 function clampCam() {
   const c = game.cam;
+  if (!(c.zoom > 0) || !isFinite(c.x) || !isFinite(c.y)) { const [x, y] = cellCenter(9, 8); c.x = x; c.y = y; c.zoom = 1; }   // nesmyslná kamera → zpět na farmu
   c.zoom = Math.max(0.4, Math.min(2.4, c.zoom));
   const [lx] = cellCenter(WORLD.x0, TOWN.y1 - 6), [rx] = cellCenter(TOWN.x1 - 6, WORLD.y0);
   const [, ty] = cellCenter(WORLD.x0, WORLD.y0), [, by] = cellCenter(TOWN.x1, TOWN.y1);
@@ -97,10 +99,16 @@ function frame(t) {
     game.lastT = t;
     const people = game.visit ? [] : [stepWalker(game.farmer, dt, t, 'farmar')];
     if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, 'pomocnik'));
-    drawScene(ctx, {
-      farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
-      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
-    });
+    try {
+      drawScene(ctx, {
+        farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
+        ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
+      });
+    } catch (e) {                               // chyba v kreslení nesmí hru zastavit; ukáže se dole, ať jde poslat
+      for (let i = 0; i < 24; i++) ctx.restore();
+      if (!perf.err && window.showError) window.showError('kreslení: ' + (e && e.message));
+      perf.err = (perf.err || 0) + 1;
+    }
     perf.avg = perf.avg * 0.95 + (performance.now() - t0) * 0.05;
     if (!perf.slow && perf.avg > 14) perf.slow = true;
     else if (perf.slow && perf.avg < 6) perf.slow = false;
@@ -368,6 +376,7 @@ function movePinch() {
   gesture.d = d; gesture.mx = mx; gesture.my = my;
 }
 function zoomAt(sx, sy, factor) {
+  if (!(factor > 0) || !isFinite(factor)) return;
   const c = game.cam;
   const wx = (sx - W / 2) / c.zoom + c.x, wy = (sy - H / 2) / c.zoom + c.y;
   c.zoom = Math.max(0.4, Math.min(2.4, c.zoom * factor));
@@ -1320,11 +1329,23 @@ async function initGoogle() {
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && game.farm) refresh(); });
 
-// grafika mapy se načítá hned při startu (s ukazatelem průběhu); budovy jen ty, co hráč má
-// (ostatní se načtou, až je postaví) – šetří paměť telefonu
+// Grafika se načítá hned při startu. Na spuštění hry se čeká jen na to, co je vidět hned (země, lidé, zvířata, les
+// a co má hráč na farmě), nejdéle 6 s – pak se hra spustí tak jako tak a zbytek se dokreslí, až dorazí.
+// Ostatní plodiny, stromy a stroje se načítají na pozadí; budovy až když je hráč postaví (šetří paměť telefonu).
 const loadingText = (n, total) => { if (!$('loading').hidden) $('loading').textContent = `Načítám farmu… ${Math.round(n / total * 100)} %`; };
-const assetsReady = preloadAssets(['t', 'c', 's', 'z', 'm', 'p'], loadingText);
-const farmAssets = farm => preloadAssets([...farm.objects.map(o => ['b', spriteName(o)]), ...['prodejna', 'stanek', 'trziste', 'domek_a', 'domek_b', 'domek_c'].map(n => ['b', n])]);
+const farmAssetList = farm => {
+  const out = [...['t', 'p', 'z'], ...['les_a', 'les_b', 'les_c'].map(n => ['s', n]), ...['prodejna', 'stanek', 'trziste', 'domek_a', 'domek_b', 'domek_c'].map(n => ['b', n])];
+  const crop = c => { for (let i = 0; i < 3; i++) out.push(['c', `${c}_${i}`]); };
+  for (const p of farm.plots) if (p.crop) crop(p.crop);
+  for (const o of farm.objects) {
+    out.push(['b', spriteName(o)]);
+    if (o.tree) for (const s of ['grow', 'ready', 'dead']) out.push(['s', `${o.tree}_${s}`]);
+    if (o.kind === 'velkepole' && (o.crop || o.load)) crop(o.crop || o.load.item);
+  }
+  return out;
+};
+const farmAssets = (farm, onProgress) => preloadAssets(farmAssetList(farm), onProgress);
+preloadAssets(['t', 'p', 'z', 'c', 's', 'm']);   // na pozadí, nic na to nečeká
 (async function boot() {
   initGoogle();
   if (game.backend.mode === 'online' && 'serviceWorker' in navigator) {
@@ -1332,9 +1353,14 @@ const farmAssets = farm => preloadAssets([...farm.objects.map(o => ['b', spriteN
   }
   try {
     const res = await game.backend.start();
-    await Promise.race([Promise.all([assetsReady, res ? farmAssets(normalize(res.farm)) : null]), new Promise(r => setTimeout(r, 15000))]);
-    if (res) enterGame(res); else showLogin();
+    clearTimeout(window.__ekoFatal);   // server odpověděl – hlášku „hra se nenačetla“ už není proč ukazovat
+    if (!res) showLogin();
+    else {
+      await Promise.race([farmAssets(normalize(res.farm), loadingText), new Promise(r => setTimeout(r, 6000))]);
+      enterGame(res);
+    }
   } catch (e) {
+    clearTimeout(window.__ekoFatal);
     $('loading').textContent = e.message + ' Obnov stránku.';
   }
   requestAnimationFrame(frame);

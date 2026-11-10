@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=17';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=17';
-import { drawIconText, drawIcon } from './icons.js?v=17';
-import { asset } from './sprites.js?v=17';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=18';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=18';
+import { drawIconText, drawIcon } from './icons.js?v=18';
+import { asset } from './sprites.js?v=18';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -150,7 +150,9 @@ function drawPlot(ctx, p, now, t) {
 // Které buňky jsou vidět ve výřezu světa (x0, y0, x1, y1 v izometrických pixelech). Počítá se v úhlopříčných
 // souřadnicích d = gx − gy (zleva doprava) a s = gx + gy (shora dolů) – tak se neprochází nic, co je mimo obrazovku.
 function visibleCells(x0, y0, x1, y1) {
-  return { d0: Math.floor(x0 / (TW / 2)) - 1, d1: Math.ceil(x1 / (TW / 2)) + 1, s0: Math.floor(y0 / (TH / 2)) - 3, s1: Math.ceil(y1 / (TH / 2)) + 1 };
+  const lim = (v, a, b) => Math.max(a, Math.min(b, v));   // mapa je malá – meze chrání před nekonečnou smyčkou při nesmyslné kameře
+  return { d0: lim(Math.floor(x0 / (TW / 2)) - 1, -400, 400), d1: lim(Math.ceil(x1 / (TW / 2)) + 1, -400, 400),
+    s0: lim(Math.floor(y0 / (TH / 2)) - 3, -400, 400), s1: lim(Math.ceil(y1 / (TH / 2)) + 1, -400, 400) };
 }
 function eachCell(vis, fn) {   // odzadu dopředu
   for (let s = vis.s0; s <= vis.s1; s++) {
@@ -166,55 +168,74 @@ function drawGroundTiles(ctx, farm, vis) {
 // Země se nemění, proto se nakreslí jednou do zásobního plátna (o kus většího než obrazovka) a při posouvání
 // mapy se z něj jen kopíruje. Když se vyjede z okraje, zásoba se posune a dokreslí se jen nový pruh;
 // celá znovu se kreslí při změně přiblížení nebo když přibude pozemek.
-const ground = { c: null, key: '', x0: 0, y0: 0, x1: 0, y1: 0, zoom: 0 };
+// Pojistka: kdyby to prohlížeč nezvládl (chyba, nebo se do zásoby nic nenakreslí), zásoba se vypne
+// a země se kreslí přímo jako dřív – hra kvůli tomu nesmí zůstat stát.
+const ground = { c: null, key: '', x0: 0, y0: 0, x1: 0, y1: 0, zoom: 0, off: false };
 const GROUND_MAX = 9e6;   // nejvýš tolik pixelů zásobního plátna (paměť telefonu)
-function drawGround(ctx, farm, cam, W, H, dpr) {
-  const vw = W / cam.zoom, vh = H / cam.zoom, left = cam.x - vw / 2, top = cam.y - vh / 2;
-  const k = cam.zoom * dpr;                                 // pixelů displeje na 1 px světa
-  const margin = Math.min(0.25, (Math.sqrt(GROUND_MAX / (W * H * dpr * dpr)) - 1) / 2);
-  const zooming = cam.zoom !== ground.zoom;
-  ground.zoom = cam.zoom;
-  if (zooming || margin < 0.05 || typeof document === 'undefined') {   // při přibližování prsty rovnou na obrazovku
-    ctx.fillStyle = BASE; ctx.fillRect(left, top, vw, vh);
-    drawGroundTiles(ctx, farm, visibleCells(left, top, left + vw, top + vh));
-    return;
-  }
+export const groundInfo = () => ({ zasoba: !ground.off && !!ground.c, vypnuto: ground.off, proc: ground.err || '' });   // pro ladění: window.__eko.ground()
+function groundDirect(ctx, farm, left, top, vw, vh) {
+  ctx.fillStyle = BASE; ctx.fillRect(left, top, vw, vh);
+  drawGroundTiles(ctx, farm, visibleCells(left, top, left + vw, top + vh));
+}
+function groundCached(ctx, farm, left, top, vw, vh, k, cw, ch, margin) {
   const key = `${k}|${farm.land}|${TILE_NAMES.filter(n => asset('t', n)).length}`;
   const stale = ground.key !== key;
   if (stale || left < ground.x0 || top < ground.y0 || left + vw > ground.x1 || top + vh > ground.y1) {
     if (!ground.c) ground.c = document.createElement('canvas');
-    const c = ground.c, g = c.getContext('2d', { alpha: false });
-    const cw = Math.ceil(W * dpr * (1 + 2 * margin)), ch = Math.ceil(H * dpr * (1 + 2 * margin));
+    const c = ground.c;
+    const fresh = c.width !== cw || c.height !== ch;
+    if (fresh) { c.width = cw; c.height = ch; }
+    const g = c.getContext('2d', { alpha: false });
+    if (!g) throw new Error('zásobní plátno nemá kontext');
     const paint = (px, py, pw, ph) => {            // dokreslí obdélník zásoby (v pixelech displeje)
       const wx = ground.x0 + px / k, wy = ground.y0 + py / k;
       g.save();
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.beginPath(); g.rect(px, py, pw, ph); g.clip();
-      g.setTransform(k, 0, 0, k, -ground.x0 * k, -ground.y0 * k);
-      g.fillStyle = BASE; g.fillRect(wx, wy, pw / k, ph / k);
-      drawGroundTiles(g, farm, visibleCells(wx, wy, wx + pw / k, wy + ph / k));
-      g.restore();
+      try {
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+        g.setTransform(k, 0, 0, k, -ground.x0 * k, -ground.y0 * k);
+        g.fillStyle = BASE; g.fillRect(wx, wy, pw / k, ph / k);
+        drawGroundTiles(g, farm, visibleCells(wx, wy, wx + pw / k, wy + ph / k));
+      } finally { g.restore(); }
     };
     // nový výřez kolem obrazovky; proti starému posunutý o celé pixely displeje, aby šla stará část jen přesunout
     const sx = Math.round((left - vw * margin - ground.x0) * k), sy = Math.round((top - vh * margin - ground.y0) * k);
-    if (!stale && c.width === cw && c.height === ch && Math.abs(sx) < cw && Math.abs(sy) < ch) {
+    ground.key = '';                               // kdyby kreslení spadlo, příště se začne znovu
+    if (!stale && !fresh && Math.abs(sx) < cw && Math.abs(sy) < ch) {
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.drawImage(c, -sx, -sy);
       ground.x0 += sx / k; ground.y0 += sy / k;
       if (sx) paint(sx > 0 ? cw - sx : 0, 0, Math.abs(sx), ch);
       if (sy) paint(0, sy > 0 ? ch - sy : 0, cw, Math.abs(sy));
     } else {
-      if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
       ground.x0 = left - vw * margin; ground.y0 = top - vh * margin;
       paint(0, 0, cw, ch);
+      if (fresh) {                                 // nové plátno: opravdu se do něj kreslí? (při nedostatku paměti zůstane prázdné)
+        const px = g.getImageData(cw >> 1, ch >> 1, 1, 1).data;
+        if (px[0] + px[1] + px[2] === 0) throw new Error('zásobní plátno je prázdné');
+      }
     }
     ground.x1 = ground.x0 + cw / k; ground.y1 = ground.y0 + ch / k;
     ground.key = key;
   }
   ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);   // kopie přesně po pixelech displeje (ostrá a rychlá)
-  ctx.drawImage(ground.c, -Math.round((left - ground.x0) * k), -Math.round((top - ground.y0) * k));
-  ctx.restore();
+  try {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);   // kopie přesně po pixelech displeje (ostrá a rychlá)
+    ctx.drawImage(ground.c, -Math.round((left - ground.x0) * k), -Math.round((top - ground.y0) * k));
+  } finally { ctx.restore(); }
+}
+function drawGround(ctx, farm, cam, W, H, dpr) {
+  const vw = W / cam.zoom, vh = H / cam.zoom, left = cam.x - vw / 2, top = cam.y - vh / 2;
+  const k = cam.zoom * dpr;                                 // pixelů displeje na 1 px světa
+  const margin = Math.min(0.25, (Math.sqrt(GROUND_MAX / (W * H * dpr * dpr)) - 1) / 2);
+  const cw = Math.ceil(W * dpr * (1 + 2 * margin)), ch = Math.ceil(H * dpr * (1 + 2 * margin));
+  const zooming = cam.zoom !== ground.zoom;                 // při přibližování prsty rovnou na obrazovku
+  ground.zoom = cam.zoom;
+  if (!ground.off && !zooming && margin >= 0.05 && cw > 0 && ch > 0 && typeof document !== 'undefined') {
+    try { groundCached(ctx, farm, left, top, vw, vh, k, cw, ch, margin); return; }
+    catch (e) { ground.off = true; ground.c = null; ground.err = String(e && e.message); }
+  }
+  groundDirect(ctx, farm, left, top, vw, vh);
 }
 
 // view = { farm, now, t, cam, W, H, dpr, ghost, hoverCell, bubble, floats, hour, people, weather }

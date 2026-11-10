@@ -1,5 +1,5 @@
 // EKOfarm – service worker: upozornění do telefonu (Web Push) a mezipaměť obrázků (rychlé načtení podruhé).
-const IMG_CACHE = 'ekofarm-img-v17';   // při nové grafice zvýšit číslo
+const IMG_CACHE = 'ekofarm-img-v18';   // při nové grafice zvýšit číslo
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin || !url.pathname.startsWith('/img/')) return;

@@ -1,5 +1,9 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 18, title: 'Oprava spuštění hry', items: [
+    'Hra se spustí hned a nečeká na načtení všech obrázků. Dřív se mohla zaseknout na „Načítám farmu…“ a napsat, že se nenačetla.',
+    'Když se něco pokazí, hra chybu napíše na obrazovku, aby ji šlo poslat a opravit.',
+  ] },
   { v: 17, title: 'Doladěná grafika a plynulejší mapa', items: [
     'Mapa se posouvá plynuleji a hra méně zahřívá telefon: země se nakreslí jednou a při posouvání se jen kopíruje.',
     'Kolem celé mapy je louka. V městečku přibyly domky a žádný už nezakrývá Stánek, Prodejnu strojů ani Tržiště.',
