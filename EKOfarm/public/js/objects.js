@@ -1,7 +1,8 @@
 // EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, pondStock } from './rules.js?v=11';
-import { TW, TH, drawPlant } from './render.js?v=11';
-import { drawIcon } from './icons.js?v=11';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, pondStock } from './rules.js?v=14';
+import { TW, TH, drawPlant } from './render.js?v=14';
+import { drawIcon } from './icons.js?v=14';
+import { spriteImage, spriteTop, animalImage, ANIMAL_SPRITES, PENS_EMPTY } from './sprites.js?v=14';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -158,6 +159,32 @@ function drawSheep(ctx, x, y, dir, t, i) {
   ctx.beginPath(); ctx.ellipse(x + 13 * dir, y - 14 - bob, 3.6, 4.4, 0, 0, Math.PI * 2); ctx.fill();
 }
 
+// zvířata ve výběhu: chodí po dvoře; vlastní obrázek zvířete, jinak kreslené kódem
+function drawPenAnimals(ctx, o, d, now, t) {
+  const an = ANIMALS[d.animal];
+  const animals = o.animals || [];
+  const sp0 = ANIMAL_SPRITES[d.animal], img = animalImage(d.animal);
+  animals.forEach((a, i) => {
+    const st = animalState(a, an, now);
+    const sp = st.state === 'eating' ? 1 : 0.35;
+    const u = 0.55 + 0.25 * Math.sin(t / (2600 / sp) + i * 2.3);
+    const v = 0.35 + 0.18 * i + 0.1 * Math.cos(t / (3100 / sp) + i * 1.7);
+    const [x, y] = iso(o.x + u * d.w, o.y + Math.min(0.88, v) * d.h);
+    const dir = Math.cos(t / (2600 / sp) + i * 2.3) > 0 ? 1 : -1;
+    if (img) {
+      const bob = st.state === 'eating' ? Math.abs(Math.sin(t / 160 + i)) * 1.5 : 0;
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x, y, sp0.w * 0.38, sp0.w * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.save(); ctx.translate(x, y - bob); if (dir > 0) ctx.scale(-1, 1);
+      ctx.drawImage(img, -sp0.w / 2, -sp0.h, sp0.w, sp0.h);
+      ctx.restore();
+    } else if (d.animal === 'krava') drawCow(ctx, x, y, dir, t, i);
+    else if (d.animal === 'prase') drawPig(ctx, x, y, dir, t, i);
+    else if (d.animal === 'ovce') drawSheep(ctx, x, y, dir, t, i);
+    else drawChicken(ctx, x, y, dir, t, i);
+    if (st.state === 'ready') drawIcon(ctx, ITEMS[an.product].icon, x, y - (img ? sp0.h + 8 : d.animal === 'slepice' ? 28 : 36), 14);
+  });
+}
+
 function drawPen(ctx, o, d, now, t) {
   const an = ANIMALS[d.animal];
   const N = iso(o.x, o.y), E = iso(o.x + d.w, o.y), S = iso(o.x + d.w, o.y + d.h), W = iso(o.x, o.y + d.h);
@@ -166,25 +193,8 @@ function drawPen(ctx, o, d, now, t) {
   const hs = d.w >= 3 ? 1.2 : 0.9;
   house(ctx, o.x + 0.1, o.y + 0.1, o.x + 0.1 + hs, o.y + 0.1 + hs, 26, 18, { krava: '#b5523b', prase: '#c98a6a', ovce: '#d9c9a8' }[d.animal] || '#e7c27a', '#8a3b2c');
   if (d.animal === 'prase') { const [mx, my] = iso(o.x + d.w * 0.7, o.y + d.h * 0.75); ctx.fillStyle = 'rgba(110,70,30,.55)'; ctx.beginPath(); ctx.ellipse(mx, my, 22, 9, 0, 0, Math.PI * 2); ctx.fill(); }
-  // zvířata
+  drawPenAnimals(ctx, o, d, now, t);
   const animals = o.animals || [];
-  animals.forEach((a, i) => {
-    const st = animalState(a, an, now);
-    const sp = st.state === 'eating' ? 1 : 0.35;
-    const u = 0.55 + 0.25 * Math.sin(t / (2600 / sp) + i * 2.3);
-    const v = 0.35 + 0.18 * i + 0.1 * Math.cos(t / (3100 / sp) + i * 1.7);
-    const [x, y] = iso(o.x + u * d.w, o.y + Math.min(0.88, v) * d.h);
-    const dir = Math.cos(t / (2600 / sp) + i * 2.3) > 0 ? 1 : -1;
-    if (d.animal === 'krava') drawCow(ctx, x, y, dir, t, i);
-    else if (d.animal === 'prase') drawPig(ctx, x, y, dir, t, i);
-    else if (d.animal === 'ovce') drawSheep(ctx, x, y, dir, t, i);
-    else drawChicken(ctx, x, y, dir, t, i);
-    if (st.state === 'ready') {
-      ctx.font = '14px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
-      ctx.textAlign = 'center';
-      drawIcon(ctx, ITEMS[an.product].icon, x, y - (d.animal === 'slepice' ? 28 : 36), 14);
-    }
-  });
   // plot
   const rail = (a, b) => {
     ctx.strokeStyle = '#9b6b3c'; ctx.lineWidth = 2.5;
@@ -729,8 +739,32 @@ export function drawPerson(ctx, x, y, shirt, hat, t, walking, work) {
   ctx.lineCap = 'butt';
 }
 
+// budova jako obrázek podle šablony: plátno je široké jako základna, vysoké 1,25× šířky
+// a přední roh základny je 12 px (24 px ve 2×) nad spodním okrajem plátna
+function drawSprite(ctx, o, d, im, now, t, farm) {
+  const sz = objSize(o);
+  const W = iso(o.x, o.y + sz.h), E = iso(o.x + sz.w, o.y), S = iso(o.x + sz.w, o.y + sz.h);
+  const w = E[0] - W[0], h = w * 1.25;
+  const top = S[1] + 12 - h;
+  ctx.drawImage(im, W[0], top, w, h);
+  if (d.type === 'pen' && PENS_EMPTY) drawPenAnimals(ctx, o, d, now, t);
+  // bubliny jako u kreslených budov
+  const st = objectStatus(o, now, farm);
+  const bx = (W[0] + E[0]) / 2, by = top + h * spriteTop(im) + 6 + Math.sin(t / 300) * 2;
+  if (d.type === 'factory' && st.done) {
+    const first = queueState(o, now).find(q => q.state === 'done');
+    bubble(ctx, bx, by, ITEMS[first.r].icon, st.done);
+  } else if (d.type === 'pen') {
+    const an = ANIMALS[d.animal];
+    if (st.done) bubble(ctx, bx, by, ITEMS[an.product].icon, st.done);
+    else if (st.hungry && (o.animals || []).length) bubble(ctx, bx, by, ITEMS[an.feed].icon, 0, true);
+  } else if (d.type === 'main' && st.done) bubble(ctx, bx, by, 'truck', st.done);
+}
+
 export function drawObject(ctx, o, now, t, farm) {
   const d = BUILDINGS[o.kind];
+  const im = spriteImage(o);
+  if (im) { drawSprite(ctx, o, d, im, now, t, farm); if (UPGRADABLE.includes(d.type)) levelPlate(ctx, o, d); return; }
   if (d.type === 'garage') { drawGarage(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
   if (d.type === 'dealer') { drawDealer(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
   if (d.type === 'stall') {

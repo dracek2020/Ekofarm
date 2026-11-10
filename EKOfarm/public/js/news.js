@@ -1,5 +1,16 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 14, title: 'Zvířata zase chodí', items: [
+    'Ohrady mají zpátky původní vzhled: zvířata chodí po výběhu a je jich vidět tolik, kolik jich máš.',
+  ] },
+  { v: 13, title: 'Budovy sedí na svých políčkách', items: [
+    'Obrázky budov jsou přesně usazené na políčka, která zabírají, a nepřesahují do stran.',
+    'Bubliny s hotovými výrobky jsou hned nad střechou.',
+  ] },
+  { v: 12, title: 'Nová grafika budov', items: [
+    'Statek a Sklad mají nový vzhled pro každou z 10 úrovní – vylepšení je teď vidět.',
+    'Nový vzhled mají všechny výrobny (13) a ohrady: kurník, kravín, prasečák a ovčín.',
+  ] },
   { v: 11, title: 'Rybník, včely a upozornění', items: [
     'Rybník (od Statku 2): kup udici v Prodejně strojů, vyrob návnadu v Krmivárně a rybař! Až ryba zabere, klepni a drž ji v zelené čárce.',
     '8 druhů ryb od plotice po sumce. Rybárna z nich vaří jídla, Uzenářství udí pstruhy.',

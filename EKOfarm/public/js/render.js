@@ -1,7 +1,7 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townHouseAt, townObject } from './rules.js?v=11';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse } from './objects.js?v=11';
-import { drawIconText, drawIcon } from './icons.js?v=11';
+import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townHouseAt, townObject } from './rules.js?v=14';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse } from './objects.js?v=14';
+import { drawIconText, drawIcon } from './icons.js?v=14';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice

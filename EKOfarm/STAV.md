@@ -23,6 +23,12 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v11 (10. 11. 2026) – rybník, včely, upozornění, průvodce**: **Rybník** (typ `pond`, st 2, 3×3, max 2): ryby přibývají (`stockState`/`pondStock`, 4+úroveň ryb, 1 za 10 min), akce `fishCast` (udice `rod` z prodejny + 1 `navnada` z Krmivárny, ryba se vybere `pickFish` deterministicky z `rnd`, `o.hook`) a `fishLand {ok}` – výsledek minihry posílá klient (dovoleno, zásoba ryb omezuje zisk). Minihra v `main.js` (`startFishing`, `fishTick`: zabere → klepni → drž prst, čárka stoupá). 8 ryb `FISH`, recepty v **Rybárně** + uzený pstruh. **Včelín** (typ `hive`, st 3): plástve `plast` přibývají (`hiveStock`, květiny do 4 políček = rychleji), `collect`; sad do 4 políček od včelína +1 plod (`beeBonus`). **Medárna** (med, svíčka), Pekárna perník a medovník. Recepty umí `qty` i v ceně (cena za kus). **Upozornění**: `src/webpush.js` (šifrování aes128gcm + VAPID bez knihoven), tabulka `push_subs`, `POST /api/push/subscribe|unsubscribe`, časovač `scheduled()` → `pushRound` (co je hotové podle `readyEvents` od `last`), okamžité upozornění prodávajícímu z tržiště; `public/sw.js`; klíče `node tools/vapid.mjs` → secrets `VAPID_PUBLIC`, `VAPID_PRIVATE`; v `wrangler.toml` musí být `[triggers] crons`. **Průvodce** (`TUTORIAL` v panels.js, `farm.tut`, akce `tutorial`, karta `#tut`) a **Jak hrát** v Menu (`helpHtml`, tabulky generované z pravidel).
 
+- **v12 (10. 11. 2026) – grafika budov**: obrázky od hráče (`public/img/b/*.webp`, oříznuté a zmenšené na 2× šířku základny: 2×2 = 384 px, 3×3 = 576 px). `public/js/sprites.js` (`spriteImage(o)`: Statek a Sklad podle úrovně `statek_N`/`sklad_N`, ohrady a 13 výroben jedním obrázkem); `drawObject` kreslí obrázek místo kódu (spodní roh na předním rohu základny, `SPRITE_DROP`), bubliny a cedulka úrovně zůstávají. Testovací verze má obrázky vložené (`SPRITE_DATA` v build-artifact.mjs). Kódem se dál kreslí: stodola na stroje, městečko, rybník, včelín, ozdoby, sad, pole. Zdroje: `/tmp` zipy hráče – originály v plném rozlišení nejsou v repozitáři.
+
+- **v13 (10. 11. 2026) – obrázky podle šablon**: každý obrázek budovy je plátno podle šablony (2×: šířka = (w+h)×96, výška = 1,25 × šířka, přední roh základny 24 px nad spodním okrajem; ve hře `drawSprite` kreslí šířku základny a roh 12 px nad okrajem). Dodané obrázky převedené na plátna (budova max. 94 % šířky základny, na střed předního rohu). Bublina nad střechou podle `spriteTop()`. Šablony pro další grafiku: `EKOfarm_sablony_grafiky.zip` (1×1 192×240, 2×2 384×480, 3×2 480×600, 3×3 576×720) – nové obrázky stačí uložit do `public/img/b/` bez úprav.
+
+- **v14 (10. 11. 2026)**: ohrady zase kreslené kódem s chodícími zvířaty (obrázky ohrad se zvířaty odstraněné). Připraveno na obrázky prázdných výběhů a zvířat (`PENS_EMPTY`, `ANIMAL_SPRITES`, `zvire_<druh>.webp`, `drawPenAnimals`) – arch `EKOfarm_ohrady_zvirata_jeden_arch.zip`.
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 
@@ -46,6 +52,7 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `public/js/objects.js` | Kreslení budov, ohrad se zvířaty, ozdob, sadů, velkého pole se stroji (`drawVehicle`, `drawBigField`) a „ducha“ při stavění |
 | `public/js/icons.js` | Vlastní SVG ikony (`ICONS`), `ic()`, `iconize()` pro text s `:klic:`, `drawIcon`/`drawIconText` pro canvas |
 | `public/js/news.js` | Novinky pro hráče (`NEWS`, nejnovější nahoře) |
+| `public/js/sprites.js` | Obrázky budov (`public/img/b/`), výběr podle druhu a úrovně |
 | `public/js/sfx.js` | Zvuky skládané v prohlížeči (WebAudio), zapnutí/vypnutí |
 | `public/js/panels.js` | HTML panelů: Stavět, obchod, prodejna strojů (`dealerHtml`), velké pole (`bigfieldHtml`), statek se zakázkami, sad, výroba, ohrada, sklad (tlačítka `data-act`) |
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |

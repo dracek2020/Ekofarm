@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize } from './rules.js?v=11';
+import { newFarm, applyAction, normalize } from './rules.js?v=14';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
