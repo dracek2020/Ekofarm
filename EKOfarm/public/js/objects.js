@@ -1,7 +1,7 @@
 // EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=10';
-import { TW, TH, drawPlant } from './render.js?v=10';
-import { drawIcon } from './icons.js?v=10';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, pondStock } from './rules.js?v=11';
+import { TW, TH, drawPlant } from './render.js?v=11';
+import { drawIcon } from './icons.js?v=11';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -527,7 +527,7 @@ function drawDeco(ctx, o, d, now, t) {
 
 export function objectDepth(o) {
   const d = objSize(o);
-  if (o.kind === 'velkepole') return o.x + o.y + 1;   // velké pole leží na zemi – kreslit brzy
+  if (o.kind === 'velkepole' || o.kind === 'rybnik') return o.x + o.y + 1;   // leží na zemi – kreslit brzy
   return o.x + o.y + (d.w + d.h) / 2;
 }
 
@@ -613,6 +613,81 @@ function drawMarket(ctx, o, d, now, t) {
   drawIcon(ctx, 'market', sx, sy - 63, 20);
 }
 
+// ---------- rybník ----------
+function drawPond(ctx, o, d, now, t) {
+  const c = iso(o.x + 1.5, o.y + 1.5);
+  const ell = (rx, ry, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(c[0], c[1], rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
+  ell(136, 64, '#c9b38a');                 // písčitý břeh
+  ell(124, 57, '#3f78b8');
+  ell(104, 46, '#4f8fd6');
+  ctx.strokeStyle = 'rgba(220,240,255,0.6)'; ctx.lineWidth = 2;   // vlnky
+  for (let i = 0; i < 3; i++) {
+    const k = ((t / 2600 + i / 3) % 1);
+    ctx.globalAlpha = 1 - k;
+    ctx.beginPath(); ctx.ellipse(c[0] - 30 + i * 30, c[1] - 6 + i * 8, 8 + k * 22, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  for (const [dx, dy] of [[-62, 14], [52, -18], [70, 16]]) {         // lekníny
+    ctx.fillStyle = '#5fae3a'; ctx.beginPath(); ctx.ellipse(c[0] + dx, c[1] + dy, 11, 5, 0, 0.3, Math.PI * 2); ctx.lineTo(c[0] + dx, c[1] + dy); ctx.fill();
+    if (dx > 60) { ctx.fillStyle = '#f5a0c0'; ctx.beginPath(); ctx.arc(c[0] + dx + 2, c[1] + dy - 3, 3.2, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // rákos na kraji
+  ctx.strokeStyle = '#5f8a3a'; ctx.lineWidth = 2.2;
+  for (const [dx, dy, h] of [[-118, -4, 30], [-112, 4, 36], [-104, -10, 26], [108, 20, 32], [116, 12, 26]]) {
+    const sw = Math.sin(t / 900 + dx) * 2;
+    ctx.beginPath(); ctx.moveTo(c[0] + dx, c[1] + dy); ctx.lineTo(c[0] + dx + sw, c[1] + dy - h); ctx.stroke();
+    ctx.fillStyle = '#7a4e2a'; ctx.beginPath(); ctx.ellipse(c[0] + dx + sw, c[1] + dy - h, 2.2, 6, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  // ryba občas vyskočí
+  const cyc = (t / 4200 + o.id * 0.37) % 1;
+  if (cyc < 0.12) {
+    const k = cyc / 0.12;
+    const fx = c[0] - 20 + k * 40, fy = c[1] - Math.sin(k * Math.PI) * 26;
+    ctx.fillStyle = '#c9a24a'; ctx.beginPath(); ctx.ellipse(fx, fy, 8, 3.4, (k - 0.5) * 1.6, 0, Math.PI * 2); ctx.fill();
+  }
+  // malé molo
+  const m0 = iso(o.x + 2.3, o.y + 2.9), m1 = iso(o.x + 2.9, o.y + 2.9), m2 = iso(o.x + 2.9, o.y + 2.0), m3 = iso(o.x + 2.3, o.y + 2.0);
+  poly(ctx, [m0, m1, m2, m3], '#a7703d');
+  ctx.strokeStyle = '#7a4e2a'; ctx.lineWidth = 1.2;
+  for (let k = 1; k < 4; k++) { const a = [m0[0] + (m3[0] - m0[0]) * k / 4, m0[1] + (m3[1] - m0[1]) * k / 4], b = [m1[0] + (m2[0] - m1[0]) * k / 4, m1[1] + (m2[1] - m1[1]) * k / 4]; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  const s = pondStock(o, now);
+  if (s.count) bubble(ctx, c[0], c[1] - 70 + Math.sin(t / 300) * 2, 'kapr', s.count, s.count < s.cap);
+}
+
+// ---------- včelín: úly a poletující včely ----------
+function drawHive(ctx, o, d, now, t, farm) {
+  const box = (gx, gy, col) => {
+    const [x, y] = iso(gx, gy);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y + 2, 18, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7a4e2a'; ctx.fillRect(x - 15, y - 6, 4, 8); ctx.fillRect(x + 11, y - 6, 4, 8);
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = i % 2 ? shade(col, 0.88) : col;
+      ctx.fillRect(x - 16, y - 18 - i * 11, 32, 12);
+    }
+    ctx.fillStyle = '#8a5a35'; ctx.beginPath(); ctx.moveTo(x - 20, y - 40); ctx.lineTo(x, y - 52); ctx.lineTo(x + 20, y - 40); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#4a3218'; ctx.fillRect(x - 5, y - 10, 10, 3);
+    return [x, y - 30];
+  };
+  const hives = [box(o.x + 0.6, o.y + 0.7, '#f2d07a'), box(o.x + 1.45, o.y + 1.4, '#9fd0f0')];
+  // květiny kolem
+  for (const [gx, gy, c] of [[0.3, 1.6, '#e0402d'], [0.5, 1.8, '#f5c542'], [1.7, 0.4, '#d6335a'], [1.9, 0.6, '#ffffff']]) {
+    const [x, y] = iso(o.x + gx, o.y + gy);
+    ctx.fillStyle = '#4fa63c'; ctx.fillRect(x - 0.8, y - 7, 1.6, 7);
+    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y - 8, 3, 0, Math.PI * 2); ctx.fill();
+  }
+  // včely
+  for (let i = 0; i < 6; i++) {
+    const [hx, hy] = hives[i % 2];
+    const a = t / (600 + i * 90) + i * 1.7;
+    const bx = hx + Math.cos(a) * (16 + i * 3), by = hy - 8 + Math.sin(a * 1.3) * (8 + i);
+    ctx.fillStyle = '#f5c542'; ctx.beginPath(); ctx.ellipse(bx, by, 2.6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2f2a26'; ctx.fillRect(bx - 0.5, by - 1.8, 1, 3.6);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(bx, by - 2.4, 1.6, 1, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  const st = objectStatus(o, now, farm);
+  if (st.done) { const [x, y] = iso(o.x + 1, o.y + 1); bubble(ctx, x, y - 78 + Math.sin(t / 300) * 2, 'plast', st.done); }
+}
+
 // ozdobný domek v městečku
 export function drawTownHouse(ctx, gx, gy, wall, roof) {
   const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
@@ -665,6 +740,8 @@ export function drawObject(ctx, o, now, t, farm) {
     ctx.restore(); levelPlate(ctx, o, d); return;
   }
   if (d.type === 'market') { drawMarket(ctx, o, d, now, t); return; }
+  if (d.type === 'pond') { drawPond(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
+  if (d.type === 'hive') { drawHive(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
   if (d.type === 'factory') drawFactory(ctx, o, d, now, t);
   else if (d.type === 'pen') drawPen(ctx, o, d, now, t);
   else if (d.type === 'main') drawMain(ctx, o, d, now, t, farm);

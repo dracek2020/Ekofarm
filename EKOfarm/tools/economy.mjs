@@ -13,6 +13,9 @@ md += '\n## Sad (stromy a keře)\n| Strom/keř | Úroveň | Sazenice | První ú
 for (const x of R.TREE_LIST) md += `| ${x.name} | ${x.level} | ${x.cost} | ${t(x.first)} | ${t(x.regrow)} | ${x.harvests} × ${x.yield} | ${R.FRUITS[x.fruit].price} | ${usedIn(x.fruit).join(', ')} |\n`;
 md += '\n## Zvířata\n| Zvíře | Úroveň | Cena | Krmivo | Produkt | Čas | Cena produktu |\n|---|---|---|---|---|---|---|\n';
 for (const a of R.ANIMAL_LIST) md += `| ${a.name} | ${a.level} | ${a.cost} | ${n(a.feed)} | ${n(a.product)} | ${t(a.time)} | ${R.ITEMS[a.product].price} |\n`;
+md += '\n## Ryby (rybník)\n| Ryba | Úroveň | Cena | Obtížnost | Použití |\n|---|---|---|---|---|\n';
+for (const f of R.FISH_LIST) md += `| ${f.name} | ${f.level} | ${f.price} | ${Math.round(f.diff * 100)} % | ${usedIn(f.id).join(', ')} |\n`;
+md += `\nRybník: ${R.POND_IV / 60000} min na rybu, 1 návnada na hod. Včelín: plástev (${R.ITEMS.plast.price} mincí) za ${R.HIVE_IV / 60000} min, s květinami o 25 % rychleji.\n`;
 md += '\n## Výroba\n| Výrobek | Budova | Úroveň | Suroviny | Čas | Cena |\n|---|---|---|---|---|---|\n';
 for (const r of Object.values(R.RECIPES).filter(r => R.PRODUCTS[r.id])) md += `| ${n(r.id)} | ${R.BUILDINGS[r.building].name} | ${r.level} | ${Object.entries(r.in).map(([id, q]) => `${q}× ${n(id)}`).join(', ')} | ${t(r.time)} | ${R.ITEMS[r.id].price} |\n`;
 md += '\n## Semena a sazenice\nSemenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.\nŠkolka: 3 plody → 1 sazenice (cena jako sazenice za mince).\n\n| Semena | Z čeho | Čas | Cena balíčku |\n|---|---|---|---|\n';

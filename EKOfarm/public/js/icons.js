@@ -140,6 +140,39 @@ export const ICONS = {
   dynovy_olej: bottle('#3f6b2a'),
 };
 
+// ---- v11: ryby, med, rybník, včelín, udice ----
+const fishIc = (c, belly, fin, extra = '', len = 1) => S(`<path d="M${4 + (1 - len) * 6} 16c4-7 ${12 * len} -8 ${19 * len} 0-${7 * len} 8-${15 * len} 7-${19 * len} 0z" fill="${c}"/><path d="M${6 + (1 - len) * 6} 18c5 3 ${11 * len} 3 ${16 * len} -1" stroke="${belly}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M${23 - (1 - len) * 2} 16l7-6v12z" fill="${fin}"/><path d="M13 10l4-4 3 5z" fill="${fin}"/><circle cx="${8 + (1 - len) * 6}" cy="14.5" r="1.6" fill="#2f2a26"/>${extra}`);
+Object.assign(ICONS, {
+  plotice: fishIc('#b9c7d6', '#eef2f5', '#d9534f', '', 0.85),
+  kapr: fishIc('#c9a24a', '#f2d98a', '#a87a2a', [[12, 14], [16, 13], [20, 14], [14, 17], [18, 17]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="#a87a2a" opacity=".6"/>`).join('')),
+  lin: fishIc('#7a8a3a', '#b8c06a', '#5a6a2a', '', 0.9),
+  okoun: fishIc('#8fae4a', '#e8e0a0', '#e0602d', [11, 15, 19].map(x => `<path d="M${x} 10v10" stroke="#3f5a2a" stroke-width="2"/>`).join(''), 0.9),
+  pstruh: fishIc('#9fb0a0', '#f0d0d8', '#7a8a7a', '<path d="M8 16h16" stroke="#e07a9a" stroke-width="2"/>' + [[12, 12], [17, 11], [20, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#2f2a26"/>`).join('')),
+  candat: fishIc('#9aa8a0', '#e6ece8', '#6a7a70', [12, 17, 21].map(x => `<path d="M${x} 11l-1 8" stroke="#5a6a60" stroke-width="1.6"/>`).join('')),
+  stika: fishIc('#6f8a4a', '#d8e0a0', '#4f6a2a', [[11, 13], [15, 15], [19, 13], [13, 17], [18, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.6" ry=".9" fill="#d8e0a0"/>`).join('')),
+  sumec: fishIc('#4a4f5a', '#8a8f9a', '#2f333a', '<path d="M5 16c-2 2-3 5-3 7M6 17c-1 3-1 6 0 8" stroke="#2f333a" stroke-width="1.2" fill="none"/>'),
+  navnada: S('<rect x="6" y="10" width="20" height="18" rx="3" fill="#8a6434"/><rect x="6" y="8" width="20" height="5" rx="2" fill="#a7703d"/>' + [[11, 18], [16, 20], [21, 17], [13, 23], [19, 24]].map(([x, y]) => `<path d="M${x - 3} ${y}c2-3 4 3 6 0" stroke="#e0807a" stroke-width="2.2" fill="none" stroke-linecap="round"/>`).join('')),
+  plast: S('<path d="M5 9h22v18H5z" fill="#e8a82e"/>' + [[9, 13], [16, 13], [23, 13], [12.5, 19], [19.5, 19], [9, 25], [16, 25], [23, 25]].map(([x, y]) => `<path d="M${x} ${y - 3.5}l3 1.7v3.6l-3 1.7-3-1.7v-3.6z" fill="#f5c542" stroke="#c98a1a" stroke-width=".8"/>`).join('')),
+  med: jar('#f2a81a', '#a7703d'),
+  svicka: S('<rect x="11" y="12" width="10" height="17" rx="1.5" fill="#f2d07a"/><path d="M11 16h10M11 20h10M11 24h10" stroke="#e0b04a" stroke-width="1"/><path d="M16 12V9" stroke="#2f2a26" stroke-width="1.4"/><path d="M16 2c3 3 3 6 0 7-3-1-3-4 0-7z" fill="#f5a02e"/><path d="M16 5c1.4 1.4 1.4 3 0 3.6-1.4-.6-1.4-2.2 0-3.6z" fill="#fff3b0"/>'),
+  medovnik: S('<path d="M4 15l12-7 12 7v10l-12 5-12-5z" fill="#c98a4a"/><path d="M4 15l12 5 12-5M16 20v10" stroke="#f3e3c3" stroke-width="1.6" fill="none"/><path d="M4 19l12 5 12-5" stroke="#f3e3c3" stroke-width="1.2" fill="none"/><path d="M4 15l12-7 12 7-12 5z" fill="#a8672a"/>'),
+  pernik: S('<path d="M16 3a4 4 0 014 4c0 1-.4 2-1 2.6h5a2 2 0 010 4h-4v4l3 8a2 2 0 01-3.6 1.6L16 22l-3.4 5.2A2 2 0 019 25.6l3-8v-4H8a2 2 0 010-4h5c-.6-.6-1-1.6-1-2.6a4 4 0 014-4z" fill="#b5733a"/><circle cx="14.5" cy="6.5" r=".9" fill="#fff"/><circle cx="17.5" cy="6.5" r=".9" fill="#fff"/><path d="M14 15h4M14 18h4" stroke="#fff" stroke-width="1.4" stroke-dasharray="1 1.5"/>'),
+  rybi_polevka: bowl('#e8c27a', '<path d="M10 14c3-2 6 2 9 0" stroke="#b9c7d6" stroke-width="2" fill="none"/><circle cx="21" cy="15" r="1.4" fill="#f08a24"/>'),
+  smazeny_kapr: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/><path d="M6 20c4-6 14-7 19-1-5 6-15 6-19 1z" fill="#d9a05b"/><path d="M25 19l5-3v7z" fill="#c98a4a"/><path d="M10 19l2 2M14 18l2 2M18 18l2 2" stroke="#b5733a" stroke-width="1.2"/><path d="M4 12c2-2 4-1 5 1" stroke="#e8e04a" stroke-width="3" fill="none" stroke-linecap="round"/>'),
+  peceny_lin: S('<rect x="3" y="14" width="26" height="12" rx="3" fill="#8a8f96"/><path d="M6 19c4-5 13-6 18-1-5 5-14 5-18 1z" fill="#9a8a3a"/><path d="M24 18l4-3v6z" fill="#7a6a2a"/><path d="M9 17v4M13 16v5M17 16v5" stroke="#f3e3c3" stroke-width="1.2"/>'),
+  rybi_prsty: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/>' + [[9, 18], [15, 20], [21, 18]].map(([x, y]) => `<rect x="${x - 3}" y="${y - 6}" width="6" height="11" rx="2" fill="#e0a04a" transform="rotate(-20 ${x} ${y})"/>`).join('')),
+  uzeny_pstruh: S('<path d="M16 2v6" stroke="#7a4e2a" stroke-width="2"/><path d="M8 9c4-1 12-1 16 0-1 9-5 18-8 20-3-2-7-11-8-20z" fill="#b5733a"/><path d="M10 12c3 1 9 1 12 0" stroke="#e8c27a" stroke-width="1.6"/><path d="M12 29l4-3 4 3z" fill="#8a5a2a"/>'),
+  candat_maslo: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/><path d="M7 20c3-4 13-5 18 0-5 4-15 4-18 0z" fill="#e6ece8"/><rect x="12" y="13" width="8" height="5" rx="1" fill="#f5e07a"/><path d="M8 24c3 1 13 1 16 0" stroke="#5fae3a" stroke-width="1.4"/>'),
+  stika_cibule: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/><path d="M5 20c4-4 16-5 22 0-6 4-18 4-22 0z" fill="#8a9a5a"/>' + [10, 16, 22].map(x => `<circle cx="${x}" cy="18" r="2.2" fill="none" stroke="#e8d9c0" stroke-width="1.4"/>`).join('')),
+  sumcovy_gulas: bowl('#a8402a', '<circle cx="11" cy="15" r="2" fill="#8a8f9a"/><circle cx="19" cy="14" r="2" fill="#8a8f9a"/><path d="M14 16l3-1" stroke="#e8502a" stroke-width="2"/>'),
+  pond: S('<ellipse cx="16" cy="19" rx="14" ry="9" fill="#4f8fd6"/><ellipse cx="16" cy="19" rx="10" ry="6" fill="#6fa8e0"/><path d="M9 19c2-1 4 1 6 0M17 22c2-1 4 1 6 0" stroke="#cfe8f5" stroke-width="1.4" fill="none"/><path d="M27 15V6M29 15V8" stroke="#5f8a3a" stroke-width="1.6"/><ellipse cx="27" cy="6" rx="1.2" ry="3" fill="#7a4e2a"/><ellipse cx="8" cy="16" rx="3" ry="1.6" fill="#5fae3a"/>'),
+  hive: S('<path d="M6 28h20" stroke="#7a4e2a" stroke-width="2.4"/><path d="M8 26c-3-3-3-8 0-11 1-6 15-6 16 0 3 3 3 8 0 11z" fill="#e8b04a"/><path d="M7 17h18M6 21h20M8 25h16" stroke="#b5803a" stroke-width="1.4"/><ellipse cx="16" cy="23" rx="2" ry="1.6" fill="#4a3218"/><ellipse cx="24" cy="7" rx="3" ry="2.2" fill="#f5c542"/><path d="M22.5 7h3" stroke="#2f2a26" stroke-width="1.2"/><ellipse cx="23.6" cy="5" rx="1.8" ry="1" fill="#e9f2f5"/>'),
+  udice: S('<path d="M5 29L26 3" stroke="#a7703d" stroke-width="2.4" stroke-linecap="round"/><path d="M26 3v18" stroke="#9aa3ab" stroke-width="1"/><path d="M26 21c0 3-3 3-3 1" stroke="#8a8f96" stroke-width="1.4" fill="none"/><circle cx="9" cy="24" r="2.6" fill="#8a8f96"/>'),
+  udice2: S('<path d="M5 29L26 3" stroke="#2f2a26" stroke-width="2.4" stroke-linecap="round"/><path d="M8 25.4l3.4-4.2" stroke="#d9b43b" stroke-width="2.6"/><path d="M26 3v18" stroke="#9aa3ab" stroke-width="1"/><path d="M26 21c0 3-3 3-3 1" stroke="#8a8f96" stroke-width="1.4" fill="none"/><circle cx="9" cy="24" r="2.6" fill="#c8452d"/>'),
+  book: S('<path d="M4 6c4-2 8-2 12 1v21c-4-3-8-3-12-1z" fill="#4f8fd6"/><path d="M28 6c-4-2-8-2-12 1v21c4-3 8-3 12-1z" fill="#3f6fb5"/><path d="M7 10c2-1 4-1 6 0M7 14c2-1 4-1 6 0M19 10c2-1 4-1 6 0M19 14c2-1 4-1 6 0" stroke="#cfe8f5" stroke-width="1.2" fill="none"/>'),
+  bell: S('<path d="M16 4a2 2 0 012 2c5 1 7 5 7 10v5l3 3H4l3-3v-5c0-5 2-9 7-10a2 2 0 012-2z" fill="#f5c542"/><circle cx="16" cy="27" r="3" fill="#e09a12"/>'),
+});
+
 // v10: semena (balíček s obrázkem plodiny) a sazenice (stromek v květináči s plodem)
 const inner = svg => svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
 const packet = key => S(`<path d="M6 7h20l-1.5 22h-17z" fill="#f3e3c3" stroke="#a0763f" stroke-width="1.4"/><path d="M6 7l2-4h16l2 4z" fill="#d9c4a0" stroke="#a0763f" stroke-width="1.2"/><g transform="translate(8.5 8.5) scale(.47)">${inner(ICONS[key])}</g><path d="M9.5 26h13" stroke="#c8452d" stroke-width="2"/>`);

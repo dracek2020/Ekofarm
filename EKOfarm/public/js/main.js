@@ -5,17 +5,17 @@ import {
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-  TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase,
-} from './rules.js?v=10';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=10';
-import { createBackend, ApiError } from './api.js?v=10';
-import { iconize, ic } from './icons.js?v=10';
-import { NEWS } from './news.js?v=10';
-import { sfx, soundOn, setSound } from './sfx.js?v=10';
-import { marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=10';
+  TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE,
+} from './rules.js?v=11';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=11';
+import { createBackend, ApiError } from './api.js?v=11';
+import { iconize, ic } from './icons.js?v=11';
+import { NEWS } from './news.js?v=11';
+import { sfx, soundOn, setSound } from './sfx.js?v=11';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=11';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 
 
 const game = {
@@ -143,6 +143,7 @@ const SFX_OF = {
   sell: 'coin', deliver: 'coin', claimDaily: 'coin', claimAch: 'coin', upgradeSilo: 'coin',
   place: 'build', buyPlot: 'build', buyLand: 'level', move: 'build', buyAnimal: 'build',
   fieldSow: 'engine', fieldHarvest: 'engine', fieldPlow: 'engine', fieldBale: 'engine', buyMachine: 'engine',
+  fishCast: 'plant', fishLand: 'harvest', claimQuest: 'coin', tutorial: 'tap',
 };
 function act(a, silent) {
   const r = applyAction(game.farm, a, now());
@@ -150,7 +151,7 @@ function act(a, silent) {
   sfx(r.gained && r.gained.levelUp ? 'level' : SFX_OF[a.type] || 'tap');
   game.queue.push(a);
   if (a.x !== undefined && a.y !== undefined && ['harvest', 'plant', 'buyPlot'].includes(a.type)) sendWalker(game.farmer, a.x, a.y);
-  else if (a.id && ['collect', 'feed', 'produce', 'harvestTree', 'plantTree', 'clearTree', 'fieldUnload', 'upgrade'].includes(a.type)) {
+  else if (a.id && ['fishCast', 'collect', 'feed', 'produce', 'harvestTree', 'plantTree', 'clearTree', 'fieldUnload', 'upgrade'].includes(a.type)) {
     const o = findObject(game.farm, a.id);
     if (o) { const d = objSize(o); sendWalker(game.farmer, o.x + Math.floor(d.w / 2), o.y + d.h); }
   }
@@ -406,6 +407,7 @@ function tapObject(o) {
     if (st === 'empty') { openPanel({ kind: 'obj', id: o.id }); return; }
   }
   if (d.type === 'storage') { openPanel({ kind: 'silo' }); return; }
+  if (d.type === 'pond') { openPanel({ kind: 'obj', id: o.id }); return; }
   if (d.type === 'bigfield') {
     if (fieldState(o, now()).state === 'unload') {
       const r = act({ type: 'fieldUnload', id: o.id });
@@ -415,7 +417,7 @@ function tapObject(o) {
   }
   if (d.type === 'main') { openPanel({ kind: 'obj', id: o.id, tab: 'zakazky' }); return; }
   if (['garage', 'dealer', 'stall'].includes(d.type)) { openPanel({ kind: 'obj', id: o.id }); return; }
-  const st = objectStatus(o, now());
+  const st = objectStatus(o, now(), game.farm);
   let did = false;
   if (st.done) did = act({ type: 'collect', id: o.id }).ok;
   if (d.type === 'pen') {
@@ -498,7 +500,156 @@ function updateHud() {
   if (game.panel) renderPanel();
   if (!$('picker').hidden && game.pickPlot) renderPicker();
   updateBanner();
+  updateTutorial();
 }
+
+// ---------- průvodce pro nové hráče ----------
+function updateTutorial() {
+  const f = game.farm, el = $('tut');
+  if (!f || !el) return;
+  const n = f.tut || 0;
+  const introDone = !f.pending.includes('sklad') && f.plots.length >= FREE_PLOTS;
+  const step = TUTORIAL[n];
+  if (step && !step.info && introDone && step.done(f)) { act({ type: 'tutorial', n: n + 1 }, true); return; }
+  const show = !!step && introDone && !game.place && !game.visit && !game.fishing;
+  el.hidden = !show;
+  if (!show) return;
+  $('tutText').innerHTML = iconize(`<small>Průvodce ${n + 1}/${TUTORIAL.length}</small><br>${step.text}`);
+  $('tutNext').hidden = !step.info;
+}
+$('tutNext').addEventListener('click', () => { act({ type: 'tutorial', n: (game.farm.tut || 0) + 1 }); });
+$('tutSkip').addEventListener('click', () => { act({ type: 'tutorial', n: TUTORIAL_DONE }); toast('Průvodce kdykoli spustíš v Menu → Jak hrát.'); });
+
+// ---------- rybaření: zabere → klepni → drž rybu v zelené čárce ----------
+function startFishing(id) {
+  const r = act({ type: 'fishCast', id });
+  if (!r.ok) return;
+  closeSheets();
+  const good = game.farm.machines.some(m => m.model === 'udice2');
+  const t = performance.now();
+  game.fishing = { id, fish: FISH[r.fish], phase: 'wait', bite: t + 1500 + Math.random() * 2500, zone: 0.2, v: 0, fy: 0.3, ft: 0.5, fnext: 0, prog: 0.3, hold: false, size: good ? 0.34 : 0.26, last: t };
+  $('fgResult').hidden = true;
+  $('fgPlay').hidden = false;
+  $('fishGame').hidden = false;
+  $('fgTitle').textContent = 'Čekej, až ryba zabere…';
+  $('fgHint').textContent = 'Splávek se houpe na vodě.';
+  $('fgBob').className = 'fg-bob';
+  requestAnimationFrame(fishTick);
+}
+function fishEnd(ok) {
+  const g = game.fishing;
+  if (!g || g.phase === 'end') return;
+  g.phase = 'end';
+  const r = act({ type: 'fishLand', id: g.id, ok }, true);
+  $('fgPlay').hidden = true;
+  $('fgResult').hidden = false;
+  const caught = ok && r.ok && !r.lost;
+  if (!caught) sfx('error');
+  $('fgTitle').textContent = caught ? 'Úlovek!' : ok && r.error === 'silo_full' ? 'Plný sklad' : 'Ryba utekla';
+  const o = findObject(game.farm, g.id);
+  const left = o ? Math.max(0, game.farm.silo.navnada || 0) : 0;
+  $('fgResultText').innerHTML = iconize(caught
+    ? `<div class="fg-big">:${g.fish.icon}:</div><b>Ulovil jsi: ${g.fish.name}!</b><br><small>+1 do skladu · ${g.fish.price} :coin: za kus · +${g.fish.xp} :xp:</small>`
+    : ok && r.error === 'silo_full' ? `<div class="fg-big">:${g.fish.icon}:</div><b>Sklad je plný!</b><br><small>Uvolni místo, ryba zatím čeká na háčku.</small>`
+    : `<div class="fg-big">:${g.fish.icon}:</div><b>${g.fish.name} utekl${['plotice', 'stika'].includes(g.fish.id) ? 'a' : ''}…</b><br><small>Příště drž čárku u ryby.</small>`);
+  $('fgAgain').textContent = `Rybařit znovu (návnada ${left})`;
+}
+function fishTick(t) {
+  const g = game.fishing;
+  if (!g || g.phase === 'end') return;
+  const dt = Math.min(0.05, (t - g.last) / 1000);
+  g.last = t;
+  if (g.phase === 'wait') {
+    if (t >= g.bite) {
+      g.phase = 'bite'; g.biteEnd = t + (g.size > 0.3 ? 1500 : 1100);
+      $('fgTitle').textContent = 'Zabírá! Klepni!';
+      $('fgBob').className = 'fg-bob bite';
+      sfx('tap');
+      if (navigator.vibrate) navigator.vibrate(120);
+    }
+  } else if (g.phase === 'bite') {
+    if (t > g.biteEnd) { $('fgTitle').textContent = 'Pozdě – ryba se pustila.'; fishEnd(false); return; }
+  } else if (g.phase === 'fight') {
+    const d = g.fish.diff;
+    // čárka: držíš = stoupá, pustíš = klesá
+    g.v += (g.hold ? 2.6 : -2.2) * dt;
+    g.v = Math.max(-1.2, Math.min(1.2, g.v));
+    g.zone += g.v * dt;
+    if (g.zone < 0) { g.zone = 0; g.v = Math.max(0, g.v) * 0.3; }
+    if (g.zone > 1 - g.size) { g.zone = 1 - g.size; g.v = Math.min(0, g.v) * 0.3; }
+    // ryba uhýbá k náhodnému cíli; těžší ryba rychleji a častěji
+    if (t > g.fnext) { g.ft = 0.05 + Math.random() * 0.9; g.fnext = t + (1400 - d * 900) * (0.5 + Math.random()); }
+    const sp = (0.18 + d * 0.9) * dt;
+    g.fy += Math.max(-sp, Math.min(sp, g.ft - g.fy));
+    const inside = g.fy >= g.zone && g.fy <= g.zone + g.size;
+    g.prog += (inside ? 0.3 : -(0.16 + d * 0.16)) * dt;
+    $('fgZone').style.bottom = (g.zone * 100) + '%';
+    $('fgZone').style.height = (g.size * 100) + '%';
+    $('fgZone').className = 'fg-zone' + (inside ? ' on' : '');
+    $('fgFish').style.bottom = `calc(${g.fy * 100}% - 14px)`;
+    $('fgProg').style.height = (Math.max(0, Math.min(1, g.prog)) * 100) + '%';
+    if (g.prog >= 1) { fishEnd(true); return; }
+    if (g.prog <= 0) { fishEnd(false); return; }
+  }
+  requestAnimationFrame(fishTick);
+}
+function fishDown(e) {
+  const g = game.fishing;
+  if (!g || e.target.closest('button')) return;
+  e.preventDefault();
+  if (g.phase === 'wait') { $('fgTitle').textContent = 'Ještě ne… počkej, až zabere.'; return; }
+  if (g.phase === 'bite') {
+    g.phase = 'fight';
+    $('fgTitle').textContent = `Na háčku: ${g.fish.name}!`;
+    $('fgHint').textContent = 'Drž prst = čárka stoupá, pusť = klesá. Udrž rybu v zelené.';
+    $('fgBob').className = 'fg-bob hide';
+    $('fgFish').innerHTML = ic(g.fish.icon);
+  }
+  g.hold = true;
+}
+$('fishGame').addEventListener('pointerdown', fishDown);
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('fishGame').addEventListener(ev, () => { if (game.fishing) game.fishing.hold = false; });
+function closeFishing() { game.fishing = null; $('fishGame').hidden = true; updateHud(); }
+$('fgQuit').addEventListener('click', () => { fishEnd(false); });
+$('fgDone').addEventListener('click', closeFishing);
+$('fgAgain').addEventListener('click', () => { const id = game.fishing && game.fishing.id; closeFishing(); if (id) startFishing(id); });
+
+// ---------- upozornění do telefonu (Web Push) ----------
+let swReg = null;
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+async function pushSub() { return swReg ? swReg.pushManager.getSubscription() : null; }
+async function pushLabel() {
+  const b = $('pushBtn');
+  if (game.backend.mode !== 'online') { b.hidden = true; return; }
+  b.hidden = false;
+  const on = !!(await pushSub().catch(() => null)) && Notification.permission === 'granted';
+  b.innerHTML = iconize(on ? ':bell: Upozornění: zapnutá (vypnout)' : ':bell: Zapnout upozornění do telefonu');
+  b.dataset.on = on ? '1' : '';
+}
+function b64uToBytes(s) { return Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0)); }
+$('pushBtn').addEventListener('click', async () => {
+  try {
+    if ($('pushBtn').dataset.on) {
+      const s = await pushSub();
+      if (s) { await game.backend.pushUnsubscribe(s.endpoint).catch(() => {}); await s.unsubscribe(); }
+      toast('Upozornění jsou vypnutá.');
+      return pushLabel();
+    }
+    if (!pushSupported() || !swReg) {
+      return toast(isIos() && !standalone() ? 'Na iPhonu nejdřív v Safari: Sdílet → <b>Přidat na plochu</b>, otevři hru z plochy a zapni upozornění tam.' : 'Tenhle prohlížeč upozornění neumí.', '', 4500);
+    }
+    const cfg = await game.backend.config();
+    if (!cfg.vapidPublic) return toast('Upozornění zatím nejsou na serveru nastavená.');
+    if (await Notification.requestPermission() !== 'granted') return toast('Upozornění jsi nepovolil. Změníš to v nastavení prohlížeče.', '', 3500);
+    const s = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(cfg.vapidPublic) });
+    await game.backend.pushSubscribe(s.toJSON());
+    toast(':bell: Hotovo! Dám ti vědět, když bude něco hotové.', 'lvlup', 2800);
+  } catch (e) { toast(e.message || 'Upozornění se nepovedlo zapnout.'); }
+  pushLabel();
+});
+$('helpBtn').addEventListener('click', () => { closeSheets(); openPanel({ kind: 'help', tab: 'zaklady' }); });
 
 let toastTimer = null;
 function toast(html, cls = '', ms = 1800) {
@@ -535,6 +686,7 @@ function renderPanel() {
   else if (p.kind === 'news') { title = ':news: Novinky'; body = newsHtml(); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
+  else if (p.kind === 'help') { title = ':book: Jak hrát'; body = helpHtml(f, p.tab); }
   else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board); }
   else if (p.kind === 'town') {
     const o = townObject(f, p.t);
@@ -555,6 +707,8 @@ function renderPanel() {
       : d.type === 'stall' ? stallHtml(f, o, now())
       : d.type === 'orchard' ? orchardHtml(f, o, now())
       : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
+      : d.type === 'pond' ? pondHtml(f, o, now())
+      : d.type === 'hive' ? hiveHtml(f, o, now())
       : decoHtml(f, o);
   }
   $('panelTitle').innerHTML = iconize(title);
@@ -664,6 +818,9 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'visit': startVisit(v); break;
+    case 'fish': startFishing(Number(v)); break;
+    case 'htab': game.panel.tab = v; renderPanel(); $('panel').scrollTop = 0; break;
+    case 'tutRestart': act({ type: 'tutorial', n: 0, reset: true }); closeSheets(); toast(':farmer: Průvodce začíná znovu.'); break;
     case 'mtab': game.panel.tab = v; if (v !== 'prodat' || !game.market) loadMarket(); renderPanel(); break;
     case 'marketReload': loadMarket(); break;
     case 'mPick': {
@@ -945,6 +1102,7 @@ $('menuBtn').addEventListener('click', () => {
   $('gLinkWrap').hidden = !(googleReady && !game.google);
   if (googleReady && !game.google) renderGoogleButton('gLinkBtn', 'signin');
   menuLabels();
+  pushLabel();
   $('menuPanel').hidden = false;
 });
 $('logoutBtn').addEventListener('click', async () => {
@@ -1052,6 +1210,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && ga
 
 (async function boot() {
   initGoogle();
+  if (game.backend.mode === 'online' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(r => { swReg = r; }).catch(() => {});
+  }
   try {
     const res = await game.backend.start();
     if (res) enterGame(res); else showLogin();

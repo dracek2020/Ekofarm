@@ -35,6 +35,15 @@ test('všechny panely se vykreslí', () => {
   assert.ok(P.marketHtml(f, md, 'moje').includes('marketCancel'));
   assert.ok(P.marketHtml(f, md, 'prodat', { item: 'corn', qty: 5, price: 999 }, T).includes('Vystavit za 120'), 'cena max 3×');
   assert.ok(P.marketHtml(f, md, 'prodat', { machine: f.machines[0] ? f.machines[0].id : -1 }, T).length > 50);
+  // v11: rybník, včelín, nápověda
+  const spot = (w, h) => { for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (R.fits(f, x, y, w, h)) return { x, y }; return null; };
+  const pond = R.applyAction(f, { type: 'place', kind: 'rybnik', ...spot(3, 3) }, T);
+  const hive = R.applyAction(f, { type: 'place', kind: 'vcelin', ...spot(2, 2) }, T);
+  assert.ok(pond.ok && hive.ok);
+  assert.ok(P.pondHtml(f, o(pond.id), T).includes('data-act="fish"'));
+  assert.ok(P.hiveHtml(f, o(hive.id), T + 3600000).includes('data-act="collect"'));
+  for (const [tab] of P.HELP_TABS) assert.ok(P.helpHtml(f, tab).length > 200, tab);
+  assert.equal(P.TUTORIAL.length, 7);
   assert.ok(P.landHtml(f, 'n').includes('buyLand'));
   assert.ok(P.landHtml(f, 'nw').includes('nejdřív sousední'));
   // velké pole ve všech stavech

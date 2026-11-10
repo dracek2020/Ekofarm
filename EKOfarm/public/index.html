@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=10">
+<link rel="stylesheet" href="/css/style.css?v=11">
 </head>
 <body>
 <!--APP-->
@@ -30,6 +30,16 @@
   </div>
   <button class="pill" id="newsBtn"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
   <button class="pill" id="townBtn"><span data-ic="shop"></span><b>Městečko</b></button>
+  <div id="tut" hidden><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
+    <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
+  <div id="fishGame" hidden><div class="fg-box">
+    <b id="fgTitle"></b>
+    <div id="fgPlay"><div class="fg-water"><div id="fgBob" class="fg-bob"></div>
+      <div class="fg-bar"><div id="fgZone" class="fg-zone"></div><div id="fgFish" class="fg-fish"></div></div>
+      <div class="fg-prog"><div id="fgProg"></div></div></div>
+      <p class="muted" id="fgHint"></p><button class="btn alt" id="fgQuit">Pustit rybu</button></div>
+    <div id="fgResult" hidden><div id="fgResultText"></div><button class="btn" id="fgAgain">Rybařit znovu</button><button class="btn alt" id="fgDone">Hotovo</button></div>
+  </div></div>
   <div id="visitBar" hidden><span id="visitText"></span><button class="btn sm" id="visitBack">Zpět domů</button></div>
   <div id="banner" hidden><span id="bannerText"></span>
     <span id="bannerSize" hidden>
@@ -52,6 +62,8 @@
 <div id="menuPanel" class="sheet" hidden>
   <div class="sheet-head"><b id="menuName">Farma</b><button class="x" data-close="menuPanel">✕</button></div>
   <p class="muted" id="menuMode"></p>
+  <button class="btn alt" id="helpBtn"><span data-ic="book"></span> Jak hrát a pravidla</button>
+  <button class="btn alt" id="pushBtn" hidden></button>
   <button class="btn alt" id="soundBtn"></button>
   <button class="btn alt" id="dayBtn"></button>
   <div id="gLinkWrap" hidden><p class="muted">Propoj farmu s Google účtem a přihlašuj se jedním klepnutím:</p><div id="gLinkBtn" class="gbtn"></div></div>
@@ -86,6 +98,6 @@ window.addEventListener('error', function (e) { showFatal(e.message || 'Chyba p�
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 setTimeout(function () { showFatal('Načítání trvá moc dlouho. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=10"></script>
+<script type="module" src="/js/main.js?v=11"></script>
 </body>
 </html>

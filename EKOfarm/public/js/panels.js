@@ -2,6 +2,7 @@
 import {
   ITEMS, ITEM_LIST, RECIPES, BUILDINGS, BUILDING_LIST, ANIMALS, ANIMAL_LIST,
   queueSize, penMax, upgradeCost, upgradeEffect, objLevel, statekLevel, MAX_BLD_LEVEL, garageSlots, vehicleCount,
+  FISH_LIST, pondStock, hiveStock, hiveFlowers, PRODUCTS,
   SEEDS, SAPLINGS, recipeQty, dailyQuests, questProgress, QUEST_TYPES, questBonus, MARKET_SLOTS, marketMaxPrice, marketBase, getItem,
   machinePrice, isVehicle, stallOffers, stallLeft, HELPER_PLANS, HELPER_LEVEL, helperActive, helperCapacity, helperInterval, CROP_CATS, getCrop,
   have, hasInputs, countKind, maxPlots, plotPrice, siloUsed, siloUpgradePrice, queueState, animalState,
@@ -11,9 +12,9 @@ import {
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=10';
-import { fmtTime } from './render.js?v=10';
-import { NEWS } from './news.js?v=10';
+} from './rules.js?v=11';
+import { fmtTime } from './render.js?v=11';
+import { NEWS } from './news.js?v=11';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -28,7 +29,7 @@ function card({ icon, name, lines, locked, act, v, disabled }) {
 
 export const SHOP_TABS = [['zvirata', 'Zvířata'], ['farma', 'Farma']];
 
-const TYPE_ORDER = { storage: 0, garage: 1, factory: 2, pen: 3, deco: 4 };
+const TYPE_ORDER = { storage: 0, garage: 1, factory: 2, pen: 3, pond: 3, hive: 3, deco: 4 };
 const nextSt = farm => `víc se statkem ${statekLevel(farm) + 1}`;
 
 function fieldCards(farm) {
@@ -550,4 +551,102 @@ export function tasksHtml(farm, now, tab, board) {
 
 export function siloTitle(farm) {
   return `Sklad ${siloUsed(farm)}/${farm.siloCap}`;
+}
+
+// ---------- v11: rybník a včelín ----------
+export function pondHtml(farm, o, now) {
+  const s = pondStock(o, now);
+  const rod = farm.machines.find(m => m.model === 'udice2') || farm.machines.find(m => m.model === 'udice');
+  const bait = have(farm, 'navnada');
+  const fishRows = FISH_LIST.map(f => `<span class="chip${farm.level < f.level ? ' dim' : ''}">:${f.icon}: ${f.name} ${farm.level < f.level ? `:lock: ${f.level}` : `${f.price} :coin:`}</span>`).join('');
+  const need = !rod ? '<div class="empty">:udice: Na rybaření potřebuješ <b>udici</b> – koupíš ji v Prodejně strojů v městečku.</div>'
+    : !bait ? '<div class="empty">:navnada: Došla ti <b>návnada</b>. Vyrob ji v Krmivárně (1 pšenice + 1 kukuřice = 3 návnady).</div>' : '';
+  return `<div class="row"><span class="ico">:pond:</span><div class="info"><b>Ryby v rybníku: ${s.count}/${s.cap}</b>
+      <small>${s.count < s.cap ? `další ryba za ${fmtTime(Math.ceil(s.next / 1000))}` : 'rybník je plný'} · návnada ${bait} :navnada:${rod ? ` · ${MACHINES[rod.model].name}` : ''}</small></div></div>
+    ${need}
+    <button class="btn${rod && bait && s.count ? '' : ' off'}" data-act="fish" data-v="${o.id}">:udice: Rybařit (1 návnada)</button>
+    <p class="muted">Hodíš udici a čekáš. Když ryba zabere, rychle klepni. Pak drž prst na obrazovce, aby zelená čárka zůstala u ryby, dokud se ukazatel nenaplní. Těžší ryby víc uhýbají.</p>
+    <div class="chips">${fishRows}</div>
+    ${upgradeBlock(farm, o)}<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout rybník</button>`;
+}
+
+export function hiveHtml(farm, o, now) {
+  const s = hiveStock(farm, o, now);
+  const flowers = hiveFlowers(farm, o);
+  return `<div class="row"><span class="ico">:hive:</span><div class="info"><b>Plástve medu: ${s.count}/${s.cap}</b>
+      <small>${s.count < s.cap ? `další za ${fmtTime(Math.ceil(s.next / 1000))}` : 'včelín je plný – vyber ho'}</small></div></div>
+    ${s.count ? `<button class="btn" data-act="collect" data-v="${o.id}">Vybrat :plast: (${s.count})</button>` : ''}
+    <p class="muted">${flowers ? ':flowers: Kolem jsou květy – včely pracují o čtvrtinu rychleji.' : ':flowers: Tip: záhon květin, kvetoucí strom nebo sad do 4 políček zrychlí včely o čtvrtinu.'}
+      Sady do 4 políček od včelína dají při sklizni o 1 plod víc. Z pláství udělá Medárna med a svíčky.</p>
+    ${upgradeBlock(farm, o)}<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout včelín</button>`;
+}
+
+// ---------- v11: průvodce pro nové hráče ----------
+// done = splněno (podle farmy), info = jen vysvětlení s tlačítkem Dál
+export const TUTORIAL = [
+  { text: 'Klepni na prázdné pole a vyber <b>Pšenici</b>. Pak můžeš prstem přejet přes další pole a zasít je najednou.', done: f => (f.stats.plant || 0) > 0 },
+  { text: 'Pšenice roste 1 minutu. Až zezlátne, <b>přejeď prstem</b> přes zralá pole a sklidíš je do skladu.', done: f => (f.stats.harvest || 0) >= 2 },
+  { text: 'Peníze vyděláš <b>zakázkami</b> (klepni na Statek) nebo prodejem ve <b>Skladu</b>. Zkus jedno z toho.', done: f => (f.stats.orders || 0) > 0 || (f.stats.sold || 0) > 0 },
+  { text: 'Otevři <b>Stavět</b> a postav <b>Krmivárnu</b> nebo <b>Semenárnu</b> – z úrody budeš vyrábět.', done: f => f.objects.some(o => BUILDINGS[o.kind].type === 'factory') },
+  { text: 'V <b>Úkolech</b> čeká každý den 8 denních úkolů a denní odměna. Plň je, dostaneš mince.', info: true },
+  { text: 'Tlačítko <b>Městečko</b> vpravo nahoře: prodejna strojů, stánek a tržiště, kde obchoduješ s kamarády.', info: true },
+  { text: 'Vylepšuj <b>Statek</b> – odemyká nové budovy, pole a sady. Všechno najdeš v <b>Menu → Jak hrát</b>. Hodně štěstí!', info: true },
+];
+
+// ---------- v11: pravidla a nápověda (Menu → Jak hrát) ----------
+export const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Městečko'], ['ryby', 'Rybník a včely'], ['tipy', 'Upozornění']];
+export function helpHtml(farm, tab = 'zaklady') {
+  const tabs = `<div class="tabs">${HELP_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="htab" data-v="${id}">${n}</button>`).join('')}</div>`;
+  const p = t => `<p class="muted">${t}</p>`;
+  let body = '';
+  if (tab === 'zaklady') {
+    body = p('<b>:wheat: Pole:</b> klepni na prázdné pole, vyber plodinu a přejeď prstem přes další pole. Zralé pole sklidíš přejetím. Sklizeň jde do <b>Skladu</b> – když je plný, prodej něco nebo ho vylepši.')
+      + p('<b>:seed_info: Osivo:</b> sázení stojí mince, nebo bere <b>semena</b> ze skladu (Semenárna: 2 plodiny → 3 balíčky).'.replace(':seed_info:', ':s_wheat:'))
+      + p('<b>:chleb: Výroba:</b> výrobny dělají z úrody výrobky (fronta až 3 kusy). Klepnutím na budovu vybereš hotové.')
+      + p('<b>:hen: Zvířata:</b> potřebují ohradu a krmivo z Krmivárny. Nakrmíš klepnutím na ohradu.')
+      + p('<b>:coin: Peníze:</b> nejvíc platí <b>zakázky</b> ve Statku, pak <b>stánek</b> a <b>tržiště</b>. Výkup ve Skladu platí polovinu ceny a mění se každé 4 hodiny.')
+      + p('<b>:xp: Úroveň hráče</b> roste za každou práci a pořád dál. Odemyká nové plodiny, zvířata, stromy, ryby, stroje a recepty.')
+      + p('<b>:helper: Pomocník</b> (Statek → Pomocník) sám sklízí a zasívá malá pole.')
+      + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.');
+  } else if (tab === 'statek') {
+    const rows = [];
+    for (let L = 1; L <= MAX_BLD_LEVEL; L++) {
+      const f = { objects: [{ kind: 'statek', lvl: L }] };
+      const b = BUILDING_LIST.filter(x => x.st === L).map(x => `:${x.icon}: ${x.name}`).join(', ');
+      rows.push(`<tr${statekLevel(farm) === L ? ' class="me"' : ''}><td><b>${L}</b></td><td>${b || '–'}</td><td>${maxPlots(f)} / ${maxOrchards(f)} / ${maxBigFields(f)}</td></tr>`);
+    }
+    body = p('Co můžeš <b>stavět</b>, určuje jen úroveň <b>Statku</b>. Vylepšíš ho za mince a suroviny (klepni na Statek → záložka Statek). Ostatní budovy můžeš vylepšit nejvýš na úroveň Statku.')
+      + `<table class="help"><tr><th>Statek</th><th>Odemkne</th><th>Polí / sadů / velkých polí</th></tr>${rows.join('')}</table>`;
+  } else if (tab === 'urovne') {
+    const by = {};
+    const add = (lv, txt) => { (by[lv] = by[lv] || []).push(txt); };
+    for (const c of CROP_LIST) add(c.level, `:${c.icon}: ${c.name}`);
+    for (const a of ANIMAL_LIST) add(a.level, `:${a.icon}: ${a.name}`);
+    for (const t of TREE_LIST) add(t.level, `:${ITEMS[t.fruit].icon}: ${t.name}`);
+    for (const f of FISH_LIST) add(f.level, `:${f.icon}: ${f.name}`);
+    for (const m of MACHINE_LIST) add(m.level, `:${m.icon}: ${m.name}`);
+    for (const r of Object.values(RECIPES)) if (PRODUCTS[r.id]) add(r.level, `:${ITEMS[r.id].icon}: ${ITEMS[r.id].name}`);
+    add(HELPER_LEVEL, ':helper: Pomocník');
+    const rows = Object.keys(by).map(Number).sort((a, b) => a - b).map(lv => `<tr${farm.level >= lv ? '' : ' class="dim"'}><td><b>${lv}</b></td><td>${by[lv].join(', ')}</td></tr>`).join('');
+    body = p(`Tvoje úroveň: <b>${farm.level}</b>. Úroveň hráče odemyká, co můžeš pěstovat, chovat, lovit a vyrábět (k výrobě potřebuješ i budovu – tu odemyká Statek).`)
+      + `<table class="help"><tr><th>Úroveň</th><th>Odemkne</th></tr>${rows}</table>`;
+  } else if (tab === 'mesto') {
+    body = p('Po prašné cestě ze spodního rohu farmy dojdeš do <b>městečka</b> (tlačítko Městečko vpravo nahoře).')
+      + p('<b>:shop: Prodejna strojů:</b> traktory, kombajny, pluh, secí stroj, lis, náčiní pro pomocníka a udice. Traktory a kombajny parkují ve Stodole. Vylepšená prodejna dává slevu.')
+      + p('<b>:stall: Stánek:</b> každé 2 hodiny nová nabídka. Prodá ti, co chybí (dráž), a vykoupí za víc než Sklad.')
+      + p('<b>:market: Tržiště hráčů</b> (jen online): prodávej kamarádům úrodu, výrobky i stroje za vlastní cenu, nejvýš trojnásobek běžné. Najednou 8 nabídek. Peníze ti přijdou samy.')
+      + p('<b>:trophy: Žebříček</b> (Úkoly → Žebříček) řadí podle úrovně. Tlačítkem Navštívit se podíváš na cizí farmu.');
+  } else if (tab === 'ryby') {
+    body = p('<b>:pond: Rybník</b> (od Statku 2): kup <b>udici</b> v Prodejně strojů a vyrob <b>návnadu</b> v Krmivárně. Klepni na rybník → Rybařit.')
+      + p('Až ryba <b>zabere</b>, rychle klepni. Pak <b>drž prst</b> na obrazovce – zelená čárka stoupá, pustíš – klesá. Drž rybu v čárce, dokud se ukazatel nenaplní. Když ukazatel spadne na nulu, ryba uteče. Karbonová udice má širší čárku a častěji zabere vzácná ryba.')
+      + p('V rybníku je jen pár ryb, každých 10 minut jedna přibude. Ryby prodáš, nebo z nich uděláš jídla v <b>Rybárně</b>.')
+      + `<div class="chips">${FISH_LIST.map(f => `<span class="chip">:${f.icon}: ${f.name} · úr. ${f.level} · ${f.price} :coin:</span>`).join('')}</div>`
+      + p('<b>:hive: Včelín</b> (od Statku 3): včely samy dělají <b>plástve medu</b>. Květiny, kvetoucí strom nebo sad do 4 políček je zrychlí. Sady blízko včelína dají při sklizni o 1 plod víc. <b>Medárna</b> z pláství udělá med a svíčky, Pekárna perník a medovník.');
+  } else {
+    body = p('<b>:bell: Upozornění</b> ti do telefonu napíše, když je úroda zralá, výroba hotová nebo když ti někdo koupil zboží na tržišti. Zapneš je v Menu.')
+      + p('<b>iPhone a iPad:</b> nejdřív v Safari klepni na Sdílet → <b>Přidat na plochu</b>, otevři hru z plochy a teprve tam upozornění zapni.')
+      + p('<b>Android:</b> stačí Menu → Zapnout upozornění a povolit.')
+      + p('<b>:gift: Denní odměna</b> roste 7 dní po sobě. <b>Denních úkolů</b> je každý den 8 a za všechny je bonus.');
+  }
+  return tabs + body + '<button class="btn alt" data-act="tutRestart" data-v="">:farmer: Spustit průvodce znovu</button>';
 }

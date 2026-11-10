@@ -49,3 +49,14 @@ CREATE TABLE IF NOT EXISTS market_sales (
   paid INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_sales_seller ON market_sales(seller, paid);
+
+-- v11: odběry upozornění (Web Push). last = do kdy už hráč upozornění dostal.
+CREATE TABLE IF NOT EXISTS push_subs (
+  endpoint TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created INTEGER NOT NULL,
+  last INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subs(user_id);

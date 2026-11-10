@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize } from './rules.js?v=10';
+import { newFarm, applyAction, normalize } from './rules.js?v=11';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -67,6 +67,8 @@ function onlineBackend() {
     market() { return req('GET', '/api/market'); },
     // kind: 'list' (vystavit), 'cancel' (stáhnout), 'buy' (koupit)
     marketPost(kind, body) { return req('POST', '/api/market/' + kind, body); },
+    pushSubscribe(sub) { return req('POST', '/api/push/subscribe', { sub }); },
+    pushUnsubscribe(endpoint) { return req('POST', '/api/push/unsubscribe', { endpoint }); },
     // mode 'login' = přihlásit / založit farmu, 'link' = propojit s přihlášenou farmou
     async google(credential, mode) {
       const d = await req('POST', '/api/google', { credential, mode });
@@ -96,6 +98,8 @@ function localBackend() {
     async visit() { throw new ApiError(400, { message: 'Návštěvy fungují jen v online hře.' }); },
     async market() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře (s kamarády).' }); },
     async marketPost() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře.' }); },
+    async pushSubscribe() { throw new ApiError(400, { message: 'Upozornění fungují jen v online hře.' }); },
+    async pushUnsubscribe() { return { ok: true }; },
     async send(actions) {
       const farm = load();
       const now = Date.now();

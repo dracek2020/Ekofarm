@@ -5,20 +5,20 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 ## Plodiny (malé pole, výnos 2 ks)
 | Plodina | Druh | Úroveň | Osivo | Růst | Cena/ks | Použití |
 |---|---|---|---|---|---|---|
-| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Semena pšenice |
+| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Návnada, Semena pšenice |
 | Ředkvička | Zelenina | 1 | 2 | 2 min | 4 | Zeleninový salát, Semena ředkvička |
 | Salát | Zelenina | 2 | 2 | 3 min | 5 | Krmivo pro prasata, Zeleninový salát, Semena salát |
-| Kukuřice | Obilí a olejniny | 2 | 3 | 5 min | 8 | Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata, Semena kukuřice |
+| Kukuřice | Obilí a olejniny | 2 | 3 | 5 min | 8 | Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata, Návnada, Semena kukuřice |
 | Rajče | Zelenina | 3 | 4 | 8 min | 9 | Zeleninový salát, Kečup, Lečo, Semena rajče |
 | Mrkev | Zelenina | 3 | 5 | 10 min | 12 | Krmivo pro krávy, Mrkvová šťáva, Semena mrkev |
 | Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky, Semena okurka |
-| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Semena brambory |
+| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Rybí polévka, Semena brambory |
 | Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem, Semena jahody |
-| Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Semena cibule |
+| Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Semena cibule |
 | Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce, Semena sója |
-| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Semena česnek |
+| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Pečený lín, Semena česnek |
 | Řepka | Obilí a olejniny | 6 | 10 | 25 min | 22 | Řepkový olej, Semena řepka |
-| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo, Semena paprika |
+| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo, Sumcový guláš, Semena paprika |
 | Slunečnice | Obilí a olejniny | 7 | 12 | 30 min | 26 | Slunečnicový olej, Semena slunečnice |
 | Zelí | Zelenina | 8 | 8 | 25 min | 20 | Krmivo pro ovce, Kysané zelí, Semena zelí |
 | Cukrová řepa | Zelenina | 8 | 14 | 40 min | 30 | Cukr, Semena cukrová řepa |
@@ -50,6 +50,20 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 | Kráva | 5 | 60 | Krmivo pro krávy | Mléko | 30 min | 71 |
 | Prase | 7 | 90 | Krmivo pro prasata | Maso | 40 min | 100 |
 | Ovce | 9 | 120 | Krmivo pro ovce | Vlna | 50 min | 107 |
+
+## Ryby (rybník)
+| Ryba | Úroveň | Cena | Obtížnost | Použití |
+|---|---|---|---|---|
+| Plotice | 3 | 8 | 15 % | Rybí polévka |
+| Kapr | 4 | 14 | 30 % | Smažený kapr |
+| Lín | 5 | 16 | 35 % | Pečený lín |
+| Okoun | 6 | 18 | 45 % | Rybí prsty |
+| Pstruh | 8 | 24 | 55 % | Uzený pstruh |
+| Candát | 10 | 30 | 65 % | Candát na másle |
+| Štika | 12 | 36 | 75 % | Štika na cibulce |
+| Sumec | 15 | 50 | 90 % | Sumcový guláš |
+
+Rybník: 10 min na rybu, 1 návnada na hod. Včelín: plástev (12 mincí) za 20 min, s květinami o 25 % rychleji.
 
 ## Výroba
 | Výrobek | Budova | Úroveň | Suroviny | Čas | Cena |
@@ -99,6 +113,19 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 | Chléb se semínky | Pekárna | 7 | 2× Mouka, 2× Semena slunečnice | 15 min | 87 |
 | Pražená semínka | Mlýn | 7 | 4× Semena slunečnice | 8 min | 68 |
 | Dýňový olej | Olejna | 10 | 4× Semena dýně | 15 min | 75 |
+| Návnada | Krmivárna | 3 | 1× Pšenice, 1× Kukuřice | 2 min | 6 |
+| Med | Medárna | 5 | 2× Plástev medu | 5 min | 36 |
+| Svíčka z vosku | Medárna | 6 | 3× Plástev medu | 10 min | 55 |
+| Medovník | Pekárna | 7 | 2× Mouka, 1× Med, 2× Vejce | 25 min | 195 |
+| Perník | Pekárna | 6 | 1× Mouka, 1× Med | 10 min | 76 |
+| Rybí polévka | Rybárna | 4 | 2× Plotice, 1× Cibule, 1× Brambory | 15 min | 67 |
+| Smažený kapr | Rybárna | 5 | 1× Kapr, 1× Mouka, 1× Vejce | 15 min | 96 |
+| Pečený lín | Rybárna | 6 | 2× Lín, 1× Česnek | 20 min | 77 |
+| Rybí prsty | Rybárna | 7 | 2× Okoun, 1× Mouka | 15 min | 81 |
+| Uzený pstruh | Uzenářství | 8 | 2× Pstruh | 25 min | 85 |
+| Candát na másle | Rybárna | 10 | 1× Candát, 1× Máslo | 20 min | 358 |
+| Štika na cibulce | Rybárna | 12 | 1× Štika, 2× Cibule | 20 min | 92 |
+| Sumcový guláš | Rybárna | 15 | 1× Sumec, 2× Paprika, 1× Cibule | 30 min | 144 |
 
 ## Semena a sazenice
 Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.
@@ -157,10 +184,14 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | Konzervárna | 2 | 180 |
 | Školka stromků | 2 | 120 |
 | Lavička | 2 | 30 |
+| Rybník | 2 | 200 |
 | Stodola na stroje | 3 | 300 |
 | Velké pole | 3 | zdarma |
 | Džusárna | 3 | 200 |
 | Kvetoucí strom | 3 | 40 |
+| Rybárna | 3 | 300 |
+| Včelín | 3 | 250 |
+| Medárna | 3 | 280 |
 | Mlékárna | 4 | 200 |
 | Olejna | 4 | 250 |
 | Marmeládárna | 4 | 260 |

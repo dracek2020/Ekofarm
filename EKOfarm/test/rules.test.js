@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -511,7 +511,7 @@ test('v9: ekonomika – každá plodina a ovoce má využití a vše má cenu', 
       assert.ok(3 * ITEMS[r.id].price >= ITEMS[cid].price, r.id);
       continue;
     }
-    const out = ITEMS[r.id].price;
+    const out = ITEMS[r.id].price * (r.qty || 1);
     const inp = Object.entries(r.in).reduce((n, [id, q]) => n + ITEMS[id].price * q, 0);
     assert.ok(out > inp, 'výrobek se musí vyplatit: ' + r.id);
   }
@@ -728,4 +728,74 @@ test('v10: 8 denních úkolů – stejné na serveru i v prohlížeči, odměny 
   applyAction(f, { type: 'claimDaily' }, T0 + 86400000);
   assert.notEqual(f.quests.day, qs.day);
   assert.ok(f.quests.list.every(x => !x.done && questProgress(f, f.quests, x) === 0));
+});
+
+test('v11: rybník – udice, návnada, zabere ryba, ulovit nebo utéct, ryby přibývají', () => {
+  const f = farm6();
+  rich(f, 5, 5000);
+  const id = applyAction(f, { type: 'place', kind: 'rybnik', x: 0, y: 0 }, T0).id;
+  assert.ok(id);
+  const o = findObject(f, id);
+  assert.equal(pondStock(o, T0).count, 5, 'nový rybník je plný');
+  assert.equal(applyAction(f, { type: 'fishCast', id }, T0).error, 'no_rod');
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'udice' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'fishCast', id }, T0).error, 'no_bait');
+  // návnada z krmivárny: 1 pšenice + 1 kukuřice = 3 kusy
+  const kid = applyAction(f, { type: 'place', kind: 'krmivarna', x: 4, y: 0 }, T0).id;
+  f.silo.wheat = 2; f.silo.corn = 2;
+  applyAction(f, { type: 'produce', id: kid, recipe: 'navnada' }, T0);
+  applyAction(f, { type: 'produce', id: kid, recipe: 'navnada' }, T0);
+  applyAction(f, { type: 'collect', id: kid }, T0 + 600000);
+  assert.equal(f.silo.navnada, 6);
+  const c1 = applyAction(f, { type: 'fishCast', id }, T0);
+  assert.ok(c1.ok && FISH[c1.fish] && FISH[c1.fish].level <= 5);
+  assert.equal(applyAction(f, { type: 'fishCast', id }, T0).error, 'hooked');
+  const g = structuredClone(f);
+  assert.equal(applyAction(g, { type: 'fishLand', id, ok: true }, T0 + 5000).fish, c1.fish, 'stejná ryba i v kopii');
+  const r = applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000);
+  assert.ok(r.ok && f.silo[c1.fish] === 1 && f.stats.fish === 1);
+  assert.equal(applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000).error, 'no_hook');
+  assert.ok(applyAction(f, { type: 'fishCast', id }, T0 + 6000).ok);
+  const lost = applyAction(f, { type: 'fishLand', id, ok: false }, T0 + 7000);
+  assert.ok(lost.ok && lost.lost);
+  assert.equal(pondStock(o, T0 + 7000).count, 3);
+  for (let i = 0; i < 3; i++) { applyAction(f, { type: 'fishCast', id }, T0 + 8000); applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 8000); }
+  assert.equal(applyAction(f, { type: 'fishCast', id }, T0 + 9000).error, 'no_fish');
+  assert.equal(pondStock(o, T0 + 9000 + 600000).count, 1, 'za 10 minut přibude ryba');
+  // každá ryba se někde zpracuje
+  const used = new Set(Object.values(RECIPES).flatMap(r => Object.keys(r.in)));
+  for (const x of FISH_LIST) assert.ok(used.has(x.id), 'nevyužitá ryba ' + x.id);
+});
+
+test('v11: včelín – plástve přibývají, květiny zrychlí, sad u včelína dá víc ovoce', () => {
+  const f = farm6();
+  rich(f, 5, 5000);
+  const id = applyAction(f, { type: 'place', kind: 'vcelin', x: 0, y: 0 }, T0).id;
+  const o = findObject(f, id);
+  assert.equal(applyAction(f, { type: 'collect', id }, T0).error, 'not_ready');
+  assert.equal(hiveStock(f, o, T0 + 20 * 60000).count, 1);
+  applyAction(f, { type: 'place', kind: 'kvetiny', x: 3, y: 0 }, T0);
+  assert.equal(hiveStock(f, o, T0 + 15 * 60000).count, 1, 's květinami po 15 min');
+  const r = applyAction(f, { type: 'collect', id }, T0 + 31 * 60000);
+  assert.ok(r.ok);
+  assert.equal(f.silo.plast, 2);
+  assert.equal(hiveStock(f, o, T0 + 31 * 60000).count, 0);
+  const sad = applyAction(f, { type: 'place', kind: 'sad', x: 2, y: 2 }, T0).id;
+  applyAction(f, { type: 'plantTree', id: sad, tree: 'jablon' }, T0);
+  const h = applyAction(f, { type: 'harvestTree', id: sad }, T0 + 1800 * 1000);
+  assert.ok(h.bees);
+  assert.equal(f.silo.jablko, 4, '3 + 1 od včel');
+});
+
+test('v11: průvodce – nová farma ho má, stará ne, jde spustit znovu', () => {
+  const f = newFarm(T0);
+  assert.equal(f.tut, 0);
+  assert.ok(applyAction(f, { type: 'tutorial', n: 3 }, T0).ok);
+  applyAction(f, { type: 'tutorial', n: 1 }, T0);
+  assert.equal(f.tut, 3, 'nejde zpátky');
+  assert.ok(applyAction(f, { type: 'tutorial', n: 0, reset: true }, T0).ok);
+  assert.equal(f.tut, 0);
+  const old = farm6(); old.level = 5; delete old.tut;
+  normalize(old);
+  assert.equal(old.tut, TUTORIAL_DONE);
 });

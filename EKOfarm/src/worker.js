@@ -1,5 +1,6 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
-import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS } from '../public/js/rules.js';
+import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents } from '../public/js/rules.js';
+import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
 
 const SESSION_DAYS = 60;
@@ -8,13 +9,17 @@ const HARVEST_GRACE_MS = 2000; // tolerance rozdílu hodin klient/server u skliz
 const PBKDF2_ITER = 100000;
 
 export default {
-  async fetch(req, env) {
+  // časovač (wrangler.toml [triggers] crons) – rozešle upozornění, co je na farmách hotové
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(pushRound(env));
+  },
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) {
       return env.ASSETS ? env.ASSETS.fetch(req) : new Response('Not found', { status: 404 });
     }
     try {
-      return await route(req, env, url.pathname, url);
+      return await route(req, env, url.pathname, url, ctx);
     } catch (e) {
       console.error(e);
       return json({ error: 'server', message: 'Chyba serveru, zkus to znovu.' }, 500);
@@ -22,11 +27,11 @@ export default {
   },
 };
 
-async function route(req, env, path, url) {
+async function route(req, env, path, url, ctx) {
   const m = req.method;
   if (m === 'POST' && path === '/api/register') return register(req, env);
   if (m === 'POST' && path === '/api/login') return login(req, env);
-  if (m === 'GET' && path === '/api/config') return json({ googleClientId: googleId(env) });
+  if (m === 'GET' && path === '/api/config') return json({ googleClientId: googleId(env), vapidPublic: pushReady(env) ? env.VAPID_PUBLIC : null });
   if (m === 'POST' && path === '/api/google') return google(req, env);
   const user = await auth(req, env);
   if (!user) return json({ error: 'auth', message: 'Přihlas se prosím znovu.' }, 401);
@@ -38,7 +43,9 @@ async function route(req, env, path, url) {
   if (m === 'GET' && path === '/api/market') return marketGet(env, user);
   if (m === 'POST' && path === '/api/market/list') return marketSell(req, env, user);
   if (m === 'POST' && path === '/api/market/cancel') return marketDeal(req, env, user, 'cancel');
-  if (m === 'POST' && path === '/api/market/buy') return marketDeal(req, env, user, 'buy');
+  if (m === 'POST' && path === '/api/market/buy') return marketDeal(req, env, user, 'buy', ctx);
+  if (m === 'POST' && path === '/api/push/subscribe') return pushSubscribe(req, env, user);
+  if (m === 'POST' && path === '/api/push/unsubscribe') return pushUnsubscribe(req, env, user);
   return json({ error: 'not_found' }, 404);
 }
 
@@ -264,7 +271,7 @@ async function marketSell(req, env, user) {
 }
 
 // koupit cizí nabídku nebo stáhnout svoji (zboží se vrátí)
-async function marketDeal(req, env, user, kind) {
+async function marketDeal(req, env, user, kind, ctx) {
   const body = await readJson(req);
   const id = Number(body.id);
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -280,9 +287,56 @@ async function marketDeal(req, env, user, kind) {
         .bind(l.seller, user.name, l.item, l.qty, l.machine, l.price, now, ...args)] : []),
       env.DB.prepare(`DELETE FROM market WHERE id = ? AND ${ifSaved}`).bind(id, ...args),
     ], { sql: 'EXISTS (SELECT 1 FROM market WHERE id = ?)', args: [id] });
-    if (ok) return json({ farm: row.farm, now, offer: offerOut(l, user.id) });
+    if (ok) {
+      if (kind === 'buy' && ctx && pushReady(env)) {
+        const what = l.machine ? MACHINES[l.machine].name : `${l.qty}× ${ITEMS[l.item] ? ITEMS[l.item].name : l.item}`;
+        ctx.waitUntil(pushToUser(env, l.seller, { title: 'Tržiště: prodáno!', body: `${user.name} koupil ${what} za ${l.price} mincí.`, tag: 'market' }).catch(() => {}));
+      }
+      return json({ farm: row.farm, now, offer: offerOut(l, user.id) });
+    }
   }
   return BUSY();
+}
+
+// ---------- upozornění do telefonu ----------
+async function pushSubscribe(req, env, user) {
+  if (!pushReady(env)) return json({ error: 'push', message: 'Upozornění zatím nejsou na serveru nastavená.' }, 400);
+  const s = (await readJson(req)).sub || {};
+  const endpoint = String(s.endpoint || ''), keys = s.keys || {};
+  if (!/^https:\/\//.test(endpoint) || endpoint.length > 1000 || !keys.p256dh || !keys.auth) return json({ error: 'push', message: 'Neplatný odběr upozornění.' }, 400);
+  const now = Date.now();
+  await env.DB.prepare('INSERT OR REPLACE INTO push_subs (endpoint, user_id, p256dh, auth, created, last) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(endpoint, user.id, String(keys.p256dh).slice(0, 200), String(keys.auth).slice(0, 100), now, now).run();
+  return json({ ok: true });
+}
+async function pushUnsubscribe(req, env, user) {
+  const b = await readJson(req);
+  await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ? AND user_id = ?').bind(String(b.endpoint || ''), user.id).run();
+  return json({ ok: true });
+}
+async function pushToUser(env, userId, data) {
+  const r = await env.DB.prepare('SELECT endpoint, p256dh, auth FROM push_subs WHERE user_id = ?').bind(userId).all();
+  for (const s of r.results || []) {
+    const st = await sendPush(env, s, data).catch(() => 0);
+    if (st === 404 || st === 410) await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ?').bind(s.endpoint).run();
+  }
+}
+// jedno kolo časovače: každému hráči s odběrem pošle, co se od minula dokončilo
+export async function pushRound(env, now = Date.now()) {
+  if (!pushReady(env)) return 0;
+  const r = await env.DB.prepare('SELECT user_id, MIN(last) AS last FROM push_subs GROUP BY user_id LIMIT 500').all();
+  let sent = 0;
+  for (const u of r.results || []) {
+    const row = await loadFarm(env, u.user_id);
+    if (!row) continue;
+    const ev = readyEvents(row.farm, u.last, now);
+    await env.DB.prepare('UPDATE push_subs SET last = ? WHERE user_id = ?').bind(now, u.user_id).run();
+    if (!ev.length) continue;
+    const body = ev.slice(0, 3).map(e => e.text).join(' · ') + (ev.length > 3 ? ` a další (${ev.length - 3})` : '');
+    await pushToUser(env, u.user_id, { title: 'EKOfarm: máš hotovo!', body, tag: 'farm' });
+    sent++;
+  }
+  return sent;
 }
 
 // ---------- pomocné ----------

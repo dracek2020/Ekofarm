@@ -167,3 +167,37 @@ body.visiting #bottom, body.visiting #newsBtn, body.visiting #townBtn, body.visi
 .stepper { display: inline-flex; align-items: center; gap: 4px; }
 .stepper b { min-width: 64px; text-align: center; }
 .stepper button { min-width: 34px; height: 32px; border-radius: 10px; border: 2px solid #d8c39a; background: #fff; font-weight: 800; color: var(--ink); }
+
+/* v11: průvodce, rybaření, nápověda */
+#tut { position: fixed; left: 50%; transform: translateX(-50%); top: calc(104px + var(--safe-t)); width: min(520px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 var(--wood-d); padding: 10px 12px; display: flex; gap: 10px; align-items: center; z-index: 5; font-size: 14px; }
+#tut .tut-ico .ic { width: 40px; height: 40px; }
+#tutText { flex: 1; }
+#tutText small { color: #8a6a3a; font-weight: 700; }
+.tut-btns { display: flex; flex-direction: column; gap: 4px; }
+.tut-btns .btn.sm { margin: 0; }
+body.visiting #tut { display: none !important; }
+#fishGame { position: fixed; inset: 0; background: rgba(20,40,70,.55); z-index: 30; display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+#fishGame[hidden] { display: none; }
+.fg-box { background: var(--paper); border: 3px solid var(--wood); border-radius: 18px; box-shadow: 0 5px 0 var(--wood-d); padding: 14px; width: min(360px, calc(100% - 24px)); text-align: center; }
+#fgTitle { display: block; font-size: 19px; margin-bottom: 8px; min-height: 26px; }
+.fg-water { position: relative; height: 300px; border-radius: 14px; background: linear-gradient(#6fb0e8, #2f6fb5); display: flex; justify-content: center; gap: 14px; padding: 10px; }
+.fg-bar { position: relative; width: 56px; height: 100%; background: rgba(10,30,60,.45); border-radius: 10px; border: 2px solid #cfe8f5; overflow: hidden; }
+.fg-zone { position: absolute; left: 0; right: 0; background: rgba(120,230,110,.55); border: 2px solid #b8f5a8; border-radius: 6px; }
+.fg-zone.on { background: rgba(120,230,110,.85); }
+.fg-fish { position: absolute; left: 50%; width: 30px; height: 28px; transform: translateX(-50%); }
+.fg-fish .ic { width: 30px; height: 28px; }
+.fg-prog { position: relative; width: 14px; height: 100%; background: rgba(10,30,60,.45); border-radius: 7px; overflow: hidden; }
+.fg-prog div { position: absolute; bottom: 0; left: 0; right: 0; background: #f5c542; }
+.fg-bob { position: absolute; left: 22%; top: 40%; width: 18px; height: 26px; border-radius: 50% 50% 40% 40%; background: linear-gradient(#e0402d 50%, #fff 50%); animation: bob 1.6s ease-in-out infinite; }
+.fg-bob.bite { animation: bite .18s linear infinite; }
+.fg-bob.hide { display: none; }
+@keyframes bob { 50% { transform: translateY(6px); } }
+@keyframes bite { 0% { transform: translate(-3px, 4px); } 50% { transform: translate(3px, 14px); } 100% { transform: translate(-3px, 4px); } }
+.fg-big .ic { width: 72px; height: 72px; }
+#fgResult .btn { margin-top: 8px; }
+.chip.dim { opacity: .5; }
+table.help { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+table.help th, table.help td { border-bottom: 1px solid #e4d6b8; padding: 5px 4px; text-align: left; vertical-align: top; }
+table.help tr.me td { background: #fff3b0; }
+table.help tr.dim td { opacity: .55; }
+table.help .ic { width: 1.1em; height: 1.1em; }

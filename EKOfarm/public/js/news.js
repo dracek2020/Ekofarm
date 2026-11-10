@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 11, title: 'Rybník, včely a upozornění', items: [
+    'Rybník (od Statku 2): kup udici v Prodejně strojů, vyrob návnadu v Krmivárně a rybař! Až ryba zabere, klepni a drž ji v zelené čárce.',
+    '8 druhů ryb od plotice po sumce. Rybárna z nich vaří jídla, Uzenářství udí pstruhy.',
+    'Včelín (od Statku 3): včely dělají plástve medu, květiny je zrychlí a sady kolem dají víc ovoce. Medárna dělá med a svíčky, Pekárna perník a medovník.',
+    'Upozornění do telefonu: Menu → Zapnout upozornění (na iPhonu nejdřív Přidat na plochu).',
+    'Průvodce pro nové hráče a v Menu „Jak hrát a pravidla“ – co odemyká Statek, co která úroveň, městečko, rybník a včely.',
+  ] },
   { v: 10, title: 'Městečko, tržiště a semena', items: [
     'Od spodního rohu farmy vede prašná cesta do městečka. Je tam Prodejna strojů, Stánek a nové Tržiště hráčů (tlačítko Městečko vpravo nahoře).',
     'Tržiště hráčů: prodávej kamarádům úrodu, výrobky i stroje za vlastní cenu (nejvýš trojnásobek běžné ceny). Peníze ti přijdou samy.',
