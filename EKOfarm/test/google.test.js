@@ -1,8 +1,7 @@
 // Přihlášení přes Google – podepsané testovací tokeny a podvržené klíče Google.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { DatabaseSync } from 'node:sqlite';
+import { fakeD1 } from '../tools/fake-d1.mjs';
 import worker from '../src/worker.js';
 import { _resetGoogleKeys } from '../src/google.js';
 
@@ -23,15 +22,6 @@ async function token(payload, key = kp.privateKey) {
 }
 const base = sub => ({ iss: 'https://accounts.google.com', aud: CLIENT, sub, exp: Math.floor(Date.now() / 1000) + 3600, given_name: 'Vojtěch' });
 
-function fakeD1() {
-  const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('../schema.sql', import.meta.url), 'utf8'));
-  return { prepare(sql) { let args = []; const st = {
-    bind(...a) { args = a; return st; },
-    async first() { return db.prepare(sql).get(...args) ?? null; },
-    async run() { const r = db.prepare(sql).run(...args); return { meta: { changes: Number(r.changes), last_row_id: Number(r.lastInsertRowid) } }; },
-  }; return st; } };
-}
 const env = { DB: fakeD1(), GOOGLE_CLIENT_ID: CLIENT };
 async function call(path, { method = 'GET', body, tok } = {}) {
   const headers = { 'content-type': 'application/json' };

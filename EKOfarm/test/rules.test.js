@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -49,7 +49,8 @@ test('úrovně', () => {
   assert.equal(levelForXp(0), 1);
   assert.equal(levelForXp(9), 1);
   assert.equal(levelForXp(10), 2);
-  assert.equal(levelForXp(100000), 20);
+  assert.equal(levelForXp(LEVEL_XP[50]), 50, 'úroveň roste i po 20');
+  assert.equal(levelForXp(1e12), 200);
 });
 
 test('level up při sklizni', () => {
@@ -83,13 +84,18 @@ test('nákup pole', () => {
   const f = farm6();
   assert.equal(applyAction(f, { type: 'buyPlot', x: 11, y: 8 }, T0).error, 'occupied');
   assert.equal(applyAction(f, { type: 'buyPlot', x: 99, y: 8 }, T0).error, 'out_of_farm');
-  assert.equal(applyAction(f, { type: 'buyPlot', x: 14, y: 8 }, T0).error, 'max_plots');
-  f.level = 2; f.coins = 100;
+  f.coins = 100;
   assert.ok(applyAction(f, { type: 'buyPlot', x: 14, y: 8 }, T0).ok);
   assert.equal(f.coins, 85);
   assert.ok(applyAction(f, { type: 'buyPlot', x: 14, y: 9 }, T0).ok);
   assert.equal(f.coins, 65);
-  assert.equal(maxPlots(2), 12);
+  assert.equal(maxPlots(f), 12, 'statek 1 = 12 polí');
+  f.coins = 1000;
+  for (let x = 0; x < 4; x++) assert.ok(applyAction(f, { type: 'buyPlot', x, y: 0 }, T0).ok);
+  assert.equal(applyAction(f, { type: 'buyPlot', x: 5, y: 0 }, T0).error, 'max_plots');
+  f.objects.find(o => o.kind === 'statek').lvl = 2;
+  assert.equal(maxPlots(f), 18);
+  assert.ok(applyAction(f, { type: 'buyPlot', x: 5, y: 0 }, T0).ok);
 });
 
 test('neplatné akce', () => {
@@ -102,8 +108,7 @@ test('neplatné akce', () => {
 test('stavění a přesun', () => {
   const f = farm6();
   f.coins = 1000;
-  assert.equal(applyAction(f, { type: 'place', kind: 'pekarna', x: 0, y: 0 }, T0).error, 'locked');
-  f.level = 2; f.xp = 10;
+  assert.equal(applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).error, 'statek_low', 'budovy odemyká statek, ne úroveň');
   assert.equal(applyAction(f, { type: 'place', kind: 'pekarna', x: 16, y: 0 }, T0).error, 'occupied', 'přesah mimo farmu');
   assert.equal(applyAction(f, { type: 'place', kind: 'pekarna', x: 10, y: 8 }, T0).error, 'occupied', 'kolize s polem');
   const r = applyAction(f, { type: 'place', kind: 'pekarna', x: 0, y: 0 }, T0);
@@ -236,8 +241,8 @@ test('6 polí zdarma kamkoliv, pak +6 za úroveň', () => {
   assert.equal(f.plots.length, 0);
   f.coins = 0;
   for (let i = 0; i < 6; i++) assert.ok(applyAction(f, { type: 'buyPlot', x: i, y: 0 }, T0).ok, 'zdarma');
-  assert.equal(applyAction(f, { type: 'buyPlot', x: 0, y: 1 }, T0).error, 'max_plots');
-  f.level = 2; f.coins = 15;
+  assert.equal(applyAction(f, { type: 'buyPlot', x: 0, y: 1 }, T0).error, 'no_coins');
+  f.coins = 15;
   assert.ok(applyAction(f, { type: 'buyPlot', x: 0, y: 1 }, T0).ok);
   assert.equal(f.coins, 0);
 });
@@ -245,7 +250,6 @@ test('6 polí zdarma kamkoliv, pak +6 za úroveň', () => {
 test('sad a stromy', () => {
   const f = farm6();
   f.coins = 1000;
-  assert.equal(applyAction(f, { type: 'place', kind: 'sad', x: 0, y: 0 }, T0).error, 'locked');
   f.level = 3; f.xp = 25;
   const id = applyAction(f, { type: 'place', kind: 'sad', x: 0, y: 0 }, T0).id;
   assert.equal(f.coins, 970);
@@ -330,8 +334,9 @@ test('prodejna strojů a převod starých strojů do garáže', () => {
 test('velké pole: stavba s vlastní velikostí a cenou za políčko', () => {
   const f = farm6();
   f.coins = 5000;
-  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).error, 'locked');
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).error, 'statek_low');
   rich(f, 5, 5000);
+  f.objects.find(o => o.kind === 'statek').lvl = 3;   // statek 3 = jedno velké pole
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 2, h: 4 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 7, h: 3 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 5, y: 5, w: 3, h: 3 }, T0).error, 'occupied', 'statek');
@@ -501,6 +506,11 @@ test('v9: ekonomika – každá plodina a ovoce má využití a vše má cenu', 
   assert.ok(Object.values(CROPS).filter(c => c.cat === 'zelenina').length >= 10);
   assert.ok(Object.keys(FRUITS).length >= 10);
   for (const r of Object.values(RECIPES)) {
+    if (r.id.startsWith('s_')) {   // semena: 3 balíčky ušetří víc, než by dal výkup 2 plodin
+      const cid = Object.keys(r.in)[0];
+      assert.ok(3 * ITEMS[r.id].price >= ITEMS[cid].price, r.id);
+      continue;
+    }
     const out = ITEMS[r.id].price;
     const inp = Object.entries(r.in).reduce((n, [id, q]) => n + ITEMS[id].price * q, 0);
     assert.ok(out > inp, 'výrobek se musí vyplatit: ' + r.id);
@@ -551,8 +561,7 @@ test('v9: stodola, prodej strojů a sleva prodejny', () => {
   assert.ok(applyAction(f, { type: 'sellMachine', id: m.id }, T0).ok);
   assert.equal(f.coins, c + 300);
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda120' }, T0).ok);
-  const pr = f.objects.find(o => o.kind === 'prodejna');
-  pr.lvl = 3;
+  f.town.prodejna = 3;
   assert.equal(machinePrice(f, 'klas8'), Math.round(1800 * 0.94));
 });
 
@@ -595,4 +604,128 @@ test('v9: pomocník sází a sklízí sám', () => {
   f.coins = 1000;
   applyAction(f, { type: 'buyMachine', model: 'kolecko' }, T0 + 7200000);
   assert.equal(helperCapacity(f), 4);
+});
+
+test('v10: semena ze sklizně – Semenárna 2 → 3, sázení bere semena dřív než mince', () => {
+  const f = farm6();
+  f.coins = 1000;
+  const id = applyAction(f, { type: 'place', kind: 'semenarna', x: 0, y: 0 }, T0).id;
+  assert.ok(id, 'semenárna od statku 1');
+  f.silo.wheat = 6;
+  for (let i = 0; i < 3; i++) assert.ok(applyAction(f, { type: 'produce', id, recipe: 's_wheat' }, T0).ok);
+  assert.equal(f.silo.wheat, undefined);
+  const r = applyAction(f, { type: 'collect', id }, T0 + 3600000);
+  assert.ok(r.ok);
+  assert.equal(f.silo.s_wheat, 9, '6 pšenice = 9 balíčků semen');
+  const c = f.coins;
+  const p = applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'wheat' }, T0);
+  assert.ok(p.ok && p.seed);
+  assert.equal(f.coins, c, 'zaplaceno semenem');
+  assert.equal(f.silo.s_wheat, 8);
+  assert.equal(f.stats.plant, 1);
+  // velké pole: část semeny, zbytek mincemi
+  rich(f, 10, 1000);
+  const big = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 11, w: 3, h: 3 }, T0).id;
+  const tr = applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).id;
+  const c2 = f.coins;
+  assert.ok(applyAction(f, { type: 'fieldSow', id: big, crop: 'wheat', machine: tr }, T0).ok);
+  assert.equal(f.silo.s_wheat, undefined, '8 semen spotřebováno');
+  assert.equal(f.coins, c2 - 1, 'deváté políčko za minci');
+  // semena jdou prodat
+  f.silo.s_corn = 4;
+  assert.ok(applyAction(f, { type: 'sell', item: 's_corn', qty: 4 }, T0).ok);
+});
+
+test('v10: sazenice ze školky', () => {
+  const f = farm6();
+  rich(f, 5, 1000);
+  const sk = applyAction(f, { type: 'place', kind: 'skolka', x: 0, y: 0 }, T0).id;
+  f.silo.jablko = 3;
+  assert.ok(applyAction(f, { type: 'produce', id: sk, recipe: 'z_jablon' }, T0).ok);
+  assert.ok(applyAction(f, { type: 'collect', id: sk }, T0 + 3600000).ok);
+  assert.equal(f.silo.z_jablon, 1);
+  const sad = applyAction(f, { type: 'place', kind: 'sad', x: 4, y: 0 }, T0).id;
+  const c = f.coins;
+  const r = applyAction(f, { type: 'plantTree', id: sad, tree: 'jablon' }, T0);
+  assert.ok(r.ok && r.sapling);
+  assert.equal(f.coins, c);
+  assert.equal(f.silo.z_jablon, undefined);
+});
+
+test('v10: statek odemyká stavbu, úroveň hráče roste pořád', () => {
+  const f = farm6();
+  f.level = 50; f.xp = LEVEL_XP[50]; f.coins = 1e6;
+  assert.equal(applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).error, 'statek_low', 'ani vysoká úroveň nepomůže');
+  assert.equal(maxOrchards(f), 2);
+  assert.equal(maxBigFields(f), 0);
+  f.objects.find(o => o.kind === 'statek').lvl = 3;
+  assert.ok(applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).ok);
+  assert.equal(maxBigFields(f), 1);
+  f.objects.find(o => o.kind === 'statek').lvl = 10;
+  assert.equal(maxPlots(f), 66);
+  assert.equal(maxBigFields(f), 4);
+  for (const b of Object.values(BUILDINGS)) assert.ok(b.st <= 7, b.id);
+  // statek se dá vylepšit bez ohledu na úroveň hráče
+  const g = farm6();
+  const st = g.objects.find(o => o.kind === 'statek');
+  for (const x of upgradeCost(st).items) g.silo[x.item] = x.qty;
+  g.coins = 1e4; g.siloCap = 999;
+  assert.ok(applyAction(g, { type: 'upgrade', id: st.id }, T0).ok, 'úroveň 1 stačí');
+  // XP po 20. úrovni
+  g.xp = LEVEL_XP[20];
+  applyAction(g, { type: 'claimDaily' }, T0);
+  assert.equal(levelForXp(LEVEL_XP[21]), 21);
+});
+
+test('v10: městečko – cesta, přesun prodejny a stánku, vylepšení', () => {
+  const f = farm6();
+  f.land.push('s', 'e', 'se');
+  assert.ok(isRoad(20, 20) && isRoad(20, 21) && !isRoad(20, 22));
+  assert.equal(fits(f, 20, 20, 1, 1), false, 'na cestě se nestaví');
+  assert.ok(fits(f, 20, 23, 1, 1));
+  assert.equal(applyAction(f, { type: 'buyPlot', x: 19, y: 20 }, T0).error, 'occupied');
+  assert.equal(applyAction(f, { type: 'place', kind: 'stanek', x: 0, y: 0 }, T0).error, 'town');
+  // stará farma s prodejnou a stánkem na farmě
+  const old = farm6();
+  old.objects.push({ id: 90, kind: 'prodejna', x: 3, y: 8, lvl: 4 }, { id: 91, kind: 'stanek', x: 12, y: 3, lvl: 2 });
+  delete old.town;
+  normalize(old);
+  assert.ok(!old.objects.some(o => o.kind === 'prodejna' || o.kind === 'stanek'));
+  assert.deepEqual(old.town, { stanek: 2, prodejna: 4, trziste: 1 });
+  assert.equal(dealerDiscount(old), 0.09);
+  // vylepšení prodejny v městečku
+  old.objects.find(o => o.kind === 'statek').lvl = 10;
+  const c = upgradeCost(townObject(old, 'prodejna'));
+  for (const x of c.items) old.silo[x.item] = x.qty;
+  old.coins = 1e6; old.siloCap = 1e4;
+  assert.ok(applyAction(old, { type: 'upgrade', town: 'prodejna' }, T0).ok);
+  assert.equal(old.town.prodejna, 5);
+  assert.equal(applyAction(old, { type: 'upgrade', town: 'trziste' }, T0).error, 'no_object');
+  assert.equal(applyAction(old, { type: 'upgrade', town: 'statek' }, T0).error, 'no_object');
+});
+
+test('v10: 8 denních úkolů – stejné na serveru i v prohlížeči, odměny a bonus', () => {
+  const f = farm6();
+  const qs = dailyQuests(f, T0);
+  assert.equal(qs.list.length, 8);
+  assert.deepEqual(dailyQuests(structuredClone(f), T0).list, qs.list, 'deterministické');
+  applyAction(f, { type: 'claimDaily' }, T0);
+  assert.equal(f.quests.day, qs.day);
+  const q = f.quests.list[0];
+  assert.equal(applyAction(f, { type: 'claimQuest', i: 0 }, T0).error, 'not_ready');
+  f.stats[q.t] += q.n;   // splněno
+  assert.equal(questProgress(f, f.quests, q), q.n);
+  const c = f.coins;
+  assert.ok(applyAction(f, { type: 'claimQuest', i: 0 }, T0).ok);
+  assert.equal(f.coins, c + q.coins);
+  assert.equal(applyAction(f, { type: 'claimQuest', i: 0 }, T0).error, 'quest_done');
+  assert.equal(applyAction(f, { type: 'claimQuest', i: 'bonus' }, T0).error, 'not_ready');
+  for (const x of f.quests.list) f.stats[x.t] += x.n * 3;
+  for (let i = 1; i < 8; i++) assert.ok(applyAction(f, { type: 'claimQuest', i }, T0).ok, 'úkol ' + i);
+  assert.ok(applyAction(f, { type: 'claimQuest', i: 'bonus' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'claimQuest', i: 'bonus' }, T0).error, 'quest_done');
+  // další den nové úkoly a progres od nuly
+  applyAction(f, { type: 'claimDaily' }, T0 + 86400000);
+  assert.notEqual(f.quests.day, qs.day);
+  assert.ok(f.quests.list.every(x => !x.done && questProgress(f, f.quests, x) === 0));
 });

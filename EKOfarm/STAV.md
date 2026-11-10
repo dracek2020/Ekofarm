@@ -19,6 +19,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v9 (10. 11. 2026) – velká aktualizace**: 20 plodin (13 zelenin + jahody, meloun; `look` = tvar kreslení), sad se 13 stromy a keři (`TREES.kind` tree/bush), 15 ovocí, zvířata prase a ovce, výrobny Konzervárna, Džusárna, Marmeládárna, Uzenářství, Textilka (celkem 43 receptů; **ceny výrobků se dopočítají z receptů**, test hlídá, že se každá plodina někde použije). **Úrovně budov 1–10** (`upgradeCost` = mince + 2–3 suroviny deterministicky, `upgradeEffect`), Statek odemyká budovy (`BUILDINGS.st`, `STATEK_LEVELS`), ostatní budovy max. úroveň Statku. **Stodola** (`garage`, místa 1+úroveň, prodej strojů za 50 %), **Prodejna strojů** a **Stánek** jsou budovy (automaticky umístěné, `placeNear`), tlačítko Stroje nahradily **Novinky** (`news.js`). **Stánek**: nabídka z `stallOffers` po 2 h. **Pomocník** (`hire`, `runHelper` – pravidelná kola každých 20 s / 10 s s motykou, 2 políčka + kolečko + traktor). **Farmář a pomocník** chodí po farmě (`drawPerson`, jen vizuálně). Bohatá úroda 8 %, výkup ve skladu 50 %. Úrovně hráče do 20. Přehled cen: `EKONOMIKA.md` (`node tools/economy.mjs`).
 
+- **v10 (10. 11. 2026) – městečko a obchod mezi hráči**: **prašná cesta** (`isRoad`: |x−y| ≤ 1 od rohu farmy 17,17 až na kraj mapy, na cestě se nestaví – `fits`) vede do **městečka** (`TOWN` 20..40, náměstí `PLAZA`, ozdobné domky `TOWN_HOUSES`). Budovy městečka mají pevné místo (`TOWN_BUILDINGS`, 3×3): **Stánek**, **Prodejna strojů**, nové **Tržiště hráčů** (typ `market`). Nejsou ve `farm.objects`; jejich úroveň je ve `farm.town` (staré prodejny/stánky z farmy se převedou v `normalize`), objekt pro kreslení/panel dává `townObject()`, vylepšení akcí `upgrade` s `town`. Tlačítko **Městečko** vpravo nahoře přesune kameru. **Tržiště hráčů**: zboží nebo stroj se vystaví za 1–3× běžné ceny (`marketTake`, max `MARKET_SLOTS` = 8), je v úschově v tabulce `market`; koupě `marketGive` + záznam v `market_sales`; prodávající dostane mince při dalším `GET /api/state` nebo `/api/actions` (`paySales`, `res.sales` → hláška). Vše v jedné D1 transakci (`saveFarm` + `env.DB.batch`, podmínka `farm.tx`). **Semena** `s_<plodina>` (Semenárna: 2 plodiny → 3 balíčky, `recipe.qty`) a **sazenice** `z_<strom>` (Školka: 3 plody → 1); sázení (`payCrop`) bere nejdřív semena, pak mince (i pomocník a velké pole). Nové výrobky chléb se semínky, pražená semínka, dýňový olej. **8 denních úkolů** (`dailyQuests`, `farm.quests` = den, výchozí statistiky, seznam; `claimQuest` i bonus), nové statistiky `plant` a `feed`. **Úroveň hráče** roste do 200 (`LEVEL_XP` generované) a budovy **odemyká jen Statek** (`BUILDINGS.st` 1–7, `STATEK_LEVELS` zrušeno); limity podle statku: pole 6 + 6×st, sady 2×st, velká pole od st 3. **Žebříček podle úrovně** s tlačítkem **Navštívit** (`GET /api/visit?name=`, režim `game.visit` jen na koukání).
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 
@@ -32,9 +34,9 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | Soubor | Co dělá |
 |---|---|
 | `public/js/rules.js` | Herní pravidla, sdílí je server i prohlížeč: `CROPS`, `PRODUCTS`, `FRUITS`, `TREES`, zakázky (`genOrder`, `orderableItems`, akce `deliver`/`discard`), sady (`plantTree`/`harvestTree`/`clearTree`), `ITEMS`, `RECIPES`, `BUILDINGS` (factory/pen/deco), `ANIMALS`, `LEVEL_XP`; `applyAction()` (plant, harvest, buyPlot, sell, place, move, produce, collect, feed, buyAnimal, upgradeSilo); `normalize()` doplní staré farmy |
-| `src/worker.js` | API: `/api/register`, `/api/login`, `/api/logout`, `GET /api/config`, `POST /api/google` (mode login/link), `GET /api/state`, `POST /api/actions` (dávka akcí, max 50). Čas a výsledek určuje server. |
+| `src/worker.js` | API: `/api/register`, `/api/login`, `/api/logout`, `GET /api/config`, `POST /api/google` (mode login/link), `GET /api/state`, `POST /api/actions` (dávka akcí, max 50), `GET /api/leaderboard`, `GET /api/visit`, `GET /api/market`, `POST /api/market/list|cancel|buy`. Čas a výsledek určuje server; `saveFarm` ukládá farmu a další příkazy v jedné transakci. |
 | `src/google.js` | Ověření Google ID tokenu (RS256, klíče Googlu, aud/iss/exp); `GOOGLE_CLIENT_ID` je ve `wrangler.toml` [vars] |
-| `schema.sql` | Tabulky D1: `users` (heslo nebo `google_sub`), `sessions`, `farms` (stav farmy jako JSON + `version` proti souběhu) |
+| `schema.sql` | Tabulky D1: `users` (heslo nebo `google_sub`), `sessions`, `farms` (stav farmy jako JSON + `version` proti souběhu), `market` (nabídky tržiště), `market_sales` (prodeje, `paid`) |
 | `public/js/api.js` | Spojení se serverem, plus lokální režim pro testovací verzi (`window.EKO_LOCAL`) |
 | `public/js/render.js` | Izometrické kreslení na canvas: tráva, plot, stromy, pole, rostliny, řazení podle hloubky, bublina s časem, plovoucí texty |
 | `public/js/objects.js` | Kreslení budov, ohrad se zvířaty, ozdob, sadů, velkého pole se stroji (`drawVehicle`, `drawBigField`) a „ducha“ při stavění |
@@ -45,7 +47,7 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |
 | `public/index.html`, `public/css/style.css` | Obrazovky a vzhled UI |
 | `tools/build-artifact.mjs` | Sestaví testovací verzi do jednoho souboru `build/ekofarm-artifact.html` |
-| `tools/dev-server.mjs` | Lokální server s SQLite v paměti (pro vývoj) |
+| `tools/dev-server.mjs` | Lokální server s SQLite v paměti (pro vývoj); náhrada D1 je v `tools/fake-d1.mjs` (i pro testy) |
 | `test/` | `npm test`: pravidla, API nad SQLite, Google přihlášení s testovacími klíči |
 
 ## Jak to funguje
@@ -60,6 +62,6 @@ https://ekofarm.xxarenaxx.workers.dev (Codespace repo `dracek2020/Ekofarm`, slo�
 https://claude.ai/artifact/YSqsiMDRFJ1iyfj4KzKrsh (aktualizuje se publikováním `build/ekofarm-artifact.html` na stejnou adresu)
 
 ## Další kroky (návrh)
-- Kamarádi – návštěvy farem a stánek pro obchod mezi hráči.
+- Kamarádi: seznam přátel, pomoc na cizí farmě při návštěvě, zprávy.
 - Push notifikace (potřebují server s časovačem a klíče VAPID), kamarádi a stánek, aplikace přes Capacitor.
 - Licence: vše vlastní, každý nový asset zapsat do `AUTORSKA_PRAVA.md`.

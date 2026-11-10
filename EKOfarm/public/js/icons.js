@@ -133,7 +133,19 @@ export const ICONS = {
   down: S('<path d="M16 26L6 14h6V6h8v8h6z" fill="#c8452d"/>'),
   sign: S('<rect x="14" y="14" width="4" height="16" fill="#7a4e2a"/><rect x="3" y="4" width="26" height="13" rx="2" fill="#f3e3c3" stroke="#8a5a35" stroke-width="2"/><path d="M8 10.5h16" stroke="#c8452d" stroke-width="2.4"/>'),
   user: S('<circle cx="16" cy="11" r="6" fill="#a0763f"/><path d="M4 29c0-7 5-11 12-11s12 4 12 11z" fill="#a0763f"/>'),
+  // ---- v10 ----
+  market: S('<path d="M2 12h28l-3-8H5z" fill="#f2c94c"/><path d="M6 12l2-8M11 12l1-8M16 12V4M21 12l-1-8M26 12l-2-8" stroke="#c8452d" stroke-width="2.2"/><path d="M4 12v16M28 12v16" stroke="#7a4e2a" stroke-width="2.4"/><rect x="3" y="20" width="26" height="5" fill="#a7703d"/><circle cx="10" cy="17" r="3" fill="#a0763f"/><circle cx="22" cy="17" r="3" fill="#4f8fd6"/><rect x="14" y="15" width="4" height="5" fill="#5fae3a"/>'),
+  seminkovy_chleb: S('<path d="M4 20c0-9 6-13 12-13s12 4 12 13v4a3 3 0 01-3 3H7a3 3 0 01-3-3z" fill="#c98f4b"/>' + [[9, 14], [13, 11], [18, 12], [22, 15], [11, 18], [16, 16], [21, 19], [8, 21], [25, 21]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.1" ry="1.8" fill="#3a3028" transform="rotate(25 ${x} ${y})"/>`).join('')),
+  prazena_seminka: S('<ellipse cx="16" cy="15" rx="13" ry="4" fill="#5a4a3a"/><path d="M3 15c0 8 6 13 13 13s13-5 13-13z" fill="#f3e3c3" stroke="#c9b993" stroke-width="1.2"/>' + [[8, 14], [12, 13], [16, 14], [20, 13], [24, 14], [14, 16], [19, 16]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="1.4" ry="2.2" fill="#2f2a26" stroke="#d9d2c0" stroke-width=".5" transform="rotate(60 ${x} ${y})"/>`).join('')),
+  dynovy_olej: bottle('#3f6b2a'),
 };
+
+// v10: semena (balíček s obrázkem plodiny) a sazenice (stromek v květináči s plodem)
+const inner = svg => svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+const packet = key => S(`<path d="M6 7h20l-1.5 22h-17z" fill="#f3e3c3" stroke="#a0763f" stroke-width="1.4"/><path d="M6 7l2-4h16l2 4z" fill="#d9c4a0" stroke="#a0763f" stroke-width="1.2"/><g transform="translate(8.5 8.5) scale(.47)">${inner(ICONS[key])}</g><path d="M9.5 26h13" stroke="#c8452d" stroke-width="2"/>`);
+for (const k of ['wheat', 'corn', 'soy', 'repka', 'sun', 'hrach', 'redkvicka', 'salat', 'carrot', 'rajce', 'potato', 'okurka', 'cibule', 'cesnek', 'paprika', 'beet', 'zeli', 'dyne', 'jahody', 'meloun']) ICONS['s_' + k] = packet(k);
+const sapling = fruit => S(`<path d="M9 21h14l-2 9H11z" fill="#c8662d"/><rect x="8" y="19" width="16" height="3" rx="1" fill="#a8542a"/><path d="M16 20V8" stroke="#7a4e2a" stroke-width="2"/><ellipse cx="11.5" cy="12" rx="4" ry="2.2" fill="#5fae3a" transform="rotate(-25 11.5 12)"/><ellipse cx="20.5" cy="10" rx="4" ry="2.2" fill="#4f9a3a" transform="rotate(25 20.5 10)"/><g transform="translate(17 0) scale(.42)">${inner(ICONS[fruit])}</g>`);
+for (const [t, f] of Object.entries({ maliny: 'maliny', rybiz: 'rybiz', angrest: 'angrest', boruvky: 'boruvky', reva: 'hrozny', jablon: 'jablko', hrusen: 'hruska', svestka: 'svestka', tresen: 'tresne', visen: 'visne', merunka: 'merunka', broskev: 'broskev', orech: 'orech' })) ICONS['z_' + t] = sapling(f);
 
 const urlCache = {};
 export function iconUrl(key) {

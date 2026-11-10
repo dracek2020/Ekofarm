@@ -19,13 +19,22 @@ test('všechny panely se vykreslí', () => {
     P.factoryHtml(f, o(ids[0]), T), P.penHtml(f, o(ids[1]), T), P.decoHtml(f, o(ids[2])),
     P.orchardHtml(f, o(ids[3]), T), P.bigfieldHtml(f, o(ids[4]), T), P.siloHtml(f), P.siloTitle(f),
     P.dealerHtml(f, T), P.shopHtml(f, 'zvirata'), P.shopHtml(f, 'farma'), P.buildHtml(f), P.statekHtml(f, 'X', T),
-    P.garageHtml(f, o(ids[5]), T), P.stallHtml(f, f.objects.find(x => x.kind === 'stanek'), T),
-    P.dealerHtml(f, T, f.objects.find(x => x.kind === 'prodejna')), P.newsHtml(), P.helperHtml(f, T),
+    P.garageHtml(f, o(ids[5]), T), P.stallHtml(f, R.townObject(f, 'stanek'), T),
+    P.dealerHtml(f, T, R.townObject(f, 'prodejna')), P.newsHtml(), P.helperHtml(f, T),
+    P.questsHtml(f, T), P.tasksHtml(f, T, 'denni'), P.tasksHtml(f, T, 'zebricek', { top: [{ name: 'A', level: 3, xp: 5 }], me: { rank: 2, level: 1 } }),
+    ...['koupit', 'prodat', 'moje'].map(tab => P.marketHtml(f, null, tab)),
     ...['zakazky', 'pomocnik', 'statek'].map(tab => P.statekHtml(f, 'X', T, tab, f.objects.find(x => x.kind === 'statek'))),
     P.siloHtml(f, T), P.upgradeBlock(f, o(ids[0])),
   ];
   assert.ok(P.statekHtml(f, 'X', T, 'statek', f.objects.find(x => x.kind === 'statek')).includes('Vylepšit') === false, 'statek 10 = max');
   for (const h of out) assert.ok(typeof h === 'string' && h.length > 5);
+  // tržiště: nabídky, prodej suroviny i stroje
+  const md = { offers: [{ id: 1, name: 'Eva', item: 'corn', qty: 5, price: 50 }, { id: 2, name: 'Eva', machine: 'pluh', qty: 1, price: 400 }], mine: [{ id: 3, item: 'wheat', qty: 2, price: 9 }], sold: [{ item: 'corn', qty: 1, coins: 9, buyer_name: 'Petr' }], slots: 8 };
+  f.silo.corn = 20;
+  assert.ok(P.marketHtml(f, md, 'koupit').includes('marketBuy'));
+  assert.ok(P.marketHtml(f, md, 'moje').includes('marketCancel'));
+  assert.ok(P.marketHtml(f, md, 'prodat', { item: 'corn', qty: 5, price: 999 }, T).includes('Vystavit za 120'), 'cena max 3×');
+  assert.ok(P.marketHtml(f, md, 'prodat', { machine: f.machines[0] ? f.machines[0].id : -1 }, T).length > 50);
   assert.ok(P.landHtml(f, 'n').includes('buyLand'));
   assert.ok(P.landHtml(f, 'nw').includes('nejdřív sousední'));
   // velké pole ve všech stavech

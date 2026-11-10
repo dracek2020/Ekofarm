@@ -14,9 +14,14 @@ for (const x of R.TREE_LIST) md += `| ${x.name} | ${x.level} | ${x.cost} | ${t(x
 md += '\n## Zvířata\n| Zvíře | Úroveň | Cena | Krmivo | Produkt | Čas | Cena produktu |\n|---|---|---|---|---|---|---|\n';
 for (const a of R.ANIMAL_LIST) md += `| ${a.name} | ${a.level} | ${a.cost} | ${n(a.feed)} | ${n(a.product)} | ${t(a.time)} | ${R.ITEMS[a.product].price} |\n`;
 md += '\n## Výroba\n| Výrobek | Budova | Úroveň | Suroviny | Čas | Cena |\n|---|---|---|---|---|---|\n';
-for (const r of Object.values(R.RECIPES)) md += `| ${n(r.id)} | ${R.BUILDINGS[r.building].name} | ${r.level} | ${Object.entries(r.in).map(([id, q]) => `${q}× ${n(id)}`).join(', ')} | ${t(r.time)} | ${R.ITEMS[r.id].price} |\n`;
-md += '\n## Budovy\n| Budova | Úroveň hráče | Statek | Cena |\n|---|---|---|---|\n';
-for (const b of R.BUILDING_LIST.filter(b => b.type !== 'deco')) md += `| ${b.name} | ${b.level} | ${b.st || '–'} | ${b.cost || 'zdarma'} |\n`;
-md += `\nStatek úroveň 2–10 potřebuje úroveň hráče: ${R.STATEK_LEVELS.slice(2).join(', ')}. Ostatní budovy nesmí mít vyšší úroveň než Statek.\n`;
+for (const r of Object.values(R.RECIPES).filter(r => R.PRODUCTS[r.id])) md += `| ${n(r.id)} | ${R.BUILDINGS[r.building].name} | ${r.level} | ${Object.entries(r.in).map(([id, q]) => `${q}× ${n(id)}`).join(', ')} | ${t(r.time)} | ${R.ITEMS[r.id].price} |\n`;
+md += '\n## Semena a sazenice\nSemenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.\nŠkolka: 3 plody → 1 sazenice (cena jako sazenice za mince).\n\n| Semena | Z čeho | Čas | Cena balíčku |\n|---|---|---|---|\n';
+for (const r of Object.values(R.RECIPES).filter(r => R.SEEDS[r.id] || R.SAPLINGS[r.id])) md += `| ${R.recipeQty(r)}× ${n(r.id)} | ${Object.entries(r.in).map(([id, q]) => `${q}× ${n(id)}`).join(', ')} | ${t(r.time)} | ${R.ITEMS[r.id].price} |\n`;
+md += '\n## Budovy (odemyká je jen úroveň Statku)\n| Budova | Statek | Cena |\n|---|---|---|\n';
+for (const b of R.BUILDING_LIST.filter(b => !b.town).sort((a, b) => a.st - b.st)) md += `| ${b.name} | ${b.st || '–'} | ${b.cost || 'zdarma'} |\n`;
+md += '\n| Statek | Polí | Sadů | Velkých polí |\n|---|---|---|---|\n';
+for (let L = 1; L <= 10; L++) { const f = { objects: [{ kind: 'statek', lvl: L }] }; md += `| ${L} | ${R.maxPlots(f)} | ${R.maxOrchards(f)} | ${R.maxBigFields(f)} |\n`; }
+md += `\nOstatní budovy nesmí mít vyšší úroveň než Statek. Úroveň hráče roste až do ${R.MAX_LEVEL} a odemyká plodiny, zvířata, stromy, stroje a recepty.\n`;
+md += `\n## Tržiště hráčů\nCena nabídky 1 až ${R.MARKET_MAX}× běžná cena, najednou nejvýš ${R.MARKET_SLOTS} nabídek na hráče.\n`;
 writeFileSync(new URL('../EKONOMIKA.md', import.meta.url), md);
 console.log('EKONOMIKA.md hotovo');

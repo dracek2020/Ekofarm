@@ -5,43 +5,43 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 ## Plodiny (malé pole, výnos 2 ks)
 | Plodina | Druh | Úroveň | Osivo | Růst | Cena/ks | Použití |
 |---|---|---|---|---|---|---|
-| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka |
-| Ředkvička | Zelenina | 1 | 2 | 2 min | 4 | Zeleninový salát |
-| Salát | Zelenina | 2 | 2 | 3 min | 5 | Krmivo pro prasata, Zeleninový salát |
-| Kukuřice | Obilí a olejniny | 2 | 3 | 5 min | 8 | Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata |
-| Rajče | Zelenina | 3 | 4 | 8 min | 9 | Zeleninový salát, Kečup, Lečo |
-| Mrkev | Zelenina | 3 | 5 | 10 min | 12 | Krmivo pro krávy, Mrkvová šťáva |
-| Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky |
-| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka |
-| Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem |
-| Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka |
-| Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce |
-| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása |
-| Řepka | Obilí a olejniny | 6 | 10 | 25 min | 22 | Řepkový olej |
-| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo |
-| Slunečnice | Obilí a olejniny | 7 | 12 | 30 min | 26 | Slunečnicový olej |
-| Zelí | Zelenina | 8 | 8 | 25 min | 20 | Krmivo pro ovce, Kysané zelí |
-| Cukrová řepa | Zelenina | 8 | 14 | 40 min | 30 | Cukr |
-| Hrách | Zelenina | 9 | 9 | 25 min | 21 | Hrachová polévka |
-| Meloun | Ovoce | 9 | 14 | 45 min | 34 | Melounový nápoj |
-| Dýně | Zelenina | 10 | 12 | 40 min | 30 | Dýňová polévka |
+| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Semena pšenice |
+| Ředkvička | Zelenina | 1 | 2 | 2 min | 4 | Zeleninový salát, Semena ředkvička |
+| Salát | Zelenina | 2 | 2 | 3 min | 5 | Krmivo pro prasata, Zeleninový salát, Semena salát |
+| Kukuřice | Obilí a olejniny | 2 | 3 | 5 min | 8 | Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata, Semena kukuřice |
+| Rajče | Zelenina | 3 | 4 | 8 min | 9 | Zeleninový salát, Kečup, Lečo, Semena rajče |
+| Mrkev | Zelenina | 3 | 5 | 10 min | 12 | Krmivo pro krávy, Mrkvová šťáva, Semena mrkev |
+| Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky, Semena okurka |
+| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Semena brambory |
+| Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem, Semena jahody |
+| Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Semena cibule |
+| Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce, Semena sója |
+| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Semena česnek |
+| Řepka | Obilí a olejniny | 6 | 10 | 25 min | 22 | Řepkový olej, Semena řepka |
+| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo, Semena paprika |
+| Slunečnice | Obilí a olejniny | 7 | 12 | 30 min | 26 | Slunečnicový olej, Semena slunečnice |
+| Zelí | Zelenina | 8 | 8 | 25 min | 20 | Krmivo pro ovce, Kysané zelí, Semena zelí |
+| Cukrová řepa | Zelenina | 8 | 14 | 40 min | 30 | Cukr, Semena cukrová řepa |
+| Hrách | Zelenina | 9 | 9 | 25 min | 21 | Hrachová polévka, Semena hrách |
+| Meloun | Ovoce | 9 | 14 | 45 min | 34 | Melounový nápoj, Semena meloun |
+| Dýně | Zelenina | 10 | 12 | 40 min | 30 | Dýňová polévka, Semena dýně |
 
 ## Sad (stromy a keře)
 | Strom/keř | Úroveň | Sazenice | První úroda | Další | Úrod × kusů | Ovoce cena | Použití |
 |---|---|---|---|---|---|---|---|
-| Jabloň | 3 | 40 | 30 min | 20 min | 4 × 3 | 10 | Jablečný džus |
-| Malinový keř | 4 | 30 | 20 min | 15 min | 5 × 3 | 8 | Malinový džem |
-| Hrušeň | 4 | 60 | 45 min | 30 min | 4 × 3 | 14 | Hruškový džus |
-| Rybíz | 5 | 35 | 25 min | 18 min | 5 × 3 | 9 | Rybízová marmeláda |
-| Švestka | 5 | 80 | 1 h | 40 min | 4 × 4 | 12 | Švestková povidla |
-| Angrešt | 6 | 40 | 30 min | 20 min | 5 × 3 | 10 | Angreštový kompot |
-| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč |
-| Borůvčí | 7 | 50 | 35 min | 25 min | 5 × 4 | 9 | Borůvkové muffiny |
-| Višeň | 7 | 100 | 1.3 h | 50 min | 4 × 4 | 16 | Višňový džus |
-| Meruňka | 8 | 160 | 2 h | 1.5 h | 5 × 4 | 20 | Meruňkový džem |
-| Vinná réva | 9 | 90 | 1 h | 45 min | 6 × 4 | 16 | Hroznový mošt |
-| Broskvoň | 10 | 200 | 2.5 h | 1.7 h | 5 × 4 | 24 | Broskvový kompot |
-| Ořešák | 11 | 240 | 3 h | 2 h | 5 × 5 | 22 | Ořechový koláč |
+| Jabloň | 3 | 40 | 30 min | 20 min | 4 × 3 | 10 | Jablečný džus, Sazenice: Jabloň |
+| Malinový keř | 4 | 30 | 20 min | 15 min | 5 × 3 | 8 | Malinový džem, Sazenice: Malinový keř |
+| Hrušeň | 4 | 60 | 45 min | 30 min | 4 × 3 | 14 | Hruškový džus, Sazenice: Hrušeň |
+| Rybíz | 5 | 35 | 25 min | 18 min | 5 × 3 | 9 | Rybízová marmeláda, Sazenice: Rybíz |
+| Švestka | 5 | 80 | 1 h | 40 min | 4 × 4 | 12 | Švestková povidla, Sazenice: Švestka |
+| Angrešt | 6 | 40 | 30 min | 20 min | 5 × 3 | 10 | Angreštový kompot, Sazenice: Angrešt |
+| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč, Sazenice: Třešeň |
+| Borůvčí | 7 | 50 | 35 min | 25 min | 5 × 4 | 9 | Borůvkové muffiny, Sazenice: Borůvčí |
+| Višeň | 7 | 100 | 1.3 h | 50 min | 4 × 4 | 16 | Višňový džus, Sazenice: Višeň |
+| Meruňka | 8 | 160 | 2 h | 1.5 h | 5 × 4 | 20 | Meruňkový džem, Sazenice: Meruňka |
+| Vinná réva | 9 | 90 | 1 h | 45 min | 6 × 4 | 16 | Hroznový mošt, Sazenice: Vinná réva |
+| Broskvoň | 10 | 200 | 2.5 h | 1.7 h | 5 × 4 | 24 | Broskvový kompot, Sazenice: Broskvoň |
+| Ořešák | 11 | 240 | 3 h | 2 h | 5 × 5 | 22 | Ořechový koláč, Sazenice: Ořešák |
 
 ## Zvířata
 | Zvíře | Úroveň | Cena | Krmivo | Produkt | Čas | Cena produktu |
@@ -96,31 +96,95 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 | Klubko vlny | Textilka | 10 | 2× Vlna | 15 min | 274 |
 | Svetr | Textilka | 11 | 2× Klubko vlny | 30 min | 690 |
 | Vlněná deka | Textilka | 12 | 3× Klubko vlny | 40 min | 1028 |
+| Chléb se semínky | Pekárna | 7 | 2× Mouka, 2× Semena slunečnice | 15 min | 87 |
+| Pražená semínka | Mlýn | 7 | 4× Semena slunečnice | 8 min | 68 |
+| Dýňový olej | Olejna | 10 | 4× Semena dýně | 15 min | 75 |
 
-## Budovy
-| Budova | Úroveň hráče | Statek | Cena |
+## Semena a sazenice
+Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.
+Školka: 3 plody → 1 sazenice (cena jako sazenice za mince).
+
+| Semena | Z čeho | Čas | Cena balíčku |
 |---|---|---|---|
-| Statek | 1 | – | zdarma |
-| Sklad | 1 | – | zdarma |
-| Prodejna strojů | 1 | – | zdarma |
-| Stánek | 1 | – | zdarma |
-| Stodola na stroje | 5 | 2 | 300 |
-| Sad | 3 | 1 | zdarma |
-| Velké pole | 5 | 2 | zdarma |
-| Krmivárna | 2 | 1 | 40 |
-| Pekárna | 2 | 1 | 60 |
-| Kurník | 3 | 1 | 50 |
-| Mlýn | 4 | 2 | 120 |
-| Kravín | 5 | 2 | 150 |
-| Konzervárna | 5 | 2 | 180 |
-| Džusárna | 5 | 2 | 200 |
-| Mlékárna | 6 | 3 | 200 |
-| Olejna | 6 | 3 | 250 |
-| Marmeládárna | 6 | 3 | 260 |
-| Prasečák | 7 | 3 | 260 |
-| Cukrovar | 8 | 4 | 400 |
-| Uzenářství | 8 | 4 | 420 |
-| Ovčín | 9 | 5 | 450 |
-| Textilka | 10 | 5 | 600 |
+| 3× Semena pšenice | 2× Pšenice | 1 min | 1 |
+| 3× Semena ředkvička | 2× Ředkvička | 1 min | 2 |
+| 3× Semena salát | 2× Salát | 1 min | 2 |
+| 3× Semena kukuřice | 2× Kukuřice | 1 min | 3 |
+| 3× Semena rajče | 2× Rajče | 2 min | 4 |
+| 3× Semena mrkev | 2× Mrkev | 2 min | 5 |
+| 3× Semena okurka | 2× Okurka | 2 min | 4 |
+| 3× Semena brambory | 2× Brambory | 2 min | 6 |
+| 3× Semena jahody | 2× Jahody | 2 min | 6 |
+| 3× Semena cibule | 2× Cibule | 2 min | 5 |
+| 3× Semena sója | 2× Sója | 3 min | 8 |
+| 3× Semena česnek | 2× Česnek | 2 min | 6 |
+| 3× Semena řepka | 2× Řepka | 3 min | 10 |
+| 3× Semena paprika | 2× Paprika | 3 min | 7 |
+| 3× Semena slunečnice | 2× Slunečnice | 4 min | 12 |
+| 3× Semena zelí | 2× Zelí | 3 min | 8 |
+| 3× Semena cukrová řepa | 2× Cukrová řepa | 4 min | 14 |
+| 3× Semena hrách | 2× Hrách | 3 min | 9 |
+| 3× Semena meloun | 2× Meloun | 5 min | 14 |
+| 3× Semena dýně | 2× Dýně | 4 min | 12 |
+| 1× Sazenice: Jabloň | 3× Jablko | 10 min | 40 |
+| 1× Sazenice: Malinový keř | 3× Maliny | 8 min | 30 |
+| 1× Sazenice: Hrušeň | 3× Hruška | 13 min | 60 |
+| 1× Sazenice: Rybíz | 3× Rybíz | 9 min | 35 |
+| 1× Sazenice: Švestka | 3× Švestka | 15 min | 80 |
+| 1× Sazenice: Angrešt | 3× Angrešt | 10 min | 40 |
+| 1× Sazenice: Třešeň | 3× Třešně | 20 min | 120 |
+| 1× Sazenice: Borůvčí | 3× Borůvky | 11 min | 50 |
+| 1× Sazenice: Višeň | 3× Višně | 18 min | 100 |
+| 1× Sazenice: Meruňka | 3× Meruňka | 25 min | 160 |
+| 1× Sazenice: Vinná réva | 3× Hrozny | 15 min | 90 |
+| 1× Sazenice: Broskvoň | 3× Broskev | 30 min | 200 |
+| 1× Sazenice: Ořešák | 3× Ořechy | 35 min | 240 |
 
-Statek úroveň 2–10 potřebuje úroveň hráče: 3, 5, 7, 9, 11, 13, 15, 17, 19. Ostatní budovy nesmí mít vyšší úroveň než Statek.
+## Budovy (odemyká je jen úroveň Statku)
+| Budova | Statek | Cena |
+|---|---|---|
+| Statek | – | zdarma |
+| Sklad | – | zdarma |
+| Semenárna | 1 | 30 |
+| Krmivárna | 1 | 40 |
+| Pekárna | 1 | 60 |
+| Kurník | 1 | 50 |
+| Sad | 1 | zdarma |
+| Keř | 1 | 10 |
+| Záhon květin | 1 | 15 |
+| Mlýn | 2 | 120 |
+| Kravín | 2 | 150 |
+| Konzervárna | 2 | 180 |
+| Školka stromků | 2 | 120 |
+| Lavička | 2 | 30 |
+| Stodola na stroje | 3 | 300 |
+| Velké pole | 3 | zdarma |
+| Džusárna | 3 | 200 |
+| Kvetoucí strom | 3 | 40 |
+| Mlékárna | 4 | 200 |
+| Olejna | 4 | 250 |
+| Marmeládárna | 4 | 260 |
+| Fontána | 4 | 150 |
+| Prasečák | 5 | 260 |
+| Cukrovar | 5 | 400 |
+| Uzenářství | 6 | 420 |
+| Ovčín | 7 | 450 |
+| Textilka | 7 | 600 |
+
+| Statek | Polí | Sadů | Velkých polí |
+|---|---|---|---|
+| 1 | 12 | 2 | 0 |
+| 2 | 18 | 4 | 0 |
+| 3 | 24 | 6 | 1 |
+| 4 | 30 | 8 | 1 |
+| 5 | 36 | 10 | 2 |
+| 6 | 42 | 12 | 2 |
+| 7 | 48 | 14 | 3 |
+| 8 | 54 | 16 | 3 |
+| 9 | 60 | 18 | 4 |
+| 10 | 66 | 20 | 4 |
+
+Ostatní budovy nesmí mít vyšší úroveň než Statek. Úroveň hráče roste až do 200 a odemyká plodiny, zvířata, stromy, stroje a recepty.
+
+## Tržiště hráčů
+Cena nabídky 1 až 3× běžná cena, najednou nejvýš 8 nabídek na hráče.

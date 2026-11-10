@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=9">
+<link rel="stylesheet" href="/css/style.css?v=10">
 </head>
 <body>
 <!--APP-->
@@ -29,6 +29,8 @@
     <button class="big" id="menuBtn"><span data-ic="gear"></span>Menu</button>
   </div>
   <button class="pill" id="newsBtn"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
+  <button class="pill" id="townBtn"><span data-ic="shop"></span><b>Městečko</b></button>
+  <div id="visitBar" hidden><span id="visitText"></span><button class="btn sm" id="visitBack">Zpět domů</button></div>
   <div id="banner" hidden><span id="bannerText"></span>
     <span id="bannerSize" hidden>
       <span class="sz">↔ <button data-size="w:-1">−</button><button data-size="w:1">+</button></span>
@@ -84,6 +86,6 @@ window.addEventListener('error', function (e) { showFatal(e.message || 'Chyba p�
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 setTimeout(function () { showFatal('Načítání trvá moc dlouho. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=9"></script>
+<script type="module" src="/js/main.js?v=10"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize } from './rules.js?v=9';
+import { newFarm, applyAction, normalize } from './rules.js?v=10';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -63,6 +63,10 @@ function onlineBackend() {
       try { return await req('GET', '/api/config'); } catch { return {}; }
     },
     leaderboard() { return req('GET', '/api/leaderboard'); },
+    visit(name) { return req('GET', '/api/visit?name=' + encodeURIComponent(name)); },
+    market() { return req('GET', '/api/market'); },
+    // kind: 'list' (vystavit), 'cancel' (stáhnout), 'buy' (koupit)
+    marketPost(kind, body) { return req('POST', '/api/market/' + kind, body); },
     // mode 'login' = přihlásit / založit farmu, 'link' = propojit s přihlášenou farmou
     async google(credential, mode) {
       const d = await req('POST', '/api/google', { credential, mode });
@@ -89,6 +93,9 @@ function localBackend() {
     async config() { return {}; },
     async leaderboard() { const f = load(); return { top: [{ name: 'Testovací farma', level: f.level, xp: f.xp, me: true }], me: { rank: 1, xp: f.xp } }; },
     async google() { throw new ApiError(400, { message: 'V testovací verzi není přihlášení přes Google.' }); },
+    async visit() { throw new ApiError(400, { message: 'Návštěvy fungují jen v online hře.' }); },
+    async market() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře (s kamarády).' }); },
+    async marketPost() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře.' }); },
     async send(actions) {
       const farm = load();
       const now = Date.now();

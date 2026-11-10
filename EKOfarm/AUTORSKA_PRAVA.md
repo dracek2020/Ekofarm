@@ -22,5 +22,6 @@ Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autor
 - Žádné obrázky, zvuky, písma ani modely bez licence, která dovoluje komerční použití. Každý nový asset zapsat sem (zdroj + licence).
 - Názvy, loga ani vzhled jiných her nepoužívat. Hra je inspirovaná žánrem, ne konkrétní hrou.
 - Před vydáním ověřit, že název **EKOfarm** není registrovaná ochranná známka pro hry/aplikace (rejstříky ÚPV, EUIPO a obchody s aplikacemi).
+- **v10**: ikony semen (balíček s plodinou), sazenic, tržiště, nových výrobků; kreslení městečka, cesty, domků a tržiště – vše vlastní kód, bez cizích obrázků.
 
 Tohle je technický přehled, ne právní rada.

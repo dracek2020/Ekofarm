@@ -3,24 +3,11 @@
 import http from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { fakeD1 } from './fake-d1.mjs';
 import worker from '../src/worker.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const db = new DatabaseSync(':memory:');
-db.exec(readFileSync(join(ROOT, 'schema.sql'), 'utf8'));
-const DB = {
-  prepare(sql) {
-    let args = [];
-    const st = {
-      bind(...a) { args = a; return st; },
-      async first() { return db.prepare(sql).get(...args) ?? null; },
-      async all() { return { results: db.prepare(sql).all(...args) }; },
-      async run() { const r = db.prepare(sql).run(...args); return { meta: { changes: Number(r.changes), last_row_id: Number(r.lastInsertRowid) } }; },
-    };
-    return st;
-  },
-};
+const DB = fakeD1();
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const ASSETS = {
   async fetch(req) {

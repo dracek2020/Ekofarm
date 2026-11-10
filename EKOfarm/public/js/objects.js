@@ -1,7 +1,7 @@
 // EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=9';
-import { TW, TH, drawPlant } from './render.js?v=9';
-import { drawIcon } from './icons.js?v=9';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=10';
+import { TW, TH, drawPlant } from './render.js?v=10';
+import { drawIcon } from './icons.js?v=10';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -581,6 +581,50 @@ function drawStall(ctx, o, d, now, t) {
   ctx.fillStyle = '#3f6fb5'; ctx.fillRect(cx - 38, cy - 50, 78, 6);
 }
 
+// tržiště hráčů: několik stánků s různými stříškami a zbožím
+function miniStall(ctx, cx, cy, awn, goods, t, k) {
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 30, 12, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7a4e2a';
+  for (const dx of [-22, 22]) ctx.fillRect(cx + dx - 2, cy - 36, 4, 38);
+  ctx.fillStyle = '#a7703d'; ctx.fillRect(cx - 26, cy - 12, 52, 12);
+  ctx.fillStyle = '#8a5a35'; ctx.fillRect(cx - 26, cy - 12, 52, 3);
+  goods.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx - 18 + i * 9, cy - 15, 3.6, 0, Math.PI * 2); ctx.fill(); });
+  const flap = Math.sin(t / 700 + k) * 1.2;
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = i % 2 ? '#fff' : awn;
+    ctx.beginPath(); ctx.moveTo(cx - 29 + i * 11.6, cy - 36); ctx.lineTo(cx - 17.4 + i * 11.6, cy - 36); ctx.lineTo(cx - 15.4 + i * 11.6, cy - 27 + flap); ctx.lineTo(cx - 27 + i * 11.6, cy - 27 + flap); ctx.fill();
+  }
+  ctx.fillStyle = awn; ctx.fillRect(cx - 30, cy - 41, 61, 5);
+}
+function drawMarket(ctx, o, d, now, t) {
+  const spots = [[0.75, 0.75, '#c8452d', ['#f2c22e', '#e0402d', '#5fae3a', '#f08a24', '#d9a05b']], [2.3, 0.85, '#5fae3a', ['#d9342b', '#c9c23a', '#5b3f8f', '#f2a03d', '#e0283c']],
+    [0.85, 2.3, '#4f8fd6', ['#e9f2f5', '#f5c542', '#b5122b', '#8fd45a', '#d9a05b']], [2.3, 2.3, '#d9b43b', ['#8a8f96', '#c8452d', '#4f8fd6', '#a7703d', '#f3e3c3']]];
+  spots.forEach(([gx, gy, awn, goods], k) => {
+    const [x, y] = iso(o.x + gx, o.y + gy);
+    ctx.save(); ctx.translate(x, y); ctx.scale(1.35, 1.35);
+    miniStall(ctx, 0, 0, awn, goods, t, k);
+    ctx.restore();
+  });
+  // cedule s ikonou
+  const [sx, sy] = iso(o.x + 1.5, o.y + 1.5);
+  ctx.fillStyle = '#7a4e2a'; ctx.fillRect(sx - 2, sy - 54, 4, 54);
+  ctx.fillStyle = '#f3e3c3'; ctx.strokeStyle = '#8a5a35'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.rect(sx - 18, sy - 76, 36, 26); ctx.fill(); ctx.stroke();
+  drawIcon(ctx, 'market', sx, sy - 63, 20);
+}
+
+// ozdobný domek v městečku
+export function drawTownHouse(ctx, gx, gy, wall, roof) {
+  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const h = house(ctx, gx + 0.2, gy + 0.2, gx + 1.8, gy + 1.8, 40, 30, wall, roof);
+  const d0 = lerp(h.W, h.S, 0.55), d1 = lerp(h.W, h.S, 0.75);
+  poly(ctx, [d0, d1, [d1[0], d1[1] - 24], [d0[0], d0[1] - 24]], '#6b3f1f');
+  for (const [a, b, k] of [[h.W, h.S, 0.25], [h.S, h.E, 0.5]]) {
+    const w0 = lerp(a, b, k - 0.1), w1 = lerp(a, b, k + 0.1);
+    poly(ctx, [[w0[0], w0[1] - 18], [w1[0], w1[1] - 18], [w1[0], w1[1] - 32], [w0[0], w0[1] - 32]], '#fdf3c4');
+  }
+}
+
 // cedulka s úrovní budovy
 function levelPlate(ctx, o, d) {
   const L = objLevel(o);
@@ -614,7 +658,13 @@ export function drawObject(ctx, o, now, t, farm) {
   const d = BUILDINGS[o.kind];
   if (d.type === 'garage') { drawGarage(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
   if (d.type === 'dealer') { drawDealer(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
-  if (d.type === 'stall') { drawStall(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
+  if (d.type === 'stall') {
+    const [cx, cy] = iso(o.x + d.w / 2, o.y + d.h / 2);
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(1.5, 1.5); ctx.translate(-cx, -cy);
+    drawStall(ctx, o, d, now, t);
+    ctx.restore(); levelPlate(ctx, o, d); return;
+  }
+  if (d.type === 'market') { drawMarket(ctx, o, d, now, t); return; }
   if (d.type === 'factory') drawFactory(ctx, o, d, now, t);
   else if (d.type === 'pen') drawPen(ctx, o, d, now, t);
   else if (d.type === 'main') drawMain(ctx, o, d, now, t, farm);

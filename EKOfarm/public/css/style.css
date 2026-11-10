@@ -155,3 +155,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .news { background: #fff; border: 2px solid #d8c39a; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
 .news ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
 .news li { margin: 3px 0; }
+
+/* v10: městečko, návštěvy, tržiště */
+#townBtn { position: fixed; right: 8px; top: calc(56px + var(--safe-t)); }
+#visitBar { font-size: 14px; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + var(--safe-b)); background: rgba(74,50,24,.92); color: #fff; padding: 8px 8px 8px 16px; border-radius: 999px; display: flex; gap: 10px; align-items: center; font-weight: 600; max-width: calc(100% - 20px); }
+#visitBar .btn { width: auto; margin: 0; }
+body.visiting #bottom, body.visiting #newsBtn, body.visiting #townBtn, body.visiting #banner { display: none !important; }
+.row.dim { opacity: .55; }
+.mform { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.mform label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; }
+.stepper { display: inline-flex; align-items: center; gap: 4px; }
+.stepper b { min-width: 64px; text-align: center; }
+.stepper button { min-width: 34px; height: 32px; border-radius: 10px; border: 2px solid #d8c39a; background: #fff; font-weight: 800; color: var(--ink); }

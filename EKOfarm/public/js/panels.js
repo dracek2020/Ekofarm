@@ -1,7 +1,8 @@
 // EKOfarm – obsah panelů (obchod, budova, ohrada, sklad). Vrací HTML; kliknutí obsluhuje main.js přes data-act.
 import {
   ITEMS, ITEM_LIST, RECIPES, BUILDINGS, BUILDING_LIST, ANIMALS, ANIMAL_LIST,
-  queueSize, penMax, upgradeCost, upgradeEffect, objLevel, statekLevel, STATEK_LEVELS, MAX_BLD_LEVEL, garageSlots, vehicleCount,
+  queueSize, penMax, upgradeCost, upgradeEffect, objLevel, statekLevel, MAX_BLD_LEVEL, garageSlots, vehicleCount,
+  SEEDS, SAPLINGS, recipeQty, dailyQuests, questProgress, QUEST_TYPES, questBonus, MARKET_SLOTS, marketMaxPrice, marketBase, getItem,
   machinePrice, isVehicle, stallOffers, stallLeft, HELPER_PLANS, HELPER_LEVEL, helperActive, helperCapacity, helperInterval, CROP_CATS, getCrop,
   have, hasInputs, countKind, maxPlots, plotPrice, siloUsed, siloUpgradePrice, queueState, animalState,
   CROP_LIST, LEVEL_XP, MAX_LEVEL, plotState,
@@ -10,10 +11,11 @@ import {
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=9';
-import { fmtTime } from './render.js?v=9';
-import { NEWS } from './news.js?v=9';
+} from './rules.js?v=10';
+import { fmtTime } from './render.js?v=10';
+import { NEWS } from './news.js?v=10';
 
+const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function card({ icon, name, lines, locked, act, v, disabled }) {
@@ -27,25 +29,26 @@ function card({ icon, name, lines, locked, act, v, disabled }) {
 export const SHOP_TABS = [['zvirata', 'Zvířata'], ['farma', 'Farma']];
 
 const TYPE_ORDER = { storage: 0, garage: 1, factory: 2, pen: 3, deco: 4 };
+const nextSt = farm => `víc se statkem ${statekLevel(farm) + 1}`;
 
 function fieldCards(farm) {
-  const max = maxPlots(farm.level);
+  const max = maxPlots(farm);
   const free = farm.plots.length < FREE_PLOTS;
   const plot = card({ icon: 'plot', name: 'Pole', act: 'buyPlot', v: 'plot', disabled: farm.plots.length >= max || farm.coins < plotPrice(farm),
-    lines: farm.plots.length >= max ? [`${farm.plots.length}/${max}`, `+6 na úrovni ${farm.level + 1}`]
+    lines: farm.plots.length >= max ? [`${farm.plots.length}/${max}`, nextSt(farm)]
       : [free ? `:gift: zdarma (${FREE_PLOTS - farm.plots.length}×)` : `${plotPrice(farm)} :coin:`, `${farm.plots.length}/${max} polí`] });
-  const sadMax = maxOrchards(farm.level);
+  const sadMax = maxOrchards(farm);
   const sadCount = countKind(farm, 'sad');
-  const sad = card({ icon: 'tree', name: 'Sad', act: 'buy', v: 'sad', locked: farm.level < 3,
-    disabled: farm.level >= 3 && (sadCount >= sadMax || farm.coins < orchardPrice(farm)),
-    lines: farm.level < 3 ? [':lock: úroveň 3', 'políčko pro strom']
-      : sadCount >= sadMax ? [`${sadCount}/${sadMax}`, `+2 na úrovni ${farm.level + 1}`]
+  const sad = card({ icon: 'tree', name: 'Sad', act: 'buy', v: 'sad',
+    disabled: sadCount >= sadMax || farm.coins < orchardPrice(farm),
+    lines: sadCount >= sadMax ? [`${sadCount}/${sadMax}`, nextSt(farm)]
       : [`${orchardPrice(farm)} :coin:`, `${sadCount}/${sadMax} sadů`] });
-  const bfMax = maxBigFields(farm.level), bfCount = countKind(farm, 'velkepole');
-  const big = card({ icon: 'field', name: 'Velké pole', act: 'buy', v: 'velkepole', locked: farm.level < 5,
-    disabled: farm.level >= 5 && bfCount >= bfMax,
-    lines: farm.level < 5 ? [':lock: úroveň 5', 'pro stroje']
-      : bfCount >= bfMax ? [`${bfCount}/${bfMax}`, 'další na vyšší úrovni']
+  const bfMax = maxBigFields(farm), bfCount = countKind(farm, 'velkepole');
+  const bfLock = BUILDINGS.velkepole.st > statekLevel(farm);
+  const big = card({ icon: 'field', name: 'Velké pole', act: 'buy', v: 'velkepole', locked: bfLock,
+    disabled: !bfLock && bfCount >= bfMax,
+    lines: bfLock ? [`:lock: statek úr. ${BUILDINGS.velkepole.st}`, 'pro stroje']
+      : bfCount >= bfMax ? [`${bfCount}/${bfMax}`, nextSt(farm)]
       : [`${FIELD_CELL_PRICE} :coin: za políčko`, `${FIELD_MIN}×${FIELD_MIN} až ${FIELD_MAX}×${FIELD_MAX}`] });
   const left = LAND_PARCELS.filter(p => !farm.land.includes(p.id)).length;
   const land = card({ icon: 'sign', name: 'Pozemky', act: 'openLand', v: '', disabled: !left,
@@ -53,24 +56,22 @@ function fieldCards(farm) {
   return [plot, sad, big, land];
 }
 
-// Stavět: všechny budovy, odemčené i zamčené (podle úrovně)
+// Stavět: všechny budovy, odemčené i zamčené (odemyká je jen úroveň Statku)
 export function buildHtml(farm) {
   const fields = fieldCards(farm);
   const list = BUILDING_LIST.filter(b => b.type in TYPE_ORDER)
-    .sort((a, b) => a.level - b.level || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.cost - b.cost);
+    .sort((a, b) => a.st - b.st || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.cost - b.cost);
   const cards = list.map(b => {
     const free = farm.pending.includes(b.id);
-    const stLow = !free && b.st > statekLevel(farm);
-    const locked = !free && (farm.level < b.level || stLow);
+    const locked = !free && b.st > statekLevel(farm);
     const done = !free && b.max && countKind(farm, b.id) >= b.max;
     const lines = free ? [':gift: zdarma', `${b.w}×${b.h}`]
-      : farm.level < b.level ? [`:lock: úroveň ${b.level}`, `${b.cost} :coin:`]
-      : stLow ? [`:lock: statek úr. ${b.st}`, `${b.cost} :coin:`]
+      : locked ? [`:lock: statek úr. ${b.st}`, `${b.cost} :coin:`]
       : done ? ['✓ postaveno', '&nbsp;']
       : [`${b.cost} :coin:`, `${b.w}×${b.h}`];
     return card({ icon: b.icon, name: b.name, locked, act: 'buy', v: b.id, disabled: done || (!free && farm.coins < b.cost), lines });
   });
-  return `<p class="muted">Úroveň ${farm.level}, statek úroveň ${statekLevel(farm)}. Zamčené budovy odemkneš vyšší úrovní nebo vylepšením Statku.</p><div class="crops">${fields.join('')}${cards.join('')}</div>`;
+  return `<p class="muted">Statek úrovně <b>${statekLevel(farm)}</b>. Každé vylepšení Statku odemkne nové budovy a víc polí a sadů. Stroje a stánek najdeš dole v <b>městečku</b>.</p><div class="crops">${fields.join('')}${cards.join('')}</div>`;
 }
 
 export function shopHtml(farm, tab) {
@@ -88,10 +89,10 @@ export function shopHtml(farm, tab) {
       return card({ icon: a.icon, name: a.name, locked, act: 'buyAnimal', v: a.id, disabled: !homes.length || count >= cap || farm.coins < a.cost, lines });
     });
   } else {
-    const max = maxPlots(farm.level);
+    const max = maxPlots(farm);
     cards = [
       card({ icon: 'plot', name: 'Pole', act: 'buyPlot', v: 'plot', disabled: farm.plots.length >= max,
-        lines: farm.plots.length >= max ? [`${farm.plots.length}/${max} · víc na další úrovni`] : [`${plotPrice(farm)} :coin:`, `${farm.plots.length}/${max} polí`] }),
+        lines: farm.plots.length >= max ? [`${farm.plots.length}/${max} · ${nextSt(farm)}`] : [`${plotPrice(farm)} :coin:`, `${farm.plots.length}/${max} polí`] }),
       false && card({ icon: 'barn', name: 'Větší sklad', act: 'upgradeSilo', v: '', disabled: farm.coins < siloUpgradePrice(farm),
         lines: [`${siloUpgradePrice(farm)} :coin:`, `${farm.siloCap} → ${farm.siloCap + 25} míst`] }),
     ];
@@ -120,13 +121,12 @@ export function upgradeBlock(farm, o) {
   if (!c) return `<div class="upg"><b>:star: Úroveň ${L}/${MAX_BLD_LEVEL}</b> – nejvyšší úroveň.</div>`;
   const items = c.items.map(x => `<span class="${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}">:${ITEMS[x.item].icon}:${have(farm, x.item)}/${x.qty}</span>`).join(' ');
   const coinOk = farm.coins >= c.coins;
-  const lock = c.player && farm.level < c.player ? `:lock: potřebuješ úroveň ${c.player}`
-    : !c.player && c.level > statekLevel(farm) ? ':lock: nejdřív vylepši Statek' : '';
+  const lock = BUILDINGS[o.kind].type !== 'main' && c.level > statekLevel(farm) ? ':lock: nejdřív vylepši Statek' : '';
   const ok = !lock && coinOk && c.items.every(x => have(farm, x.item) >= x.qty);
   return `<div class="upg"><b>:star: Úroveň ${L}/${MAX_BLD_LEVEL}</b> → ${c.level}: ${upgradeEffect(o)}
     <div class="need">${items} <span class="${coinOk ? 'okq' : 'miss'}">:coin:${c.coins}</span></div>
     ${lock ? `<small>${lock}</small>` : ''}
-    <button class="btn sm${ok ? '' : ' off'}" data-act="upgrade" data-v="${o.id}">Vylepšit</button></div>`;
+    <button class="btn sm${ok ? '' : ' off'}" data-act="upgrade" data-v="${o.id}"${o.town ? ' data-town="1"' : ''}>Vylepšit</button></div>`;
 }
 
 export const STATEK_TABS = [['zakazky', 'Zakázky'], ['pomocnik', 'Pomocník'], ['statek', 'Statek']];
@@ -138,7 +138,9 @@ export function statekHtml(farm, name, now, tab = 'zakazky', o) {
     const next = farm.level < MAX_LEVEL ? LEVEL_XP[farm.level + 1] - farm.xp : 0;
     const L = statekLevel(farm);
     const unlocks = BUILDING_LIST.filter(b => b.st === L + 1).map(b => `:${b.icon}: ${b.name}`).join(', ');
-    return tabs + `<p class="muted">Farma ${esc(name)} · úroveň ${farm.level} · ${farm.xp} XP${next ? ` (do další ${next})` : ''}</p>
+    const have1 = BUILDING_LIST.filter(b => b.st && b.st <= L).map(b => `:${b.icon}:`).join('');
+    return tabs + `<p class="muted">Farma ${esc(name)} · hráč úrovně <b>${farm.level}</b> · ${farm.xp} XP${next ? ` (do další ${next})` : ''}. Úroveň hráče roste pořád; co můžeš <b>stavět</b>, určuje Statek.</p>
+      <p class="muted">Statek ${L}: až ${maxPlots(farm)} polí, ${maxOrchards(farm)} sadů, ${maxBigFields(farm)}× velké pole. Odemčeno: ${have1}</p>
       ${unlocks ? `<p class="muted">Statek úrovně ${L + 1} odemkne: <b>${unlocks}</b></p>` : ''}
       ${upgradeBlock(farm, o)}`;
   }
@@ -161,7 +163,7 @@ export function helperHtml(farm, now) {
     ? `<button class="chip${h && h.tractor ? ' on' : ''}" data-act="helperTractor" data-v="${h && h.tractor ? 0 : 1}">:tractor: Jezdí traktorem (+3 políčka)</button>` : '';
   const status = active
     ? `<div class="row"><span class="ico">:helper:</span><div class="info"><b>Pomocník pracuje</b><small>ještě ${fmtTime(Math.ceil((h.until - now) / 1000))} · hotovo ${h.n || 0} prací</small></div></div>`
-    : `<p class="muted">:helper: Pomocník sám sklízí zralá malá pole a zasívá prázdná vybranou plodinou (osivo platíš ty). Úroda jde do skladu.</p>`;
+    : `<p class="muted">:helper: Pomocník sám sklízí zralá malá pole a zasívá prázdná vybranou plodinou (bere semena ze skladu, jinak platíš mincemi). Úroda jde do skladu.</p>`;
   return `${status}<p class="muted"><b>Co má sít:</b></p><div class="chips">${cropOpts}</div>${tractor ? `<div class="chips">${tractor}</div>` : ''}
     <p class="muted">${tools}</p><div class="hire">${plans}</div>`;
 }
@@ -171,8 +173,9 @@ export function orchardHtml(farm, o, now) {
   if (st.state === 'empty') {
     const cards = [...TREE_LIST].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'bush' ? -1 : 1) || a.level - b.level).map(t => {
       const locked = farm.level < t.level;
-      return card({ icon: ITEMS[t.fruit].icon, name: t.name, locked, act: 'plantTree', v: t.id, disabled: !locked && farm.coins < t.cost,
-        lines: locked ? [`:lock: úroveň ${t.level}`] : [`sazenice ${t.cost} :coin:`, `${t.harvests}× ${t.yield} :${ITEMS[t.fruit].icon}: · první za ${fmtTime(t.first)}`] });
+      const sap = have(farm, 'z_' + t.id);
+      return card({ icon: ITEMS[t.fruit].icon, name: t.name, locked, act: 'plantTree', v: t.id, disabled: !locked && !sap && farm.coins < t.cost,
+        lines: locked ? [`:lock: úroveň ${t.level}`] : [sap ? `:z_${t.id}: sazenice ze skladu (${sap})` : `sazenice ${t.cost} :coin:`, `${t.harvests}× ${t.yield} :${ITEMS[t.fruit].icon}: · první za ${fmtTime(t.first)}`] });
     });
     return `<p class="muted">Vyber strom. Plodí několikrát, pak doslouží a vykopeš ho.</p><div class="crops">${cards.join('')}</div>
       <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout sad</button>`;
@@ -190,7 +193,13 @@ export function orchardHtml(farm, o, now) {
     <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout sad</button>`;
 }
 
-// prodejna strojů (tlačítko vlevo nahoře)
+// cena osiva pro n políček: semena ze skladu + zbytek v mincích
+function seedCost(farm, c, n) {
+  const s = Math.min(n, have(farm, 's_' + c.id));
+  return (s ? `${s}× :s_${c.id}:` : '') + (n - s ? `${s ? ' + ' : ''}${(n - s) * c.cost} :coin:` : '');
+}
+
+// prodejna strojů v městečku
 export function dealerHtml(farm, now, o) {
   const slots = garageSlots(farm), used = vehicleCount(farm);
   const cards = MACHINE_LIST.map(m => {
@@ -213,7 +222,7 @@ export function dealerHtml(farm, now, o) {
     small = `<p class="muted"><b>Malá pole</b> – stroje je obslouží najednou.</p>`;
     if (hasMachine(farm, 'tractor')) {
       small += `<div class="crops">${CROP_LIST.filter(c => c.level <= farm.level).map(c => card({ icon: c.icon, name: `Zasít: ${c.name}`, act: 'sowAll', v: c.id, disabled: !empty,
-        lines: [`${empty}× ${c.cost} :coin:`] })).join('')}</div>`;
+        lines: [seedCost(farm, c, empty)] })).join('')}</div>`;
     }
     if (hasMachine(farm, 'combine')) small += ready ? `<button class="btn" data-act="harvestAll" data-v="">Sklidit všechna zralá malá pole (${ready})</button>` : '';
   }
@@ -250,8 +259,7 @@ export function stallHtml(farm, o, now) {
       <button class="btn sm${left && h ? '' : ' off'}" data-act="stallSell" data-v="${i}" data-q="all">Vše</button></div>`;
   }).join('');
   return `<p class="muted">:clock: Nová nabídka za <b>${fmtTime(Math.ceil((off.next - now) / 1000))}</b>. Ve stánku koupíš, co ti chybí (dráž), a prodáš za lepší cenu než ve výkupu skladu.</p>
-    <p class="muted"><b>Stánek prodává</b></p>${buy}<p class="muted"><b>Stánek vykupuje</b></p>${sell}${upgradeBlock(farm, o)}
-    <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout stánek</button>`;
+    <p class="muted"><b>Stánek prodává</b></p>${buy}<p class="muted"><b>Stánek vykupuje</b></p>${sell}${upgradeBlock(farm, o)}`;
 }
 
 export function newsHtml() {
@@ -276,9 +284,10 @@ export function bigfieldHtml(farm, o, now) {
     if (o.straw && hasTool(farm, 'baler')) tools += `<button class="btn alt" data-act="fieldBale" data-v="${tr.id}">:lis: Slisovat slámu (${Math.floor(cells / 2)} balíků)</button>`;
     if (soil !== 'plowed' && hasTool(farm, 'plow')) tools += `<button class="btn alt" data-act="fieldPlow" data-v="${tr.id}">:pluh: Zorat pole (+50 % úrody)</button>`;
     const hint = !hasTool(farm, 'plow') && soil !== 'plowed' ? '<small>Tip: s pluhem z prodejny strojů bude úroda o 50 % větší.</small>' : '';
-    const cards = CROP_LIST.map(c => card({ icon: c.icon, name: c.name, locked: farm.level < c.level, act: 'fieldSow', v: c.id, disabled: farm.coins < c.cost * cells,
+    const cards = CROP_LIST.map(c => card({ icon: c.icon, name: c.name, locked: farm.level < c.level, act: 'fieldSow', v: c.id,
+      disabled: farm.coins < (cells - Math.min(cells, have(farm, 's_' + c.id))) * c.cost,
       lines: farm.level < c.level ? [`:lock: úroveň ${c.level}`]
-        : [`osivo ${c.cost * cells} :coin:`, `úroda ${Math.round(cells * c.yield * (o.soil === 'plowed' ? 1.5 : 1))} :${c.icon}:`, `sklízí ${MACHINE_TYPE_NAME[c.harvester]}`] }));
+        : [`osivo ${seedCost(farm, c, cells)}`, `úroda ${Math.round(cells * c.yield * (o.soil === 'plowed' ? 1.5 : 1))} :${c.icon}:`, `sklízí ${MACHINE_TYPE_NAME[c.harvester]}`] }));
     const mult = soil === 'plowed' ? 1.5 : 1;
     return head + `<p class="muted">${soilTxt} ${hint}</p>${tools}<p class="muted">Seje <b>${MACHINES[tr.model].name}</b>${hasTool(farm, 'seeder') ? ' se secím strojem' : ''} (${fmtTime(sec)}). Vyber plodinu:</p><div class="crops">${cards.join('')}</div>` + move;
   }
@@ -330,7 +339,7 @@ export function factoryHtml(farm, o, now) {
   const recipes = Object.values(RECIPES).filter(r => r.building === o.kind).map(r => {
     const locked = farm.level < r.level;
     return card({
-      icon: ITEMS[r.id].icon, name: ITEMS[r.id].name, locked, act: 'produce', v: r.id,
+      icon: ITEMS[r.id].icon, name: (recipeQty(r) > 1 ? recipeQty(r) + '× ' : '') + ITEMS[r.id].name, locked, act: 'produce', v: r.id,
       disabled: !locked && (!hasInputs(farm, r) || q.length >= qs),
       lines: locked ? [`:lock: úroveň ${r.level}`] : [ingredients(farm, r), `:clock: ${fmtTime(r.time)} · ${ITEMS[r.id].price} :coin:`],
     });
@@ -369,7 +378,8 @@ export function decoHtml(farm, o) {
 }
 
 export function siloHtml(farm, now) {
-  const items = ITEM_LIST.filter(it => have(farm, it.id) > 0);
+  const group = it => (SEEDS[it.id] || SAPLINGS[it.id] ? 2 : CROPS[it.id] || FRUITS_OF(it) ? 0 : 1);
+  const items = ITEM_LIST.filter(it => have(farm, it.id) > 0).sort((a, b) => group(a) - group(b));
   const trend = id => {
     const m = marketMult(id, now);
     return m >= 1.15 ? ' <span class="up">:up: dobrá cena</span>' : m <= 0.85 ? ' <span class="down">:down: nízká cena</span>' : '';
@@ -417,9 +427,87 @@ function landMap(farm, sel) {
   }).join('')).join('');
 }
 
-export const TASK_TABS = [['odmeny', 'Odměny a úkoly'], ['zebricek', 'Žebříček']];
+export const TASK_TABS = [['denni', 'Denní úkoly'], ['odmeny', 'Odměny'], ['zebricek', 'Žebříček']];
 
 export function canClaimDaily(farm, now) { return farm.daily.day !== dayKey(now); }
+export function claimableQuests(farm, now) {
+  const qs = dailyQuests(farm, now);
+  const n = qs.list.filter(q => !q.done && questProgress(farm, qs, q) >= q.n).length;
+  return n + (!qs.bonus && qs.list.every(q => q.done) ? 1 : 0);
+}
+
+// 8 denních úkolů + bonus za všechny
+export function questsHtml(farm, now) {
+  const qs = dailyQuests(farm, now);
+  const left = 86400000 - ((now + 3600000) % 86400000);
+  const rows = qs.list.map((q, i) => {
+    const T = QUEST_TYPES[q.t];
+    const p = Math.min(q.n, questProgress(farm, qs, q));
+    const ok = p >= q.n;
+    const btn = q.done ? '<span class="okq">✓</span>' : `<button class="btn sm${ok ? '' : ' off'}" data-act="claimQuest" data-v="${i}">${q.coins} :coin:</button>`;
+    return `<div class="row${q.done ? ' dim' : ''}"><span class="ico">:${T.icon}:</span><div class="info"><b>${T.text}: ${p}/${q.n}</b><small>odměna ${q.coins} :coin: + ${q.xp} :xp:</small>
+      <div class="bar"><div style="width:${(p / q.n * 100).toFixed(1)}%"></div></div></div>${btn}</div>`;
+  }).join('');
+  const done = qs.list.filter(q => q.done).length;
+  const b = questBonus(farm);
+  const bonus = qs.bonus ? '<p class="muted">:trophy: Dnešní bonus máš. Zítra přijdou nové úkoly!</p>'
+    : `<div class="row"><span class="ico">:gift:</span><div class="info"><b>Bonus za všech ${qs.list.length} úkolů (${done}/${qs.list.length})</b><small>${b.coins} :coin: + ${b.xp} :xp:</small></div>
+      <button class="btn sm${done === qs.list.length ? '' : ' off'}" data-act="claimQuest" data-v="bonus">Vyzvednout</button></div>`;
+  return `<p class="muted"><b>:star: Denní úkoly</b> – každý den nové. Nové za <b>${fmtTime(Math.ceil(left / 1000))}</b>.</p>${rows}${bonus}`;
+}
+
+// tržiště hráčů v městečku (jen online). data = odpověď serveru, form = rozpracovaná nabídka
+export const MARKET_TABS = [['koupit', 'Koupit'], ['prodat', 'Prodat'], ['moje', 'Moje nabídky']];
+export function marketHtml(farm, data, tab = 'koupit', form = {}, now = Date.now()) {
+  const tabs = `<div class="tabs">${MARKET_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="mtab" data-v="${id}">${n}</button>`).join('')}</div>`;
+  const intro = '<p class="muted">:market: Tady si hráči prodávají úrodu, výrobky i stroje. Cenu určuje prodávající – nejvýš trojnásobek běžné ceny.</p>';
+  if (data && data.error) return tabs + intro + `<div class="empty">${esc(data.error)}</div>`;
+  if (!data) return tabs + intro + '<div class="empty">Načítám tržiště…</div>';
+  const what = o => (o.machine ? { icon: MACHINES[o.machine].icon, name: MACHINES[o.machine].name } : { icon: ITEMS[o.item].icon, name: `${o.qty}× ${ITEMS[o.item].name}` });
+  if (tab === 'koupit') {
+    const rows = data.offers.filter(o => (o.machine ? MACHINES[o.machine] : getItem(o.item))).map(o => {
+      const w = what(o);
+      return `<div class="row"><span class="ico">:${w.icon}:</span><div class="info"><b>${esc(w.name)}</b><small>od ${esc(o.name)} · běžně ${marketBase(o)} :coin:</small></div>
+        <button class="btn sm${farm.coins >= o.price ? '' : ' off'}" data-act="marketBuy" data-v="${o.id}">${o.price} :coin:</button></div>`;
+    }).join('');
+    return tabs + intro + (rows || '<div class="empty">Zatím tu nikdo nic neprodává. Buď první – záložka Prodat!</div>') + '<button class="btn alt" data-act="marketReload" data-v="">↻ Obnovit</button>';
+  }
+  if (tab === 'moje') {
+    const rows = data.mine.map(o => {
+      const w = what(o);
+      return `<div class="row"><span class="ico">:${w.icon}:</span><div class="info"><b>${esc(w.name)}</b><small>za ${o.price} :coin: · čeká na kupce</small></div>
+        <button class="btn sm alt" data-act="marketCancel" data-v="${o.id}">Stáhnout</button></div>`;
+    }).join('') || '<div class="empty">Nic nenabízíš.</div>';
+    const sold = data.sold.map(s => `<div class="row"><span class="ico">:${s.machine ? MACHINES[s.machine].icon : ITEMS[s.item] ? ITEMS[s.item].icon : 'box'}:</span><div class="info"><b>Prodáno: ${s.machine ? esc(MACHINES[s.machine].name) : `${s.qty}× ${esc(ITEMS[s.item] ? ITEMS[s.item].name : s.item)}`}</b><small>koupil ${esc(s.buyer_name)} · +${s.coins} :coin:</small></div></div>`).join('');
+    return tabs + `<p class="muted">Nabídky: <b>${data.mine.length}/${data.slots || MARKET_SLOTS}</b>. Stažená nabídka se ti vrátí do skladu. Peníze za prodané zboží ti přijdou samy.</p>` + rows + (sold ? '<p class="muted"><b>Naposledy prodáno</b></p>' + sold : '');
+  }
+  // prodat: vybrat zboží ze skladu nebo stroj, počet a cenu
+  const items = ITEM_LIST.filter(it => have(farm, it.id) > 0);
+  const chips = items.map(it => `<button class="chip${form.item === it.id ? ' on' : ''}" data-act="mPick" data-v="i:${it.id}">:${it.icon}: ${have(farm, it.id)}</button>`).join('')
+    + farm.machines.map(m => `<button class="chip${form.machine === m.id ? ' on' : ''}" data-act="mPick" data-v="m:${m.id}">:${MACHINES[m.model].icon}: ${esc(MACHINES[m.model].name)}</button>`).join('');
+  let f = '';
+  if (form.item && have(farm, form.item) > 0) {
+    const it = ITEMS[form.item];
+    const qty = Math.max(1, Math.min(have(farm, it.id), form.qty || 1));
+    const l = { item: it.id, qty };
+    const price = Math.max(1, Math.min(marketMaxPrice(l), form.price || marketBase(l)));
+    f = `<div class="upg"><b>:${it.icon}: ${esc(it.name)}</b> (máš ${have(farm, it.id)})
+      <div class="mform"><label>Počet <span class="stepper"><button data-act="mQty" data-v="-10">−10</button><button data-act="mQty" data-v="-1">−</button><b>${qty}</b><button data-act="mQty" data-v="1">+</button><button data-act="mQty" data-v="10">+10</button></span></label>
+      <label>Cena <span class="stepper"><button data-act="mPrice" data-v="-10">−10</button><button data-act="mPrice" data-v="-1">−</button><b>${price} :coin:</b><button data-act="mPrice" data-v="1">+</button><button data-act="mPrice" data-v="10">+10</button></span></label></div>
+      <small>Běžná cena ${marketBase(l)} :coin:, nejvýš ${marketMaxPrice(l)} :coin:. Výkup ve skladu by dal ${qty * sellPrice(it.id, now)} :coin:.</small>
+      <button class="btn" data-act="marketList" data-v="">Vystavit za ${price} :coin:</button></div>`;
+  } else if (form.machine && farm.machines.some(m => m.id === form.machine)) {
+    const m = farm.machines.find(x => x.id === form.machine);
+    const l = { machine: m.model };
+    const price = Math.max(1, Math.min(marketMaxPrice(l), form.price || marketBase(l)));
+    f = `<div class="upg"><b>:${MACHINES[m.model].icon}: ${esc(MACHINES[m.model].name)}</b>
+      <div class="mform"><label>Cena <span class="stepper"><button data-act="mPrice" data-v="-100">−100</button><button data-act="mPrice" data-v="-10">−10</button><b>${price} :coin:</b><button data-act="mPrice" data-v="10">+10</button><button data-act="mPrice" data-v="100">+100</button></span></label></div>
+      <small>Nový stojí ${marketBase(l)} :coin:, nejvýš ${marketMaxPrice(l)} :coin:. Ve stodole bys za něj dostal ${Math.round(MACHINES[m.model].cost * 0.5)} :coin:.</small>
+      <button class="btn" data-act="marketList" data-v="">Vystavit za ${price} :coin:</button></div>`;
+  }
+  return tabs + `<p class="muted">Vyber, co chceš prodat (nabídek ${data.mine.length}/${data.slots || MARKET_SLOTS}). Zboží se ze skladu přesune na tržiště, dokud ho někdo nekoupí nebo ho nestáhneš.</p>
+    <div class="chips">${chips || '<span class="muted">Sklad je prázdný.</span>'}</div>${f}`;
+}
 export function claimableAch(farm) {
   return ACHIEVEMENTS.filter(a => { const t = farm.ach[a.id] || 0; return t < a.tiers.length && (farm.stats[a.stat] || 0) >= a.tiers[t]; }).length;
 }
@@ -428,10 +516,12 @@ export function tasksHtml(farm, now, tab, board) {
   const tabs = `<div class="tabs">${TASK_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="ttab" data-v="${id}">${n}</button>`).join('')}</div>`;
   if (tab === 'zebricek') {
     if (!board) return tabs + '<div class="empty">Načítám žebříček…</div>';
-    const rows = board.top.map((r, i) => `<div class="row${r.me ? ' me' : ''}"><span class="rank">${i + 1}.</span><div class="info"><b>${esc(r.name)}</b><small>úroveň ${r.level} · ${r.xp} :xp:</small></div></div>`).join('');
-    const mine = board.me && !board.top.some(r => r.me) ? `<p class="muted">Tvoje místo: <b>${board.me.rank}.</b> (${board.me.xp} :xp:)</p>` : '';
-    return tabs + (rows || '<div class="empty">Zatím tu nikdo není.</div>') + mine;
+    const rows = board.top.map((r, i) => `<div class="row${r.me ? ' me' : ''}"><span class="rank">${i + 1}.</span><div class="info"><b>${esc(r.name)}</b><small>úroveň ${r.level} · ${r.xp} :xp:</small></div>
+      ${r.me ? '' : `<button class="btn sm alt" data-act="visit" data-v="${esc(r.name)}">:house: Navštívit</button>`}</div>`).join('');
+    const mine = board.me && !board.top.some(r => r.me) ? `<p class="muted">Tvoje místo: <b>${board.me.rank}.</b> (úroveň ${board.me.level || farm.level})</p>` : '';
+    return tabs + '<p class="muted">Pořadí podle úrovně hráče. Klepni na Navštívit a podívej se, jak hospodaří ostatní.</p>' + (rows || '<div class="empty">Zatím tu nikdo není.</div>') + mine;
   }
+  if (tab === 'denni') return tabs + questsHtml(farm, now);
   const can = canClaimDaily(farm, now);
   const next = can ? (farm.daily.day === dayKey(now - 86400000) ? farm.daily.streak % 7 + 1 : 1) : farm.daily.streak;
   const days = DAILY.map((d, i) => {

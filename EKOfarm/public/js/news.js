@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 10, title: 'Městečko, tržiště a semena', items: [
+    'Od spodního rohu farmy vede prašná cesta do městečka. Je tam Prodejna strojů, Stánek a nové Tržiště hráčů (tlačítko Městečko vpravo nahoře).',
+    'Tržiště hráčů: prodávej kamarádům úrodu, výrobky i stroje za vlastní cenu (nejvýš trojnásobek běžné ceny). Peníze ti přijdou samy.',
+    'Semena z úrody: v Semenárně uděláš ze 2 plodin 3 balíčky semen. Sázení bere semena dřív než mince. Semena jdou prodat i použít ve výrobě.',
+    'Školka stromků dělá sazenice z ovoce. Nové výrobky: chléb se semínky, pražená semínka a dýňový olej.',
+    '8 denních úkolů s odměnou v mincích a bonus za splnění všech.',
+    'Úroveň hráče roste pořád. Co můžeš stavět, určuje jen úroveň Statku – každá úroveň odemkne nové budovy, pole a sady.',
+    'V žebříčku (podle úrovně) můžeš navštívit farmu kteréhokoliv hráče.',
+  ] },
   { v: 9, title: 'Velká farmářská aktualizace', items: [
     '13 druhů zeleniny a 15 druhů ovoce – nové plodiny, keře (maliny, rybíz, angrešt, borůvky, réva) a stromy (višeň, broskvoň, ořešák).',
     'Nová zvířata: prasata a ovce. Nové výrobny: konzervárna, džusárna, marmeládárna, uzenářství a textilka.',

@@ -26,7 +26,8 @@ for (const m of js.matchAll(/^(?:const|let|function|class|async function)\s+([A-
 
 const html = read('public/index.html');
 const body = html.slice(html.indexOf('<!--APP-->') + 10, html.indexOf('<script type="module"'));
-const out = `<title>EKOfarm – test</title>
+const out = `<meta charset="utf-8">
+<title>EKOfarm – test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 ${read('public/css/style.css')}
