@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -275,6 +275,78 @@ test('sad a stromy', () => {
   assert.equal(objectStatus(o, t).dead, true);
   assert.ok(applyAction(f, { type: 'clearTree', id }, t).ok);
   assert.equal(treeState(o, t).state, 'empty');
+});
+
+test('vesničané: nákup, vylepšení, práce ve výrobně, ohradě a obchodník', () => {
+  const f = rich(farm6(), 20, 10000);
+  // nákup a vylepšení: 100, pak 100 / 200 / 300 / 400, nejvýš úroveň 5
+  const id = applyAction(f, { type: 'buyVill' }, T0).id;
+  assert.equal(f.coins, 9900);
+  for (const cost of [100, 200, 300, 400]) { const c = f.coins; assert.ok(applyAction(f, { type: 'upVill', id }, T0).ok); assert.equal(c - f.coins, cost); }
+  assert.equal(findVill(f, id).lvl, 5);
+  assert.equal(applyAction(f, { type: 'upVill', id }, T0).error, 'vill_lvl_max');
+  // výrobna: Mlýn mele mouku z pšenice ze skladu, hotovou nosí do skladu
+  const mlyn = applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 3 }, T0).id;
+  assert.ok(mlyn, 'mlýn postaven');
+  assert.equal(applyAction(f, { type: 'assignVill', id, at: f.objects.find(o => o.kind === 'statek').id }, T0).error, 'bad_job', 've Statku ne');
+  assert.ok(applyAction(f, { type: 'assignVill', id, at: mlyn }, T0).ok);
+  assert.ok(applyAction(f, { type: 'villJob', id, r: 'mouka' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'villJob', id, r: 'chleb' }, T0).error, 'bad_action', 'chleb se v mlýně nedělá');
+  f.silo.wheat = 30; f.silo.mouka = 0;
+  const need = RECIPES.mouka.in.wheat;
+  applyAction(f, { type: 'nop' }, T0 + 3600 * 1000);           // hodina práce
+  assert.ok(f.silo.mouka > 0, 'mouka je ve skladu');
+  assert.equal((f.silo.wheat || 0) + (f.silo.mouka + findObject(f, mlyn).queue.length) * need, 30, 'pšenice se spotřebovala jen na mouku');
+  // obchodník ve skladu prodává mouku, ale nechá si 2 kusy
+  let sk = f.objects.find(o => o.kind === 'sklad');
+  if (!sk) sk = findObject(f, applyAction(f, { type: 'place', kind: 'sklad', x: 12, y: 0 }, T0 + 3600 * 1000).id);
+  const tid = applyAction(f, { type: 'buyVill' }, T0 + 3600 * 1000).id;
+  assert.ok(applyAction(f, { type: 'assignVill', id: tid, at: sk.id }, T0 + 3600 * 1000).ok);
+  assert.ok(applyAction(f, { type: 'villSell', id: tid, item: 'mouka', keep: 2 }, T0 + 3600 * 1000).ok);
+  const coins = f.coins;
+  applyAction(f, { type: 'nop' }, T0 + 5 * 3600 * 1000);
+  assert.ok(f.coins > coins, 'obchodník vydělal');
+  assert.ok(f.silo.mouka >= 2, 'nechal si 2 kusy');
+  assert.ok(findVill(f, tid).earned > 0);
+  // jedna budova = jeden vesničan: nový tam vystřídá starého
+  const v3 = applyAction(f, { type: 'buyVill' }, T0).id;
+  assert.ok(applyAction(f, { type: 'assignVill', id: v3, at: mlyn }, T0).ok);
+  assert.equal(findVill(f, id).at, 0);
+  assert.equal(villAt(f, mlyn).id, v3);
+  // ohrada: krmí krmivem ze skladu a sbírá vejce
+  const kurnik = applyAction(f, { type: 'place', kind: 'kurnik', x: 5, y: 3 }, T0).id;
+  for (let i = 0; i < 2; i++) assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).ok);
+  assert.ok(applyAction(f, { type: 'assignVill', id, at: kurnik }, T0 + 6 * 3600 * 1000).ok);
+  f.silo.krmivo_slepice = 10; f.silo.vejce = 0;
+  applyAction(f, { type: 'nop' }, T0 + 8 * 3600 * 1000);
+  assert.ok(f.silo.vejce > 0, 'vejce ve skladu');
+  assert.ok((f.silo.krmivo_slepice || 0) < 10, 'krmivo spotřebováno');
+  // odvolat
+  assert.ok(applyAction(f, { type: 'assignVill', id, at: 0 }, T0).ok);
+  assert.equal(villAt(f, kurnik), null);
+});
+
+test('vesničané: dlouhá nepřítomnost se dopočítá rychle', () => {
+  const f = rich(farm6(), 20, 1e6);
+  const at = [];
+  ['mlyn', 'pekarna', 'krmivarna', 'semenarna', 'konzervarna', 'mlekarna', 'olejna', 'cukrovar'].forEach((kind, i) => {
+    const b = BUILDINGS[kind];
+    let pos = null;
+    for (let y = 0; y < 17 && !pos; y++) for (let x = 0; x < 17 && !pos; x++) if (fits(f, x, y, b.w, b.h)) pos = [x, y];
+    const o = applyAction(f, { type: 'place', kind, x: pos[0], y: pos[1] }, T0);
+    assert.ok(o.ok, kind);
+    const v = applyAction(f, { type: 'buyVill' }, T0).id;
+    for (let k = 0; k < 4; k++) applyAction(f, { type: 'upVill', id: v }, T0);
+    applyAction(f, { type: 'assignVill', id: v, at: o.id }, T0);
+    if (kind === 'mlyn') applyAction(f, { type: 'villJob', id: v, r: 'mouka' }, T0);
+    at.push(o.id);
+  });
+  f.silo.wheat = 5000; f.siloCap = 100000;
+  const t0 = performance.now();
+  applyAction(f, { type: 'nop' }, T0 + 30 * 24 * 3600 * 1000);   // měsíc pryč
+  const ms = performance.now() - t0;
+  assert.ok(ms < 150, `dopočet trval ${ms.toFixed(1)} ms`);
+  assert.ok(f.silo.mouka > 0);
 });
 
 test('přesun malého pole i s plodinou', () => {

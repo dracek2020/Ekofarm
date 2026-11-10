@@ -4,19 +4,19 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=22';
-import { preloadAssets, spriteName } from './sprites.js?v=22';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=22';
-import { createBackend, ApiError } from './api.js?v=22';
-import { iconize, ic } from './icons.js?v=22';
-import { NEWS } from './news.js?v=22';
-import { sfx, soundOn, setSound } from './sfx.js?v=22';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=22';
+} from './rules.js?v=23';
+import { preloadAssets, spriteName } from './sprites.js?v=23';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=23';
+import { createBackend, ApiError } from './api.js?v=23';
+import { iconize, ic } from './icons.js?v=23';
+import { NEWS } from './news.js?v=23';
+import { sfx, soundOn, setSound } from './sfx.js?v=23';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=23';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 22;
+const APP_VERSION = 23;
 
 
 const game = {
@@ -103,7 +103,7 @@ function frame(t) {
     try {
       drawScene(ctx, {
         farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
-        ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
+        ghost: game.visit ? null : ghostView(), villWork: game.villWork, hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
       });
     } catch (e) {                               // chyba v kreslení nesmí hru zastavit; ukáže se dole, ať jde poslat
       for (let i = 0; i < 24; i++) ctx.restore();
@@ -144,15 +144,21 @@ function stepWalker(w, dt, t, who) {
   }
   return { gx: w.pos[0], gy: w.pos[1], who, dir: w.dir || -1, walking, work: t < w.work };
 }
-// práce pomocníka se dopočítává průběžně
+// práce pomocníka a vesničanů se dopočítává průběžně
 setInterval(() => {
-  if (!game.farm || !game.farm.helper) return;
-  const touched = runHelper(game.farm, now());
-  if (touched.length) {
-    for (const [x, y] of touched.slice(-4)) sendWalker(game.helperW, x, y);
-    updateHud();
+  if (!game.farm || game.visit) return;
+  let changed = false;
+  if (game.farm.helper) {
+    const touched = runHelper(game.farm, now());
+    if (touched.length) { for (const [x, y] of touched.slice(-4)) sendWalker(game.helperW, x, y); changed = true; }
   }
+  if (game.farm.vill && game.farm.vill.length) {
+    const worked = runVillagers(game.farm, now());
+    if (worked.length) { for (const id of worked) game.villWork[id] = performance.now(); changed = true; }
+  }
+  if (changed) updateHud();
 }, 1000);
+game.villWork = {};   // kdy naposledy vesničan v budově pracoval (animace na mapě)
 
 // ---------- akce ----------
 const SFX_OF = {
@@ -904,6 +910,20 @@ $('panelBody').addEventListener('click', e => {
       renderPanel();
       break;
     case 'helperTractor': act({ type: 'helperSet', tractor: v === '1' }); break;
+    // ---- vesničané ----
+    case 'buyVill': { const r = act({ type: 'buyVill' }); if (r.ok) toast(`:helper: Nový vesničan ${villName(findVill(f, r.id))}! Přiřaď ho v okně budovy.`, '', 3000); break; }
+    case 'upVill': { const r = act({ type: 'upVill', id: Number(v) }); if (r.ok) toast(`:helper: Vesničan má úroveň ${r.lvl}`); break; }
+    case 'villAssign': { const [id, at] = v.split('|').map(Number); if (act({ type: 'assignVill', id, at }).ok) toast(`:helper: ${villName(findVill(f, id))} tu teď pracuje`); break; }
+    case 'villFree': act({ type: 'assignVill', id: Number(v), at: 0 }); break;
+    case 'villJob': { const [id, r] = v.split('|'); act({ type: 'villJob', id: Number(id), r: r || null }); break; }
+    case 'villSellAdd': { const [id, item] = v.split('|'); act({ type: 'villSell', id: Number(id), item, keep: 5 }); break; }
+    case 'villSellDel': { const [id, item] = v.split('|'); act({ type: 'villSell', id: Number(id), item, keep: -1 }); break; }
+    case 'villKeep': {
+      const [id, item, d] = v.split('|'), vv = findVill(f, Number(id));
+      if (vv && vv.sell && item in vv.sell) act({ type: 'villSell', id: vv.id, item, keep: Math.max(0, Math.min(9999, vv.sell[item] + Number(d))) });
+      break;
+    }
+    case 'openVill': openPanel({ kind: 'shop', tab: 'lide' }); break;
     case 'openObj': { const o = findObject(f, Number(v)); if (o) openPanel({ kind: 'obj', id: o.id }); break; }
     case 'openLand': openPanel({ kind: 'land', sel: (LAND_PARCELS.find(p => !f.land.includes(p.id)) || {}).id }); break;
     case 'selLand': game.panel.sel = v; renderPanel(); break;

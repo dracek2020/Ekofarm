@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=22';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=22';
-import { drawIconText, drawIcon } from './icons.js?v=22';
-import { asset } from './sprites.js?v=22';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt } from './rules.js?v=23';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=23';
+import { drawIconText, drawIcon } from './icons.js?v=23';
+import { asset } from './sprites.js?v=23';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -280,7 +280,15 @@ export function drawScene(ctx, view) {
       drawPerson(ctx, (pp.gx - pp.gy) * TW / 2, (pp.gx + pp.gy) * TH / 2, pp.who, pp.dir, t, pp.walking, pp.work);
     } else if (it.sign) drawSaleSign(ctx, farm, it.sign);
     else if (it.house) drawTownHouse(ctx, it.house[0], it.house[1], it.v);
-    else drawObject(ctx, it.o, view.now, t, farm);
+    else {
+      drawObject(ctx, it.o, view.now, t, farm);
+      const vg = !it.o.town && farm.vill && villAt(farm, it.o.id);
+      if (vg) {   // vesničan stojí u předního rohu budovy; když zrovna pracoval, pohne se
+        const sz = objSize(it.o), gx = it.o.x + 0.35, gy = it.o.y + sz.h + 0.1;
+        const busy = view.villWork && performance.now() - (view.villWork[it.o.id] || -1e9) < 1500;
+        drawPerson(ctx, (gx - gy) * TW / 2, (gx + gy) * TH / 2, 'pomocnik', 1, t, false, busy);
+      }
+    }
   }
   for (const it of items) if (it.o && it.o.town) townLabel(ctx, it.o);   // popisky městečka až navrch (domky je nezakryjí)
   if (ghost) drawGhost(ctx, ghost, view.now, t);

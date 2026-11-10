@@ -574,6 +574,7 @@ export function newFarm(now) {
 // doplní chybějící části u starších farem
 export function normalize(farm) {
   if (!Array.isArray(farm.objects)) farm.objects = [];
+  if (!Array.isArray(farm.vill)) farm.vill = [];
   if (!farm.nextId) farm.nextId = 1;
   if (!farm.siloCap) farm.siloCap = SILO_START;
   if (!Array.isArray(farm.pending)) farm.pending = [];
@@ -935,6 +936,87 @@ export function runHelper(farm, now) {
   return touched;
 }
 
+// ---------- vesničané: pracovníci v budovách (automatizace farmy) ----------
+// Koupíš ho (úroveň 1), přiřadíš do budovy a nastavíš práci. Bere suroviny ze skladu a hotové nosí do skladu.
+// Výrobna: vyrábí zvolený výrobek. Ohrada: krmí a sbírá. Včelín: sbírá plástve. Sklad: obchodník prodává.
+export const VILL_BUY = 100;                          // cena nového vesničana (úroveň 1)
+export const VILL_MAX_LVL = 5;
+export const villUpCost = lvl => 100 * lvl;           // vylepšení na další úroveň: na 2 → 100, na 3 → 200, na 4 → 300, na 5 → 400
+export const VILL_IV = [0, 120, 90, 60, 45, 30];      // jak často obejde budovu (s) podle úrovně
+export const TRADER_QTY = [0, 3, 5, 8, 12, 16];      // kolik kusů obchodník prodá za jednu obchůzku
+export const VILL_MAX = 30;
+const VILL_CATCHUP = 24 * 3600 * 1000;               // po dlouhé nepřítomnosti se dopočítá nejvýš den práce
+const VILL_TICKS = 150;                               // … a nejvýš tolik obchůzek na vesničana (pak řidší)
+const VILL_NAMES = ['Anička', 'Pepa', 'Mařenka', 'Franta', 'Božena', 'Vašek', 'Jarka', 'Honza', 'Liduška', 'Tonda', 'Věrka', 'Kuba', 'Zdenka', 'Lojza', 'Hanka', 'Míla'];
+export const villName = v => VILL_NAMES[(v.id * 7 + 3) % VILL_NAMES.length];
+// jakou práci jde v budově dělat
+export function villJobType(kind) {
+  const t = BUILDINGS[kind] && BUILDINGS[kind].type;
+  return t === 'factory' ? 'factory' : t === 'pen' ? 'pen' : t === 'hive' ? 'hive' : t === 'storage' ? 'trader' : null;
+}
+export const villAt = (farm, objId) => (farm.vill || []).find(v => v.at === objId) || null;
+export const findVill = (farm, id) => (farm.vill || []).find(v => v.id === id) || null;
+
+// jedna obchůzka vesničana v čase t; vrací true, když něco udělal
+function villWork(farm, v, o, t) {
+  const ok = r => !!(r && r.ok);
+  let did = false;
+  switch (villJobType(o.kind)) {
+    case 'factory': {
+      if (o.queue.length && o.queue[0].end <= t) did = ok(doAction(farm, { type: 'collect', id: o.id }, t));
+      const r = v.r && RECIPES[v.r];
+      if (r && r.building === o.kind) {
+        while (o.queue.length < queueSize(o) && farm.level >= r.level && hasInputs(farm, r)) {
+          if (!ok(doAction(farm, { type: 'produce', id: o.id, recipe: r.id }, t))) break;
+          did = true;
+        }
+      }
+      break;
+    }
+    case 'pen':
+      if (ok(doAction(farm, { type: 'collect', id: o.id }, t))) did = true;
+      if (o.animals.some(x => !x.fed) && ok(doAction(farm, { type: 'feed', id: o.id }, t))) did = true;
+      break;
+    case 'hive':
+      if (hiveStock(farm, o, t).count > 0 && ok(doAction(farm, { type: 'collect', id: o.id }, t))) did = true;
+      break;
+    case 'trader': {
+      let left = TRADER_QTY[v.lvl] || 0;
+      for (const [item, keep] of Object.entries(v.sell || {})) {
+        if (left <= 0) break;
+        const n = Math.min(left, have(farm, item) - keep);
+        if (n <= 0) continue;
+        const price = sellPrice(item, t);
+        if (ok(doAction(farm, { type: 'sell', item, qty: n }, t))) { left -= n; did = true; v.earned = (v.earned || 0) + n * price; }
+      }
+      break;
+    }
+  }
+  return did;
+}
+// dopočítá práci všech vesničanů do času now (po obchůzkách, v pořadí času – výrobky jednoho může použít druhý)
+export function runVillagers(farm, now) {
+  const worked = [];
+  const list = [];
+  for (const v of farm.vill || []) {
+    const o = v.at && findObject(farm, v.at);
+    if (!o || !villJobType(o.kind)) { v.t = Math.max(v.t || 0, now); continue; }
+    const from = Math.max(v.t || now, now - VILL_CATCHUP);
+    const iv = Math.max(VILL_IV[v.lvl] * 1000, (now - from) / VILL_TICKS);
+    list.push({ v, o, iv, next: from + iv });
+  }
+  for (let guard = 0; list.length && guard < 6000; guard++) {
+    let k = 0;
+    for (let i = 1; i < list.length; i++) if (list[i].next < list[k].next) k = i;
+    const e = list[k];
+    if (e.next > now) break;
+    if (villWork(farm, e.v, e.o, e.next)) { e.v.n = (e.v.n || 0) + 1; worked.push(e.o.id); }
+    e.v.t = e.next;
+    e.next += e.iv;
+  }
+  return worked;
+}
+
 // ---------- stánek ----------
 export const STALL_PERIOD = 2 * 3600 * 1000;
 export function stallOffers(farm, now) {
@@ -1145,6 +1227,9 @@ export const ERRORS = {
   max_level: 'Budova už má nejvyšší úroveň.',
   stall_qty: 'Tolik už stánek nemá nebo nechce.',
   helper_level: 'Pomocníka si najmeš od úrovně 3.',
+  vill_max: 'Víc vesničanů už na farmu nepřibude.',
+  vill_lvl_max: 'Vesničan už má nejvyšší úroveň.',
+  bad_job: 'Tady vesničan pracovat nemůže.',
   no_helper: 'Pomocník teď nepracuje – najmi ho ve Statku.',
   land_owned: 'Tenhle pozemek už je tvůj.',
   land_far: 'Nejdřív kup sousední pozemek.',
@@ -1161,6 +1246,11 @@ export function applyAction(farm, a, now) {
   normalize(farm);
   ensureQuests(farm, now);
   if (farm.helper) runHelper(farm, now);
+  if (farm.vill.length) runVillagers(farm, now);
+  return doAction(farm, a, now);
+}
+// samotná akce (bez dopočítání pomocníka a vesničanů – ty ji volají taky)
+function doAction(farm, a, now) {
   if (!a || typeof a.type !== 'string') return fail('bad_action');
   switch (a.type) {
     case 'plant': {
@@ -1562,6 +1652,58 @@ export function applyAction(farm, a, now) {
       }
       st[key][a.i] = (st[key][a.i] || 0) + a.qty;
       return { ok: true, total };
+    }
+    case 'buyVill': {
+      if (farm.vill.length >= VILL_MAX) return fail('vill_max');
+      if (farm.coins < VILL_BUY) return fail('no_coins');
+      farm.coins -= VILL_BUY;
+      const v = { id: farm.nextId++, lvl: 1, at: 0, r: null, sell: {}, t: now, n: 0 };
+      farm.vill.push(v);
+      return { ok: true, id: v.id };
+    }
+    case 'upVill': {
+      const v = findVill(farm, a.id);
+      if (!v) return fail('no_object');
+      if (v.lvl >= VILL_MAX_LVL) return fail('vill_lvl_max');
+      const cost = villUpCost(v.lvl);
+      if (farm.coins < cost) return fail('no_coins');
+      farm.coins -= cost;
+      v.lvl++;
+      return { ok: true, lvl: v.lvl };
+    }
+    case 'assignVill': {   // at = id budovy, 0 = odvolat; v budově je nejvýš jeden vesničan (jiný se uvolní)
+      const v = findVill(farm, a.id);
+      if (!v || !isInt(a.at)) return fail('bad_action');
+      if (a.at) {
+        const o = findObject(farm, a.at);
+        if (!o || !villJobType(o.kind)) return fail('bad_job');
+        const other = villAt(farm, a.at);
+        if (other && other !== v) other.at = 0;
+      }
+      v.at = a.at; v.t = now;
+      return { ok: true };
+    }
+    case 'villJob': {      // výrobna: co má vyrábět (null = nic)
+      const v = findVill(farm, a.id);
+      const o = v && v.at && findObject(farm, v.at);
+      if (!o || villJobType(o.kind) !== 'factory') return fail('bad_job');
+      if (a.r === null) { v.r = null; return { ok: true }; }
+      const r = getRecipe(a.r);
+      if (!r || r.building !== o.kind) return fail('bad_action');
+      if (farm.level < r.level) return fail('locked');
+      v.r = r.id;
+      return { ok: true };
+    }
+    case 'villSell': {     // obchodník: prodávat předmět, ale nechat si aspoň keep kusů (keep < 0 = neprodávat)
+      const v = findVill(farm, a.id);
+      const o = v && v.at && findObject(farm, v.at);
+      if (!o || villJobType(o.kind) !== 'trader') return fail('bad_job');
+      const it = getItem(a.item);
+      if (!it || !Number.isInteger(a.keep) || a.keep > 9999) return fail('bad_action');
+      if (!v.sell) v.sell = {};
+      if (a.keep < 0) delete v.sell[it.id];
+      else { if (!(it.id in v.sell) && Object.keys(v.sell).length >= 40) return fail('bad_action'); v.sell[it.id] = a.keep; }
+      return { ok: true };
     }
     case 'hire': {
       const plan = isInt(a.plan) ? HELPER_PLANS[a.plan] : null;

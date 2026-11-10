@@ -1,5 +1,13 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 23, title: 'Vesničané – automatizace farmy', items: [
+    'Kup si vesničana (Obchod → Vesničané, 100 mincí) a přiřaď ho v okně budovy.',
+    'Ve výrobně vyrábí, co mu vybereš: suroviny si bere ze skladu a hotové tam nosí.',
+    'V ohradě krmí zvířata a sbírá vejce, mléko a další. Ve včelíně sbírá plástve.',
+    'Ve skladu je z něj obchodník: prodává, co mu vybereš, a nechá si tolik kusů, kolik určíš.',
+    'Vylepšení na úroveň 2 až 5 stojí 100, 200, 300 a 400 mincí. Vesničan pak obchází budovu častěji (každé 2 min až každých 30 s) a obchodník prodá víc.',
+    'Pracují, i když hru zavřeš (dopočítá se nejvýš den zpátky).',
+  ] },
   { v: 22, title: 'Přesouvání všeho', items: [
     'Podrž prst na budově nebo poli: zvedne se a můžeš ho rovnou táhnout jinam. Potvrď ✓ dole.',
     'Přesunout jde všechno: Statek, Sklad, výrobny, ohrady, sady, rybník, ozdoby, velká i malá pole.',
