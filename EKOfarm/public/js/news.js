@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 25, title: 'Farmáři, pracovní oblasti a zásoby', items: [
+    'Ve Statku (záložka Farmáři) si koupíš až 5 farmářů po 100 mincích.',
+    'Pracovní oblast tvoří aspoň 4 pole nebo 4 sady vedle sebe. Přikoupené pole oblast zvětší, 4 pole o kus dál udělají novou oblast. Na mapě ji poznáš podle čísla.',
+    'Farmář v oblasti sklízí do Skladu a sází, co mu nastavíš. V sadu vykope suchý strom a zasadí nový.',
+    'Semena a sazenice jsou teď v zásobě ve Statku (3 kusy na každé pole a sad), ne ve Skladu. Farmáři sázejí jen ze zásob.',
+    'Ve Stánku v městečku je nová záložka Zásoby: koupíš tam semena, sazenice i krmivo.',
+  ] },
   { v: 24, title: 'Obchodník prodává méně často', items: [
     'Obchodník ve skladu prodává jen jednou za 30 minut. S každou úrovní častěji: 25, 20, 15 a na úrovni 5 jednou za 10 minut.',
     'Zato prodá najednou víc: 10, 15, 20, 30 a 40 kusů podle úrovně.',

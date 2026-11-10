@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=24';
-import { preloadAssets, spriteName } from './sprites.js?v=24';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=24';
-import { createBackend, ApiError } from './api.js?v=24';
-import { iconize, ic } from './icons.js?v=24';
-import { NEWS } from './news.js?v=24';
-import { sfx, soundOn, setSound } from './sfx.js?v=24';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=24';
+} from './rules.js?v=25';
+import { preloadAssets, spriteName } from './sprites.js?v=25';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=25';
+import { createBackend, ApiError } from './api.js?v=25';
+import { iconize, ic } from './icons.js?v=25';
+import { NEWS } from './news.js?v=25';
+import { sfx, soundOn, setSound } from './sfx.js?v=25';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=25';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 24;
+const APP_VERSION = 25;
 
 
 const game = {
@@ -784,7 +784,7 @@ function renderPanel() {
     const o = townObject(f, p.t);
     title = `:${BUILDINGS[p.t].icon}: ${BUILDINGS[p.t].name}`;
     img = bImg(p.t);
-    body = p.t === 'prodejna' ? dealerHtml(f, now(), o) : p.t === 'stanek' ? stallHtml(f, o, now())
+    body = p.t === 'prodejna' ? dealerHtml(f, now(), o) : p.t === 'stanek' ? stallHtml(f, o, now(), p.tab)
       : marketHtml(f, game.market, p.tab, game.mform, now());
   }
   else {
@@ -924,6 +924,14 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'openVill': openPanel({ kind: 'shop', tab: 'lide' }); break;
+    // ---- farmáři ve Statku, zásoby ----
+    case 'buyFarmer': { const r = act({ type: 'buyFarmer' }); if (r.ok) toast(`:farmer: Nový farmář ${villName(findVill(f, r.id))}! Přiřaď ho k pracovní oblasti.`, '', 3000); break; }
+    case 'areaAssign': { const [id, kind, a] = v.split('|'); const r = act({ type: 'assignArea', id: Number(id), kind, a: Number(a) }); if (r.ok) toast(`:farmer: ${villName(findVill(f, Number(id)))} pracuje v oblasti ${r.n}`); break; }
+    case 'areaFree': act({ type: 'assignArea', id: Number(v), a: 0 }); break;
+    case 'farmerCrop': { const [id, c] = v.split('|'); act({ type: 'farmerJob', id: Number(id), crop: c || null }); break; }
+    case 'farmerTree': { const [id, t] = v.split('|'); act({ type: 'farmerJob', id: Number(id), tree: t || null }); break; }
+    case 'buySupply': { const [item, q] = v.split('|'); const r = act({ type: 'buySupply', item, qty: Number(q) }); if (r.ok) toast(`+${q}× :${ITEMS[item].icon}: · −${r.cost} :coin:`); break; }
+    case 'openStall': openPanel({ kind: 'town', t: 'stanek', tab: 'zasoby' }); break;
     case 'openObj': { const o = findObject(f, Number(v)); if (o) openPanel({ kind: 'obj', id: o.id }); break; }
     case 'openLand': openPanel({ kind: 'land', sel: (LAND_PARCELS.find(p => !f.land.includes(p.id)) || {}).id }); break;
     case 'selLand': game.panel.sel = v; renderPanel(); break;

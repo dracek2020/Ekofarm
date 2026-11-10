@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt } from './rules.js?v=24';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=24';
-import { drawIconText, drawIcon } from './icons.js?v=24';
-import { asset } from './sprites.js?v=24';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=25';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=25';
+import { drawIconText, drawIcon } from './icons.js?v=25';
+import { asset } from './sprites.js?v=25';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -238,6 +238,26 @@ function drawGround(ctx, farm, cam, W, H, dpr) {
   groundDirect(ctx, farm, left, top, vw, vh);
 }
 
+// pracovní oblasti s farmářem: číslo oblasti nad horním políčkem, farmář stojí u předního
+function drawAreas(ctx, farm, view, t, seen) {
+  const areas = workAreas(farm);
+  for (const v of farm.vill) {
+    const g = isFarmer(v) && areaOf(areas, v);
+    if (!g) continue;
+    let top = g.cells[0], front = g.cells[0];
+    for (const c of g.cells) { if (c.x + c.y < top.x + top.y) top = c; if (c.x + c.y > front.x + front.y) front = c; }
+    if (!seen(top.x, top.y) && !seen(front.x, front.y)) continue;
+    const busy = view.villWork && performance.now() - (view.villWork[g.key] || -1e9) < 1500;
+    const gx = front.x + 0.9, gy = front.y + 1.05;
+    drawPerson(ctx, (gx - gy) * TW / 2, (gx + gy) * TH / 2, 'farmar', -1, t, false, busy);
+    const [x, y] = cellCenter(top.x, top.y);
+    ctx.fillStyle = g.kind === 'pole' ? '#5fae34' : '#c8862e'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y - 30, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = '800 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(g.n), x, y - 29.5); ctx.textBaseline = 'alphabetic';
+  }
+}
+
 // view = { farm, now, t, cam, W, H, dpr, ghost, hoverCell, bubble, floats, hour, people, weather }
 export function drawScene(ctx, view) {
   const { farm, cam, W, H, t } = view;
@@ -291,6 +311,7 @@ export function drawScene(ctx, view) {
     }
   }
   for (const it of items) if (it.o && it.o.town) townLabel(ctx, it.o);   // popisky městečka až navrch (domky je nezakryjí)
+  if (farm.vill && farm.vill.some(isFarmer)) drawAreas(ctx, farm, view, t, seen);
   if (ghost) drawGhost(ctx, ghost, view.now, t);
   if (mp) {
     const p = farm.plots.find(q => q.x === mp[0] && q.y === mp[1]);

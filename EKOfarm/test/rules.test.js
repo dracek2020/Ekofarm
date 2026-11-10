@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt } from '../public/js/rules.js';
+import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -359,6 +359,55 @@ test('vesničané: dlouhá nepřítomnost se dopočítá rychle', () => {
   assert.ok(f.silo.mouka > 0);
 });
 
+test('zásoby ve Statku, nákup v městečku, farmáři v pracovních oblastech', () => {
+  const f = rich(farm6(), 20, 10000);
+  f.objects = f.objects.filter(o => o.kind !== 'sad');
+  // kapacita zásob: 3 na pole a sad
+  assert.equal(seedCap(f), 3 * f.plots.length);
+  assert.ok(applyAction(f, { type: 'buySupply', item: 's_wheat', qty: 10 }, T0).ok);
+  assert.equal(f.seeds.s_wheat, 10); assert.equal(f.silo.s_wheat, undefined, 'semena nejsou ve skladu');
+  assert.equal(applyAction(f, { type: 'buySupply', item: 's_wheat', qty: seedCap(f) }, T0).error, 'seeds_full');
+  assert.equal(applyAction(f, { type: 'buySupply', item: 'wheat', qty: 1 }, T0).error, 'no_supply', 'úroda se nekupuje');
+  assert.ok(applyAction(f, { type: 'buySupply', item: 'krmivo_slepice', qty: 5 }, T0).ok);
+  assert.equal(f.silo.krmivo_slepice, 5, 'krmivo jde do skladu');
+  // oblasti: 6 polí v řadě = oblast 1; 3 pole o kus dál nejsou oblast, 4. ji vytvoří
+  let areas = workAreas(f);
+  assert.equal(areas.filter(g => g.kind === 'pole').length, 1);
+  assert.equal(areas[0].ids.length, f.plots.length);
+  for (let i = 0; i < 3; i++) { f.coins += 1000; assert.ok(applyAction(f, { type: 'buyPlot', x: 12 + i, y: 14 }, T0).ok); }
+  assert.equal(workAreas(f).filter(g => g.kind === 'pole').length, 1, '3 pole oblast nejsou');
+  assert.ok(applyAction(f, { type: 'buyPlot', x: 15, y: 14 }, T0).ok);
+  areas = workAreas(f);
+  assert.equal(areas.filter(g => g.kind === 'pole').length, 2, 'oblast 2');
+  // farmáři: nejvýš 5, jen do oblastí
+  const ids = [];
+  for (let i = 0; i < 5; i++) ids.push(applyAction(f, { type: 'buyFarmer' }, T0).id);
+  assert.equal(applyAction(f, { type: 'buyFarmer' }, T0).error, 'farm_max');
+  const [a, b] = ids;
+  assert.equal(applyAction(f, { type: 'assignVill', id: a, at: f.objects[0].id }, T0).error, 'bad_job');
+  assert.ok(applyAction(f, { type: 'assignArea', id: a, kind: 'pole', a: f.plots[0].id }, T0).ok);
+  assert.ok(applyAction(f, { type: 'farmerJob', id: a, crop: 'wheat' }, T0).ok);
+  // sází jen se semeny ze zásoby; sklízí do skladu
+  f.seeds = { s_wheat: 3 };
+  for (const p of f.plots) { p.crop = null; }
+  applyAction(f, { type: 'nop' }, T0 + 150 * 1000);              // první obchůzka (úroveň 1 = po 2 min)
+  const area1 = workAreas(f)[0].ids.map(id => f.plots.find(p => p.id === id));
+  assert.equal(area1.filter(p => p.crop === 'wheat').length, 3, 'zasadil jen 3 – víc semen nebylo');
+  assert.equal(f.seeds.s_wheat, undefined);
+  const coins = f.coins;
+  f.silo.wheat = 0;
+  applyAction(f, { type: 'nop' }, T0 + 24 * 3600 * 1000);
+  assert.ok(f.silo.wheat > 0, 'sklizeno');
+  assert.equal(f.coins, coins, 'za osivo neplatil');
+  // druhý farmář do stejné oblasti → první se uvolní; větší oblast se nerozbije
+  assert.ok(applyAction(f, { type: 'assignArea', id: b, kind: 'pole', a: f.plots[2].id }, T0).ok);
+  assert.equal(findVill(f, a).area, null);
+  f.coins += 1000;
+  assert.ok(applyAction(f, { type: 'buyPlot', x: 16, y: 14 }, T0).ok);
+  assert.equal(workAreas(f).filter(g => g.kind === 'pole').length, 2);
+  assert.equal(applyAction(f, { type: 'assignArea', id: a, kind: 'sad', a: 999 }, T0).error, 'area_small');
+});
+
 test('přesun malého pole i s plodinou', () => {
   const f = farm6();
   const p = f.plots[0], [x, y] = [p.x, p.y];
@@ -391,11 +440,11 @@ test('vykopání živého stromu: vrátí sazenici nebo mince jen před první �
   assert.equal(f.coins, c0, 'mince zpět');
   assert.equal(treeState(o, T0 + 1000).state, 'empty');
   // sazenice ze skladu → zpět do skladu, pak jde zasadit jiný strom
-  f.silo.z_jablon = 1;
+  f.seeds.z_jablon = 1;
   assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
-  assert.equal(f.silo.z_jablon || 0, 0);
+  assert.equal(f.seeds.z_jablon || 0, 0);
   assert.deepEqual(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).back, { item: 'z_jablon' });
-  assert.equal(f.silo.z_jablon, 1);
+  assert.equal(f.seeds.z_jablon, 1);
   // zralé ovoce se musí nejdřív sklidit; po první úrodě se nic nevrací
   assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
   const t = T0 + 1800 * 1000;
@@ -411,7 +460,7 @@ test('vykopání živého stromu: vrátí sazenici nebo mince jen před první �
   delete o.paid;
   assert.equal(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).back, null);
   // plný sklad: sazenici není kam vrátit
-  f.silo.z_jablon = 1;
+  f.seeds.z_jablon = 1;
   assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
   f.silo.wheat = f.siloCap;
   assert.equal(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).error, 'silo_full');
@@ -757,12 +806,12 @@ test('v10: semena ze sklizně – Semenárna 2 → 3, sázení bere semena dří
   assert.equal(f.silo.wheat, undefined);
   const r = applyAction(f, { type: 'collect', id }, T0 + 3600000);
   assert.ok(r.ok);
-  assert.equal(f.silo.s_wheat, 9, '6 pšenice = 9 balíčků semen');
+  assert.equal(f.seeds.s_wheat, 9, '6 pšenice = 9 balíčků semen');
   const c = f.coins;
   const p = applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'wheat' }, T0);
   assert.ok(p.ok && p.seed);
   assert.equal(f.coins, c, 'zaplaceno semenem');
-  assert.equal(f.silo.s_wheat, 8);
+  assert.equal(f.seeds.s_wheat, 8);
   assert.equal(f.stats.plant, 1);
   // velké pole: část semeny, zbytek mincemi
   rich(f, 10, 1000);
@@ -770,10 +819,10 @@ test('v10: semena ze sklizně – Semenárna 2 → 3, sázení bere semena dří
   const tr = applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).id;
   const c2 = f.coins;
   assert.ok(applyAction(f, { type: 'fieldSow', id: big, crop: 'wheat', machine: tr }, T0).ok);
-  assert.equal(f.silo.s_wheat, undefined, '8 semen spotřebováno');
+  assert.equal(f.seeds.s_wheat, undefined, '8 semen spotřebováno');
   assert.equal(f.coins, c2 - 1, 'deváté políčko za minci');
   // semena jdou prodat
-  f.silo.s_corn = 4;
+  f.seeds.s_corn = 4;
   assert.ok(applyAction(f, { type: 'sell', item: 's_corn', qty: 4 }, T0).ok);
 });
 
@@ -784,13 +833,13 @@ test('v10: sazenice ze školky', () => {
   f.silo.jablko = 3;
   assert.ok(applyAction(f, { type: 'produce', id: sk, recipe: 'z_jablon' }, T0).ok);
   assert.ok(applyAction(f, { type: 'collect', id: sk }, T0 + 3600000).ok);
-  assert.equal(f.silo.z_jablon, 1);
+  assert.equal(f.seeds.z_jablon, 1);
   const sad = applyAction(f, { type: 'place', kind: 'sad', x: 4, y: 0 }, T0).id;
   const c = f.coins;
   const r = applyAction(f, { type: 'plantTree', id: sad, tree: 'jablon' }, T0);
   assert.ok(r.ok && r.sapling);
   assert.equal(f.coins, c);
-  assert.equal(f.silo.z_jablon, undefined);
+  assert.equal(f.seeds.z_jablon, undefined);
 });
 
 test('v10: statek odemyká stavbu, úroveň hráče roste pořád', () => {
