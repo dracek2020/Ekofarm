@@ -1,0 +1,16 @@
+name = "ekofarm"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ekofarm"
+database_id = "7a277eca-375d-47ab-a55e-9552cd6aeec6"
+
+[vars]
+# Client ID z Google Cloud Console (OAuth klient typu „Webová aplikace“)
+GOOGLE_CLIENT_ID = "SEM_VLOZ_GOOGLE_CLIENT_ID"

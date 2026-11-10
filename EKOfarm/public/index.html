@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5b9e3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>EKOfarm</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icon-192.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<!--APP-->
+<canvas id="game"></canvas>
+
+<div id="hud" hidden>
+  <div id="top">
+    <div class="pill" id="lvl"><span class="lvl-num" id="lvlNum">1</span><div class="xpbar"><div id="xpFill"></div></div></div>
+    <div class="pill"><span>🪙</span><b id="coins">0</b></div>
+    <button class="pill" id="siloBtn"><span>🏚️</span><b id="silo">0/50</b></button>
+  </div>
+  <div id="bottom">
+    <button class="big" id="buildBtn"><span>🔨</span>Stavět</button>
+    <button class="big" id="shopBtn"><span>🛒</span>Obchod</button>
+    <button class="big" id="siloBtn2"><span>🏚️</span>Sklad</button>
+    <button class="big" id="menuBtn"><span>⚙️</span>Menu</button>
+  </div>
+  <div id="banner" hidden><span id="bannerText"></span><button id="bannerOk" class="ok" hidden>✓</button><button id="bannerClose">✕</button></div>
+</div>
+
+<div id="picker" class="sheet" hidden>
+  <div class="sheet-head"><b>Co zasadit?</b><button class="x" data-close="picker">✕</button></div>
+  <div id="cropList" class="crops"></div>
+</div>
+
+<div id="panel" class="sheet" hidden>
+  <div class="sheet-head"><b id="panelTitle"></b><button class="x" data-close="panel">✕</button></div>
+  <div id="panelBody"></div>
+</div>
+
+<div id="menuPanel" class="sheet" hidden>
+  <div class="sheet-head"><b id="menuName">Farma</b><button class="x" data-close="menuPanel">✕</button></div>
+  <p class="muted" id="menuMode"></p>
+  <div id="gLinkWrap" hidden><p class="muted">Propoj farmu s Google účtem a přihlašuj se jedním klepnutím:</p><div id="gLinkBtn" class="gbtn"></div></div>
+  <button class="btn" id="logoutBtn">Odhlásit</button>
+</div>
+
+<div id="login" hidden>
+  <div class="card">
+    <h1>🌾 EKOfarm</h1>
+    <p class="muted">Tvoje vlastní farma. Pěstuj, prodávej, rozšiřuj.</p>
+    <input id="lName" placeholder="Jméno farmáře" autocomplete="username" maxlength="20">
+    <input id="lPass" type="password" placeholder="Heslo" autocomplete="current-password">
+    <p id="lErr" class="err"></p>
+    <div id="gWrap" hidden><div class="or"><span>nebo</span></div><div id="gBtn" class="gbtn"></div></div>
+    <button class="btn" id="loginBtn">Přihlásit</button>
+    <button class="btn alt" id="regBtn">Založit novou farmu</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading">Načítám farmu…</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
