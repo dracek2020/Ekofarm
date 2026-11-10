@@ -44,6 +44,8 @@ async function route(req, env, path, url, ctx) {
   if (m === 'POST' && path === '/api/market/list') return marketSell(req, env, user);
   if (m === 'POST' && path === '/api/market/cancel') return marketDeal(req, env, user, 'cancel');
   if (m === 'POST' && path === '/api/market/buy') return marketDeal(req, env, user, 'buy', ctx);
+  if (m === 'GET' && path === '/api/chat') return chatGet(env, url);
+  if (m === 'POST' && path === '/api/chat') return chatPost(req, env, user);
   if (m === 'POST' && path === '/api/push/subscribe') return pushSubscribe(req, env, user);
   if (m === 'POST' && path === '/api/push/unsubscribe') return pushUnsubscribe(req, env, user);
   return json({ error: 'not_found' }, 404);
@@ -296,6 +298,27 @@ async function marketDeal(req, env, user, kind, ctx) {
     }
   }
   return BUSY();
+}
+
+// ---------- chat pro všechny hráče ----------
+const CHAT_MAX = 200, CHAT_GAP = 3000, CHAT_DAYS = 7;
+async function chatGet(env, url) {
+  const after = Math.max(0, Number(url.searchParams.get('after')) || 0);
+  const r = after
+    ? await env.DB.prepare('SELECT id, name, text, created FROM chat WHERE id > ? ORDER BY id LIMIT 60').bind(after).all()
+    : await env.DB.prepare('SELECT * FROM (SELECT id, name, text, created FROM chat ORDER BY id DESC LIMIT 50) ORDER BY id').bind().all();
+  return json({ msgs: (r.results || []).map(m => ({ id: m.id, name: m.name, text: m.text, t: m.created })) });
+}
+async function chatPost(req, env, user) {
+  const body = await readJson(req);
+  const text = String(body.text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX);
+  if (!text) return json({ error: 'empty', message: 'Napiš zprávu.' }, 400);
+  const now = Date.now();
+  const last = await env.DB.prepare('SELECT MAX(created) AS t FROM chat WHERE user_id = ?').bind(user.id).first();
+  if (last && last.t && now - last.t < CHAT_GAP) return json({ error: 'slow', message: 'Pomaleji – další zprávu pošleš za chvilku.' }, 429);
+  const res = await env.DB.prepare('INSERT INTO chat (user_id, name, text, created) VALUES (?, ?, ?, ?)').bind(user.id, user.name, text, now).run();
+  if (res.meta.last_row_id % 50 === 0) await env.DB.prepare('DELETE FROM chat WHERE created < ?').bind(now - CHAT_DAYS * 86400000).run();
+  return json({ ok: true, id: res.meta.last_row_id });
 }
 
 // ---------- upozornění do telefonu ----------

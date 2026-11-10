@@ -169,7 +169,7 @@ body.visiting #bottom, body.visiting #newsBtn, body.visiting #townBtn, body.visi
 .stepper button { min-width: 34px; height: 32px; border-radius: 10px; border: 2px solid #d8c39a; background: #fff; font-weight: 800; color: var(--ink); }
 
 /* v11: průvodce, rybaření, nápověda */
-#tut { position: fixed; left: 50%; transform: translateX(-50%); top: calc(104px + var(--safe-t)); width: min(520px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 var(--wood-d); padding: 10px 12px; display: flex; gap: 10px; align-items: center; z-index: 5; font-size: 14px; }
+#tut { position: fixed; left: 50%; transform: translateX(-50%); top: calc(148px + var(--safe-t)); width: min(520px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 var(--wood-d); padding: 10px 12px; display: flex; gap: 10px; align-items: center; z-index: 5; font-size: 14px; }
 #tut .tut-ico .ic { width: 40px; height: 40px; }
 #tutText { flex: 1; }
 #tutText small { color: #8a6a3a; font-weight: 700; }
@@ -201,3 +201,24 @@ table.help th, table.help td { border-bottom: 1px solid #e4d6b8; padding: 5px 4p
 table.help tr.me td { background: #fff3b0; }
 table.help tr.dim td { opacity: .55; }
 table.help .ic { width: 1.1em; height: 1.1em; }
+
+/* v15: počasí, chat, zavírání */
+#weatherBtn { position: fixed; left: 8px; top: calc(100px + var(--safe-t)); }
+#chatBtn { position: fixed; right: 8px; top: calc(100px + var(--safe-t)); }
+#chatBtn .dot { top: -2px; right: -2px; }
+body.visiting #weatherBtn, body.visiting #chatBtn { display: none !important; }
+.sheet-head { position: sticky; top: -12px; background: var(--paper); z-index: 2; padding-top: 4px; margin-top: -4px; }
+.tut-x { position: absolute; top: -10px; right: -10px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: var(--red); color: #fff; font-weight: 800; font-size: 13px; }
+.fg-box { position: relative; }
+.fg-x { position: absolute; top: -12px; right: -12px; }
+.fg-rec { color: #c8452d; font-weight: 800; margin-top: 4px; }
+#toast { cursor: pointer; }
+.chat-list { max-height: 45vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: #fffaf0; border-radius: 12px; border: 2px solid #eadbbd; }
+.chat-msg { align-self: flex-start; max-width: 85%; background: #fff; border: 1px solid #e4d6b8; border-radius: 12px 12px 12px 4px; padding: 6px 10px; font-size: 14px; word-wrap: break-word; }
+.chat-msg.mine { align-self: flex-end; background: #e6f5d8; border-radius: 12px 12px 4px 12px; }
+.chat-head { font-size: 12px; color: #8a6a3a; font-weight: 700; }
+.chat-name { background: none; border: 0; padding: 0; color: #2f6fb5; font-weight: 800; font-size: 12px; text-decoration: underline; }
+.chat-form { display: flex; gap: 6px; margin-top: 8px; }
+.chat-form input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 2px solid #d8c39a; font-size: 16px; }
+.chat-form .btn.sm { margin: 0; }
+#toast { z-index: 40; }

@@ -60,3 +60,13 @@ CREATE TABLE IF NOT EXISTS push_subs (
   last INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_push_user ON push_subs(user_id);
+
+-- v15: chat pro celý server (zprávy starší než 7 dní se mažou)
+CREATE TABLE IF NOT EXISTS chat (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_user ON chat(user_id, created);

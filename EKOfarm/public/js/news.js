@@ -1,5 +1,11 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 15, title: 'Počasí, větší ryby a chat', items: [
+    'Počasí pro všechny: jasno, polojasno, déšť a horko se střídají každé 2 hodiny. Co zasadíš v dešti, roste rychleji, v horku pomaleji. Počasí vidíš vlevo nahoře.',
+    '6 nových ryb (karas, cejn, amur, úhoř, bolen, jeseter) a 5 nových jídel. Každá ryba má váhu – velká dá 2 kusy, obří 3, a u každého druhu se ukazuje tvůj rekord.',
+    'Chat pro všechny hráče (vpravo nahoře). Klepnutím na jméno navštívíš jeho farmu.',
+    'Každé okno jde kdykoli zavřít: křížek zůstává nahoře i při posouvání, průvodce i rybaření mají křížek a hlášku zavřeš klepnutím.',
+  ] },
   { v: 14, title: 'Zvířata zase chodí', items: [
     'Ohrady mají zpátky původní vzhled: zvířata chodí po výběhu a je jich vidět tolik, kolik jich máš.',
   ] },

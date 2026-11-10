@@ -154,3 +154,20 @@ test('v10: návštěva farmy a žebříček podle úrovně', async () => {
   r = await call('/api/visit?name=nikdo', { token: a });
   assert.equal(r.status, 404);
 });
+
+test('v15: chat pro celý server', async () => {
+  const a = (await call('/api/register', { method: 'POST', body: { name: 'Chatar', password: 'tajne123' } })).data.token;
+  const b = (await call('/api/register', { method: 'POST', body: { name: 'Chatarka', password: 'tajne123' } })).data.token;
+  assert.equal((await call('/api/chat', { method: 'POST', token: a, body: { text: '   ' } })).status, 400);
+  assert.equal((await call('/api/chat', { method: 'POST', token: a, body: { text: 'Ahoj <b>všichni</b>\n' + 'x'.repeat(300) } })).status, 200);
+  assert.equal((await call('/api/chat', { method: 'POST', token: a, body: { text: 'hned znovu' } })).status, 429, 'ochrana proti spamu');
+  assert.equal((await call('/api/chat', { method: 'POST', token: b, body: { text: 'Čau!' } })).status, 200);
+  let r = await call('/api/chat', { token: b });
+  assert.equal(r.data.msgs.length, 2);
+  assert.equal(r.data.msgs[0].name, 'Chatar');
+  assert.equal(r.data.msgs[0].text.length, 200, 'zkrácená zpráva');
+  assert.ok(!r.data.msgs[0].text.includes('\n'));
+  r = await call('/api/chat?after=' + r.data.msgs[0].id, { token: a });
+  assert.deepEqual(r.data.msgs.map(m => m.text), ['Čau!']);
+  assert.equal((await call('/api/chat')).status, 401, 'jen přihlášení');
+});

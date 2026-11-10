@@ -1,7 +1,7 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townHouseAt, townObject } from './rules.js?v=14';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse } from './objects.js?v=14';
-import { drawIconText, drawIcon } from './icons.js?v=14';
+import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townHouseAt, townObject } from './rules.js?v=15';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse } from './objects.js?v=15';
+import { drawIconText, drawIcon } from './icons.js?v=15';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -459,6 +459,31 @@ export function drawScene(ctx, view) {
   // den a noc podle hodin v zařízení
   const tint = skyTint(view.hour);
   if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, W, H); }
+  drawWeather(ctx, view.weather, W, H, t);
+}
+
+// počasí přes celou obrazovku: déšť = kapky a šedivý nádech, horko = teplý nádech
+function drawWeather(ctx, w, W, H, t) {
+  if (w === 'dest') {
+    ctx.fillStyle = 'rgba(60,80,110,0.16)'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(210,225,245,0.55)'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const n = Math.round(W * H / 9000);
+    for (let i = 0; i < n; i++) {
+      const sx = (i * 97.13) % W, sp = 0.5 + ((i * 37) % 10) / 20;
+      const y = ((t * sp + i * 131) % (H + 40)) - 20, x = (sx - y * 0.25 + W) % W;
+      ctx.moveTo(x, y); ctx.lineTo(x - 4, y + 14);
+    }
+    ctx.stroke();
+  } else if (w === 'horko') {
+    ctx.fillStyle = 'rgba(255,170,60,0.10)'; ctx.fillRect(0, 0, W, H);
+  } else if (w === 'polojasno') {
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    for (let i = 0; i < 3; i++) {
+      const x = ((t / 60 + i * W / 3) % (W + 300)) - 150, y = 90 + i * H / 4;
+      ctx.beginPath(); ctx.ellipse(x, y, 140, 50, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
 }
 
 // barevný nádech podle denní doby (h = hodina s desetinami)

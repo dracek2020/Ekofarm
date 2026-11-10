@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -753,7 +753,8 @@ test('v11: rybník – udice, návnada, zabere ryba, ulovit nebo utéct, ryby p�
   const g = structuredClone(f);
   assert.equal(applyAction(g, { type: 'fishLand', id, ok: true }, T0 + 5000).fish, c1.fish, 'stejná ryba i v kopii');
   const r = applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000);
-  assert.ok(r.ok && f.silo[c1.fish] === 1 && f.stats.fish === 1);
+  assert.ok(r.ok && f.silo[c1.fish] >= 1 && f.stats.fish >= 1);
+  assert.ok(r.kg >= FISH[c1.fish].kg[0] && r.kg <= FISH[c1.fish].kg[1] && f.fishRec[c1.fish] === r.kg && r.record);
   assert.equal(applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000).error, 'no_hook');
   assert.ok(applyAction(f, { type: 'fishCast', id }, T0 + 6000).ok);
   const lost = applyAction(f, { type: 'fishLand', id, ok: false }, T0 + 7000);
@@ -798,4 +799,26 @@ test('v11: průvodce – nová farma ho má, stará ne, jde spustit znovu', () =
   const old = farm6(); old.level = 5; delete old.tut;
   normalize(old);
   assert.equal(old.tut, TUTORIAL_DONE);
+});
+
+test('v15: počasí je pro všechny stejné, mění se po 2 hodinách a mění růst', () => {
+  const seen = new Set();
+  for (let i = 0; i < 200; i++) seen.add(weatherAt(T0 + i * 7200000).id);
+  assert.equal(seen.size, 4, 'všechny druhy počasí se vyskytují');
+  assert.equal(weatherAt(T0).id, weatherAt(T0 + 1).id);
+  let rain = T0; while (weatherAt(rain).id !== 'dest') rain += 7200000;
+  const f = farm6();
+  applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'wheat' }, rain);
+  assert.equal(f.plots[0].d, 48000, 'v dešti pšenice 48 s místo 60');
+  assert.equal(applyAction(f, { type: 'harvest', x: 11, y: 8 }, rain + 49000).ok, true);
+  assert.equal(growMs(CROPS.wheat, rain), 48000);
+});
+
+test('v15: velikost ryb – váha, obří úlovek dá víc kusů, rekordy', () => {
+  const kapr = FISH.kapr;
+  assert.equal(fishSize(kapr, 1).qty, 1);
+  assert.equal(fishSize(kapr, 9).name, 'velká');
+  assert.equal(fishSize(kapr, 12).qty, 3);
+  assert.ok(FISH_LIST.length >= 14);
+  for (const x of FISH_LIST) assert.ok(x.kg[1] > x.kg[0], x.id);
 });

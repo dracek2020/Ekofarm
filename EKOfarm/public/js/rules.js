@@ -1,7 +1,7 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-export const RULES_VERSION = 11;
+export const RULES_VERSION = 15;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -131,17 +131,28 @@ export const FRUITS = {
 };
 
 // ryby z rybníka: diff = jak těžko se chytá (0..1), w = jak často zabere
-const fish = (id, name, level, price, diff, w, color) => ({ id, name, level, price, diff, w, color, icon: id, xp: 1 + Math.round(price / 8) });
+// kg = rozpětí váhy [min, max]; fem = ženský rod (pro text „utekla“)
+const fish = (id, name, level, price, diff, w, color, kg, fem = false) => ({ id, name, level, price, diff, w, color, kg, fem, icon: id, xp: 1 + Math.round(price / 8) });
 export const FISH = {
-  plotice: fish('plotice', 'Plotice', 3, 8, 0.15, 30, '#b9c7d6'),
-  kapr:    fish('kapr',    'Kapr',    4, 14, 0.3, 25, '#c9a24a'),
-  lin:     fish('lin',     'Lín',     5, 16, 0.35, 18, '#7a8a3a'),
-  okoun:   fish('okoun',   'Okoun',   6, 18, 0.45, 15, '#8fae4a'),
-  pstruh:  fish('pstruh',  'Pstruh',  8, 24, 0.55, 12, '#c98a9a'),
-  candat:  fish('candat',  'Candát',  10, 30, 0.65, 9, '#9aa8a0'),
-  stika:   fish('stika',   'Štika',   12, 36, 0.75, 7, '#6f8a4a'),
-  sumec:   fish('sumec',   'Sumec',   15, 50, 0.9, 4, '#4a4f5a'),
+  plotice: fish('plotice', 'Plotice', 3, 8, 0.15, 30, '#b9c7d6', [0.1, 0.6], true),
+  karas:   fish('karas',   'Karas',   3, 7, 0.1, 28, '#d9b44a', [0.2, 1.5]),
+  kapr:    fish('kapr',    'Kapr',    4, 14, 0.3, 25, '#c9a24a', [1, 12]),
+  cejn:    fish('cejn',    'Cejn',    5, 12, 0.3, 20, '#b0b8a0', [0.5, 4]),
+  lin:     fish('lin',     'Lín',     5, 16, 0.35, 18, '#7a8a3a', [0.5, 4]),
+  okoun:   fish('okoun',   'Okoun',   6, 18, 0.45, 15, '#8fae4a', [0.2, 2]),
+  pstruh:  fish('pstruh',  'Pstruh',  8, 24, 0.55, 12, '#c98a9a', [0.5, 5]),
+  amur:    fish('amur',    'Amur',    9, 28, 0.6, 10, '#8a9a6a', [2, 25]),
+  candat:  fish('candat',  'Candát',  10, 30, 0.65, 9, '#9aa8a0', [1, 10]),
+  uhor:    fish('uhor',    'Úhoř',    11, 34, 0.7, 8, '#5a5a3a', [0.5, 4]),
+  stika:   fish('stika',   'Štika',   12, 36, 0.75, 7, '#6f8a4a', [1, 15], true),
+  bolen:   fish('bolen',   'Bolen',   13, 40, 0.8, 6, '#a0aab8', [1, 8]),
+  sumec:   fish('sumec',   'Sumec',   15, 50, 0.9, 4, '#4a4f5a', [5, 80]),
+  jeseter: fish('jeseter', 'Jeseter', 18, 70, 0.95, 3, '#7a8a9a', [5, 60]),
 };
+// velikost úlovku: podíl v rozpětí váhy → kolik kusů do skladu
+export const FISH_SIZES = [{ min: 0.9, name: 'obří', qty: 3 }, { min: 0.65, name: 'velká', qty: 2 }, { min: 0, name: 'běžná', qty: 1 }];
+export const fishSize = (f, kg) => FISH_SIZES.find(s => (kg - f.kg[0]) / (f.kg[1] - f.kg[0]) >= s.min - 1e-9);
+export const fmtKg = kg => (kg < 1 ? `${Math.round(kg * 1000)} g` : `${(Math.round(kg * 10) / 10).toString().replace('.', ',')} kg`);
 export const FISH_LIST = Object.values(FISH);
 
 // stromy a keře do sadu: cost = sazenice, first = první úroda (s), regrow = další úroda (s), harvests = kolikrát plodí
@@ -197,6 +208,8 @@ export const PRODUCTS = {
   rybi_polevka: P('rybi_polevka', 'Rybí polévka'), smazeny_kapr: P('smazeny_kapr', 'Smažený kapr'), peceny_lin: P('peceny_lin', 'Pečený lín'),
   rybi_prsty: P('rybi_prsty', 'Rybí prsty'), uzeny_pstruh: P('uzeny_pstruh', 'Uzený pstruh'), candat_maslo: P('candat_maslo', 'Candát na másle'),
   stika_cibule: P('stika_cibule', 'Štika na cibulce'), sumcovy_gulas: P('sumcovy_gulas', 'Sumcový guláš'),
+  rybi_karbanatky: P('rybi_karbanatky', 'Rybí karbanátky'), amur_gril: P('amur_gril', 'Amur na grilu'), uzeny_uhor: P('uzeny_uhor', 'Uzený úhoř'),
+  bolen_bylinky: P('bolen_bylinky', 'Bolen na bylinkách'), kaviar: P('kaviar', 'Kaviár'),
 };
 
 // semena (Semenárna: 2 plodiny → 3 balíčky) a sazenice (Školka: 3 plody → 1 sazenice)
@@ -268,6 +281,11 @@ export const RECIPES = {
   candat_maslo:   R('candat_maslo',   'rybarna', 10, { candat: 1, maslo: 1 }, 1200, 8),
   stika_cibule:   R('stika_cibule',   'rybarna', 12, { stika: 1, cibule: 2 }, 1200, 9),
   sumcovy_gulas:  R('sumcovy_gulas',  'rybarna', 15, { sumec: 1, paprika: 2, cibule: 1 }, 1800, 12),
+  rybi_karbanatky: R('rybi_karbanatky', 'rybarna', 5, { karas: 2, cejn: 1, mouka: 1 }, 900, 5),
+  amur_gril:      R('amur_gril',      'rybarna', 9, { amur: 1, cesnek: 1, paprika: 1 }, 1200, 8),
+  uzeny_uhor:     R('uzeny_uhor',     'uzenarstvi', 11, { uhor: 2 }, 1500, 9),
+  bolen_bylinky:  R('bolen_bylinky',  'rybarna', 13, { bolen: 1, maslo: 1, cibule: 1 }, 1200, 10),
+  kaviar:         R('kaviar',         'rybarna', 18, { jeseter: 1 }, 1800, 14),
 };
 // qty = kolik kusů recept vyrobí (semena 3, jinak 1)
 for (const c of CROP_LIST) RECIPES['s_' + c.id] = { ...R('s_' + c.id, 'semenarna', c.level, { [c.id]: 2 }, 60 + Math.round(c.time / 12), 1), qty: 3 };
@@ -490,6 +508,24 @@ export function marketMult(id, now) {
 // výkupna ve skladu platí polovinu ceny (× tržní výkyv); lépe platí stánek a nejlépe zakázky
 export const sellPrice = (id, now) => Math.max(1, Math.round(ITEMS[id].price * 0.5 * marketMult(id, now)));
 export const nextMarketChange = now => (Math.floor(now / MARKET_PERIOD) + 1) * MARKET_PERIOD;
+
+// ---------- počasí (stejné pro všechny hráče, mění se každé 2 hodiny) ----------
+export const WEATHER_PERIOD = 2 * 3600 * 1000;
+export const WEATHER = {
+  jasno:     { id: 'jasno',     name: 'Jasno',         icon: 'w_sun',   w: 40, grow: 1,    fish: 1,   text: 'Pěkný den, všechno roste normálně.' },
+  polojasno: { id: 'polojasno', name: 'Polojasno',     icon: 'w_cloud', w: 25, grow: 1,    fish: 1.2, text: 'Ryby berou o něco lépe.' },
+  dest:      { id: 'dest',      name: 'Déšť',          icon: 'w_rain',  w: 22, grow: 0.8,  fish: 1.8, text: 'Co zasadíš v dešti, roste o 20 % rychleji. Ryby berou a častěji zabere velká.' },
+  horko:     { id: 'horko',     name: 'Horko a sucho', icon: 'w_hot',   w: 13, grow: 1.15, fish: 0.7, text: 'Co zasadíš v horku, roste o 15 % pomaleji. Ryby moc neberou.' },
+};
+export function weatherAt(now) {
+  const p = Math.floor(now / WEATHER_PERIOD);
+  let x = (hashStr('pocasi:' + p) % 1000) / 1000 * 100;
+  for (const w of Object.values(WEATHER)) { x -= w.w; if (x < 0) return w; }
+  return WEATHER.jasno;
+}
+export const nextWeather = now => (Math.floor(now / WEATHER_PERIOD) + 1) * WEATHER_PERIOD;
+// jak dlouho poroste plodina zasazená v čase now (ms)
+export const growMs = (c, now) => Math.round(c.time * 1000 * weatherAt(now).grow);
 
 // den pro denní odměnu (středoevropský čas, zjednodušeně UTC+1)
 export const dayKey = now => new Date(now + 3600000).toISOString().slice(0, 10);
@@ -760,10 +796,11 @@ export const hiveStock = (farm, o, now) => stockState(o, now, hiveCap(o), hiveIv
 export const beeBonus = (farm, o) => (farm.objects.some(x => x.kind === 'vcelin' && near(o, x, 4)) ? 1 : 0);
 
 // která ryba zabere (podle úrovně, s lepší udicí častěji vzácná)
-export function pickFish(farm, roll) {
+export function pickFish(farm, roll, now = 0) {
   const good = farm.machines.some(m => m.model === 'udice2');
+  const wf = weatherAt(now).fish;
   const list = FISH_LIST.filter(f => f.level <= farm.level);
-  const w = f => f.w * (good && f.diff >= 0.5 ? 1.8 : 1);
+  const w = f => f.w * (good && f.diff >= 0.5 ? 1.8 : 1) * (f.diff >= 0.5 ? wf : 1);
   let x = roll * list.reduce((n, f) => n + w(f), 0);
   for (const f of list) { x -= w(f); if (x < 0) return f.id; }
   return list[list.length - 1].id;
@@ -775,7 +812,7 @@ export const HOOK_MS = 120000;   // ryba na háčku vydrží 2 minuty
 export function readyEvents(farm, from, to) {
   const inR = t => t > from && t <= to;
   const ev = [];
-  const crops = farm.plots.filter(p => p.crop && inR(p.planted + CROPS[p.crop].time * 1000)).length;
+  const crops = farm.plots.filter(p => p.crop && inR(p.planted + (p.d || CROPS[p.crop].time * 1000))).length;
   if (crops) ev.push({ k: 'crop', text: `Úroda je zralá na ${crops} ${crops === 1 ? 'poli' : 'polích'}` });
   for (const o of farm.objects) {
     const d = BUILDINGS[o.kind];
@@ -879,7 +916,7 @@ export function runHelper(farm, now) {
         if (!p.crop) {
           if (!payCrop(farm, c, 1)) break;
           addStat(farm, 'plant', 1);
-          p.crop = c.id; p.planted = t;
+          p.crop = c.id; p.planted = t; p.d = growMs(c, t);
           h.n = (h.n || 0) + 1; cap--; touched.push([p.x, p.y]);
         }
       }
@@ -1003,7 +1040,7 @@ export function fits(farm, x, y, w, h, ignoreId = 0) {
 export function plotState(plot, now) {
   if (!plot || !plot.crop) return { state: 'empty', progress: 0, left: 0 };
   const c = CROPS[plot.crop];
-  const total = c.time * 1000;
+  const total = plot.d || c.time * 1000;
   const elapsed = Math.max(0, now - plot.planted);
   if (elapsed >= total) return { state: 'ready', progress: 1, left: 0 };
   return { state: 'growing', progress: elapsed / total, left: Math.ceil((total - elapsed) / 1000) };
@@ -1129,6 +1166,7 @@ export function applyAction(farm, a, now) {
       addStat(farm, 'plant', 1);
       p.crop = c.id;
       p.planted = now;
+      p.d = growMs(c, now);
       return { ok: true, seed: pay.seeds > 0 };
     }
     case 'harvest': {
@@ -1151,7 +1189,7 @@ export function applyAction(farm, a, now) {
       let n = 0;
       for (const p of empty) {
         if (!payCrop(farm, c, 1)) break;
-        p.crop = c.id; p.planted = now; n++;
+        p.crop = c.id; p.planted = now; p.d = growMs(c, now); n++;
       }
       if (!n) return fail('no_coins');
       addStat(farm, 'plant', n);
@@ -1395,7 +1433,7 @@ export function applyAction(farm, a, now) {
       o.soil = 'sown'; o.straw = false;
       o.crop = c.id;
       o.job = { type: 'sow', m: m.id, start: now, end: now + sec * 1000 };
-      o.readyAt = o.job.end + c.time * 1000;
+      o.readyAt = o.job.end + growMs(c, now);
       o.load = null;
       addStat(farm, 'jobs', 1);
       return { ok: true };
@@ -1556,8 +1594,13 @@ export function applyAction(farm, a, now) {
       if (have(farm, 'navnada') < 1) return fail('no_bait');
       takeItem(farm, 'navnada', 1);
       takeStock(o, now, s.cap, pondIv(o), 1);
-      o.hook = { f: pickFish(farm, rnd(farm)), t: now };
-      return { ok: true, fish: o.hook.f };
+      const f = FISH[pickFish(farm, rnd(farm), now)];
+      // váha: většinou menší kusy, v dobrém počasí a s lepší udicí častěji velké
+      const boost = weatherAt(now).fish * (farm.machines.some(m => m.model === 'udice2') ? 1.3 : 1);
+      const k = Math.pow(rnd(farm), 1.8 / boost);
+      const kg = Math.round((f.kg[0] + (f.kg[1] - f.kg[0]) * k) * 100) / 100;
+      o.hook = { f: f.id, t: now, kg };
+      return { ok: true, fish: f.id, kg };
     }
     case 'fishLand': {
       const o = findObject(farm, a.id);
@@ -1565,11 +1608,17 @@ export function applyAction(farm, a, now) {
       if (!o.hook || now - o.hook.t > HOOK_MS + 30000) { o.hook = null; return fail('no_hook'); }
       const f = FISH[o.hook.f];
       if (a.ok !== true) { o.hook = null; return { ok: true, lost: true, fish: f.id }; }
-      if (siloFree(farm) < 1) return fail('silo_full');
+      const kg = o.hook.kg || f.kg[0];
+      const size = fishSize(f, kg);
+      if (siloFree(farm) < size.qty) return fail('silo_full');
       o.hook = null;
-      addItem(farm, f.id, 1);
-      const levelUp = addXp(farm, f.xp);
-      return { ok: true, fish: f.id, gained: { items: [{ item: f.id, qty: 1 }], xp: f.xp, levelUp } };
+      addItem(farm, f.id, size.qty);
+      if (!farm.fishRec) farm.fishRec = {};
+      const record = kg > (farm.fishRec[f.id] || 0);
+      if (record) farm.fishRec[f.id] = kg;
+      const xp = f.xp * size.qty + (record ? 3 : 0);
+      const levelUp = addXp(farm, xp);
+      return { ok: true, fish: f.id, kg, size: size.name, record, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
     }
     case 'tutorial': {
       if (!isInt(a.n) || a.n < 0 || a.n > TUTORIAL_DONE) return fail('bad_action');

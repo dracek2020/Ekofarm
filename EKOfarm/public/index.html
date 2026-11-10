@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=14">
+<link rel="stylesheet" href="/css/style.css?v=15">
 </head>
 <body>
 <!--APP-->
@@ -30,9 +30,11 @@
   </div>
   <button class="pill" id="newsBtn"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
   <button class="pill" id="townBtn"><span data-ic="shop"></span><b>Městečko</b></button>
-  <div id="tut" hidden><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
+  <button class="pill" id="weatherBtn"></button>
+  <button class="pill" id="chatBtn"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
+  <div id="tut" hidden><button class="tut-x" id="tutClose" aria-label="Zavřít">✕</button><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
     <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
-  <div id="fishGame" hidden><div class="fg-box">
+  <div id="fishGame" hidden><div class="fg-box"><button class="x fg-x" id="fgClose" aria-label="Zavřít">✕</button>
     <b id="fgTitle"></b>
     <div id="fgPlay"><div class="fg-water"><div id="fgBob" class="fg-bob"></div>
       <div class="fg-bar"><div id="fgZone" class="fg-zone"></div><div id="fgFish" class="fg-fish"></div></div>
@@ -98,6 +100,6 @@ window.addEventListener('error', function (e) { showFatal(e.message || 'Chyba p�
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 setTimeout(function () { showFatal('Načítání trvá moc dlouho. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=14"></script>
+<script type="module" src="/js/main.js?v=15"></script>
 </body>
 </html>

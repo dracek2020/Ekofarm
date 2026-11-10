@@ -5,17 +5,17 @@ import {
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-  TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE,
-} from './rules.js?v=14';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=14';
-import { createBackend, ApiError } from './api.js?v=14';
-import { iconize, ic } from './icons.js?v=14';
-import { NEWS } from './news.js?v=14';
-import { sfx, soundOn, setSound } from './sfx.js?v=14';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=14';
+  TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
+} from './rules.js?v=15';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=15';
+import { createBackend, ApiError } from './api.js?v=15';
+import { iconize, ic } from './icons.js?v=15';
+import { NEWS } from './news.js?v=15';
+import { sfx, soundOn, setSound } from './sfx.js?v=15';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=15';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 
 
 const game = {
@@ -91,7 +91,7 @@ function frame(t) {
     if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, '#4f8fd6', '#3f8a25'));
     drawScene(ctx, {
       farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H,
-      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people,
+      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id,
     });
   }
   requestAnimationFrame(frame);
@@ -511,13 +511,14 @@ function updateTutorial() {
   const introDone = !f.pending.includes('sklad') && f.plots.length >= FREE_PLOTS;
   const step = TUTORIAL[n];
   if (step && !step.info && introDone && step.done(f)) { act({ type: 'tutorial', n: n + 1 }, true); return; }
-  const show = !!step && introDone && !game.place && !game.visit && !game.fishing;
+  const show = !!step && introDone && !game.place && !game.visit && !game.fishing && !game.tutHidden;
   el.hidden = !show;
   if (!show) return;
   $('tutText').innerHTML = iconize(`<small>Průvodce ${n + 1}/${TUTORIAL.length}</small><br>${step.text}`);
   $('tutNext').hidden = !step.info;
 }
 $('tutNext').addEventListener('click', () => { act({ type: 'tutorial', n: (game.farm.tut || 0) + 1 }); });
+$('tutClose').addEventListener('click', () => { $('tut').hidden = true; game.tutHidden = true; });
 $('tutSkip').addEventListener('click', () => { act({ type: 'tutorial', n: TUTORIAL_DONE }); toast('Průvodce kdykoli spustíš v Menu → Jak hrát.'); });
 
 // ---------- rybaření: zabere → klepni → drž rybu v zelené čárce ----------
@@ -527,7 +528,9 @@ function startFishing(id) {
   closeSheets();
   const good = game.farm.machines.some(m => m.model === 'udice2');
   const t = performance.now();
-  game.fishing = { id, fish: FISH[r.fish], phase: 'wait', bite: t + 1500 + Math.random() * 2500, zone: 0.2, v: 0, fy: 0.3, ft: 0.5, fnext: 0, prog: 0.3, hold: false, size: good ? 0.34 : 0.26, last: t };
+  const fsh = FISH[r.fish];
+  const ratio = Math.max(0, Math.min(1, ((r.kg || fsh.kg[0]) - fsh.kg[0]) / (fsh.kg[1] - fsh.kg[0])));
+  game.fishing = { id, fish: fsh, kg: r.kg, diff: Math.min(1, fsh.diff + 0.2 * ratio), phase: 'wait', bite: t + 1500 + Math.random() * 2500, zone: 0.2, v: 0, fy: 0.3, ft: 0.5, fnext: 0, prog: 0.3, hold: false, size: good ? 0.34 : 0.26, last: t };
   $('fgResult').hidden = true;
   $('fgPlay').hidden = false;
   $('fishGame').hidden = false;
@@ -549,9 +552,10 @@ function fishEnd(ok) {
   const o = findObject(game.farm, g.id);
   const left = o ? Math.max(0, game.farm.silo.navnada || 0) : 0;
   $('fgResultText').innerHTML = iconize(caught
-    ? `<div class="fg-big">:${g.fish.icon}:</div><b>Ulovil jsi: ${g.fish.name}!</b><br><small>+1 do skladu · ${g.fish.price} :coin: za kus · +${g.fish.xp} :xp:</small>`
+    ? `<div class="fg-big">:${g.fish.icon}:</div><b>Ulovil jsi: ${g.fish.name} – ${fmtKg(r.kg)}!</b>${r.record ? '<div class="fg-rec">:trophy: Nový rekord!</div>' : ''}
+       <br><small>${r.size === 'běžná' ? '' : `${r.size === 'obří' ? 'Obří' : 'Velká'} ryba: `}+${r.gained.items[0].qty} do skladu · ${g.fish.price} :coin: za kus · +${r.gained.xp} :xp:</small>`
     : ok && r.error === 'silo_full' ? `<div class="fg-big">:${g.fish.icon}:</div><b>Sklad je plný!</b><br><small>Uvolni místo, ryba zatím čeká na háčku.</small>`
-    : `<div class="fg-big">:${g.fish.icon}:</div><b>${g.fish.name} utekl${['plotice', 'stika'].includes(g.fish.id) ? 'a' : ''}…</b><br><small>Příště drž čárku u ryby.</small>`);
+    : `<div class="fg-big">:${g.fish.icon}:</div><b>${g.fish.name} (${fmtKg(g.kg || g.fish.kg[0])}) utekl${g.fish.fem ? 'a' : ''}…</b><br><small>Příště drž čárku u ryby.</small>`);
   $('fgAgain').textContent = `Rybařit znovu (návnada ${left})`;
 }
 function fishTick(t) {
@@ -570,7 +574,7 @@ function fishTick(t) {
   } else if (g.phase === 'bite') {
     if (t > g.biteEnd) { $('fgTitle').textContent = 'Pozdě – ryba se pustila.'; fishEnd(false); return; }
   } else if (g.phase === 'fight') {
-    const d = g.fish.diff;
+    const d = g.diff;
     // čárka: držíš = stoupá, pustíš = klesá
     g.v += (g.hold ? 2.6 : -2.2) * dt;
     g.v = Math.max(-1.2, Math.min(1.2, g.v));
@@ -600,7 +604,7 @@ function fishDown(e) {
   if (g.phase === 'wait') { $('fgTitle').textContent = 'Ještě ne… počkej, až zabere.'; return; }
   if (g.phase === 'bite') {
     g.phase = 'fight';
-    $('fgTitle').textContent = `Na háčku: ${g.fish.name}!`;
+    $('fgTitle').textContent = `Na háčku: ${g.fish.name}${fishSize(g.fish, g.kg || 0).qty > 1 ? ' – velký kus!' : '!'}`;
     $('fgHint').textContent = 'Drž prst = čárka stoupá, pusť = klesá. Udrž rybu v zelené.';
     $('fgBob').className = 'fg-bob hide';
     $('fgFish').innerHTML = ic(g.fish.icon);
@@ -611,6 +615,7 @@ $('fishGame').addEventListener('pointerdown', fishDown);
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('fishGame').addEventListener(ev, () => { if (game.fishing) game.fishing.hold = false; });
 function closeFishing() { game.fishing = null; $('fishGame').hidden = true; updateHud(); }
 $('fgQuit').addEventListener('click', () => { fishEnd(false); });
+$('fgClose').addEventListener('click', () => { if (game.fishing && game.fishing.phase !== 'end') fishEnd(false); closeFishing(); });
 $('fgDone').addEventListener('click', closeFishing);
 $('fgAgain').addEventListener('click', () => { const id = game.fishing && game.fishing.id; closeFishing(); if (id) startFishing(id); });
 
@@ -652,6 +657,14 @@ $('pushBtn').addEventListener('click', async () => {
 $('helpBtn').addEventListener('click', () => { closeSheets(); openPanel({ kind: 'help', tab: 'zaklady' }); });
 
 let toastTimer = null;
+$('toast').addEventListener('click', () => { $('toast').className = ''; });
+// Esc (klávesnice) zavře, co je otevřené
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (game.fishing) { if (game.fishing.phase === 'end') closeFishing(); else fishEnd(false); return; }
+  if (game.visit) { $('visitBack').click(); return; }
+  closeSheets(); cancelPlace(); setSow(null);
+});
 function toast(html, cls = '', ms = 1800) {
   const el = $('toast');
   el.innerHTML = iconize(html);
@@ -680,6 +693,7 @@ function openPanel(p) {
 function renderPanel() {
   const p = game.panel, f = game.farm;
   if (!p || !f) return;
+  if (p.kind === 'chat') { renderChat(); return; }
   let title = '', body = '';
   if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f); }
@@ -1070,6 +1084,74 @@ $('dayBtn').addEventListener('click', () => {
 document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
 function newsSeen() { try { return Number(localStorage.getItem('ekofarm_news') || 0); } catch { return 0; } }
 $('newsDot').hidden = newsSeen() >= NEWS[0].v;
+
+// ---------- počasí ----------
+function updateWeather() {
+  const w = weatherAt(now());
+  $('weatherBtn').innerHTML = iconize(`:${w.icon}: <b>${w.name}</b>`);
+}
+setInterval(updateWeather, 30000);
+$('weatherBtn').addEventListener('click', () => {
+  const w = weatherAt(now());
+  const left = Math.ceil((nextWeather(now()) - now()) / 1000);
+  toast(`:${w.icon}: <b>${w.name}</b><br><small>${w.text}<br>Počasí se změní za ${fmtTime(left)}.</small>`, '', 4000);
+});
+
+// ---------- chat pro všechny hráče ----------
+const chat = { msgs: [], last: 0, seen: 0, timer: null };
+try { chat.seen = Number(localStorage.getItem('ekofarm_chat_seen') || 0); } catch { /* nevadí */ }
+const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function chatPoll() {
+  if (!game.farm || game.backend.mode !== 'online') return;
+  try {
+    const r = await game.backend.chatGet(chat.last);
+    if (r.msgs.length) {
+      chat.msgs = chat.msgs.concat(r.msgs).slice(-100);
+      chat.last = r.msgs[r.msgs.length - 1].id;
+      if (game.panel && game.panel.kind === 'chat') renderChat();
+    }
+  } catch { /* zkusíme příště */ }
+  chatDot();
+}
+function chatDot() {
+  const open = game.panel && game.panel.kind === 'chat';
+  if (open && chat.last > chat.seen) { chat.seen = chat.last; try { localStorage.setItem('ekofarm_chat_seen', String(chat.seen)); } catch { /* nevadí */ } }
+  $('chatDot').hidden = open || !chat.msgs.some(m => m.id > chat.seen && m.name !== game.name);
+}
+function renderChat() {
+  const body = $('panelBody');
+  if (!$('chatList')) {
+    $('panelTitle').innerHTML = iconize(':chat: Chat všech farmářů');
+    body.innerHTML = game.backend.mode !== 'online'
+      ? '<div class="empty">Chat funguje jen v online hře.</div>'
+      : '<div id="chatList" class="chat-list"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Napiš zprávu…"><button class="btn sm" type="submit">Poslat</button></form><p class="muted">Buď na ostatní hodný. Zprávy se po 7 dnech mažou.</p>';
+    if (!$('chatForm')) return;
+    $('chatForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = $('chatInput').value.trim();
+      if (!text) return;
+      try { await game.backend.chatSend(text); $('chatInput').value = ''; chatPoll(); } catch (err) { toast(err.message); }
+    });
+  }
+  const list = $('chatList');
+  if (!list) return;
+  const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  list.innerHTML = chat.msgs.length ? chat.msgs.map(m => {
+    const mine = m.name === game.name;
+    const time = new Date(m.t).toLocaleTimeString('cs', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="chat-msg${mine ? ' mine' : ''}"><div class="chat-head">${mine ? 'Ty' : `<button class="chat-name" data-act="visit" data-v="${escHtml(m.name)}">${escHtml(m.name)}</button>`} <small>${time}</small></div><div>${escHtml(m.text)}</div></div>`;
+  }).join('') : '<div class="empty">Zatím tu nikdo nic nenapsal. Pozdrav ostatní!</div>';
+  if (atEnd || !list.dataset.init) { list.scrollTop = list.scrollHeight; list.dataset.init = '1'; }
+  chatDot();
+}
+$('chatBtn').addEventListener('click', () => {
+  cancelPlace();
+  if (game.panel && game.panel.kind === 'chat') { closeSheets(); return; }
+  openPanel({ kind: 'chat' });
+  chatPoll();
+});
+setInterval(() => { if (game.panel && game.panel.kind === 'chat') chatPoll(); }, 4000);
+setInterval(() => { if (!game.panel || game.panel.kind !== 'chat') chatPoll(); }, 20000);
 $('newsBtn').addEventListener('click', () => {
   cancelPlace();
   if (game.panel && game.panel.kind === 'news') { closeSheets(); return; }
@@ -1143,6 +1225,8 @@ function enterGame(res) {
   centerCamera();
   clampCam();
   setSow(null);
+  updateWeather();
+  chatPoll();
   if (res.created && res.google) toast(`Vítej na farmě, ${res.name}! :wheat:`, '', 2500);
   startIntro();
 }

@@ -173,7 +173,7 @@ body.visiting #bottom, body.visiting #newsBtn, body.visiting #townBtn, body.visi
 .stepper button { min-width: 34px; height: 32px; border-radius: 10px; border: 2px solid #d8c39a; background: #fff; font-weight: 800; color: var(--ink); }
 
 /* v11: průvodce, rybaření, nápověda */
-#tut { position: fixed; left: 50%; transform: translateX(-50%); top: calc(104px + var(--safe-t)); width: min(520px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 var(--wood-d); padding: 10px 12px; display: flex; gap: 10px; align-items: center; z-index: 5; font-size: 14px; }
+#tut { position: fixed; left: 50%; transform: translateX(-50%); top: calc(148px + var(--safe-t)); width: min(520px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 16px; box-shadow: 0 4px 0 var(--wood-d); padding: 10px 12px; display: flex; gap: 10px; align-items: center; z-index: 5; font-size: 14px; }
 #tut .tut-ico .ic { width: 40px; height: 40px; }
 #tutText { flex: 1; }
 #tutText small { color: #8a6a3a; font-weight: 700; }
@@ -206,6 +206,27 @@ table.help tr.me td { background: #fff3b0; }
 table.help tr.dim td { opacity: .55; }
 table.help .ic { width: 1.1em; height: 1.1em; }
 
+/* v15: počasí, chat, zavírání */
+#weatherBtn { position: fixed; left: 8px; top: calc(100px + var(--safe-t)); }
+#chatBtn { position: fixed; right: 8px; top: calc(100px + var(--safe-t)); }
+#chatBtn .dot { top: -2px; right: -2px; }
+body.visiting #weatherBtn, body.visiting #chatBtn { display: none !important; }
+.sheet-head { position: sticky; top: -12px; background: var(--paper); z-index: 2; padding-top: 4px; margin-top: -4px; }
+.tut-x { position: absolute; top: -10px; right: -10px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; background: var(--red); color: #fff; font-weight: 800; font-size: 13px; }
+.fg-box { position: relative; }
+.fg-x { position: absolute; top: -12px; right: -12px; }
+.fg-rec { color: #c8452d; font-weight: 800; margin-top: 4px; }
+#toast { cursor: pointer; }
+.chat-list { max-height: 45vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; background: #fffaf0; border-radius: 12px; border: 2px solid #eadbbd; }
+.chat-msg { align-self: flex-start; max-width: 85%; background: #fff; border: 1px solid #e4d6b8; border-radius: 12px 12px 12px 4px; padding: 6px 10px; font-size: 14px; word-wrap: break-word; }
+.chat-msg.mine { align-self: flex-end; background: #e6f5d8; border-radius: 12px 12px 4px 12px; }
+.chat-head { font-size: 12px; color: #8a6a3a; font-weight: 700; }
+.chat-name { background: none; border: 0; padding: 0; color: #2f6fb5; font-weight: 800; font-size: 12px; text-decoration: underline; }
+.chat-form { display: flex; gap: 6px; margin-top: 8px; }
+.chat-form input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 2px solid #d8c39a; font-size: 16px; }
+.chat-form .btn.sm { margin: 0; }
+#toast { z-index: 40; }
+
 </style>
 
 <canvas id="game"></canvas>
@@ -225,9 +246,11 @@ table.help .ic { width: 1.1em; height: 1.1em; }
   </div>
   <button class="pill" id="newsBtn"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
   <button class="pill" id="townBtn"><span data-ic="shop"></span><b>Městečko</b></button>
-  <div id="tut" hidden><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
+  <button class="pill" id="weatherBtn"></button>
+  <button class="pill" id="chatBtn"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
+  <div id="tut" hidden><button class="tut-x" id="tutClose" aria-label="Zavřít">✕</button><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
     <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
-  <div id="fishGame" hidden><div class="fg-box">
+  <div id="fishGame" hidden><div class="fg-box"><button class="x fg-x" id="fgClose" aria-label="Zavřít">✕</button>
     <b id="fgTitle"></b>
     <div id="fgPlay"><div class="fg-water"><div id="fgBob" class="fg-bob"></div>
       <div class="fg-bar"><div id="fgZone" class="fg-zone"></div><div id="fgFish" class="fg-fish"></div></div>
@@ -336,7 +359,7 @@ const SPRITE_DATA = {
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-const RULES_VERSION = 11;
+const RULES_VERSION = 15;
 const GRID_W = 17;
 const GRID_H = 17;
 const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -466,17 +489,28 @@ const FRUITS = {
 };
 
 // ryby z rybníka: diff = jak těžko se chytá (0..1), w = jak často zabere
-const fish = (id, name, level, price, diff, w, color) => ({ id, name, level, price, diff, w, color, icon: id, xp: 1 + Math.round(price / 8) });
+// kg = rozpětí váhy [min, max]; fem = ženský rod (pro text „utekla“)
+const fish = (id, name, level, price, diff, w, color, kg, fem = false) => ({ id, name, level, price, diff, w, color, kg, fem, icon: id, xp: 1 + Math.round(price / 8) });
 const FISH = {
-  plotice: fish('plotice', 'Plotice', 3, 8, 0.15, 30, '#b9c7d6'),
-  kapr:    fish('kapr',    'Kapr',    4, 14, 0.3, 25, '#c9a24a'),
-  lin:     fish('lin',     'Lín',     5, 16, 0.35, 18, '#7a8a3a'),
-  okoun:   fish('okoun',   'Okoun',   6, 18, 0.45, 15, '#8fae4a'),
-  pstruh:  fish('pstruh',  'Pstruh',  8, 24, 0.55, 12, '#c98a9a'),
-  candat:  fish('candat',  'Candát',  10, 30, 0.65, 9, '#9aa8a0'),
-  stika:   fish('stika',   'Štika',   12, 36, 0.75, 7, '#6f8a4a'),
-  sumec:   fish('sumec',   'Sumec',   15, 50, 0.9, 4, '#4a4f5a'),
+  plotice: fish('plotice', 'Plotice', 3, 8, 0.15, 30, '#b9c7d6', [0.1, 0.6], true),
+  karas:   fish('karas',   'Karas',   3, 7, 0.1, 28, '#d9b44a', [0.2, 1.5]),
+  kapr:    fish('kapr',    'Kapr',    4, 14, 0.3, 25, '#c9a24a', [1, 12]),
+  cejn:    fish('cejn',    'Cejn',    5, 12, 0.3, 20, '#b0b8a0', [0.5, 4]),
+  lin:     fish('lin',     'Lín',     5, 16, 0.35, 18, '#7a8a3a', [0.5, 4]),
+  okoun:   fish('okoun',   'Okoun',   6, 18, 0.45, 15, '#8fae4a', [0.2, 2]),
+  pstruh:  fish('pstruh',  'Pstruh',  8, 24, 0.55, 12, '#c98a9a', [0.5, 5]),
+  amur:    fish('amur',    'Amur',    9, 28, 0.6, 10, '#8a9a6a', [2, 25]),
+  candat:  fish('candat',  'Candát',  10, 30, 0.65, 9, '#9aa8a0', [1, 10]),
+  uhor:    fish('uhor',    'Úhoř',    11, 34, 0.7, 8, '#5a5a3a', [0.5, 4]),
+  stika:   fish('stika',   'Štika',   12, 36, 0.75, 7, '#6f8a4a', [1, 15], true),
+  bolen:   fish('bolen',   'Bolen',   13, 40, 0.8, 6, '#a0aab8', [1, 8]),
+  sumec:   fish('sumec',   'Sumec',   15, 50, 0.9, 4, '#4a4f5a', [5, 80]),
+  jeseter: fish('jeseter', 'Jeseter', 18, 70, 0.95, 3, '#7a8a9a', [5, 60]),
 };
+// velikost úlovku: podíl v rozpětí váhy → kolik kusů do skladu
+const FISH_SIZES = [{ min: 0.9, name: 'obří', qty: 3 }, { min: 0.65, name: 'velká', qty: 2 }, { min: 0, name: 'běžná', qty: 1 }];
+const fishSize = (f, kg) => FISH_SIZES.find(s => (kg - f.kg[0]) / (f.kg[1] - f.kg[0]) >= s.min - 1e-9);
+const fmtKg = kg => (kg < 1 ? `${Math.round(kg * 1000)} g` : `${(Math.round(kg * 10) / 10).toString().replace('.', ',')} kg`);
 const FISH_LIST = Object.values(FISH);
 
 // stromy a keře do sadu: cost = sazenice, first = první úroda (s), regrow = další úroda (s), harvests = kolikrát plodí
@@ -532,6 +566,8 @@ const PRODUCTS = {
   rybi_polevka: P('rybi_polevka', 'Rybí polévka'), smazeny_kapr: P('smazeny_kapr', 'Smažený kapr'), peceny_lin: P('peceny_lin', 'Pečený lín'),
   rybi_prsty: P('rybi_prsty', 'Rybí prsty'), uzeny_pstruh: P('uzeny_pstruh', 'Uzený pstruh'), candat_maslo: P('candat_maslo', 'Candát na másle'),
   stika_cibule: P('stika_cibule', 'Štika na cibulce'), sumcovy_gulas: P('sumcovy_gulas', 'Sumcový guláš'),
+  rybi_karbanatky: P('rybi_karbanatky', 'Rybí karbanátky'), amur_gril: P('amur_gril', 'Amur na grilu'), uzeny_uhor: P('uzeny_uhor', 'Uzený úhoř'),
+  bolen_bylinky: P('bolen_bylinky', 'Bolen na bylinkách'), kaviar: P('kaviar', 'Kaviár'),
 };
 
 // semena (Semenárna: 2 plodiny → 3 balíčky) a sazenice (Školka: 3 plody → 1 sazenice)
@@ -603,6 +639,11 @@ const RECIPES = {
   candat_maslo:   R('candat_maslo',   'rybarna', 10, { candat: 1, maslo: 1 }, 1200, 8),
   stika_cibule:   R('stika_cibule',   'rybarna', 12, { stika: 1, cibule: 2 }, 1200, 9),
   sumcovy_gulas:  R('sumcovy_gulas',  'rybarna', 15, { sumec: 1, paprika: 2, cibule: 1 }, 1800, 12),
+  rybi_karbanatky: R('rybi_karbanatky', 'rybarna', 5, { karas: 2, cejn: 1, mouka: 1 }, 900, 5),
+  amur_gril:      R('amur_gril',      'rybarna', 9, { amur: 1, cesnek: 1, paprika: 1 }, 1200, 8),
+  uzeny_uhor:     R('uzeny_uhor',     'uzenarstvi', 11, { uhor: 2 }, 1500, 9),
+  bolen_bylinky:  R('bolen_bylinky',  'rybarna', 13, { bolen: 1, maslo: 1, cibule: 1 }, 1200, 10),
+  kaviar:         R('kaviar',         'rybarna', 18, { jeseter: 1 }, 1800, 14),
 };
 // qty = kolik kusů recept vyrobí (semena 3, jinak 1)
 for (const c of CROP_LIST) RECIPES['s_' + c.id] = { ...R('s_' + c.id, 'semenarna', c.level, { [c.id]: 2 }, 60 + Math.round(c.time / 12), 1), qty: 3 };
@@ -825,6 +866,24 @@ function marketMult(id, now) {
 // výkupna ve skladu platí polovinu ceny (× tržní výkyv); lépe platí stánek a nejlépe zakázky
 const sellPrice = (id, now) => Math.max(1, Math.round(ITEMS[id].price * 0.5 * marketMult(id, now)));
 const nextMarketChange = now => (Math.floor(now / MARKET_PERIOD) + 1) * MARKET_PERIOD;
+
+// ---------- počasí (stejné pro všechny hráče, mění se každé 2 hodiny) ----------
+const WEATHER_PERIOD = 2 * 3600 * 1000;
+const WEATHER = {
+  jasno:     { id: 'jasno',     name: 'Jasno',         icon: 'w_sun',   w: 40, grow: 1,    fish: 1,   text: 'Pěkný den, všechno roste normálně.' },
+  polojasno: { id: 'polojasno', name: 'Polojasno',     icon: 'w_cloud', w: 25, grow: 1,    fish: 1.2, text: 'Ryby berou o něco lépe.' },
+  dest:      { id: 'dest',      name: 'Déšť',          icon: 'w_rain',  w: 22, grow: 0.8,  fish: 1.8, text: 'Co zasadíš v dešti, roste o 20 % rychleji. Ryby berou a častěji zabere velká.' },
+  horko:     { id: 'horko',     name: 'Horko a sucho', icon: 'w_hot',   w: 13, grow: 1.15, fish: 0.7, text: 'Co zasadíš v horku, roste o 15 % pomaleji. Ryby moc neberou.' },
+};
+function weatherAt(now) {
+  const p = Math.floor(now / WEATHER_PERIOD);
+  let x = (hashStr('pocasi:' + p) % 1000) / 1000 * 100;
+  for (const w of Object.values(WEATHER)) { x -= w.w; if (x < 0) return w; }
+  return WEATHER.jasno;
+}
+const nextWeather = now => (Math.floor(now / WEATHER_PERIOD) + 1) * WEATHER_PERIOD;
+// jak dlouho poroste plodina zasazená v čase now (ms)
+const growMs = (c, now) => Math.round(c.time * 1000 * weatherAt(now).grow);
 
 // den pro denní odměnu (středoevropský čas, zjednodušeně UTC+1)
 const dayKey = now => new Date(now + 3600000).toISOString().slice(0, 10);
@@ -1095,10 +1154,11 @@ const hiveStock = (farm, o, now) => stockState(o, now, hiveCap(o), hiveIv(farm, 
 const beeBonus = (farm, o) => (farm.objects.some(x => x.kind === 'vcelin' && near(o, x, 4)) ? 1 : 0);
 
 // která ryba zabere (podle úrovně, s lepší udicí častěji vzácná)
-function pickFish(farm, roll) {
+function pickFish(farm, roll, now = 0) {
   const good = farm.machines.some(m => m.model === 'udice2');
+  const wf = weatherAt(now).fish;
   const list = FISH_LIST.filter(f => f.level <= farm.level);
-  const w = f => f.w * (good && f.diff >= 0.5 ? 1.8 : 1);
+  const w = f => f.w * (good && f.diff >= 0.5 ? 1.8 : 1) * (f.diff >= 0.5 ? wf : 1);
   let x = roll * list.reduce((n, f) => n + w(f), 0);
   for (const f of list) { x -= w(f); if (x < 0) return f.id; }
   return list[list.length - 1].id;
@@ -1110,7 +1170,7 @@ const HOOK_MS = 120000;   // ryba na háčku vydrží 2 minuty
 function readyEvents(farm, from, to) {
   const inR = t => t > from && t <= to;
   const ev = [];
-  const crops = farm.plots.filter(p => p.crop && inR(p.planted + CROPS[p.crop].time * 1000)).length;
+  const crops = farm.plots.filter(p => p.crop && inR(p.planted + (p.d || CROPS[p.crop].time * 1000))).length;
   if (crops) ev.push({ k: 'crop', text: `Úroda je zralá na ${crops} ${crops === 1 ? 'poli' : 'polích'}` });
   for (const o of farm.objects) {
     const d = BUILDINGS[o.kind];
@@ -1214,7 +1274,7 @@ function runHelper(farm, now) {
         if (!p.crop) {
           if (!payCrop(farm, c, 1)) break;
           addStat(farm, 'plant', 1);
-          p.crop = c.id; p.planted = t;
+          p.crop = c.id; p.planted = t; p.d = growMs(c, t);
           h.n = (h.n || 0) + 1; cap--; touched.push([p.x, p.y]);
         }
       }
@@ -1338,7 +1398,7 @@ function fits(farm, x, y, w, h, ignoreId = 0) {
 function plotState(plot, now) {
   if (!plot || !plot.crop) return { state: 'empty', progress: 0, left: 0 };
   const c = CROPS[plot.crop];
-  const total = c.time * 1000;
+  const total = plot.d || c.time * 1000;
   const elapsed = Math.max(0, now - plot.planted);
   if (elapsed >= total) return { state: 'ready', progress: 1, left: 0 };
   return { state: 'growing', progress: elapsed / total, left: Math.ceil((total - elapsed) / 1000) };
@@ -1464,6 +1524,7 @@ function applyAction(farm, a, now) {
       addStat(farm, 'plant', 1);
       p.crop = c.id;
       p.planted = now;
+      p.d = growMs(c, now);
       return { ok: true, seed: pay.seeds > 0 };
     }
     case 'harvest': {
@@ -1486,7 +1547,7 @@ function applyAction(farm, a, now) {
       let n = 0;
       for (const p of empty) {
         if (!payCrop(farm, c, 1)) break;
-        p.crop = c.id; p.planted = now; n++;
+        p.crop = c.id; p.planted = now; p.d = growMs(c, now); n++;
       }
       if (!n) return fail('no_coins');
       addStat(farm, 'plant', n);
@@ -1730,7 +1791,7 @@ function applyAction(farm, a, now) {
       o.soil = 'sown'; o.straw = false;
       o.crop = c.id;
       o.job = { type: 'sow', m: m.id, start: now, end: now + sec * 1000 };
-      o.readyAt = o.job.end + c.time * 1000;
+      o.readyAt = o.job.end + growMs(c, now);
       o.load = null;
       addStat(farm, 'jobs', 1);
       return { ok: true };
@@ -1891,8 +1952,13 @@ function applyAction(farm, a, now) {
       if (have(farm, 'navnada') < 1) return fail('no_bait');
       takeItem(farm, 'navnada', 1);
       takeStock(o, now, s.cap, pondIv(o), 1);
-      o.hook = { f: pickFish(farm, rnd(farm)), t: now };
-      return { ok: true, fish: o.hook.f };
+      const f = FISH[pickFish(farm, rnd(farm), now)];
+      // váha: většinou menší kusy, v dobrém počasí a s lepší udicí častěji velké
+      const boost = weatherAt(now).fish * (farm.machines.some(m => m.model === 'udice2') ? 1.3 : 1);
+      const k = Math.pow(rnd(farm), 1.8 / boost);
+      const kg = Math.round((f.kg[0] + (f.kg[1] - f.kg[0]) * k) * 100) / 100;
+      o.hook = { f: f.id, t: now, kg };
+      return { ok: true, fish: f.id, kg };
     }
     case 'fishLand': {
       const o = findObject(farm, a.id);
@@ -1900,11 +1966,17 @@ function applyAction(farm, a, now) {
       if (!o.hook || now - o.hook.t > HOOK_MS + 30000) { o.hook = null; return fail('no_hook'); }
       const f = FISH[o.hook.f];
       if (a.ok !== true) { o.hook = null; return { ok: true, lost: true, fish: f.id }; }
-      if (siloFree(farm) < 1) return fail('silo_full');
+      const kg = o.hook.kg || f.kg[0];
+      const size = fishSize(f, kg);
+      if (siloFree(farm) < size.qty) return fail('silo_full');
       o.hook = null;
-      addItem(farm, f.id, 1);
-      const levelUp = addXp(farm, f.xp);
-      return { ok: true, fish: f.id, gained: { items: [{ item: f.id, qty: 1 }], xp: f.xp, levelUp } };
+      addItem(farm, f.id, size.qty);
+      if (!farm.fishRec) farm.fishRec = {};
+      const record = kg > (farm.fishRec[f.id] || 0);
+      if (record) farm.fishRec[f.id] = kg;
+      const xp = f.xp * size.qty + (record ? 3 : 0);
+      const levelUp = addXp(farm, xp);
+      return { ok: true, fish: f.id, kg, size: size.name, record, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
     }
     case 'tutorial': {
       if (!isInt(a.n) || a.n < 0 || a.n > TUTORIAL_DONE) return fail('bad_action');
@@ -1973,6 +2045,12 @@ function mergeItems(list) {
 // ---- public/js/news.js ----
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 const NEWS = [
+  { v: 15, title: 'Počasí, větší ryby a chat', items: [
+    'Počasí pro všechny: jasno, polojasno, déšť a horko se střídají každé 2 hodiny. Co zasadíš v dešti, roste rychleji, v horku pomaleji. Počasí vidíš vlevo nahoře.',
+    '6 nových ryb (karas, cejn, amur, úhoř, bolen, jeseter) a 5 nových jídel. Každá ryba má váhu – velká dá 2 kusy, obří 3, a u každého druhu se ukazuje tvůj rekord.',
+    'Chat pro všechny hráče (vpravo nahoře). Klepnutím na jméno navštívíš jeho farmu.',
+    'Každé okno jde kdykoli zavřít: křížek zůstává nahoře i při posouvání, průvodce i rybaření mají křížek a hlášku zavřeš klepnutím.',
+  ] },
   { v: 14, title: 'Zvířata zase chodí', items: [
     'Ohrady mají zpátky původní vzhled: zvířata chodí po výběhu a je jich vidět tolik, kolik jich máš.',
   ] },
@@ -2188,6 +2266,23 @@ Object.assign(ICONS, {
   hive: S('<path d="M6 28h20" stroke="#7a4e2a" stroke-width="2.4"/><path d="M8 26c-3-3-3-8 0-11 1-6 15-6 16 0 3 3 3 8 0 11z" fill="#e8b04a"/><path d="M7 17h18M6 21h20M8 25h16" stroke="#b5803a" stroke-width="1.4"/><ellipse cx="16" cy="23" rx="2" ry="1.6" fill="#4a3218"/><ellipse cx="24" cy="7" rx="3" ry="2.2" fill="#f5c542"/><path d="M22.5 7h3" stroke="#2f2a26" stroke-width="1.2"/><ellipse cx="23.6" cy="5" rx="1.8" ry="1" fill="#e9f2f5"/>'),
   udice: S('<path d="M5 29L26 3" stroke="#a7703d" stroke-width="2.4" stroke-linecap="round"/><path d="M26 3v18" stroke="#9aa3ab" stroke-width="1"/><path d="M26 21c0 3-3 3-3 1" stroke="#8a8f96" stroke-width="1.4" fill="none"/><circle cx="9" cy="24" r="2.6" fill="#8a8f96"/>'),
   udice2: S('<path d="M5 29L26 3" stroke="#2f2a26" stroke-width="2.4" stroke-linecap="round"/><path d="M8 25.4l3.4-4.2" stroke="#d9b43b" stroke-width="2.6"/><path d="M26 3v18" stroke="#9aa3ab" stroke-width="1"/><path d="M26 21c0 3-3 3-3 1" stroke="#8a8f96" stroke-width="1.4" fill="none"/><circle cx="9" cy="24" r="2.6" fill="#c8452d"/>'),
+  // ---- v15: další ryby, jídla, počasí, chat ----
+  karas: fishIc('#d9b44a', '#f5e0a0', '#b08a2a', '', 0.8),
+  cejn: S('<path d="M5 16c3-8 13-10 18-1-5 9-15 8-18 1z" fill="#b0b8a0"/><path d="M8 18c4 2 10 2 14-1" stroke="#e0e6d8" stroke-width="2" fill="none"/><path d="M22 15l8-6v13z" fill="#8a9480"/><path d="M12 8l5-3 3 5z" fill="#8a9480"/><circle cx="9" cy="14" r="1.4" fill="#2f2a26"/>'),
+  amur: fishIc('#8a9a6a', '#c8d0a8', '#6a7a4a', [11, 15, 19].map(x => `<path d="M${x} 12c1 1 1 3 0 4" stroke="#6a7a4a" stroke-width="1" fill="none"/>`).join('')),
+  uhor: S('<path d="M3 18c4-6 8 2 12-2s8-6 13 0c-4 0-6 3-9 4s-7 4-11 2c-2-1-4-2-5-4z" fill="#5a5a3a"/><path d="M6 19c4 1 9-1 13-3" stroke="#a8a070" stroke-width="1.6" fill="none"/><circle cx="25" cy="16" r="1.2" fill="#2f2a26"/>'),
+  bolen: fishIc('#a0aab8', '#e8edf3', '#7a8494', '<path d="M7 16h3" stroke="#2f2a26" stroke-width="1.6"/>', 0.95),
+  jeseter: S('<path d="M2 16c6-5 16-6 22-2l6-5v14l-6-5c-6 4-16 3-22-2z" fill="#7a8a9a"/>' + [8, 12, 16, 20].map(x => `<path d="M${x} 12l1.5-2 1.5 2z" fill="#dfe6ee"/>`).join('') + '<path d="M2 16l-1 3" stroke="#5a6a7a" stroke-width="1.4"/><circle cx="6" cy="15" r="1" fill="#2f2a26"/>'),
+  rybi_karbanatky: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/>' + [[10, 19], [17, 21], [22, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3.4" fill="#c98a4a"/><ellipse cx="${x - 1}" cy="${y - 1}" rx="2.4" ry="1.2" fill="#e0b070"/>`).join('')),
+  amur_gril: S('<path d="M3 24h26M3 20h26" stroke="#4a4f5a" stroke-width="1.6"/><path d="M5 18c4-6 14-7 19-1-5 6-15 6-19 1z" fill="#a89a5a"/><path d="M24 17l5-3v7z" fill="#8a7a4a"/><path d="M10 15l2 5M15 14l2 6M20 15l2 5" stroke="#4a3a20" stroke-width="1.6"/>'),
+  uzeny_uhor: S('<path d="M16 2v5" stroke="#7a4e2a" stroke-width="2"/><path d="M16 7c-6 2-8 6-4 9s4 7-2 9c4 2 10 1 12-3s-4-7-2-10 2-4-4-5z" fill="#8a5a2a"/><path d="M14 10c-2 2-1 4 1 5" stroke="#d9a05b" stroke-width="1.4" fill="none"/>'),
+  bolen_bylinky: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/><path d="M6 20c4-5 14-6 20-1-6 5-16 5-20 1z" fill="#c8d0dc"/>' + [[10, 17], [15, 16], [20, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="1" fill="#5fae3a" transform="rotate(-30 ${x} ${y})"/>`).join('') + '<rect x="12" y="20" width="6" height="3" rx="1" fill="#f5e07a"/>'),
+  kaviar: S('<ellipse cx="16" cy="24" rx="12" ry="4" fill="#9fb7c9"/><path d="M5 14h22v8a11 4 0 01-22 0z" fill="#d9e6ee" stroke="#9fb7c9"/><ellipse cx="16" cy="14" rx="11" ry="3.6" fill="#2f2a26"/>' + [[10, 14], [14, 13], [18, 14], [22, 13], [16, 15]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#6a6a7a"/>`).join('')),
+  w_sun: S('<circle cx="16" cy="16" r="7" fill="#f5c542"/>' + Array.from({ length: 8 }, (_, i) => `<rect x="15" y="2" width="2" height="5" rx="1" fill="#f5a02e" transform="rotate(${i * 45} 16 16)"/>`).join('')),
+  w_cloud: S('<circle cx="11" cy="11" r="6" fill="#f5c542"/><path d="M8 26a6 6 0 010-12 8 8 0 0115 2 5 5 0 011 10z" fill="#e9f2f5" stroke="#b8c7d0"/>'),
+  w_rain: S('<path d="M8 19a6 6 0 010-12 8 8 0 0115 2 5 5 0 011 10z" fill="#b8c7d0" stroke="#8a9aa8"/>' + [[10, 23], [16, 25], [22, 23]].map(([x, y]) => `<path d="M${x} ${y}l-2 5" stroke="#4f8fd6" stroke-width="2.2" stroke-linecap="round"/>`).join('')),
+  w_hot: S('<circle cx="16" cy="13" r="7" fill="#f08a24"/>' + Array.from({ length: 8 }, (_, i) => `<rect x="15" y="0" width="2" height="4" rx="1" fill="#e0602d" transform="rotate(${i * 45} 16 13)"/>`).join('') + '<path d="M5 26c3-2 5 2 8 0s5 2 8 0 5 2 7 0" stroke="#c9a24a" stroke-width="2" fill="none"/>'),
+  chat: S('<path d="M4 6h24a2 2 0 012 2v13a2 2 0 01-2 2H13l-6 5v-5H4a2 2 0 01-2-2V8a2 2 0 012-2z" fill="#4f8fd6"/><circle cx="10" cy="14.5" r="2" fill="#fff"/><circle cx="16" cy="14.5" r="2" fill="#fff"/><circle cx="22" cy="14.5" r="2" fill="#fff"/>'),
   book: S('<path d="M4 6c4-2 8-2 12 1v21c-4-3-8-3-12-1z" fill="#4f8fd6"/><path d="M28 6c-4-2-8-2-12 1v21c4-3 8-3 12-1z" fill="#3f6fb5"/><path d="M7 10c2-1 4-1 6 0M7 14c2-1 4-1 6 0M19 10c2-1 4-1 6 0M19 14c2-1 4-1 6 0" stroke="#cfe8f5" stroke-width="1.2" fill="none"/>'),
   bell: S('<path d="M16 4a2 2 0 012 2c5 1 7 5 7 10v5l3 3H4l3-3v-5c0-5 2-9 7-10a2 2 0 012-2z" fill="#f5c542"/><circle cx="16" cy="27" r="3" fill="#e09a12"/>'),
 });
@@ -2770,6 +2865,31 @@ function drawScene(ctx, view) {
   // den a noc podle hodin v zařízení
   const tint = skyTint(view.hour);
   if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, W, H); }
+  drawWeather(ctx, view.weather, W, H, t);
+}
+
+// počasí přes celou obrazovku: déšť = kapky a šedivý nádech, horko = teplý nádech
+function drawWeather(ctx, w, W, H, t) {
+  if (w === 'dest') {
+    ctx.fillStyle = 'rgba(60,80,110,0.16)'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(210,225,245,0.55)'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const n = Math.round(W * H / 9000);
+    for (let i = 0; i < n; i++) {
+      const sx = (i * 97.13) % W, sp = 0.5 + ((i * 37) % 10) / 20;
+      const y = ((t * sp + i * 131) % (H + 40)) - 20, x = (sx - y * 0.25 + W) % W;
+      ctx.moveTo(x, y); ctx.lineTo(x - 4, y + 14);
+    }
+    ctx.stroke();
+  } else if (w === 'horko') {
+    ctx.fillStyle = 'rgba(255,170,60,0.10)'; ctx.fillRect(0, 0, W, H);
+  } else if (w === 'polojasno') {
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    for (let i = 0; i < 3; i++) {
+      const x = ((t / 60 + i * W / 3) % (W + 300)) - 150, y = 90 + i * H / 4;
+      ctx.beginPath(); ctx.ellipse(x, y, 140, 50, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
 }
 
 // barevný nádech podle denní doby (h = hodina s desetinami)
@@ -4204,13 +4324,17 @@ function pondHtml(farm, o, now) {
   const s = pondStock(o, now);
   const rod = farm.machines.find(m => m.model === 'udice2') || farm.machines.find(m => m.model === 'udice');
   const bait = have(farm, 'navnada');
-  const fishRows = FISH_LIST.map(f => `<span class="chip${farm.level < f.level ? ' dim' : ''}">:${f.icon}: ${f.name} ${farm.level < f.level ? `:lock: ${f.level}` : `${f.price} :coin:`}</span>`).join('');
+  const rec = farm.fishRec || {};
+  const fishRows = FISH_LIST.map(f => `<span class="chip${farm.level < f.level ? ' dim' : ''}">:${f.icon}: ${f.name} ${farm.level < f.level ? `:lock: ${f.level}` : rec[f.id] ? `:trophy: ${fmtKg(rec[f.id])}` : `${f.price} :coin:`}</span>`).join('');
+  const w = weatherAt(now);
   const need = !rod ? '<div class="empty">:udice: Na rybaření potřebuješ <b>udici</b> – koupíš ji v Prodejně strojů v městečku.</div>'
     : !bait ? '<div class="empty">:navnada: Došla ti <b>návnada</b>. Vyrob ji v Krmivárně (1 pšenice + 1 kukuřice = 3 návnady).</div>' : '';
   return `<div class="row"><span class="ico">:pond:</span><div class="info"><b>Ryby v rybníku: ${s.count}/${s.cap}</b>
       <small>${s.count < s.cap ? `další ryba za ${fmtTime(Math.ceil(s.next / 1000))}` : 'rybník je plný'} · návnada ${bait} :navnada:${rod ? ` · ${MACHINES[rod.model].name}` : ''}</small></div></div>
     ${need}
     <button class="btn${rod && bait && s.count ? '' : ' off'}" data-act="fish" data-v="${o.id}">:udice: Rybařit (1 návnada)</button>
+    <p class="muted">:${w.icon}: ${w.name}: ${w.fish > 1 ? 'ryby teď berou dobře a častěji zabere velká.' : w.fish < 1 ? 'ryby teď moc neberou.' : 'běžné rybaření.'}
+      Velká ryba dá 2 kusy, obří 3. U každé ryby se ukazuje tvůj rekord :trophy:.</p>
     <p class="muted">Hodíš udici a čekáš. Když ryba zabere, rychle klepni. Pak drž prst na obrazovce, aby zelená čárka zůstala u ryby, dokud se ukazatel nenaplní. Těžší ryby víc uhýbají.</p>
     <div class="chips">${fishRows}</div>
     ${upgradeBlock(farm, o)}<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout rybník</button>`;
@@ -4240,7 +4364,7 @@ const TUTORIAL = [
 ];
 
 // ---------- v11: pravidla a nápověda (Menu → Jak hrát) ----------
-const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Městečko'], ['ryby', 'Rybník a včely'], ['tipy', 'Upozornění']];
+const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Městečko'], ['ryby', 'Rybník a včely'], ['tipy', 'Počasí a další']];
 function helpHtml(farm, tab = 'zaklady') {
   const tabs = `<div class="tabs">${HELP_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="htab" data-v="${id}">${n}</button>`).join('')}</div>`;
   const p = t => `<p class="muted">${t}</p>`;
@@ -4286,12 +4410,15 @@ function helpHtml(farm, tab = 'zaklady') {
     body = p('<b>:pond: Rybník</b> (od Statku 2): kup <b>udici</b> v Prodejně strojů a vyrob <b>návnadu</b> v Krmivárně. Klepni na rybník → Rybařit.')
       + p('Až ryba <b>zabere</b>, rychle klepni. Pak <b>drž prst</b> na obrazovce – zelená čárka stoupá, pustíš – klesá. Drž rybu v čárce, dokud se ukazatel nenaplní. Když ukazatel spadne na nulu, ryba uteče. Karbonová udice má širší čárku a častěji zabere vzácná ryba.')
       + p('V rybníku je jen pár ryb, každých 10 minut jedna přibude. Ryby prodáš, nebo z nich uděláš jídla v <b>Rybárně</b>.')
-      + `<div class="chips">${FISH_LIST.map(f => `<span class="chip">:${f.icon}: ${f.name} · úr. ${f.level} · ${f.price} :coin:</span>`).join('')}</div>`
+      + p('<b>Velikost:</b> každá ryba má váhu. Velká ryba dá do skladu 2 kusy, obří 3 a je těžší ji udržet. Největší úlovek každého druhu se ukazuje jako rekord. V dešti a s karbonovou udicí častěji zabere velká a vzácná ryba.')
+      + `<div class="chips">${FISH_LIST.map(f => `<span class="chip">:${f.icon}: ${f.name} · úr. ${f.level} · ${fmtKg(f.kg[0])}–${fmtKg(f.kg[1])} · ${f.price} :coin:</span>`).join('')}</div>`
       + p('<b>:hive: Včelín</b> (od Statku 3): včely samy dělají <b>plástve medu</b>. Květiny, kvetoucí strom nebo sad do 4 políček je zrychlí. Sady blízko včelína dají při sklizni o 1 plod víc. <b>Medárna</b> z pláství udělá med a svíčky, Pekárna perník a medovník.');
   } else {
     body = p('<b>:bell: Upozornění</b> ti do telefonu napíše, když je úroda zralá, výroba hotová nebo když ti někdo koupil zboží na tržišti. Zapneš je v Menu.')
       + p('<b>iPhone a iPad:</b> nejdřív v Safari klepni na Sdílet → <b>Přidat na plochu</b>, otevři hru z plochy a teprve tam upozornění zapni.')
       + p('<b>Android:</b> stačí Menu → Zapnout upozornění a povolit.')
+      + p('<b>:w_sun: Počasí</b> je stejné pro všechny a mění se každé 2 hodiny (vlevo nahoře). ' + Object.values(WEATHER).map(x => `:${x.icon}: <b>${x.name}</b>: ${x.text}`).join(' '))
+      + p('<b>:chat: Chat</b> (vpravo nahoře) je společný pro všechny hráče. Klepnutím na jméno navštívíš jeho farmu.')
       + p('<b>:gift: Denní odměna</b> roste 7 dní po sobě. <b>Denních úkolů</b> je každý den 8 a za všechny je bonus.');
   }
   return tabs + body + '<button class="btn alt" data-act="tutRestart" data-v="">:farmer: Spustit průvodce znovu</button>';
@@ -4367,6 +4494,8 @@ function onlineBackend() {
     market() { return req('GET', '/api/market'); },
     // kind: 'list' (vystavit), 'cancel' (stáhnout), 'buy' (koupit)
     marketPost(kind, body) { return req('POST', '/api/market/' + kind, body); },
+    chatGet(after) { return req('GET', '/api/chat?after=' + (after || 0)); },
+    chatSend(text) { return req('POST', '/api/chat', { text }); },
     pushSubscribe(sub) { return req('POST', '/api/push/subscribe', { sub }); },
     pushUnsubscribe(endpoint) { return req('POST', '/api/push/unsubscribe', { endpoint }); },
     // mode 'login' = přihlásit / založit farmu, 'link' = propojit s přihlášenou farmou
@@ -4398,6 +4527,8 @@ function localBackend() {
     async visit() { throw new ApiError(400, { message: 'Návštěvy fungují jen v online hře.' }); },
     async market() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře (s kamarády).' }); },
     async marketPost() { throw new ApiError(400, { message: 'Tržiště hráčů funguje jen v online hře.' }); },
+    async chatGet() { return { msgs: [] }; },
+    async chatSend() { throw new ApiError(400, { message: 'Chat funguje jen v online hře.' }); },
     async pushSubscribe() { throw new ApiError(400, { message: 'Upozornění fungují jen v online hře.' }); },
     async pushUnsubscribe() { return { ok: true }; },
     async send(actions) {
@@ -4425,7 +4556,7 @@ function createBackend() {
 
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 
 
 const game = {
@@ -4501,7 +4632,7 @@ function frame(t) {
     if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, '#4f8fd6', '#3f8a25'));
     drawScene(ctx, {
       farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H,
-      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people,
+      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id,
     });
   }
   requestAnimationFrame(frame);
@@ -4921,13 +5052,14 @@ function updateTutorial() {
   const introDone = !f.pending.includes('sklad') && f.plots.length >= FREE_PLOTS;
   const step = TUTORIAL[n];
   if (step && !step.info && introDone && step.done(f)) { act({ type: 'tutorial', n: n + 1 }, true); return; }
-  const show = !!step && introDone && !game.place && !game.visit && !game.fishing;
+  const show = !!step && introDone && !game.place && !game.visit && !game.fishing && !game.tutHidden;
   el.hidden = !show;
   if (!show) return;
   $('tutText').innerHTML = iconize(`<small>Průvodce ${n + 1}/${TUTORIAL.length}</small><br>${step.text}`);
   $('tutNext').hidden = !step.info;
 }
 $('tutNext').addEventListener('click', () => { act({ type: 'tutorial', n: (game.farm.tut || 0) + 1 }); });
+$('tutClose').addEventListener('click', () => { $('tut').hidden = true; game.tutHidden = true; });
 $('tutSkip').addEventListener('click', () => { act({ type: 'tutorial', n: TUTORIAL_DONE }); toast('Průvodce kdykoli spustíš v Menu → Jak hrát.'); });
 
 // ---------- rybaření: zabere → klepni → drž rybu v zelené čárce ----------
@@ -4937,7 +5069,9 @@ function startFishing(id) {
   closeSheets();
   const good = game.farm.machines.some(m => m.model === 'udice2');
   const t = performance.now();
-  game.fishing = { id, fish: FISH[r.fish], phase: 'wait', bite: t + 1500 + Math.random() * 2500, zone: 0.2, v: 0, fy: 0.3, ft: 0.5, fnext: 0, prog: 0.3, hold: false, size: good ? 0.34 : 0.26, last: t };
+  const fsh = FISH[r.fish];
+  const ratio = Math.max(0, Math.min(1, ((r.kg || fsh.kg[0]) - fsh.kg[0]) / (fsh.kg[1] - fsh.kg[0])));
+  game.fishing = { id, fish: fsh, kg: r.kg, diff: Math.min(1, fsh.diff + 0.2 * ratio), phase: 'wait', bite: t + 1500 + Math.random() * 2500, zone: 0.2, v: 0, fy: 0.3, ft: 0.5, fnext: 0, prog: 0.3, hold: false, size: good ? 0.34 : 0.26, last: t };
   $('fgResult').hidden = true;
   $('fgPlay').hidden = false;
   $('fishGame').hidden = false;
@@ -4959,9 +5093,10 @@ function fishEnd(ok) {
   const o = findObject(game.farm, g.id);
   const left = o ? Math.max(0, game.farm.silo.navnada || 0) : 0;
   $('fgResultText').innerHTML = iconize(caught
-    ? `<div class="fg-big">:${g.fish.icon}:</div><b>Ulovil jsi: ${g.fish.name}!</b><br><small>+1 do skladu · ${g.fish.price} :coin: za kus · +${g.fish.xp} :xp:</small>`
+    ? `<div class="fg-big">:${g.fish.icon}:</div><b>Ulovil jsi: ${g.fish.name} – ${fmtKg(r.kg)}!</b>${r.record ? '<div class="fg-rec">:trophy: Nový rekord!</div>' : ''}
+       <br><small>${r.size === 'běžná' ? '' : `${r.size === 'obří' ? 'Obří' : 'Velká'} ryba: `}+${r.gained.items[0].qty} do skladu · ${g.fish.price} :coin: za kus · +${r.gained.xp} :xp:</small>`
     : ok && r.error === 'silo_full' ? `<div class="fg-big">:${g.fish.icon}:</div><b>Sklad je plný!</b><br><small>Uvolni místo, ryba zatím čeká na háčku.</small>`
-    : `<div class="fg-big">:${g.fish.icon}:</div><b>${g.fish.name} utekl${['plotice', 'stika'].includes(g.fish.id) ? 'a' : ''}…</b><br><small>Příště drž čárku u ryby.</small>`);
+    : `<div class="fg-big">:${g.fish.icon}:</div><b>${g.fish.name} (${fmtKg(g.kg || g.fish.kg[0])}) utekl${g.fish.fem ? 'a' : ''}…</b><br><small>Příště drž čárku u ryby.</small>`);
   $('fgAgain').textContent = `Rybařit znovu (návnada ${left})`;
 }
 function fishTick(t) {
@@ -4980,7 +5115,7 @@ function fishTick(t) {
   } else if (g.phase === 'bite') {
     if (t > g.biteEnd) { $('fgTitle').textContent = 'Pozdě – ryba se pustila.'; fishEnd(false); return; }
   } else if (g.phase === 'fight') {
-    const d = g.fish.diff;
+    const d = g.diff;
     // čárka: držíš = stoupá, pustíš = klesá
     g.v += (g.hold ? 2.6 : -2.2) * dt;
     g.v = Math.max(-1.2, Math.min(1.2, g.v));
@@ -5010,7 +5145,7 @@ function fishDown(e) {
   if (g.phase === 'wait') { $('fgTitle').textContent = 'Ještě ne… počkej, až zabere.'; return; }
   if (g.phase === 'bite') {
     g.phase = 'fight';
-    $('fgTitle').textContent = `Na háčku: ${g.fish.name}!`;
+    $('fgTitle').textContent = `Na háčku: ${g.fish.name}${fishSize(g.fish, g.kg || 0).qty > 1 ? ' – velký kus!' : '!'}`;
     $('fgHint').textContent = 'Drž prst = čárka stoupá, pusť = klesá. Udrž rybu v zelené.';
     $('fgBob').className = 'fg-bob hide';
     $('fgFish').innerHTML = ic(g.fish.icon);
@@ -5021,6 +5156,7 @@ $('fishGame').addEventListener('pointerdown', fishDown);
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('fishGame').addEventListener(ev, () => { if (game.fishing) game.fishing.hold = false; });
 function closeFishing() { game.fishing = null; $('fishGame').hidden = true; updateHud(); }
 $('fgQuit').addEventListener('click', () => { fishEnd(false); });
+$('fgClose').addEventListener('click', () => { if (game.fishing && game.fishing.phase !== 'end') fishEnd(false); closeFishing(); });
 $('fgDone').addEventListener('click', closeFishing);
 $('fgAgain').addEventListener('click', () => { const id = game.fishing && game.fishing.id; closeFishing(); if (id) startFishing(id); });
 
@@ -5062,6 +5198,14 @@ $('pushBtn').addEventListener('click', async () => {
 $('helpBtn').addEventListener('click', () => { closeSheets(); openPanel({ kind: 'help', tab: 'zaklady' }); });
 
 let toastTimer = null;
+$('toast').addEventListener('click', () => { $('toast').className = ''; });
+// Esc (klávesnice) zavře, co je otevřené
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (game.fishing) { if (game.fishing.phase === 'end') closeFishing(); else fishEnd(false); return; }
+  if (game.visit) { $('visitBack').click(); return; }
+  closeSheets(); cancelPlace(); setSow(null);
+});
 function toast(html, cls = '', ms = 1800) {
   const el = $('toast');
   el.innerHTML = iconize(html);
@@ -5090,6 +5234,7 @@ function openPanel(p) {
 function renderPanel() {
   const p = game.panel, f = game.farm;
   if (!p || !f) return;
+  if (p.kind === 'chat') { renderChat(); return; }
   let title = '', body = '';
   if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f); }
@@ -5480,6 +5625,74 @@ $('dayBtn').addEventListener('click', () => {
 document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
 function newsSeen() { try { return Number(localStorage.getItem('ekofarm_news') || 0); } catch { return 0; } }
 $('newsDot').hidden = newsSeen() >= NEWS[0].v;
+
+// ---------- počasí ----------
+function updateWeather() {
+  const w = weatherAt(now());
+  $('weatherBtn').innerHTML = iconize(`:${w.icon}: <b>${w.name}</b>`);
+}
+setInterval(updateWeather, 30000);
+$('weatherBtn').addEventListener('click', () => {
+  const w = weatherAt(now());
+  const left = Math.ceil((nextWeather(now()) - now()) / 1000);
+  toast(`:${w.icon}: <b>${w.name}</b><br><small>${w.text}<br>Počasí se změní za ${fmtTime(left)}.</small>`, '', 4000);
+});
+
+// ---------- chat pro všechny hráče ----------
+const chat = { msgs: [], last: 0, seen: 0, timer: null };
+try { chat.seen = Number(localStorage.getItem('ekofarm_chat_seen') || 0); } catch { /* nevadí */ }
+const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function chatPoll() {
+  if (!game.farm || game.backend.mode !== 'online') return;
+  try {
+    const r = await game.backend.chatGet(chat.last);
+    if (r.msgs.length) {
+      chat.msgs = chat.msgs.concat(r.msgs).slice(-100);
+      chat.last = r.msgs[r.msgs.length - 1].id;
+      if (game.panel && game.panel.kind === 'chat') renderChat();
+    }
+  } catch { /* zkusíme příště */ }
+  chatDot();
+}
+function chatDot() {
+  const open = game.panel && game.panel.kind === 'chat';
+  if (open && chat.last > chat.seen) { chat.seen = chat.last; try { localStorage.setItem('ekofarm_chat_seen', String(chat.seen)); } catch { /* nevadí */ } }
+  $('chatDot').hidden = open || !chat.msgs.some(m => m.id > chat.seen && m.name !== game.name);
+}
+function renderChat() {
+  const body = $('panelBody');
+  if (!$('chatList')) {
+    $('panelTitle').innerHTML = iconize(':chat: Chat všech farmářů');
+    body.innerHTML = game.backend.mode !== 'online'
+      ? '<div class="empty">Chat funguje jen v online hře.</div>'
+      : '<div id="chatList" class="chat-list"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Napiš zprávu…"><button class="btn sm" type="submit">Poslat</button></form><p class="muted">Buď na ostatní hodný. Zprávy se po 7 dnech mažou.</p>';
+    if (!$('chatForm')) return;
+    $('chatForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = $('chatInput').value.trim();
+      if (!text) return;
+      try { await game.backend.chatSend(text); $('chatInput').value = ''; chatPoll(); } catch (err) { toast(err.message); }
+    });
+  }
+  const list = $('chatList');
+  if (!list) return;
+  const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  list.innerHTML = chat.msgs.length ? chat.msgs.map(m => {
+    const mine = m.name === game.name;
+    const time = new Date(m.t).toLocaleTimeString('cs', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="chat-msg${mine ? ' mine' : ''}"><div class="chat-head">${mine ? 'Ty' : `<button class="chat-name" data-act="visit" data-v="${escHtml(m.name)}">${escHtml(m.name)}</button>`} <small>${time}</small></div><div>${escHtml(m.text)}</div></div>`;
+  }).join('') : '<div class="empty">Zatím tu nikdo nic nenapsal. Pozdrav ostatní!</div>';
+  if (atEnd || !list.dataset.init) { list.scrollTop = list.scrollHeight; list.dataset.init = '1'; }
+  chatDot();
+}
+$('chatBtn').addEventListener('click', () => {
+  cancelPlace();
+  if (game.panel && game.panel.kind === 'chat') { closeSheets(); return; }
+  openPanel({ kind: 'chat' });
+  chatPoll();
+});
+setInterval(() => { if (game.panel && game.panel.kind === 'chat') chatPoll(); }, 4000);
+setInterval(() => { if (!game.panel || game.panel.kind !== 'chat') chatPoll(); }, 20000);
 $('newsBtn').addEventListener('click', () => {
   cancelPlace();
   if (game.panel && game.panel.kind === 'news') { closeSheets(); return; }
@@ -5553,6 +5766,8 @@ function enterGame(res) {
   centerCamera();
   clampCam();
   setSow(null);
+  updateWeather();
+  chatPoll();
   if (res.created && res.google) toast(`Vítej na farmě, ${res.name}! :wheat:`, '', 2500);
   startIntro();
 }

@@ -29,6 +29,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v14 (10. 11. 2026)**: ohrady zase kreslené kódem s chodícími zvířaty (obrázky ohrad se zvířaty odstraněné). Připraveno na obrázky prázdných výběhů a zvířat (`PENS_EMPTY`, `ANIMAL_SPRITES`, `zvire_<druh>.webp`, `drawPenAnimals`) – arch `EKOfarm_ohrady_zvirata_jeden_arch.zip`.
 
+- **v15 (10. 11. 2026)**: **počasí** `weatherAt(now)` (hash 2h období, stejné pro všechny: jasno/polojasno/déšť/horko, `grow` násobí dobu růstu při zasazení → `plot.d`, `growMs`; `fish` zvýhodní vzácné a velké ryby), pilulka `#weatherBtn`, kapky/nádech v `drawWeather`. **Ryby**: 14 druhů s `kg` rozpětím, `o.hook.kg`, `fishSize` (velká 2 ks, obří 3 ks), rekordy `farm.fishRec`, obtížnost minihry roste s váhou; 5 nových jídel. **Chat** pro celý server: tabulka `chat`, `GET /api/chat?after=`, `POST /api/chat` (max 200 znaků, 1 zpráva/3 s, mazání po 7 dnech), panel `renderChat` (staví se jednou, obnova každé 4 s, tečka každých 20 s). **Zavírání**: lepivá hlavička panelu s ✕, ✕ u průvodce a rybaření, klepnutí na hlášku, Esc.
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 
