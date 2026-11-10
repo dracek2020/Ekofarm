@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/style.css?v=6">
 </head>
 <body>
 <!--APP-->
@@ -67,8 +67,20 @@
 </div>
 
 <div id="toast"></div>
-<div id="loading">Načítám farmu…</div>
+<div id="loading">Načítám farmu…<noscript> Zapni prosím JavaScript.</noscript></div>
 
-<script type="module" src="/js/main.js"></script>
+<script>
+// když se hra kvůli chybě nenačte, ukázat to místo věčného „Načítám…“
+function showFatal(msg) {
+  var el = document.getElementById('loading');
+  if (!el || el.hidden) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px"><p>Hra se nenačetla.</p><p style="font-size:13px;opacity:.8">' +
+    String(msg).replace(/</g, '&lt;') + '</p><button class="btn" style="max-width:240px;margin:12px auto" onclick="location.reload()">Načíst znovu</button></div>';
+}
+window.addEventListener('error', function (e) { showFatal(e.message || 'Chyba při načítání.'); });
+window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
+setTimeout(function () { showFatal('Načítání trvá moc dlouho. Zkontroluj připojení.'); }, 15000);
+</script>
+<script type="module" src="/js/main.js?v=6"></script>
 </body>
 </html>

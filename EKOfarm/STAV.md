@@ -11,6 +11,11 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v5 (10. 11. 2026)**: **Prodejna strojů** (tlačítko 🚜 Stroje vlevo nahoře): Traktor Brázda 60 (úr. 3, 250 🪙, 6 políček/min), Brázda 120 (úr. 7, 900, 12/min), Kombajn Klas 4 (úr. 5, 600, 6/min), Klas 8 (úr. 9, 1800, 12/min). Stroje jsou v garáži (`farm.machines`), staré traktory/kombajny z mapy se převedou. **Velké pole** od úrovně 5 (Stavět): velikost 3×3 až 6×6 si hráč zvolí ↔/↕, 8 🪙 za políčko, počet 1 + 1 za každé 3 úrovně nad 5. Setí traktorem a sklizeň (obilí, kukuřice, sója = kombajn; mrkev = traktor) trvají podle rychlosti stroje; stroj je vidět, jak jezdí po řádcích s prachem. Úroda čeká na poli a odveze se do skladu klepnutím (po částech, když je sklad plný). Malá pole stroje obslouží z prodejny (Zasít vše / Sklidit vše).
 
+- **v6 (10. 11. 2026) – oprava**: ve v5 omylem zmizely panely výroby, ohrady a ozdoby (`factoryHtml`, `penHtml`, `decoHtml`) → hra se v prohlížeči nenačetla. Vráceno. Přidány testy `imports.test.js` (každý import existuje) a `panels.test.js` (každý panel se vykreslí), čísla verzí v adresách skriptů (`?v=N`, proti staré kopii v prohlížeči) a hláška „Hra se nenačetla“ s tlačítkem místo věčného načítání.
+
+## Postup vydání nové verze
+1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
+
 ## Ekonomika (v4)
 - **Utrácení:** osivo při setí, sazenice stromů, budovy, zvířata, stroje, pole od 7. kusu, sady, rozšíření skladu.
 - **Příjem:** výkup ve skladu (základní cena `price`) a zakázky (1,3–1,7× hodnota + XP).

@@ -164,10 +164,8 @@ export function normalize(farm) {
   }
   if (!farm.objects.some(o => o.kind === 'sklad') && !farm.pending.includes('sklad')) farm.pending.push('sklad');
   if (!farm.seed) farm.seed = ((farm.created || 1) % 2147483646) + 1;
-  if (!Array.isArray(farm.orders)) {
-    farm.orders = [];
-    for (let i = 0; i < ORDER_SLOTS; i++) farm.orders.push(genOrder(farm, 0));
-  }
+  if (!Array.isArray(farm.orders)) farm.orders = [];
+  while (farm.orders.length < ORDER_SLOTS) farm.orders.push(genOrder(farm, 0));
   farm.v = RULES_VERSION;
   return farm;
 }

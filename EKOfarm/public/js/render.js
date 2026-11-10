@@ -1,6 +1,6 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState } from './rules.js';
-import { drawObject, drawGhost, objectDepth } from './objects.js';
+import { GRID_W, GRID_H, CROPS, plotState } from './rules.js?v=6';
+import { drawObject, drawGhost, objectDepth } from './objects.js?v=6';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice

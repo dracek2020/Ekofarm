@@ -6,8 +6,8 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, maxOrchards, orchardPrice, treeState, orderReady, canDeliver,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js';
-import { fmtTime } from './render.js';
+} from './rules.js?v=6';
+import { fmtTime } from './render.js?v=6';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -196,6 +196,63 @@ export function bigfieldHtml(farm, o, now) {
   }
   return head + `<p class="muted">Sklizeno. Na poli čeká ${st.stock} × ${c.icon}.</p>
     <button class="btn" data-act="fieldUnload" data-v="${o.id}">📦 Odvézt do skladu</button>` + move;
+}
+
+function ingredients(farm, recipe) {
+  return Object.entries(recipe.in).map(([id, n]) =>
+    `<span class="${have(farm, id) >= n ? '' : 'miss'}">${ITEMS[id].icon}${have(farm, id)}/${n}</span>`).join(' ');
+}
+
+export function factoryHtml(farm, o, now) {
+  const d = BUILDINGS[o.kind];
+  const q = queueState(o, now);
+  const slots = [];
+  for (let i = 0; i < QUEUE_SIZE; i++) {
+    const s = q[i];
+    if (!s) { slots.push('<div class="slot empty">volno</div>'); continue; }
+    const it = ITEMS[s.r];
+    const info = s.state === 'done' ? '✔ hotovo' : s.state === 'working' ? fmtTime(s.left) : 'čeká';
+    const bar = s.state === 'working' ? `<div class="bar"><div style="width:${(s.progress * 100).toFixed(1)}%"></div></div>` : '';
+    slots.push(`<div class="slot ${s.state}"><span class="ico">${it.icon}</span><small>${info}</small>${bar}</div>`);
+  }
+  const done = q.filter(s => s.state === 'done').length;
+  const recipes = Object.values(RECIPES).filter(r => r.building === o.kind).map(r => {
+    const locked = farm.level < r.level;
+    return card({
+      icon: ITEMS[r.id].icon, name: ITEMS[r.id].name, locked, act: 'produce', v: r.id,
+      disabled: !locked && (!hasInputs(farm, r) || q.length >= QUEUE_SIZE),
+      lines: locked ? [`🔒 úroveň ${r.level}`] : [ingredients(farm, r), `⏱ ${fmtTime(r.time)} · ${ITEMS[r.id].price} 🪙`],
+    });
+  });
+  return `<div class="slots">${slots.join('')}</div>
+    ${done ? `<button class="btn" data-act="collect" data-v="${o.id}">Vybrat hotové (${done})</button>` : ''}
+    <p class="muted">Vyber, co vyrobit (fronta až ${QUEUE_SIZE} výrobky):</p>
+    <div class="crops">${recipes.join('')}</div>
+    <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout ${esc(d.name)}</button>`;
+}
+
+export function penHtml(farm, o, now) {
+  const d = BUILDINGS[o.kind];
+  const an = ANIMALS[d.animal];
+  const rows = o.animals.map((a, i) => {
+    const st = animalState(a, an, now);
+    const txt = st.state === 'hungry' ? `má hlad – chce ${ITEMS[an.feed].icon}` : st.state === 'ready' ? `${ITEMS[an.product].icon} připraveno` : `${ITEMS[an.product].icon} za ${fmtTime(st.left)}`;
+    const bar = st.state === 'eating' ? `<div class="bar"><div style="width:${(st.progress * 100).toFixed(1)}%"></div></div>` : '';
+    return `<div class="row"><span class="ico">${an.icon}</span><div class="info"><b>${an.name} ${i + 1}</b><small>${txt}</small>${bar}</div></div>`;
+  }).join('') || `<div class="empty">Ohrada je prázdná. Kup ${an.acc} v obchodě nebo tady.</div>`;
+  const ready = o.animals.filter(a => animalState(a, an, now).state === 'ready').length;
+  const hungry = o.animals.filter(a => !a.fed).length;
+  return `${rows}
+    <p class="muted">${an.name}: krmivo ${ITEMS[an.feed].icon} → ${ITEMS[an.product].icon} ${ITEMS[an.product].name} za ${fmtTime(an.time)}. Krmivo ve skladu: <b>${have(farm, an.feed)}</b></p>
+    ${ready ? `<button class="btn" data-act="collect" data-v="${o.id}">Sebrat ${ITEMS[an.product].icon} (${ready})</button>` : ''}
+    ${hungry ? `<button class="btn" data-act="feed" data-v="${o.id}">Nakrmit (${hungry})</button>` : ''}
+    ${o.animals.length < an.max ? `<button class="btn alt" data-act="buyAnimal" data-v="${an.id}">Koupit ${an.acc} za ${an.cost} 🪙 (${o.animals.length}/${an.max})</button>` : ''}
+    <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout ${esc(d.name)}</button>`;
+}
+
+
+export function decoHtml(farm, o) {
+  return `<p class="muted">Ozdoba dělá farmu hezčí.</p><button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout</button>`;
 }
 
 export function siloHtml(farm) {

@@ -5,12 +5,14 @@ import {
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-} from './rules.js';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js';
-import { createBackend, ApiError } from './api.js';
-import { shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js';
+} from './rules.js?v=6';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=6';
+import { createBackend, ApiError } from './api.js?v=6';
+import { shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=6';
 
 const $ = id => document.getElementById(id);
+const APP_VERSION = 6;
+
 
 const game = {
   backend: createBackend(),
