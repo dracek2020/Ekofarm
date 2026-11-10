@@ -1,7 +1,7 @@
 // EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=7';
-import { TW, TH, drawPlant } from './render.js?v=7';
-import { drawIcon } from './icons.js?v=7';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=8';
+import { TW, TH, drawPlant } from './render.js?v=8';
+import { drawIcon } from './icons.js?v=8';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }

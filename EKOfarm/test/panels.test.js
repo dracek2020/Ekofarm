@@ -20,6 +20,8 @@ test('všechny panely se vykreslí', () => {
     P.dealerHtml(f, T), P.shopHtml(f, 'zvirata'), P.shopHtml(f, 'farma'), P.buildHtml(f), P.statekHtml(f, 'X', T),
   ];
   for (const h of out) assert.ok(typeof h === 'string' && h.length > 5);
+  assert.ok(P.landHtml(f, 'n').includes('buyLand'));
+  assert.ok(P.landHtml(f, 'nw').includes('nejdřív sousední'));
   // velké pole ve všech stavech
   const tr = R.applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T).id;
   const kb = R.applyAction(f, { type: 'buyMachine', model: 'klas4' }, T).id;

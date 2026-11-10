@@ -15,6 +15,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v7 (10. 11. 2026)**: plodiny brambory (4), řepka (6), slunečnice (7), cukrová řepa (8); budovy Mlýn (mouka), Olejna (olej), Cukrovar (cukr), recept Buchty; nářadí v prodejně: **Pluh** (zorané pole +50 % úrody), **Secí stroj** (setí 2× rychleji), **Lis** (po obilí sláma → balíky); stavy velkého pole `raw/stubble/plowed/sown`, úlohy `plow/sow/harvest/bale`, úroda a balíky čekají v `o.load`. **Denní odměna** (7 dní, `claimDaily`), **úkoly** se 3 stupni (`ACHIEVEMENTS`, statistiky `farm.stats`), **žebříček** (`GET /api/leaderboard`), **tržní ceny** výkupu 0,7–1,4× měněné po 4 h (`marketMult`, stejné na serveru i v prohlížeči). **Vlastní SVG ikony** (`icons.js`, v textu `:klic:` → `iconize()`), **zvuky** přes WebAudio (`sfx.js`), **den a noc** podle hodin (vypínatelné v Menu). Tlačítko Úkoly s červenou tečkou.
 
+- **v8 (10. 11. 2026)**: **dokupování pozemků**. Základ 17×17 (0..16), kolem něj 8 pozemků (`LAND_PARCELS`: 4 boční 17×8/8×17, 4 rohové 8×8; svět `WORLD` −8..24). Cena a úroveň podle pořadí (`LAND_PRICES` 1500…25000, `LAND_LEVELS` 5…12), rohový jde koupit, až je koupený některý sousední (`needs`). `farm.land` = koupené id; `landOwned()` hlídá stavění ve `fits()`. Nekoupená země je tmavší louka se stromy a cedulí „Na prodej“, plot se kreslí jen po hranici vlastní země. Klepnutí na cizí pozemek nebo Stavět → Pozemky otevře panel s mapkou 3×3.
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 

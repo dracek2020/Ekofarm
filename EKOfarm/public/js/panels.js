@@ -4,11 +4,12 @@ import {
   have, hasInputs, countKind, maxPlots, plotPrice, siloUsed, siloUpgradePrice, queueState, animalState,
   CROP_LIST, LEVEL_XP, MAX_LEVEL, plotState,
   TREES, TREE_LIST, FREE_PLOTS, maxOrchards, orchardPrice, treeState, orderReady, canDeliver,
+  LAND_PARCELS, landPrice, landLevel, landReachable,
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=7';
-import { fmtTime } from './render.js?v=7';
+} from './rules.js?v=8';
+import { fmtTime } from './render.js?v=8';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -43,7 +44,10 @@ function fieldCards(farm) {
     lines: farm.level < 5 ? [':lock: úroveň 5', 'pro stroje']
       : bfCount >= bfMax ? [`${bfCount}/${bfMax}`, 'další na vyšší úrovni']
       : [`${FIELD_CELL_PRICE} :coin: za políčko`, `${FIELD_MIN}×${FIELD_MIN} až ${FIELD_MAX}×${FIELD_MAX}`] });
-  return [plot, sad, big];
+  const left = LAND_PARCELS.filter(p => !farm.land.includes(p.id)).length;
+  const land = card({ icon: 'sign', name: 'Pozemky', act: 'openLand', v: '', disabled: !left,
+    lines: left ? [`další za ${landPrice(farm)} :coin:`, `od úrovně ${landLevel(farm)}`] : ['vše koupeno', '&nbsp;'] });
+  return [plot, sad, big, land];
 }
 
 // Stavět: všechny budovy, odemčené i zamčené (podle úrovně)
@@ -285,6 +289,38 @@ export function siloHtml(farm, now) {
     </div>`).join('') : '<div class="empty">Sklad je prázdný. Sklízej úrodu z polí! :wheat:</div>';
   return `<p class="muted">:clock: Výkupní ceny se mění každé 4 hodiny – další změna za <b>${fmtTime(Math.ceil((nextMarketChange(now) - now) / 1000))}</b>. Zakázky ve Statku platí vždy víc.</p>
     ${rows}<button class="btn alt" data-act="upgradeSilo" data-v="">Rozšířit sklad na ${farm.siloCap + 25} míst za ${siloUpgradePrice(farm)} :coin:</button>`;
+}
+
+// dokupování pozemků kolem farmy
+export function landHtml(farm, sel) {
+  const price = landPrice(farm), lvl = landLevel(farm);
+  const cards = LAND_PARCELS.map(p => {
+    const own = farm.land.includes(p.id);
+    const reach = landReachable(farm, p);
+    const lines = own ? ['✓ tvůj pozemek'] : !reach ? ['nejdřív sousední pozemek'] : farm.level < lvl ? [`:lock: úroveň ${lvl}`] : [`${price} :coin:`];
+    lines.push(`${p.w}×${p.h} políček`);
+    return `<button class="crop${p.id === sel ? ' sel' : ''}${own || !reach ? ' dim' : ''}" data-act="selLand" data-v="${p.id}">
+      <div class="nm">${esc(p.name)}</div>${lines.map(l => `<div class="meta">${l}</div>`).join('')}</button>`;
+  }).join('');
+  const sp = LAND_PARCELS.find(p => p.id === sel);
+  let buy = '';
+  if (sp && !farm.land.includes(sp.id) && landReachable(farm, sp)) {
+    buy = farm.level < lvl ? `<div class="empty">:lock: Další pozemek koupíš od úrovně ${lvl}.</div>`
+      : `<button class="btn" data-act="buyLand" data-v="${sp.id}"${farm.coins < price ? ' disabled' : ''}>Koupit ${esc(sp.name)} za ${price} :coin:</button>`;
+  }
+  return `<p class="muted">Když ti dojde místo, přikup pozemek kolem farmy. Každý další je dražší. Rohové pozemky jdou koupit, až máš některý vedlejší.</p>
+    <div class="landmap">${landMap(farm, sel)}</div>
+    ${buy}<div class="crops">${cards}</div>`;
+}
+
+// malá mapka 3×3: uprostřed farma, kolem pozemky
+function landMap(farm, sel) {
+  const grid = [['nw', 'n', 'ne'], ['w', '', 'e'], ['sw', 's', 'se']];
+  return grid.map(row => row.map(id => {
+    if (!id) return '<div class="lm farm">:house:</div>';
+    const own = farm.land.includes(id);
+    return `<button class="lm${own ? ' own' : ''}${id === sel ? ' sel' : ''}" data-act="selLand" data-v="${id}">${own ? '✓' : ':sign:'}</button>`;
+  }).join('')).join('');
 }
 
 export const TASK_TABS = [['odmeny', 'Odměny a úkoly'], ['zebricek', 'Žebříček']];

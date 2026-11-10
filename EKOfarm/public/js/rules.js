@@ -1,10 +1,40 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-export const RULES_VERSION = 7;
+export const RULES_VERSION = 8;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
+
+// ---------- pozemky ----------
+// základ farmy je 0..16 × 0..16; kolem něj se dá dokoupit 8 pozemků (svět −8..24)
+export const WORLD = { x0: -8, y0: -8, x1: 25, y1: 25 };
+export const LAND_PARCELS = [
+  { id: 'n',  name: 'Louka u lesa',     x: 0,   y: -8, w: 17, h: 8 },
+  { id: 'e',  name: 'Pole u cesty',     x: 17,  y: 0,  w: 8,  h: 17 },
+  { id: 's',  name: 'Údolí u potoka',   x: 0,   y: 17, w: 17, h: 8 },
+  { id: 'w',  name: 'Slunná stráň',     x: -8,  y: 0,  w: 8,  h: 17 },
+  { id: 'ne', name: 'Horní pastviny',   x: 17,  y: -8, w: 8,  h: 8, needs: ['n', 'e'] },
+  { id: 'se', name: 'Dolní pastviny',   x: 17,  y: 17, w: 8,  h: 8, needs: ['s', 'e'] },
+  { id: 'sw', name: 'Rybníková louka',  x: -8,  y: 17, w: 8,  h: 8, needs: ['s', 'w'] },
+  { id: 'nw', name: 'Lesní mýtina',     x: -8,  y: -8, w: 8,  h: 8, needs: ['n', 'w'] },
+];
+// cena a potřebná úroveň podle toho, kolikátý pozemek kupuješ
+export const LAND_PRICES = [1500, 3000, 5000, 8000, 12000, 16000, 20000, 25000];
+export const LAND_LEVELS = [5, 6, 7, 8, 9, 10, 11, 12];
+export const getParcel = id => LAND_PARCELS.find(p => p.id === id) || null;
+export function parcelAt(x, y) {
+  return LAND_PARCELS.find(p => x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h) || null;
+}
+export function landOwned(farm, x, y) {
+  if (x >= 0 && y >= 0 && x < GRID_W && y < GRID_H) return true;
+  const p = parcelAt(x, y);
+  return !!p && farm.land.includes(p.id);
+}
+// lze pozemek koupit (sousedí s farmou)? rohový potřebuje aspoň jeden sousední boční
+export const landReachable = (farm, p) => !p.needs || p.needs.some(id => farm.land.includes(id));
+export const landPrice = farm => LAND_PRICES[Math.min(farm.land.length, LAND_PRICES.length - 1)];
+export const landLevel = farm => LAND_LEVELS[Math.min(farm.land.length, LAND_LEVELS.length - 1)];
 export const START_COINS = 50;
 export const SILO_START = 50;
 export const SILO_STEP = 25;
@@ -195,6 +225,7 @@ export function normalize(farm) {
   if (!farm.siloCap) farm.siloCap = SILO_START;
   if (!Array.isArray(farm.pending)) farm.pending = [];
   if (!Array.isArray(farm.machines)) farm.machines = [];
+  if (!Array.isArray(farm.land)) farm.land = [];
   if (!farm.stats) farm.stats = {};
   for (const k of STAT_KEYS) if (!farm.stats[k]) farm.stats[k] = 0;
   if (!farm.ach) farm.ach = {};
@@ -402,7 +433,8 @@ export function countKind(farm, kind) {
 
 // je místo volné? (ignoreId = objekt, který se právě přesouvá)
 export function fits(farm, x, y, w, h, ignoreId = 0) {
-  if (!isInt(x) || !isInt(y) || x < 0 || y < 0 || x + w > GRID_W || y + h > GRID_H) return false;
+  if (!isInt(x) || !isInt(y) || !isInt(w) || !isInt(h)) return false;
+  for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) if (!landOwned(farm, xx, yy)) return false;
   for (const p of farm.plots) if (p.x >= x && p.x < x + w && p.y >= y && p.y < y + h) return false;
   for (const o of farm.objects) {
     if (o.id === ignoreId) continue;
@@ -498,6 +530,8 @@ export const ERRORS = {
   owned: 'Tenhle stroj už máš.',
   machine_busy: 'Stroj právě pracuje na jiném poli.',
   claimed: 'Dnešní odměnu už máš. Přijď zítra!',
+  land_owned: 'Tenhle pozemek už je tvůj.',
+  land_far: 'Nejdřív kup sousední pozemek.',
   wrong_machine: 'Na tuhle plodinu potřebuješ jiný stroj.',
   not_empty_tree: 'V sadu už strom roste.',
   no_order: 'Tahle zakázka teď není.',
@@ -569,7 +603,7 @@ export function applyAction(farm, a, now) {
       return { ok: true, count: n, partial: n < ready.length, gained: { items: mergeItems(items), xp, levelUp } };
     }
     case 'buyPlot': {
-      if (!fits(farm, a.x, a.y, 1, 1)) return fail(isInt(a.x) && isInt(a.y) && a.x >= 0 && a.y >= 0 && a.x < GRID_W && a.y < GRID_H ? 'occupied' : 'out_of_farm');
+      if (!fits(farm, a.x, a.y, 1, 1)) return fail(isInt(a.x) && isInt(a.y) && landOwned(farm, a.x, a.y) ? 'occupied' : 'out_of_farm');
       if (farm.plots.length >= maxPlots(farm.level)) return fail('max_plots');
       const price = plotPrice(farm);
       if (farm.coins < price) return fail('no_coins');
@@ -821,6 +855,19 @@ export function applyAction(farm, a, now) {
       const item = o.load.item;
       if (!rest) o.load = null;
       return { ok: true, rest, gained: { items: [{ item, qty: n }], xp, levelUp } };
+    }
+    case 'buyLand': {
+      const p = getParcel(a.id);
+      if (!p) return fail('bad_action');
+      if (farm.land.includes(p.id)) return fail('land_owned');
+      if (!landReachable(farm, p)) return fail('land_far');
+      if (farm.level < landLevel(farm)) return fail('locked');
+      const price = landPrice(farm);
+      if (farm.coins < price) return fail('no_coins');
+      farm.coins -= price;
+      farm.land.push(p.id);
+      const levelUp = addXp(farm, 20);
+      return { ok: true, price, gained: { items: [], xp: 20, levelUp } };
     }
     case 'claimDaily': {
       const today = dayKey(now);

@@ -461,3 +461,25 @@ test('v7: nové plodiny a výroba', () => {
   assert.equal(f.silo.mouka, 1);
   assert.ok(orderableItems(8).includes('cukr') && orderableItems(8).includes('buchty'));
 });
+
+test('v8: dokupování pozemků', () => {
+  const f = farm6();
+  f.coins = 100000; f.level = 4; f.xp = 45;
+  assert.equal(applyAction(f, { type: 'buyPlot', x: 5, y: -2 }, T0).error, 'out_of_farm');
+  assert.equal(applyAction(f, { type: 'buyLand', id: 'n' }, T0).error, 'locked', 'první pozemek od úrovně 5');
+  f.level = 12; f.xp = 500;
+  assert.equal(applyAction(f, { type: 'buyLand', id: 'nw' }, T0).error, 'land_far', 'roh až po sousedním');
+  assert.equal(applyAction(f, { type: 'buyLand', id: 'xx' }, T0).error, 'bad_action');
+  const c = f.coins;
+  assert.ok(applyAction(f, { type: 'buyLand', id: 'n' }, T0).ok);
+  assert.equal(f.coins, c - 1500);
+  assert.equal(applyAction(f, { type: 'buyLand', id: 'n' }, T0).error, 'land_owned');
+  assert.ok(applyAction(f, { type: 'buyPlot', x: 5, y: -2 }, T0).ok || f.plots.length >= 6, 'na novém pozemku jde stavět');
+  assert.ok(applyAction(f, { type: 'place', kind: 'velkepole', x: 8, y: -7, w: 6, h: 6 }, T0).ok, 'velké pole na novém pozemku');
+  assert.equal(applyAction(f, { type: 'place', kind: 'ker', x: -1, y: -1 }, T0).error, 'occupied', 'roh ještě není koupený');
+  const c2 = f.coins;
+  assert.ok(applyAction(f, { type: 'buyLand', id: 'nw' }, T0).ok);
+  assert.equal(f.coins, c2 - 3000, 'druhý pozemek dražší');
+  assert.ok(applyAction(f, { type: 'place', kind: 'ker', x: -1, y: -1 }, T0).ok);
+  assert.ok(applyAction(f, { type: 'place', kind: 'pekarna', x: 16, y: 3 }, T0).error === 'occupied', 'přes okraj na nekoupený pozemek nejde');
+});

@@ -1,7 +1,7 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState } from './rules.js?v=7';
-import { drawObject, drawGhost, objectDepth } from './objects.js?v=7';
-import { drawIconText } from './icons.js?v=7';
+import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt } from './rules.js?v=8';
+import { drawObject, drawGhost, objectDepth } from './objects.js?v=8';
+import { drawIconText, drawIcon } from './icons.js?v=8';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -27,19 +27,19 @@ export function inFarm(gx, gy) {
   return gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
 }
 
-// pevné rozmístění stromů kolem farmy (deterministické)
+// stromy kolem farmy a v divočině nekoupených pozemků (deterministické); na koupené zemi se nekreslí
 const BG_TREES = (() => {
   const out = [];
   let seed = 7;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  for (let gy = -6; gy < GRID_H + 5; gy++) {
-    for (let gx = -6; gx < GRID_W + 5; gx++) {
-      if (inFarm(gx, gy)) continue;
-      const dist = Math.max(-gx, -gy, gx - GRID_W + 1, gy - GRID_H + 1);
-      if (dist >= 2 && rnd() < 0.35) out.push({ gx, gy, s: 0.8 + rnd() * 0.5, h: rnd() });
+  for (let gy = WORLD.y0 - 6; gy < WORLD.y1 + 5; gy++) {
+    for (let gx = WORLD.x0 - 6; gx < WORLD.x1 + 5; gx++) {
+      if (gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H) continue;
+      const inWorld = gx >= WORLD.x0 && gy >= WORLD.y0 && gx < WORLD.x1 && gy < WORLD.y1;
+      const r = rnd(), s = 0.8 + rnd() * 0.5, h = rnd();
+      if (r < (inWorld ? 0.16 : 0.35)) out.push({ gx, gy, s, h });
     }
   }
-  out.sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy));
   return out;
 })();
 
@@ -65,21 +65,46 @@ function drawTree(ctx, t) {
   ctx.fillStyle = g[2]; ctx.beginPath(); ctx.arc(x - 9 * s, y - 45 * s, 7 * s, 0, Math.PI * 2); ctx.fill();
 }
 
-function drawFence(ctx) {
+// plot kolem vlastní země – jen na hranách, kde vlastní políčko sousedí s cizím
+function drawFence(ctx, farm) {
   const corner = (gx, gy) => [(gx - gy) * TW / 2, (gx + gy) * TH / 2];
-  const pts = [corner(0, 0), corner(GRID_W, 0), corner(GRID_W, GRID_H), corner(0, GRID_H)];
   ctx.strokeStyle = '#9b6b3c';
   ctx.lineWidth = 3;
-  for (const off of [6, 12]) {
-    ctx.beginPath();
-    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y - off) : ctx.moveTo(x, y - off)));
-    ctx.closePath();
-    ctx.stroke();
-  }
   ctx.fillStyle = '#7d532c';
-  const post = (gx, gy) => { const [x, y] = corner(gx, gy); ctx.fillRect(x - 2, y - 16, 4, 16); };
-  for (let i = 0; i <= GRID_W; i++) { post(i, 0); post(i, GRID_H); }
-  for (let j = 1; j < GRID_H; j++) { post(0, j); post(GRID_W, j); }
+  for (let gy = WORLD.y0; gy < WORLD.y1; gy++) {
+    for (let gx = WORLD.x0; gx < WORLD.x1; gx++) {
+      if (!landOwned(farm, gx, gy)) continue;
+      const edges = [];
+      if (!landOwned(farm, gx, gy - 1)) edges.push([corner(gx, gy), corner(gx + 1, gy)]);
+      if (!landOwned(farm, gx + 1, gy)) edges.push([corner(gx + 1, gy), corner(gx + 1, gy + 1)]);
+      if (!landOwned(farm, gx, gy + 1)) edges.push([corner(gx, gy + 1), corner(gx + 1, gy + 1)]);
+      if (!landOwned(farm, gx - 1, gy)) edges.push([corner(gx, gy), corner(gx, gy + 1)]);
+      for (const [a, b] of edges) {
+        for (const off of [6, 12]) { ctx.beginPath(); ctx.moveTo(a[0], a[1] - off); ctx.lineTo(b[0], b[1] - off); ctx.stroke(); }
+        ctx.fillRect(a[0] - 2, a[1] - 16, 4, 16);
+        ctx.fillRect(b[0] - 2, b[1] - 16, 4, 16);
+      }
+    }
+  }
+}
+
+// cedule „Na prodej“ uprostřed nekoupeného pozemku
+function drawSaleSign(ctx, farm, p) {
+  const [x, y] = cellCenter(p.x + p.w / 2 - 0.5, p.y + p.h / 2 - 0.5);
+  ctx.fillStyle = '#7a4e2a';
+  ctx.fillRect(x - 2.5, y - 44, 5, 44);
+  ctx.fillStyle = '#f3e3c3'; ctx.strokeStyle = '#8a5a35'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.rect(x - 46, y - 78, 92, 38); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#4a3218'; ctx.textAlign = 'center';
+  ctx.font = '700 12px system-ui, sans-serif';
+  ctx.fillText('NA PRODEJ', x, y - 63);
+  ctx.font = '700 13px system-ui, sans-serif';
+  if (farm.level < landLevel(farm)) {
+    drawIcon(ctx, 'lock', x - 30, y - 50, 14);
+    ctx.fillText(`úroveň ${landLevel(farm)}`, x + 6, y - 46);
+  } else {
+    drawIconText(ctx, `${landPrice(farm)} :coin:`, x, y - 46, 15);
+  }
 }
 
 function drawPlot(ctx, gx, gy, planted) {
@@ -242,30 +267,36 @@ export function drawScene(ctx, view) {
   ctx.scale(cam.zoom, cam.zoom);
   ctx.translate(-cam.x, -cam.y);
 
-  // tráva farmy
-  for (let gy = 0; gy < GRID_H; gy++) {
-    for (let gx = 0; gx < GRID_W; gx++) {
+  // tráva: vlastní země světlá, nekoupené pozemky jako divoká louka
+  for (let gy = WORLD.y0; gy < WORLD.y1; gy++) {
+    for (let gx = WORLD.x0; gx < WORLD.x1; gx++) {
+      const own = landOwned(farm, gx, gy);
       const [x, y] = cellCenter(gx, gy);
       diamond(ctx, x, y, TW + 1, TH + 1);
-      ctx.fillStyle = (gx + gy) % 2 ? '#7cc251' : '#78bd4d';
+      ctx.fillStyle = own ? ((gx + gy) % 2 ? '#7cc251' : '#78bd4d') : ((gx * 7 + gy * 3) % 5 ? '#62a240' : '#5e9c3d');
       ctx.fill();
     }
   }
-  drawFence(ctx);
-  for (const tr of BG_TREES) drawTree(ctx, tr);
+  drawFence(ctx, farm);
 
   // pole v pořadí hloubky
   // pole a budovy v pořadí hloubky
   const ghost = view.ghost;
   const items = farm.plots.map(p => ({ d: p.x + p.y + 1, p }));
   for (const o of farm.objects) if (!ghost || ghost.moveId !== o.id) items.push({ d: objectDepth(o), o });
+  for (const tr of BG_TREES) if (!landOwned(farm, tr.gx, tr.gy)) items.push({ d: tr.gx + tr.gy + 1, tree: tr });
+  for (const p of LAND_PARCELS) {
+    if (!farm.land.includes(p.id) && landReachable(farm, p)) items.push({ d: p.x + p.y + (p.w + p.h) / 2 + 0.5, sign: p });
+  }
   items.sort((a, b) => a.d - b.d);
   for (const it of items) {
     if (it.p) {
       const p = it.p;
       drawPlot(ctx, p.x, p.y, !!p.crop);
       if (p.crop) drawCrops(ctx, p, plotState(p, view.now), t);
-    } else drawObject(ctx, it.o, view.now, t, farm);
+    } else if (it.tree) drawTree(ctx, it.tree);
+    else if (it.sign) drawSaleSign(ctx, farm, it.sign);
+    else drawObject(ctx, it.o, view.now, t, farm);
   }
   if (ghost) drawGhost(ctx, ghost, view.now, t);
 

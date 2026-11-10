@@ -132,3 +132,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .down { color: var(--red); font-weight: 700; }
 #bottom { gap: 6px; }
 #bottom .big { width: 58px; height: 58px; font-size: 11px; }
+
+.landmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 220px; margin: 6px auto 10px; transform: rotate(45deg) scale(.72); }
+.lm { aspect-ratio: 1; border-radius: 6px; border: 2px solid #8a6a3f; background: #5e9c3d; display: grid; place-items: center; font-weight: 800; color: #fff; }
+.lm > * { transform: rotate(-45deg); }
+.lm.farm, .lm.own { background: #7cc251; }
+.lm.sel { outline: 3px solid #ffe58a; }
+.crop.sel { border-color: var(--wood); background: #fff3c4; }

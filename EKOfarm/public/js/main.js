@@ -1,19 +1,19 @@
 // EKOfarm – hlavní herní smyčka, ovládání a UI.
 import {
-  CROP_LIST, CROPS, ITEMS, BUILDINGS, ANIMALS, GRID_W, GRID_H, ERRORS,
+  CROP_LIST, CROPS, ITEMS, BUILDINGS, ANIMALS, GRID_W, GRID_H, ERRORS, WORLD, landOwned, parcelAt, getParcel, LAND_PARCELS,
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-} from './rules.js?v=7';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=7';
-import { createBackend, ApiError } from './api.js?v=7';
-import { iconize, ic } from './icons.js?v=7';
-import { sfx, soundOn, setSound } from './sfx.js?v=7';
-import { tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=7';
+} from './rules.js?v=8';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=8';
+import { createBackend, ApiError } from './api.js?v=8';
+import { iconize, ic } from './icons.js?v=8';
+import { sfx, soundOn, setSound } from './sfx.js?v=8';
+import { landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=8';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 7;
+const APP_VERSION = 8;
 
 
 const game = {
@@ -57,8 +57,8 @@ function centerCamera() {
 function clampCam() {
   const c = game.cam;
   c.zoom = Math.max(0.4, Math.min(2.4, c.zoom));
-  const [lx] = cellCenter(0, GRID_H), [rx] = cellCenter(GRID_W, 0);
-  const [, ty] = cellCenter(0, 0), [, by] = cellCenter(GRID_W, GRID_H);
+  const [lx] = cellCenter(WORLD.x0, WORLD.y1), [rx] = cellCenter(WORLD.x1, WORLD.y0);
+  const [, ty] = cellCenter(WORLD.x0, WORLD.y0), [, by] = cellCenter(WORLD.x1, WORLD.y1);
   c.x = Math.max(lx, Math.min(rx, c.x));
   c.y = Math.max(ty - 60, Math.min(by, c.y));
 }
@@ -93,7 +93,7 @@ const SFX_OF = {
   harvest: 'harvest', harvestTree: 'harvest', harvestAll: 'harvest', collect: 'harvest', fieldUnload: 'harvest', feed: 'plant',
   plant: 'plant', sowAll: 'plant', plantTree: 'plant', clearTree: 'build',
   sell: 'coin', deliver: 'coin', claimDaily: 'coin', claimAch: 'coin', upgradeSilo: 'coin',
-  place: 'build', buyPlot: 'build', move: 'build', buyAnimal: 'build',
+  place: 'build', buyPlot: 'build', buyLand: 'level', move: 'build', buyAnimal: 'build',
   fieldSow: 'engine', fieldHarvest: 'engine', fieldPlow: 'engine', fieldBale: 'engine', buyMachine: 'engine',
 };
 function act(a, silent) {
@@ -183,8 +183,8 @@ function inGhost(cell) {
 
 function setGhost(x, y) {
   const s = placeSize();
-  game.place.x = Math.max(0, Math.min(GRID_W - s.w, x));
-  game.place.y = Math.max(0, Math.min(GRID_H - s.h, y));
+  game.place.x = Math.max(WORLD.x0, Math.min(WORLD.x1 - s.w, x));
+  game.place.y = Math.max(WORLD.y0, Math.min(WORLD.y1 - s.h, y));
 }
 
 canvas.addEventListener('pointerdown', e => {
@@ -305,6 +305,12 @@ function onTap([gx, gy]) {
   }
   const o = objectAt(game.farm, gx, gy);
   if (o) { tapObject(o); return; }
+  if (!landOwned(game.farm, gx, gy)) {
+    const p = parcelAt(gx, gy);
+    setSow(null);
+    if (p) openPanel({ kind: 'land', sel: p.id });
+    return;
+  }
   const plot = findPlot(game.farm, gx, gy);
   if (!plot) { setSow(null); return; }
   const st = plotState(plot, now());
@@ -353,7 +359,7 @@ function tapObject(o) {
 // ---------- stavění a přesun ----------
 function nearestFree(s, cx, cy, moveId = 0) {
   let best = null, bd = Infinity;
-  for (let y = 0; y <= GRID_H - s.h; y++) for (let x = 0; x <= GRID_W - s.w; x++) {
+  for (let y = WORLD.y0; y <= WORLD.y1 - s.h; y++) for (let x = WORLD.x0; x <= WORLD.x1 - s.w; x++) {
     if (!fits(game.farm, x, y, s.w, s.h, moveId)) continue;
     const dd = (x - cx) ** 2 + (y - cy) ** 2;
     if (dd < bd) { bd = dd; best = [x, y]; }
@@ -455,6 +461,7 @@ function renderPanel() {
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f); }
   else if (p.kind === 'dealer') { title = ':tractor: Prodejna strojů'; body = dealerHtml(f, now()); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
+  else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
   else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board); }
   else {
     const o = findObject(f, p.id);
@@ -516,6 +523,19 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'clearTree': act({ type: 'clearTree', id: Number(v) }); break;
     case 'ttab': game.panel.tab = v; if (v === 'zebricek') loadBoard(); renderPanel(); break;
+    case 'openLand': openPanel({ kind: 'land', sel: (LAND_PARCELS.find(p => !f.land.includes(p.id)) || {}).id }); break;
+    case 'selLand': game.panel.sel = v; renderPanel(); break;
+    case 'buyLand': {
+      const r = act({ type: 'buyLand', id: v });
+      if (r.ok) {
+        const p = getParcel(v);
+        closeSheets();
+        const [cx, cy] = cellCenter(p.x + p.w / 2, p.y + p.h / 2);
+        game.cam.x = cx; game.cam.y = cy; game.cam.zoom = Math.min(game.cam.zoom, 0.8); clampCam();
+        toast(`:sign: ${p.name} je tvoje! Můžeš tu stavět.`, 'lvlup', 2600);
+      }
+      break;
+    }
     case 'claimDaily': {
       const r = act({ type: 'claimDaily' });
       if (r.ok) toast(`:gift: Den ${r.streak}: +${r.coins} :coin:`, 'lvlup', 2200);
