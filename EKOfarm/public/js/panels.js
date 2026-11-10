@@ -12,10 +12,10 @@ import {
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=21';
-import { fmtTime } from './render.js?v=21';
-import { NEWS } from './news.js?v=21';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=21';
+} from './rules.js?v=22';
+import { fmtTime } from './render.js?v=22';
+import { NEWS } from './news.js?v=22';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=22';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -91,7 +91,8 @@ export function buildHtml(farm, tab = 'farma') {
       size: `${b.w}×${b.h}`, price: free || done ? undefined : b.cost, badge: locked ? `:lock: Statek ${b.st}` : n && b.max > 1 ? `${n}/${b.max}` : '',
       lines: free ? [':gift: dostal jsi zdarma'] : [], cta });
   });
-  const head = `<p class="muted">Statek úrovně <b>${statekLevel(farm)}</b>. Každé vylepšení Statku odemkne nové budovy a víc polí a sadů. Stroje a stánek najdeš dole v <b>městečku</b>.</p>`;
+  const head = `<p class="muted">Statek úrovně <b>${statekLevel(farm)}</b>. Každé vylepšení Statku odemkne nové budovy a víc polí a sadů. Stroje a stánek najdeš dole v <b>městečku</b>.</p>
+    <p class="tip">↔ <b>Přesun:</b> podrž prst na budově nebo poli a táhni. Potvrď ✓ dole.</p>`;
   return tabsHtml(BUILD_TABS, tab, 'btab') + (tab === 'farma' ? head : '') + `<div class="crops cards">${tab === 'farma' ? fieldCards(farm).join('') : ''}${cards.join('')}</div>`;
 }
 
@@ -166,7 +167,7 @@ export function statekHtml(farm, name, now, tab = 'zakazky', o) {
     return tabs + `<p class="muted">Farma ${esc(name)} · hráč úrovně <b>${farm.level}</b> · ${farm.xp} XP${next ? ` (do další ${next})` : ''}. Úroveň hráče roste pořád; co můžeš <b>stavět</b>, určuje Statek.</p>
       <p class="muted">Statek ${L}: až ${maxPlots(farm)} polí, ${maxOrchards(farm)} sadů, ${maxBigFields(farm)}× velké pole. Odemčeno: ${have1}</p>
       ${unlocks ? `<p class="muted">Statek úrovně ${L + 1} odemkne: <b>${unlocks}</b></p>` : ''}
-      ${upgradeBlock(farm, o)}`;
+      ${upgradeBlock(farm, o)}${o ? `<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout statek</button>` : ''}`;
   }
   return tabs + `<p class="muted"><b>:truck: Zakázky</b> – doruč zboží a dostaneš nejvíc mincí. Zakázku, která se ti nehodí, zruš ✕ a za 3 minuty přijde nová.</p>
     <div class="orders">${farm.orders.map((x, i) => orderCard(farm, x, i, now)).join('')}</div>`;
@@ -438,12 +439,13 @@ export function siloHtml(farm, now) {
     </div>`;
   };
   const GROUPS = ['Úroda a ovoce', 'Výrobky', 'Semena a sazenice'];
+  const sk = farm.objects.find(o => o.kind === 'sklad');
   const rows = items.length ? GROUPS.map((g, k) => {
     const list = items.filter(it => group(it) === k);
     return list.length ? `<div class="items-h">${g}</div><div class="items">${list.map(tile).join('')}</div>` : '';
   }).join('') : '<div class="empty">Sklad je prázdný. Sklízej úrodu z polí! :wheat:</div>';
   return `<p class="muted">:clock: Výkupní ceny se mění každé 4 hodiny – další změna za <b>${fmtTime(Math.ceil((nextMarketChange(now) - now) / 1000))}</b>. Zakázky ve Statku platí vždy víc.</p>
-    ${rows}${farm.objects.find(o => o.kind === 'sklad') ? upgradeBlock(farm, farm.objects.find(o => o.kind === 'sklad')) : ''}`;
+    ${rows}${sk ? upgradeBlock(farm, sk) + `<button class="btn alt" data-act="move" data-v="${sk.id}">↔ Přesunout sklad</button>` : ''}`;
 }
 
 // dokupování pozemků kolem farmy
@@ -661,7 +663,8 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:coin: Peníze:</b> nejvíc platí <b>zakázky</b> ve Statku, pak <b>stánek</b> a <b>tržiště</b>. Výkup ve Skladu platí polovinu ceny a mění se každé 4 hodiny.')
       + p('<b>:xp: Úroveň hráče</b> roste za každou práci a pořád dál. Odemyká nové plodiny, zvířata, stromy, ryby, stroje a recepty.')
       + p('<b>:helper: Pomocník</b> (Statek → Pomocník) sám sklízí a zasívá malá pole.')
-      + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.');
+      + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.')
+      + p('<b>↔ Přesun:</b> podrž prst na budově nebo poli, zvedne se a můžeš ho táhnout. Potvrď ✓ dole. Přesunout jde všechno, i Statek, a pole i s tím, co na něm roste.');
   } else if (tab === 'statek') {
     const rows = [];
     for (let L = 1; L <= MAX_BLD_LEVEL; L++) {

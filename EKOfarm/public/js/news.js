@@ -1,5 +1,11 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 22, title: 'Přesouvání všeho', items: [
+    'Podrž prst na budově nebo poli: zvedne se a můžeš ho rovnou táhnout jinam. Potvrď ✓ dole.',
+    'Přesunout jde všechno: Statek, Sklad, výrobny, ohrady, sady, rybník, ozdoby, velká i malá pole.',
+    'Malé pole se přesune i s tím, co na něm roste.',
+    'Statek a Sklad mají v okně i tlačítko Přesunout.',
+  ] },
   { v: 21, title: 'Nový vzhled', items: [
     'Celá hra má nový vzhled: krémová okna s hnědým rámem, zelená tlačítka a větší písmo.',
     'Spodní lišta přes celou šířku. Tlačítko otevřeného okna svítí zeleně.',

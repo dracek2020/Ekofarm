@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=21';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=21';
-import { drawIconText, drawIcon } from './icons.js?v=21';
-import { asset } from './sprites.js?v=21';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=22';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=22';
+import { drawIconText, drawIcon } from './icons.js?v=22';
+import { asset } from './sprites.js?v=22';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -257,7 +257,8 @@ export function drawScene(ctx, view) {
   // pole, budovy, stromy a lidé v pořadí hloubky
   const ghost = view.ghost;
   const items = [];
-  for (const p of farm.plots) if (seen(p.x, p.y)) items.push({ d: p.x + p.y + 1, p });
+  const mp = ghost && ghost.movePlot;   // přesouvané pole se kreslí jen na novém místě
+  for (const p of farm.plots) if (seen(p.x, p.y) && !(mp && mp[0] === p.x && mp[1] === p.y)) items.push({ d: p.x + p.y + 1, p });
   for (const o of farm.objects) {
     if (ghost && ghost.moveId === o.id) continue;
     const sz = objSize(o);
@@ -283,6 +284,10 @@ export function drawScene(ctx, view) {
   }
   for (const it of items) if (it.o && it.o.town) townLabel(ctx, it.o);   // popisky městečka až navrch (domky je nezakryjí)
   if (ghost) drawGhost(ctx, ghost, view.now, t);
+  if (mp) {
+    const p = farm.plots.find(q => q.x === mp[0] && q.y === mp[1]);
+    if (p) { ctx.globalAlpha = 0.8; drawPlot(ctx, { ...p, x: ghost.x, y: ghost.y }, view.now, t); ctx.globalAlpha = 1; }
+  }
   if (view.debug) {   // ladění grafiky: obrysy políček, která budovy zabírají (window.__eko.debug = true)
     ctx.strokeStyle = '#ff2a2a'; ctx.lineWidth = 1.5;
     for (const it of items) {

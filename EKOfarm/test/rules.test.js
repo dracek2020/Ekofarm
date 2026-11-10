@@ -191,7 +191,8 @@ test('statek uprostřed a sklad k umístění zdarma', () => {
   const f = farm6();
   const st = f.objects.find(o => o.kind === 'statek');
   assert.deepEqual([st.x + 1.5, st.y + 1.5], [8.5, 8.5], 'střed statku = střed mřížky 17×17');
-  assert.equal(applyAction(f, { type: 'move', id: st.id, x: 0, y: 0 }, T0).error, 'fixed');
+  assert.ok(applyAction(f, { type: 'move', id: st.id, x: 12, y: 12 }, T0).ok, 'statek jde přesunout');
+  assert.ok(applyAction(f, { type: 'move', id: st.id, x: 7, y: 7 }, T0).ok, 'a zpátky');
   assert.equal(applyAction(f, { type: 'place', kind: 'statek', x: 0, y: 0 }, T0).error, 'bad_action');
   assert.equal(applyAction(f, { type: 'place', kind: 'sklad', x: 8, y: 8 }, T0).error, 'occupied');
   f.coins = 0;
@@ -274,6 +275,21 @@ test('sad a stromy', () => {
   assert.equal(objectStatus(o, t).dead, true);
   assert.ok(applyAction(f, { type: 'clearTree', id }, t).ok);
   assert.equal(treeState(o, t).state, 'empty');
+});
+
+test('přesun malého pole i s plodinou', () => {
+  const f = farm6();
+  const p = f.plots[0], [x, y] = [p.x, p.y];
+  assert.ok(applyAction(f, { type: 'plant', x, y, crop: 'wheat' }, T0).ok);
+  const q = f.plots[1];
+  assert.equal(applyAction(f, { type: 'movePlot', x, y, tx: q.x, ty: q.y }, T0).error, 'occupied', 'na jiné pole ne');
+  assert.equal(applyAction(f, { type: 'movePlot', x, y, tx: 8, ty: 8 }, T0).error, 'occupied', 'na statek ne');
+  assert.equal(applyAction(f, { type: 'movePlot', x, y, tx: -20, ty: 3 }, T0).error, 'occupied', 'mimo farmu ne');
+  assert.equal(applyAction(f, { type: 'movePlot', x: 16, y: 16, tx: 15, ty: 15 }, T0).error, 'no_object');
+  assert.ok(applyAction(f, { type: 'movePlot', x, y, tx: 14, ty: 2 }, T0).ok);
+  assert.deepEqual([p.x, p.y, p.crop], [14, 2, 'wheat'], 'plodina se přesunula s polem');
+  assert.ok(applyAction(f, { type: 'movePlot', x: 14, y: 2, tx: 14, ty: 2 }, T0).ok, 'na stejné místo');
+  assert.equal(f.plots.length, 6);
 });
 
 test('vykopání živého stromu: vrátí sazenici nebo mince jen před první úrodou', () => {

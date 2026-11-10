@@ -1132,7 +1132,6 @@ export const ERRORS = {
   nothing: 'Teď tu není co dělat.',
   no_home: 'Nejdřív postav pro zvíře ohradu.',
   pen_full: 'Ohrada je plná.',
-  fixed: 'Statek stojí pevně uprostřed farmy.',
   no_machine: 'Na tohle potřebuješ stroj z obchodu.',
   max_orchards: 'Víc sadů odemkneš vylepšením Statku.',
   max_fields: 'Další velké pole odemkneš vylepšením Statku.',
@@ -1275,14 +1274,20 @@ export function applyAction(farm, a, now) {
       const levelUp = addXp(farm, d.xp);
       return { ok: true, id: o.id, gained: { items: [], xp: d.xp, levelUp } };
     }
-    case 'move': {
+    case 'move': {   // přesun jakékoli budovy (i Statku) na volné místo
       const o = findObject(farm, a.id);
       if (!o) return fail('no_object');
-      const d = BUILDINGS[o.kind];
-      if (d.type === 'main') return fail('fixed');
       const sz = objSize(o);
       if (!fits(farm, a.x, a.y, sz.w, sz.h, o.id)) return fail('occupied');
       o.x = a.x; o.y = a.y;
+      return { ok: true };
+    }
+    case 'movePlot': {   // přesun malého pole i s tím, co na něm roste
+      const p = findPlot(farm, a.x, a.y);
+      if (!p) return fail('no_object');
+      if (a.tx === p.x && a.ty === p.y) return { ok: true };
+      if (!fits(farm, a.tx, a.ty, 1, 1)) return fail('occupied');
+      p.x = a.tx; p.y = a.ty;
       return { ok: true };
     }
     case 'produce': {

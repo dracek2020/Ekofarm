@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=21';
-import { preloadAssets, spriteName } from './sprites.js?v=21';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=21';
-import { createBackend, ApiError } from './api.js?v=21';
-import { iconize, ic } from './icons.js?v=21';
-import { NEWS } from './news.js?v=21';
-import { sfx, soundOn, setSound } from './sfx.js?v=21';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=21';
+} from './rules.js?v=22';
+import { preloadAssets, spriteName } from './sprites.js?v=22';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=22';
+import { createBackend, ApiError } from './api.js?v=22';
+import { iconize, ic } from './icons.js?v=22';
+import { NEWS } from './news.js?v=22';
+import { sfx, soundOn, setSound } from './sfx.js?v=22';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=22';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 
 
 const game = {
@@ -78,7 +78,8 @@ function ghostView() {
   const p = game.place;
   if (!p) return null;
   const s = placeSize();
-  return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, moveId: p.moveId, ok: fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
+  const same = p.movePlot && p.movePlot[0] === p.x && p.movePlot[1] === p.y;
+  return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, moveId: p.moveId, movePlot: p.movePlot, ok: same || fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
 }
 
 // když telefon nestíhá, kreslí se 30× za sekundu místo 60× (šetří baterii)
@@ -157,7 +158,7 @@ setInterval(() => {
 const SFX_OF = {
   upgrade: 'level', sellMachine: 'coin', stallBuy: 'coin', stallSell: 'coin', hire: 'build',
   harvest: 'harvest', harvestTree: 'harvest', harvestAll: 'harvest', collect: 'harvest', fieldUnload: 'harvest', feed: 'plant',
-  plant: 'plant', sowAll: 'plant', plantTree: 'plant', clearTree: 'build',
+  plant: 'plant', sowAll: 'plant', plantTree: 'plant', clearTree: 'build', move: 'build', movePlot: 'build',
   sell: 'coin', deliver: 'coin', claimDaily: 'coin', claimAch: 'coin', upgradeSilo: 'coin',
   place: 'build', buyPlot: 'build', buyLand: 'level', move: 'build', buyAnimal: 'build',
   fieldSow: 'engine', fieldHarvest: 'engine', fieldPlow: 'engine', fieldBale: 'engine', buyMachine: 'engine',
@@ -291,6 +292,10 @@ canvas.addEventListener('pointerdown', e => {
   const plot = findPlot(game.farm, cell[0], cell[1]);
   const st = plot && plotState(plot, now());
   const tree = readyTreeAt(cell);
+  // podržení prstu na budově nebo poli = přesun (táhnutím rovnou posouvá)
+  if ((plot || objectAt(game.farm, cell[0], cell[1])) && !(st && st.state === 'ready') && !tree && !(game.sowCrop && st && st.state === 'empty')) {
+    gesture.hold = setTimeout(() => holdMove(cell), 450);
+  }
   if (st && st.state === 'ready') {
     gesture.mode = 'harvest';
     act({ type: 'harvest', x: cell[0], y: cell[1] });
@@ -312,7 +317,7 @@ canvas.addEventListener('pointermove', e => {
   p.x = e.clientX; p.y = e.clientY;
   if (gesture && gesture.mode === 'pinch') { movePinch(); return; }
   if (!gesture) return;
-  if (gesture.mode === 'pending' && Math.hypot(e.clientX - gesture.sx, e.clientY - gesture.sy) > 9) gesture.mode = 'pan';
+  if (gesture.mode === 'pending' && Math.hypot(e.clientX - gesture.sx, e.clientY - gesture.sy) > 9) { gesture.mode = 'pan'; clearTimeout(gesture.hold); }
   if (gesture.mode === 'pan') {
     game.cam.x -= (e.clientX - gesture.lx) / game.cam.zoom;
     game.cam.y -= (e.clientY - gesture.ly) / game.cam.zoom;
@@ -349,6 +354,7 @@ canvas.addEventListener('pointermove', e => {
 function endPointer(e) {
   if (!pointers.has(e.pointerId)) return;
   pointers.delete(e.pointerId);
+  if (gesture) clearTimeout(gesture.hold);
   if (gesture && gesture.mode === 'pinch') {
     if (pointers.size < 2) gesture = null;
     return;
@@ -360,7 +366,20 @@ function endPointer(e) {
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
 
+// podržení prstu: zvednout budovu nebo pole a táhnout (potvrzení ✓ v liště dole)
+function holdMove(cell) {
+  if (!gesture || gesture.mode !== 'pending' || game.place || game.visit || !game.farm) return;
+  const o = objectAt(game.farm, cell[0], cell[1]);
+  const plot = !o && findPlot(game.farm, cell[0], cell[1]);
+  if (!o && !plot) return;
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch { /* nevadí */ }
+  if (o) startPlace(o.kind, o.id); else startPlace('plot', 0, [plot.x, plot.y]);
+  gesture.mode = 'ghost';
+  gesture.off = [cell[0] - game.place.x, cell[1] - game.place.y];
+  sfx('tap');
+}
 function startPinch() {
+  if (gesture) clearTimeout(gesture.hold);
   const [a, b] = [...pointers.values()];
   gesture = { mode: 'pinch', d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
   game.hover = null;
@@ -461,17 +480,18 @@ function nearestFree(s, cx, cy, moveId = 0) {
   return best;
 }
 
-function startPlace(kind, moveId) {
+function startPlace(kind, moveId, movePlot) {
   closeSheets();
   setSow(null);
   let pos;
   const size = moveId ? objSize(findObject(game.farm, moveId)) : kind === 'velkepole' ? { w: 4, h: 4 } : sizeOf(kind);
   if (moveId) { const o = findObject(game.farm, moveId); pos = [o.x, o.y]; }
+  else if (movePlot) pos = movePlot;
   else {
     const [cx, cy] = screenToCell(W / 2, H / 2, game.cam, W, H);
     pos = nearestFree(size, cx, cy) || [cx, cy];
   }
-  game.place = { kind, moveId, x: 0, y: 0, w: size.w, h: size.h };
+  game.place = { kind, moveId, movePlot, x: 0, y: 0, w: size.w, h: size.h };
   setGhost(pos[0], pos[1]);
   updateBanner();
 }
@@ -479,6 +499,12 @@ function startPlace(kind, moveId) {
 function confirmPlace() {
   const p = game.place;
   if (!p) return;
+  if (p.movePlot) {   // přesun malého pole
+    const [x, y] = p.movePlot;
+    if ((x !== p.x || y !== p.y) && !act({ type: 'movePlot', x, y, tx: p.x, ty: p.y }).ok) return;
+    cancelPlace();
+    return;
+  }
   if (p.kind === 'plot') {
     const r = act({ type: 'buyPlot', x: p.x, y: p.y });
     if (!r.ok) return;
@@ -1051,7 +1077,8 @@ function updateBanner() {
   const p = game.place;
   if (p) {
     ok = true;
-    if (p.kind === 'plot') text = f.plots.length < FREE_PLOTS
+    if (p.movePlot) text = '↔ Pole: posuň prstem a potvrď';
+    else if (p.kind === 'plot') text = f.plots.length < FREE_PLOTS
       ? `:plot: Pole zdarma ${f.plots.length + 1}/${FREE_PLOTS} – posuň, kam chceš, a potvrď`
       : `:plot: Nové pole za ${plotPrice(f)} :coin: (${f.plots.length}/${maxPlots(f)}) – posuň a potvrď`;
     else if (p.kind === 'sad' && !p.moveId) text = `:tree: Sad za ${orchardPrice(f)} :coin: (${countKind(f, 'sad')}/${maxOrchards(f)}) – posuň a potvrď`;
