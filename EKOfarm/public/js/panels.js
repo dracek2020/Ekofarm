@@ -12,11 +12,11 @@ import {
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-  VILL_BUY, VILL_MAX, VILL_MAX_LVL, VILL_IV, TRADER_QTY, villUpCost, villName, villJobType, villAt, findObject,
-} from './rules.js?v=23';
-import { fmtTime } from './render.js?v=23';
-import { NEWS } from './news.js?v=23';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=23';
+  VILL_BUY, VILL_MAX, VILL_MAX_LVL, villIv, TRADER_QTY, villUpCost, villName, villJobType, villAt, findObject,
+} from './rules.js?v=24';
+import { fmtTime } from './render.js?v=24';
+import { NEWS } from './news.js?v=24';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=24';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -148,6 +148,7 @@ const VILL_WHAT = {
   hive: 'sbírá plástve do skladu',
   trader: 'prodává vybrané věci ze skladu za výkupní cenu a nechá si, kolik určíš',
 };
+const ivText = s => (s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s / 60} min`);
 const villImg = () => (hasAsset('p', 'pomocnik_l') ? assetUrl('p', 'pomocnik_l') : null);
 function villShopHtml(farm) {
   const full = farm.vill.length >= VILL_MAX;
@@ -158,9 +159,9 @@ function villShopHtml(farm) {
     const job = !o ? 'volný – přiřaď ho v okně budovy' : BUILDINGS[o.kind].name + (v.r && RECIPES[v.r] ? ` · ${ITEMS[v.r].name}` : villJobType(o.kind) === 'trader' ? ' · obchodník' : '');
     const up = v.lvl < VILL_MAX_LVL ? `<button class="btn sm" data-act="upVill" data-v="${v.id}">↑ ${v.lvl + 1} · ${villUpCost(v.lvl)} :coin:</button>` : '<span class="chip on">max</span>';
     return `<div class="row"><span class="ico">:helper:</span><div class="info"><b>${esc(villName(v))} · úroveň ${v.lvl}</b><small>${esc(job)}</small>
-      <small>obchůzka každých ${VILL_IV[v.lvl]} s · hotovo ${v.n || 0}×</small></div>${up}${o ? `<button class="btn sm alt" data-act="openObj" data-v="${o.id}">Otevřít</button>` : ''}</div>`;
+      <small>${o && villJobType(o.kind) === 'trader' ? 'prodává' : 'obchůzka'} každých ${ivText(villIv(v, o))} · hotovo ${v.n || 0}×</small></div>${up}${o ? `<button class="btn sm alt" data-act="openObj" data-v="${o.id}">Otevřít</button>` : ''}</div>`;
   });
-  return `<p class="muted"><b>Vesničan</b> pracuje v budově za tebe: ve <b>výrobně</b> vyrábí, co mu vybereš, v <b>ohradě</b> krmí a sbírá, ve <b>včelíně</b> sbírá plástve a ve <b>skladu</b> jako obchodník prodává. Suroviny bere ze skladu a hotové tam nosí. Čím vyšší úroveň, tím častěji obchází budovu (a obchodník prodá víc).</p>
+  return `<p class="muted"><b>Vesničan</b> pracuje v budově za tebe: ve <b>výrobně</b> vyrábí, co mu vybereš, v <b>ohradě</b> krmí a sbírá, ve <b>včelíně</b> sbírá plástve a ve <b>skladu</b> jako obchodník prodává. Suroviny bere ze skladu a hotové tam nosí. Čím vyšší úroveň, tím častěji obchází budovu. Obchodník prodává jednou za 30 minut (na úrovni 5 za 10 minut).</p>
     <div class="crops cards">${buy}</div>${rows.length ? `<div class="sect">Tvoji vesničané</div>${rows.join('')}` : ''}`;
 }
 // blok „Pracovník“ v okně budovy: přiřadit vesničana, nastavit práci, vylepšit, odvolat
@@ -191,12 +192,14 @@ export function workerBlock(farm, o) {
     const add = ITEM_LIST.filter(it => have(farm, it.id) > 0 && !(it.id in sell));
     job = (list || '<small class="muted">Zatím nic neprodává. Vyber, co má prodávat:</small>')
       + (add.length ? `<small><b>Přidat:</b></small><div class="chips">${add.map(it => `<button class="chip" data-act="villSellAdd" data-v="${v.id}|${it.id}">+ :${it.icon}: ${esc(it.name)}</button>`).join('')}</div>` : '')
-      + `<small class="muted">Prodá až ${TRADER_QTY[v.lvl]} ks za obchůzku. Vydělal celkem ${v.earned || 0} :coin:.</small>`;
+      + `<small class="muted">Jednou za ${ivText(villIv(v, o))} prodá až ${TRADER_QTY[v.lvl]} ks. Vydělal celkem ${v.earned || 0} :coin:.</small>`;
   }
   const up = v.lvl < VILL_MAX_LVL ? `<button class="btn sm" data-act="upVill" data-v="${v.id}">↑ Úroveň ${v.lvl + 1} · ${villUpCost(v.lvl)} :coin:</button>` : '<span class="chip on">nejvyšší úroveň</span>';
+  const nextIv = v.lvl < VILL_MAX_LVL ? villIv({ lvl: v.lvl + 1 }, o) : 0;
   return `<div class="sect">${head}</div><div class="upg worker"><b>:helper: ${esc(villName(v))} · úroveň ${v.lvl}</b>
-    <small class="muted">${VILL_WHAT[type][0].toUpperCase() + VILL_WHAT[type].slice(1)}. Obchůzka každých ${VILL_IV[v.lvl]} s · hotovo ${v.n || 0}×.</small>
-    ${job}<div class="hire">${up}<button class="btn sm alt" data-act="villFree" data-v="${v.id}">Odvolat</button></div></div>`;
+    <small class="muted">${VILL_WHAT[type][0].toUpperCase() + VILL_WHAT[type].slice(1)}. ${type === 'trader' ? 'Prodává' : 'Obchůzka'} každých ${ivText(villIv(v, o))} · hotovo ${v.n || 0}×.</small>
+    ${job}${nextIv ? `<small class="muted">Na úrovni ${v.lvl + 1}: každých ${ivText(nextIv)}${type === 'trader' ? `, ${TRADER_QTY[v.lvl + 1]} ks` : ''}.</small>` : ''}
+    <div class="hire">${up}<button class="btn sm alt" data-act="villFree" data-v="${v.id}">Odvolat</button></div></div>`;
 }
 
 // blok „Vylepšit budovu“ – suroviny, mince, co to přinese
@@ -724,7 +727,7 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:xp: Úroveň hráče</b> roste za každou práci a pořád dál. Odemyká nové plodiny, zvířata, stromy, ryby, stroje a recepty.')
       + p('<b>:helper: Pomocník</b> (Statek → Pomocník) sám sklízí a zasívá malá pole.')
       + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.')
-      + p('<b>:helper: Vesničané</b> (Obchod → Vesničané, 100 :coin:): přiřaď je v okně budovy. Ve výrobně vyrábějí zvolený výrobek, v ohradě krmí a sbírají, ve včelíně sbírají plástve a ve skladu prodávají jako obchodník. Suroviny berou ze skladu a hotové tam nosí. Vylepšení (100 / 200 / 300 / 400 :coin:, nejvýš úroveň 5) zrychlí jejich obchůzky.')
+      + p('<b>:helper: Vesničané</b> (Obchod → Vesničané, 100 :coin:): přiřaď je v okně budovy. Ve výrobně vyrábějí zvolený výrobek, v ohradě krmí a sbírají, ve včelíně sbírají plástve a ve skladu prodávají jako obchodník. Suroviny berou ze skladu a hotové tam nosí. Vylepšení (100 / 200 / 300 / 400 :coin:, nejvýš úroveň 5) zrychlí jejich obchůzky. Obchodník prodává jednou za 30 min (úroveň 5: za 10 min) 10–40 kusů.')
       + p('<b>↔ Přesun:</b> podrž prst na budově nebo poli, zvedne se a můžeš ho táhnout. Potvrď ✓ dole. Přesunout jde všechno, i Statek, a pole i s tím, co na něm roste.');
   } else if (tab === 'statek') {
     const rows = [];

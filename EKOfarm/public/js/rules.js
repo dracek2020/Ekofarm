@@ -943,7 +943,10 @@ export const VILL_BUY = 100;                          // cena nového vesničana
 export const VILL_MAX_LVL = 5;
 export const villUpCost = lvl => 100 * lvl;           // vylepšení na další úroveň: na 2 → 100, na 3 → 200, na 4 → 300, na 5 → 400
 export const VILL_IV = [0, 120, 90, 60, 45, 30];      // jak často obejde budovu (s) podle úrovně
-export const TRADER_QTY = [0, 3, 5, 8, 12, 16];      // kolik kusů obchodník prodá za jednu obchůzku
+export const TRADER_IV = [0, 1800, 1500, 1200, 900, 600];   // obchodník prodává jen jednou za 30 / 25 / 20 / 15 / 10 min
+export const TRADER_QTY = [0, 10, 15, 20, 30, 40];   // kolik kusů obchodník prodá najednou
+// za kolik sekund vesničan v budově obejde svou práci
+export const villIv = (v, o) => (o && villJobType(o.kind) === 'trader' ? TRADER_IV : VILL_IV)[v.lvl];
 export const VILL_MAX = 30;
 const VILL_CATCHUP = 24 * 3600 * 1000;               // po dlouhé nepřítomnosti se dopočítá nejvýš den práce
 const VILL_TICKS = 150;                               // … a nejvýš tolik obchůzek na vesničana (pak řidší)
@@ -1002,7 +1005,7 @@ export function runVillagers(farm, now) {
     const o = v.at && findObject(farm, v.at);
     if (!o || !villJobType(o.kind)) { v.t = Math.max(v.t || 0, now); continue; }
     const from = Math.max(v.t || now, now - VILL_CATCHUP);
-    const iv = Math.max(VILL_IV[v.lvl] * 1000, (now - from) / VILL_TICKS);
+    const iv = Math.max(villIv(v, o) * 1000, (now - from) / VILL_TICKS);
     list.push({ v, o, iv, next: from + iv });
   }
   for (let guard = 0; list.length && guard < 6000; guard++) {

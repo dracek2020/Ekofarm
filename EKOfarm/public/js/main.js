@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=23';
-import { preloadAssets, spriteName } from './sprites.js?v=23';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=23';
-import { createBackend, ApiError } from './api.js?v=23';
-import { iconize, ic } from './icons.js?v=23';
-import { NEWS } from './news.js?v=23';
-import { sfx, soundOn, setSound } from './sfx.js?v=23';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=23';
+} from './rules.js?v=24';
+import { preloadAssets, spriteName } from './sprites.js?v=24';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=24';
+import { createBackend, ApiError } from './api.js?v=24';
+import { iconize, ic } from './icons.js?v=24';
+import { NEWS } from './news.js?v=24';
+import { sfx, soundOn, setSound } from './sfx.js?v=24';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=24';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 23;
+const APP_VERSION = 24;
 
 
 const game = {

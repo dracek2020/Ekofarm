@@ -1,5 +1,10 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 24, title: 'Obchodník prodává méně často', items: [
+    'Obchodník ve skladu prodává jen jednou za 30 minut. S každou úrovní častěji: 25, 20, 15 a na úrovni 5 jednou za 10 minut.',
+    'Zato prodá najednou víc: 10, 15, 20, 30 a 40 kusů podle úrovně.',
+    'V okně vesničana vidíš, co přinese další úroveň.',
+  ] },
   { v: 23, title: 'Vesničané – automatizace farmy', items: [
     'Kup si vesničana (Obchod → Vesničané, 100 mincí) a přiřaď ho v okně budovy.',
     'Ve výrobně vyrábí, co mu vybereš: suroviny si bere ze skladu a hotové tam nosí.',

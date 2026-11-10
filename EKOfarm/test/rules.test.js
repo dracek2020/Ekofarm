@@ -308,6 +308,16 @@ test('vesničané: nákup, vylepšení, práce ve výrobně, ohradě a obchodní
   assert.ok(f.coins > coins, 'obchodník vydělal');
   assert.ok(f.silo.mouka >= 2, 'nechal si 2 kusy');
   assert.ok(findVill(f, tid).earned > 0);
+  // obchodník prodává jen jednou za 30 min (úroveň 1), najednou až 10 kusů
+  assert.ok(applyAction(f, { type: 'villJob', id, r: null }, T0 + 5 * 3600 * 1000).ok, 'mlýn stojí');
+  f.siloCap = 1000;
+  f.silo.wheat = 100;
+  assert.ok(applyAction(f, { type: 'villSell', id: tid, item: 'wheat', keep: 0 }, T0 + 5 * 3600 * 1000).ok);
+  const tv = findVill(f, tid), n0 = tv.n, w1 = f.silo.wheat;
+  applyAction(f, { type: 'nop' }, T0 + 7 * 3600 * 1000);              // 2 hodiny = 4 prodeje
+  assert.ok(tv.n - n0 >= 3 && tv.n - n0 <= 4, `prodejů: ${tv.n - n0}`);
+  assert.ok(w1 - f.silo.wheat <= (tv.n - n0) * 10, 'nejvýš 10 kusů najednou');
+  assert.ok(w1 - f.silo.wheat > 0);
   // jedna budova = jeden vesničan: nový tam vystřídá starého
   const v3 = applyAction(f, { type: 'buyVill' }, T0).id;
   assert.ok(applyAction(f, { type: 'assignVill', id: v3, at: mlyn }, T0).ok);

@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt } from './rules.js?v=23';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=23';
-import { drawIconText, drawIcon } from './icons.js?v=23';
-import { asset } from './sprites.js?v=23';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt } from './rules.js?v=24';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=24';
+import { drawIconText, drawIcon } from './icons.js?v=24';
+import { asset } from './sprites.js?v=24';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
