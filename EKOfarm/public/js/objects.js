@@ -1,7 +1,7 @@
 // EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=8';
-import { TW, TH, drawPlant } from './render.js?v=8';
-import { drawIcon } from './icons.js?v=8';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize } from './rules.js?v=9';
+import { TW, TH, drawPlant } from './render.js?v=9';
+import { drawIcon } from './icons.js?v=9';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -134,13 +134,38 @@ function drawCow(ctx, x, y, dir, t, i) {
   ctx.beginPath(); ctx.ellipse(x + 17 * dir, y - 15.5 - bob, 3, 2.2, 0, 0, Math.PI * 2); ctx.fill();
 }
 
+function drawPig(ctx, x, y, dir, t, i) {
+  const bob = Math.abs(Math.sin(t / 300 + i)) * 0.8;
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#e08a96';
+  for (const lx of [-6, -2, 3, 7]) ctx.fillRect(x + lx, y - 6, 2.4, 6);
+  ctx.fillStyle = '#f5b0b8';
+  ctx.beginPath(); ctx.ellipse(x, y - 10 - bob, 11, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + 11 * dir, y - 12 - bob, 5, 4.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#e08a96';
+  ctx.beginPath(); ctx.ellipse(x + 15 * dir, y - 11.5 - bob, 2.4, 2, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x + 9 * dir, y - 16 - bob); ctx.lineTo(x + 10 * dir, y - 20 - bob); ctx.lineTo(x + 12 * dir, y - 16 - bob); ctx.fill();
+}
+
+function drawSheep(ctx, x, y, dir, t, i) {
+  const bob = Math.abs(Math.sin(t / 350 + i)) * 0.8;
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#4a3f38';
+  for (const lx of [-6, -2, 3, 7]) ctx.fillRect(x + lx, y - 7, 2.2, 7);
+  ctx.fillStyle = '#f7f3ec';
+  for (const [dx, dy, r] of [[-5, -11, 6], [3, -12, 7], [8, -10, 5], [-1, -15, 5]]) { ctx.beginPath(); ctx.arc(x + dx * dir, y + dy - bob, r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#4a3f38';
+  ctx.beginPath(); ctx.ellipse(x + 13 * dir, y - 14 - bob, 3.6, 4.4, 0, 0, Math.PI * 2); ctx.fill();
+}
+
 function drawPen(ctx, o, d, now, t) {
   const an = ANIMALS[d.animal];
   const N = iso(o.x, o.y), E = iso(o.x + d.w, o.y), S = iso(o.x + d.w, o.y + d.h), W = iso(o.x, o.y + d.h);
-  poly(ctx, [N, E, S, W], d.animal === 'krava' ? '#a9c76b' : '#c9b77c');
+  poly(ctx, [N, E, S, W], { krava: '#a9c76b', prase: '#a8875a', ovce: '#b8d88a' }[d.animal] || '#c9b77c');
   // domek v zadním rohu
   const hs = d.w >= 3 ? 1.2 : 0.9;
-  house(ctx, o.x + 0.1, o.y + 0.1, o.x + 0.1 + hs, o.y + 0.1 + hs, 26, 18, d.animal === 'krava' ? '#b5523b' : '#e7c27a', '#8a3b2c');
+  house(ctx, o.x + 0.1, o.y + 0.1, o.x + 0.1 + hs, o.y + 0.1 + hs, 26, 18, { krava: '#b5523b', prase: '#c98a6a', ovce: '#d9c9a8' }[d.animal] || '#e7c27a', '#8a3b2c');
+  if (d.animal === 'prase') { const [mx, my] = iso(o.x + d.w * 0.7, o.y + d.h * 0.75); ctx.fillStyle = 'rgba(110,70,30,.55)'; ctx.beginPath(); ctx.ellipse(mx, my, 22, 9, 0, 0, Math.PI * 2); ctx.fill(); }
   // zvířata
   const animals = o.animals || [];
   animals.forEach((a, i) => {
@@ -150,11 +175,14 @@ function drawPen(ctx, o, d, now, t) {
     const v = 0.35 + 0.18 * i + 0.1 * Math.cos(t / (3100 / sp) + i * 1.7);
     const [x, y] = iso(o.x + u * d.w, o.y + Math.min(0.88, v) * d.h);
     const dir = Math.cos(t / (2600 / sp) + i * 2.3) > 0 ? 1 : -1;
-    if (d.animal === 'krava') drawCow(ctx, x, y, dir, t, i); else drawChicken(ctx, x, y, dir, t, i);
+    if (d.animal === 'krava') drawCow(ctx, x, y, dir, t, i);
+    else if (d.animal === 'prase') drawPig(ctx, x, y, dir, t, i);
+    else if (d.animal === 'ovce') drawSheep(ctx, x, y, dir, t, i);
+    else drawChicken(ctx, x, y, dir, t, i);
     if (st.state === 'ready') {
       ctx.font = '14px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
       ctx.textAlign = 'center';
-      drawIcon(ctx, ITEMS[an.product].icon, x, y - (d.animal === 'krava' ? 36 : 28), 14);
+      drawIcon(ctx, ITEMS[an.product].icon, x, y - (d.animal === 'slepice' ? 28 : 36), 14);
     }
   });
   // plot
@@ -190,6 +218,22 @@ function drawOrchard(ctx, o, d, now, t) {
   const tr = TREES[o.tree];
   const g = st.state === 'growing' && o.left === tr.harvests ? 0.35 + 0.65 * st.progress : 1;
   const sway = st.state === 'ready' ? Math.sin(t / 500 + o.x) * 1.2 : 0;
+  if (tr.kind === 'bush') {           // keř: nízký a kulatý, bobule po celém keři
+    const r = 12 * g;
+    ctx.fillStyle = st.state === 'dead' ? '#8a7a5c' : '#3f8a35';
+    ctx.beginPath(); ctx.arc(cx - 6 * g, cy - r * 0.8, r * 0.75, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 6 * g, cy - r * 0.8, r * 0.75, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = st.state === 'dead' ? '#9a8a6a' : '#4ea845';
+    ctx.beginPath(); ctx.arc(cx + sway, cy - r * 1.25, r * 0.8, 0, Math.PI * 2); ctx.fill();
+    if (st.state === 'dead') { drawIcon(ctx, 'axe', cx + 14, cy - 28, 14); return; }
+    if (st.state === 'ready' || st.progress > 0.5) {
+      ctx.fillStyle = st.state === 'ready' ? tr.color : '#b8dc8a';
+      for (const [dx, dy] of [[-10, -9], [-4, -16], [4, -12], [10, -8], [0, -22], [7, -19], [-8, -18]]) {
+        ctx.beginPath(); ctx.arc(cx + dx * g + sway, cy + dy * g, st.state === 'ready' ? 2.6 : 1.6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    return;
+  }
   // kmen
   ctx.fillStyle = st.state === 'dead' ? '#6b5440' : '#7a4e2a';
   ctx.fillRect(cx - 2.5 * g, cy - 24 * g, 5 * g, 24 * g);
@@ -487,8 +531,90 @@ export function objectDepth(o) {
   return o.x + o.y + (d.w + d.h) / 2;
 }
 
+// ---------- stodola, prodejna, stánek ----------
+function drawGarage(ctx, o, d, now, t, farm) {
+  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const h = house(ctx, o.x + 0.1, o.y + 0.15, o.x + d.w - 0.1, o.y + d.h - 0.1, 44, 30, '#a8483a', '#6f3a2a');
+  // velká vrata na levé (přední) stěně
+  const g0 = lerp(h.W, h.S, 0.18), g1 = lerp(h.W, h.S, 0.82);
+  poly(ctx, [g0, g1, [g1[0], g1[1] - 34], [g0[0], g0[1] - 34]], '#5b3a1e');
+  ctx.strokeStyle = '#f3e3c3'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(g0[0], g0[1]); ctx.lineTo(g1[0], g1[1] - 34); ctx.moveTo(g1[0], g1[1]); ctx.lineTo(g0[0], g0[1] - 34); ctx.stroke();
+  // zaparkované stroje před stodolou (ty, co zrovna nepracují)
+  if (farm) {
+    const idle = farm.machines.filter(m => isVehicle(m.model) && !farm.objects.some(x => x.job && x.job.m === m.id && now < x.job.end));
+    idle.slice(0, 3).forEach((m, i) => {
+      const [vx, vy] = iso(o.x + 0.5 + i * 0.9, o.y + d.h + 0.35);
+      drawVehicle(ctx, vx, vy, m.model, 1, t, 0.5, false);
+    });
+  }
+}
+
+function drawDealer(ctx, o, d, now, t) {
+  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const h = house(ctx, o.x + 0.2, o.y + 0.15, o.x + d.w - 0.15, o.y + d.h - 0.5, 40, 18, '#e8e2d6', '#3f6fb5');
+  // výloha a markýza
+  const w0 = lerp(h.W, h.S, 0.12), w1 = lerp(h.W, h.S, 0.88);
+  poly(ctx, [[w0[0], w0[1] - 8], [w1[0], w1[1] - 8], [w1[0], w1[1] - 28], [w0[0], w0[1] - 28]], '#9fd0f0');
+  for (let k = 0; k < 6; k++) {
+    const a = lerp(w0, w1, k / 6), b = lerp(w0, w1, (k + 1) / 6);
+    poly(ctx, [[a[0], a[1] - 30], [b[0], b[1] - 30], [b[0] + 3, b[1] - 24], [a[0] + 3, a[1] - 24]], k % 2 ? '#fff' : '#c8452d');
+  }
+  drawIcon(ctx, 'shop', h.apex[0], h.apex[1] + 14, 18);
+  const [vx, vy] = iso(o.x + d.w * 0.55, o.y + d.h - 0.3);
+  drawVehicle(ctx, vx, vy, 'brazda60', 1, t, 0.48, false);
+}
+
+function drawStall(ctx, o, d, now, t) {
+  const [cx, cy] = iso(o.x + d.w / 2, o.y + d.h / 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 40, 16, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7a4e2a';
+  for (const dx of [-30, 30]) ctx.fillRect(cx + dx - 2, cy - 44, 4, 46);
+  ctx.fillStyle = '#a7703d'; ctx.fillRect(cx - 34, cy - 14, 68, 14);       // pult
+  ctx.fillStyle = '#8a5a35'; ctx.fillRect(cx - 34, cy - 14, 68, 3);
+  const goods = ['#e0402d', '#f2c22e', '#5fae3a', '#f08a24', '#6b2f7a', '#d9342b'];
+  goods.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx - 26 + i * 10.5, cy - 17, 4, 0, Math.PI * 2); ctx.fill(); });
+  for (let k = 0; k < 6; k++) {                                              // pruhovaná stříška
+    ctx.fillStyle = k % 2 ? '#fff' : '#4f8fd6';
+    ctx.beginPath(); ctx.moveTo(cx - 38 + k * 12.7, cy - 44); ctx.lineTo(cx - 25.3 + k * 12.7, cy - 44); ctx.lineTo(cx - 25.3 + k * 12.7 + 2, cy - 34); ctx.lineTo(cx - 38 + k * 12.7 + 2, cy - 34); ctx.fill();
+  }
+  ctx.fillStyle = '#3f6fb5'; ctx.fillRect(cx - 38, cy - 50, 78, 6);
+}
+
+// cedulka s úrovní budovy
+function levelPlate(ctx, o, d) {
+  const L = objLevel(o);
+  if (L < 2) return;
+  const sz = { w: o.w || d.w, h: o.h || d.h };
+  const [x, y] = iso(o.x + sz.w, o.y + sz.h / 2);
+  ctx.fillStyle = '#4f8fd6'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x - 6, y - 10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '800 10px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(L), x - 6, y - 9.5);
+  ctx.textBaseline = 'alphabetic';
+}
+
+// panáček: farmář nebo pomocník; walking = jde, work = pracuje
+export function drawPerson(ctx, x, y, shirt, hat, t, walking, work) {
+  const step = walking ? Math.sin(t / 90) : 0;
+  const bend = work ? Math.abs(Math.sin(t / 120)) * 3 : 0;
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x, y, 6, 2.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#2f4f8f'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - 1.5, y - 9); ctx.lineTo(x - 2 - step * 2, y - 1); ctx.moveTo(x + 1.5, y - 9); ctx.lineTo(x + 2 + step * 2, y - 1); ctx.stroke();
+  ctx.fillStyle = shirt; ctx.fillRect(x - 4, y - 18 + bend, 8, 10);
+  ctx.strokeStyle = shirt; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(x - 4, y - 16 + bend); ctx.lineTo(x - 6 + step * 2, y - 10 + bend + (work ? 3 : 0)); ctx.moveTo(x + 4, y - 16 + bend); ctx.lineTo(x + 6 - step * 2, y - 10 + bend + (work ? 3 : 0)); ctx.stroke();
+  ctx.fillStyle = '#f2c9a0'; ctx.beginPath(); ctx.arc(x, y - 21 + bend, 3.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = hat; ctx.beginPath(); ctx.ellipse(x, y - 24 + bend, 6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(x - 3, y - 27 + bend, 6, 3);
+  ctx.lineCap = 'butt';
+}
+
 export function drawObject(ctx, o, now, t, farm) {
   const d = BUILDINGS[o.kind];
+  if (d.type === 'garage') { drawGarage(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
+  if (d.type === 'dealer') { drawDealer(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
+  if (d.type === 'stall') { drawStall(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
   if (d.type === 'factory') drawFactory(ctx, o, d, now, t);
   else if (d.type === 'pen') drawPen(ctx, o, d, now, t);
   else if (d.type === 'main') drawMain(ctx, o, d, now, t, farm);
@@ -496,6 +622,7 @@ export function drawObject(ctx, o, now, t, farm) {
   else if (d.type === 'storage') drawStorage(ctx, o, d, now, t);
   else if (d.type === 'bigfield') drawBigField(ctx, o, d, now, t, farm);
   else drawDeco(ctx, o, d, now, t);
+  if (UPGRADABLE.includes(d.type)) levelPlate(ctx, o, d);
 }
 
 // duch při stavění/přesunu: ghost = { kind, x, y, ok }

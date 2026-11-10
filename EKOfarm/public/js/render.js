@@ -1,7 +1,7 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt } from './rules.js?v=8';
-import { drawObject, drawGhost, objectDepth } from './objects.js?v=8';
-import { drawIconText, drawIcon } from './icons.js?v=8';
+import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt } from './rules.js?v=9';
+import { drawObject, drawGhost, objectDepth, drawPerson } from './objects.js?v=9';
+import { drawIconText, drawIcon } from './icons.js?v=9';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -235,6 +235,71 @@ export function drawPlant(ctx, crop, px, py, g, ready, t) {
       }
       break;
     }
+    default: drawLook(ctx, (CROPS[crop] && CROPS[crop].look) || {}, px, py, g, s, ready, sway);
+  }
+}
+
+// obecné tvary rostlin pro novou zeleninu a ovoce (podle look.t a barvy plodu look.c)
+function drawLook(ctx, L, px, py, g, s, ready, sway) {
+  const c = L.c || '#e0402d';
+  const fruitOn = ready || g > 0.75;
+  switch (L.t) {
+    case 'root': {
+      if (ready) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - 1, 3, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#5fae3a';
+      for (const a of [-0.5, 0.5]) { ctx.beginPath(); ctx.ellipse(px + Math.sin(a) * 3 + sway, py - 6 * s, 2, 5 * s, a, 0, Math.PI * 2); ctx.fill(); }
+      break;
+    }
+    case 'leafy': {
+      const r = 7 * s;
+      ctx.fillStyle = '#5fa83f'; ctx.beginPath(); ctx.arc(px, py - r * 0.7, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - r * 0.8, r * 0.65, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case 'bush': {
+      const h = 16 * s;
+      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + sway, py - h); ctx.stroke();
+      ctx.fillStyle = '#4f9a3a';
+      ctx.beginPath(); ctx.arc(px + sway, py - h * 0.7, 6 * s, 0, Math.PI * 2); ctx.fill();
+      if (fruitOn) {
+        ctx.fillStyle = ready ? c : '#8fc45a';
+        for (const [dx, dy] of [[-3, -0.5], [3, -0.6], [0, -0.85]]) { ctx.beginPath(); ctx.arc(px + dx + sway, py + dy * h, 2.4, 0, Math.PI * 2); ctx.fill(); }
+      }
+      break;
+    }
+    case 'vine': {
+      ctx.fillStyle = '#4f9a3a';
+      for (const [dx, dy] of [[-5, -2], [4, -3], [0, -5]]) { ctx.beginPath(); ctx.ellipse(px + dx, py + dy * s, 4 * s, 2.6 * s, 0.4, 0, Math.PI * 2); ctx.fill(); }
+      if (fruitOn) {
+        const big = c !== '#3f8f3a';
+        ctx.fillStyle = ready ? c : '#8fc45a';
+        ctx.beginPath(); ctx.ellipse(px + 2, py - 1, big ? 5 : 4.5, big ? 4 : 2, big ? 0 : 0.3, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
+    case 'bulb': {
+      if (ready || g > 0.6) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - 1.5, 3, 0, Math.PI * 2); ctx.fill(); }
+      ctx.strokeStyle = '#5fae3a'; ctx.lineWidth = 1.6;
+      for (const dx of [-2, 0, 2]) { ctx.beginPath(); ctx.moveTo(px, py - 3); ctx.lineTo(px + dx * 2 + sway, py - 14 * s); ctx.stroke(); }
+      break;
+    }
+    case 'pod': {
+      const h = 15 * s;
+      ctx.strokeStyle = '#5fae3a'; ctx.lineWidth = 1.4;
+      for (const dx of [-3, 3]) { ctx.beginPath(); ctx.moveTo(px + dx, py); ctx.quadraticCurveTo(px + dx * 2 + sway, py - h / 2, px + dx + sway, py - h); ctx.stroke(); }
+      if (fruitOn) { ctx.fillStyle = ready ? c : '#a8dc6a'; for (const dy of [0.4, 0.7]) { ctx.beginPath(); ctx.ellipse(px + sway, py - h * dy, 1.6, 3.4, 0.3, 0, Math.PI * 2); ctx.fill(); } }
+      break;
+    }
+    case 'berry': {
+      ctx.fillStyle = '#3f8f3a';
+      for (const [dx, dy] of [[-4, -2], [4, -2], [0, -4]]) { ctx.beginPath(); ctx.ellipse(px + dx, py + dy, 3.4 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+      if (fruitOn) { ctx.fillStyle = ready ? c : '#f2f2d0'; for (const dx of [-3, 3]) { ctx.beginPath(); ctx.arc(px + dx, py, 2, 0, Math.PI * 2); ctx.fill(); } }
+      break;
+    }
+    default:
+      ctx.fillStyle = '#5fae3a';
+      ctx.beginPath(); ctx.arc(px, py - 5 * s, 5 * s, 0, Math.PI * 2); ctx.fill();
   }
 }
 
@@ -285,6 +350,7 @@ export function drawScene(ctx, view) {
   const items = farm.plots.map(p => ({ d: p.x + p.y + 1, p }));
   for (const o of farm.objects) if (!ghost || ghost.moveId !== o.id) items.push({ d: objectDepth(o), o });
   for (const tr of BG_TREES) if (!landOwned(farm, tr.gx, tr.gy)) items.push({ d: tr.gx + tr.gy + 1, tree: tr });
+  for (const pp of view.people || []) items.push({ d: pp.gx + pp.gy + 0.05, person: pp });
   for (const p of LAND_PARCELS) {
     if (!farm.land.includes(p.id) && landReachable(farm, p)) items.push({ d: p.x + p.y + (p.w + p.h) / 2 + 0.5, sign: p });
   }
@@ -295,6 +361,11 @@ export function drawScene(ctx, view) {
       drawPlot(ctx, p.x, p.y, !!p.crop);
       if (p.crop) drawCrops(ctx, p, plotState(p, view.now), t);
     } else if (it.tree) drawTree(ctx, it.tree);
+    else if (it.person) {
+      const pp = it.person;
+      const [px, py] = [(pp.gx - pp.gy) * TW / 2, (pp.gx + pp.gy) * TH / 2];
+      drawPerson(ctx, px, py, pp.shirt, pp.hat, t, pp.walking, pp.work);
+    }
     else if (it.sign) drawSaleSign(ctx, farm, it.sign);
     else drawObject(ctx, it.o, view.now, t, farm);
   }

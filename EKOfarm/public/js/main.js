@@ -4,16 +4,17 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-} from './rules.js?v=8';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=8';
-import { createBackend, ApiError } from './api.js?v=8';
-import { iconize, ic } from './icons.js?v=8';
-import { sfx, soundOn, setSound } from './sfx.js?v=8';
-import { landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=8';
+  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+} from './rules.js?v=9';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=9';
+import { createBackend, ApiError } from './api.js?v=9';
+import { iconize, ic } from './icons.js?v=9';
+import { NEWS } from './news.js?v=9';
+import { sfx, soundOn, setSound } from './sfx.js?v=9';
+import { garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=9';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 
 
 const game = {
@@ -80,16 +81,59 @@ function frame(t) {
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (game.bubble && t > game.bubble.until) game.bubble = null;
     game.floats = game.floats.filter(f => t - f.t0 < 1300);
+    const dt = Math.min(0.1, (t - (game.lastT || t)) / 1000);
+    game.lastT = t;
+    const people = [stepWalker(game.farmer, dt, t, '#c8452d', '#d9b43b')];
+    if (helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, '#4f8fd6', '#3f8a25'));
     drawScene(ctx, {
       farm: game.farm, now: now(), t, cam: game.cam, W, H,
-      ghost: ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour,
+      ghost: ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people,
     });
   }
   requestAnimationFrame(frame);
 }
 
+// ---------- farmář a pomocník (chodí tam, kde se pracuje) ----------
+function homeSpot() {
+  const st = game.farm && game.farm.objects.find(o => o.kind === 'statek');
+  return st ? [st.x + 1.5, st.y + 3.3] : [8, 10];
+}
+game.farmer = { pos: null, targets: [], work: 0 };
+game.helperW = { pos: null, targets: [], work: 0, off: [0.6, 0.4] };
+function sendWalker(w, gx, gy) {
+  w.targets.push([gx + 0.5, gy + 0.5]);
+  if (w.targets.length > 6) w.targets.splice(0, w.targets.length - 6);
+}
+function stepWalker(w, dt, t, shirt, hat) {
+  if (!w.pos) { const [hx, hy] = homeSpot(); w.pos = [hx + (w.off ? w.off[0] : 0), hy + (w.off ? w.off[1] : 0)]; }
+  let walking = false;
+  if (t < w.work) { /* pracuje na místě */ }
+  else if (w.targets.length) {
+    const [tx, ty] = w.targets[0];
+    const dx = tx - w.pos[0], dy = ty - w.pos[1], dist = Math.hypot(dx, dy);
+    const sp = 5 * dt;
+    if (dist <= sp) { w.pos = [tx, ty]; w.targets.shift(); w.work = t + 450; }
+    else { w.pos = [w.pos[0] + dx / dist * sp, w.pos[1] + dy / dist * sp]; walking = true; w.dir = dx - dy >= 0 ? 1 : -1; }
+  } else if (t > w.work + 6000) {                     // po chvíli nečinnosti se vrátí ke statku
+    const [hx, hy] = homeSpot();
+    if (Math.hypot(hx - w.pos[0], hy - w.pos[1]) > 0.3) w.targets.push([hx + (w.off ? w.off[0] : 0), hy + (w.off ? w.off[1] : 0)]);
+    w.work = t;
+  }
+  return { gx: w.pos[0], gy: w.pos[1], shirt, hat, walking, work: t < w.work };
+}
+// práce pomocníka se dopočítává průběžně
+setInterval(() => {
+  if (!game.farm || !game.farm.helper) return;
+  const touched = runHelper(game.farm, now());
+  if (touched.length) {
+    for (const [x, y] of touched.slice(-4)) sendWalker(game.helperW, x, y);
+    updateHud();
+  }
+}, 1000);
+
 // ---------- akce ----------
 const SFX_OF = {
+  upgrade: 'level', sellMachine: 'coin', stallBuy: 'coin', stallSell: 'coin', hire: 'build',
   harvest: 'harvest', harvestTree: 'harvest', harvestAll: 'harvest', collect: 'harvest', fieldUnload: 'harvest', feed: 'plant',
   plant: 'plant', sowAll: 'plant', plantTree: 'plant', clearTree: 'build',
   sell: 'coin', deliver: 'coin', claimDaily: 'coin', claimAch: 'coin', upgradeSilo: 'coin',
@@ -101,6 +145,11 @@ function act(a, silent) {
   if (!r.ok) { if (!silent) { toast(ERRORS[r.error] || 'To teď nejde.'); sfx('error'); } return r; }
   sfx(r.gained && r.gained.levelUp ? 'level' : SFX_OF[a.type] || 'tap');
   game.queue.push(a);
+  if (a.x !== undefined && a.y !== undefined && ['harvest', 'plant', 'buyPlot'].includes(a.type)) sendWalker(game.farmer, a.x, a.y);
+  else if (a.id && ['collect', 'feed', 'produce', 'harvestTree', 'plantTree', 'clearTree', 'fieldUnload', 'upgrade'].includes(a.type)) {
+    const o = findObject(game.farm, a.id);
+    if (o) { const d = objSize(o); sendWalker(game.farmer, o.x + Math.floor(d.w / 2), o.y + d.h); }
+  }
   afterChange(a, r);
   scheduleFlush();
   return r;
@@ -341,7 +390,8 @@ function tapObject(o) {
     } else openPanel({ kind: 'obj', id: o.id });
     return;
   }
-  if (d.type === 'main') { openPanel({ kind: 'obj', id: o.id }); return; }
+  if (d.type === 'main') { openPanel({ kind: 'obj', id: o.id, tab: 'zakazky' }); return; }
+  if (['garage', 'dealer', 'stall'].includes(d.type)) { openPanel({ kind: 'obj', id: o.id }); return; }
   const st = objectStatus(o, now());
   let did = false;
   if (st.done) did = act({ type: 'collect', id: o.id }).ok;
@@ -459,7 +509,7 @@ function renderPanel() {
   let title = '', body = '';
   if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f); }
-  else if (p.kind === 'dealer') { title = ':tractor: Prodejna strojů'; body = dealerHtml(f, now()); }
+  else if (p.kind === 'news') { title = ':news: Novinky'; body = newsHtml(); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
   else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board); }
@@ -470,7 +520,10 @@ function renderPanel() {
     title = `:${d.icon}: ${d.name}`;
     body = d.type === 'factory' ? factoryHtml(f, o, now())
       : d.type === 'pen' ? penHtml(f, o, now())
-      : d.type === 'main' ? statekHtml(f, game.name, now())
+      : d.type === 'main' ? statekHtml(f, game.name, now(), p.tab, o)
+      : d.type === 'garage' ? garageHtml(f, o, now())
+      : d.type === 'dealer' ? dealerHtml(f, now(), o)
+      : d.type === 'stall' ? stallHtml(f, o, now())
       : d.type === 'orchard' ? orchardHtml(f, o, now())
       : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
       : decoHtml(f, o);
@@ -482,7 +535,7 @@ function renderPanel() {
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
-  if (game.panel && ['obj', 'dealer', 'silo'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
+  if (game.panel && ['obj', 'silo'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
 }, 1000);
 
 $('panelBody').addEventListener('click', e => {
@@ -523,6 +576,41 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'clearTree': act({ type: 'clearTree', id: Number(v) }); break;
     case 'ttab': game.panel.tab = v; if (v === 'zebricek') loadBoard(); renderPanel(); break;
+    case 'stab': game.panel.tab = v; renderPanel(); break;
+    case 'upgrade': {
+      const r = act({ type: 'upgrade', id: Number(v) });
+      if (r.ok) toast(`:star: Vylepšeno na úroveň ${r.level}!`, 'lvlup', 2200);
+      break;
+    }
+    case 'sellMachine': {
+      const r = act({ type: 'sellMachine', id: Number(v) });
+      if (r.ok) toast(`Prodáno za ${r.refund} :coin:`);
+      break;
+    }
+    case 'stallBuy': {
+      const r = act({ type: 'stallBuy', i: Number(v), qty: 1 });
+      if (r.ok) toast(`−${r.total} :coin:`);
+      break;
+    }
+    case 'stallSell': {
+      const off = stallOffers(f, now()).sell[Number(v)];
+      const left = stallLeft(f, now(), 's', Number(v), off.qty);
+      const qty = b.dataset.q === 'all' ? Math.min(left, have(f, off.item)) : 1;
+      if (qty > 0) { const r = act({ type: 'stallSell', i: Number(v), qty }); if (r.ok) toast(`+${r.total} :coin:`); }
+      break;
+    }
+    case 'hire': {
+      const crop = game.helperPick || (f.helper && f.helper.crop) || game.sowCrop || 'wheat';
+      const r = act({ type: 'hire', plan: Number(v), crop });
+      if (r.ok) toast(':helper: Pomocník jde do práce!', 'lvlup', 2000);
+      break;
+    }
+    case 'helperCrop':
+      if (!f.helper) { toast('Nejdřív pomocníka najmi – plodinu si zapamatuje.'); game.helperPick = v; }
+      else act({ type: 'helperSet', crop: v });
+      renderPanel();
+      break;
+    case 'helperTractor': act({ type: 'helperSet', tractor: v === '1' }); break;
     case 'openLand': openPanel({ kind: 'land', sel: (LAND_PARCELS.find(p => !f.land.includes(p.id)) || {}).id }); break;
     case 'selLand': game.panel.sel = v; renderPanel(); break;
     case 'buyLand': {
@@ -552,7 +640,7 @@ $('panelBody').addEventListener('click', e => {
       break;
     case 'buyMachine': {
       const r = act({ type: 'buyMachine', model: v });
-      if (r.ok) toast(`:${MACHINES[v].icon}: ${MACHINES[v].name} je v garáži!`);
+      if (r.ok) toast(`:${MACHINES[v].icon}: ${MACHINES[v].name} je ve stodole!`);
       break;
     }
     case 'fieldSow': {
@@ -609,7 +697,8 @@ function openPicker(plot) {
 }
 function renderPicker() {
   const f = game.farm;
-  $('cropList').innerHTML = iconize(CROP_LIST.map(c => {
+  const groups = Object.entries(CROP_CATS).map(([cat, title]) => [title, CROP_LIST.filter(c => c.cat === cat)]);
+  $('cropList').innerHTML = iconize(groups.map(([title, list]) => `<div class="cat">${title}</div>` + list.map(c => {
     const locked = f.level < c.level;
     return `<button class="crop${locked ? ' locked' : ''}" data-crop="${c.id}">
       <div class="ico">:${c.icon}:</div>
@@ -617,7 +706,7 @@ function renderPicker() {
       <div class="meta">${locked ? `:lock: úroveň ${c.level}` : `${c.cost} :coin: · :clock: ${fmtTime(c.time)}`}</div>
       <div class="meta">${locked ? '&nbsp;' : `sklizeň ${c.yield}× · ${c.price} :coin:/ks`}</div>
     </button>`;
-  }).join(''));
+  }).join('')).join(''));
 }
 $('cropList').addEventListener('click', e => {
   const b = e.target.closest('[data-crop]');
@@ -690,10 +779,14 @@ $('dayBtn').addEventListener('click', () => {
   menuLabels();
 });
 document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
-$('dealerBtn').addEventListener('click', () => {
+function newsSeen() { try { return Number(localStorage.getItem('ekofarm_news') || 0); } catch { return 0; } }
+$('newsDot').hidden = newsSeen() >= NEWS[0].v;
+$('newsBtn').addEventListener('click', () => {
   cancelPlace();
-  if (game.panel && game.panel.kind === 'dealer') { closeSheets(); return; }
-  openPanel({ kind: 'dealer' });
+  if (game.panel && game.panel.kind === 'news') { closeSheets(); return; }
+  openPanel({ kind: 'news' });
+  try { localStorage.setItem('ekofarm_news', String(NEWS[0].v)); } catch { /* nevadí */ }
+  $('newsDot').hidden = true;
 });
 $('bannerClose').addEventListener('click', () => { cancelPlace(); setSow(null); });
 

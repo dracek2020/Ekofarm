@@ -104,7 +104,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .order .btn.off { opacity: .45; }
 .order .del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: #ead9b5; color: #6f4f28; font-weight: 800; font-size: 12px; }
 
-#dealerBtn { position: fixed; left: 8px; top: calc(56px + var(--safe-t)); }
+#newsBtn { position: fixed; left: 8px; top: calc(56px + var(--safe-t)); }
+#newsBtn .dot { top: -2px; right: -2px; }
 #bannerSize { display: inline-flex; gap: 8px; flex-wrap: wrap; }
 #bannerSize .sz { display: inline-flex; align-items: center; gap: 3px; background: #fff2; border-radius: 999px; padding: 2px 6px; }
 #bannerSize button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: #fff; color: var(--ink); font-weight: 800; font-size: 16px; }
@@ -139,3 +140,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .lm.farm, .lm.own { background: #7cc251; }
 .lm.sel { outline: 3px solid #ffe58a; }
 .crop.sel { border-color: var(--wood); background: #fff3c4; }
+
+.cat { grid-column: 1 / -1; font-weight: 800; margin: 6px 0 0; color: var(--wood-d); }
+.upg { background: #fff; border: 2px solid #d8c39a; border-radius: 12px; padding: 10px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.upg .need { display: flex; flex-wrap: wrap; gap: 8px; font-weight: 700; font-size: 14px; }
+.upg .okq { color: var(--green-d); } .upg .miss { color: var(--red); }
+.upg .btn.sm { align-self: flex-start; margin: 0; }
+.btn.sm.off, .btn.off { opacity: .45; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.chip { border: 2px solid #d8c39a; background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 700; }
+.chip.on { background: #ffe58a; border-color: var(--wood); }
+.hire { display: flex; flex-wrap: wrap; gap: 6px; }
+.hire .btn.sm { margin: 0; }
+.news { background: #fff; border: 2px solid #d8c39a; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+.news ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
+.news li { margin: 3px 0; }

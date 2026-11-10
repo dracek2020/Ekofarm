@@ -17,6 +17,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v8 (10. 11. 2026)**: **dokupování pozemků**. Základ 17×17 (0..16), kolem něj 8 pozemků (`LAND_PARCELS`: 4 boční 17×8/8×17, 4 rohové 8×8; svět `WORLD` −8..24). Cena a úroveň podle pořadí (`LAND_PRICES` 1500…25000, `LAND_LEVELS` 5…12), rohový jde koupit, až je koupený některý sousední (`needs`). `farm.land` = koupené id; `landOwned()` hlídá stavění ve `fits()`. Nekoupená země je tmavší louka se stromy a cedulí „Na prodej“, plot se kreslí jen po hranici vlastní země. Klepnutí na cizí pozemek nebo Stavět → Pozemky otevře panel s mapkou 3×3.
 
+- **v9 (10. 11. 2026) – velká aktualizace**: 20 plodin (13 zelenin + jahody, meloun; `look` = tvar kreslení), sad se 13 stromy a keři (`TREES.kind` tree/bush), 15 ovocí, zvířata prase a ovce, výrobny Konzervárna, Džusárna, Marmeládárna, Uzenářství, Textilka (celkem 43 receptů; **ceny výrobků se dopočítají z receptů**, test hlídá, že se každá plodina někde použije). **Úrovně budov 1–10** (`upgradeCost` = mince + 2–3 suroviny deterministicky, `upgradeEffect`), Statek odemyká budovy (`BUILDINGS.st`, `STATEK_LEVELS`), ostatní budovy max. úroveň Statku. **Stodola** (`garage`, místa 1+úroveň, prodej strojů za 50 %), **Prodejna strojů** a **Stánek** jsou budovy (automaticky umístěné, `placeNear`), tlačítko Stroje nahradily **Novinky** (`news.js`). **Stánek**: nabídka z `stallOffers` po 2 h. **Pomocník** (`hire`, `runHelper` – pravidelná kola každých 20 s / 10 s s motykou, 2 políčka + kolečko + traktor). **Farmář a pomocník** chodí po farmě (`drawPerson`, jen vizuálně). Bohatá úroda 8 %, výkup ve skladu 50 %. Úrovně hráče do 20. Přehled cen: `EKONOMIKA.md` (`node tools/economy.mjs`).
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 
@@ -37,6 +39,7 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `public/js/render.js` | Izometrické kreslení na canvas: tráva, plot, stromy, pole, rostliny, řazení podle hloubky, bublina s časem, plovoucí texty |
 | `public/js/objects.js` | Kreslení budov, ohrad se zvířaty, ozdob, sadů, velkého pole se stroji (`drawVehicle`, `drawBigField`) a „ducha“ při stavění |
 | `public/js/icons.js` | Vlastní SVG ikony (`ICONS`), `ic()`, `iconize()` pro text s `:klic:`, `drawIcon`/`drawIconText` pro canvas |
+| `public/js/news.js` | Novinky pro hráče (`NEWS`, nejnovější nahoře) |
 | `public/js/sfx.js` | Zvuky skládané v prohlížeči (WebAudio), zapnutí/vypnutí |
 | `public/js/panels.js` | HTML panelů: Stavět, obchod, prodejna strojů (`dealerHtml`), velké pole (`bigfieldHtml`), statek se zakázkami, sad, výroba, ohrada, sklad (tlačítka `data-act`) |
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |

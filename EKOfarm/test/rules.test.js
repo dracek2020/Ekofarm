@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
+// hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
+function rich(f, level, coins = 1e6) {
+  f.level = level; f.xp = LEVEL_XP[level]; f.coins = coins;
+  f.objects.find(o => o.kind === 'statek').lvl = 10;
+  if (!f.objects.some(o => o.kind === 'stodola')) f.objects.push({ id: f.nextId++, kind: 'stodola', x: 0, y: 15, lvl: 10 });
+  return f;
+}
 // farma s 6 poli na původních místech (pole jsou zdarma)
 function farm6() {
   const f = newFarm(T0);
@@ -42,7 +49,7 @@ test('úrovně', () => {
   assert.equal(levelForXp(0), 1);
   assert.equal(levelForXp(9), 1);
   assert.equal(levelForXp(10), 2);
-  assert.equal(levelForXp(100000), 15);
+  assert.equal(levelForXp(100000), 20);
 });
 
 test('level up při sklizni', () => {
@@ -67,7 +74,7 @@ test('prodej', () => {
   assert.equal(applyAction(f, { type: 'sell', item: 'wheat', qty: 5 }, T0).error, 'not_enough');
   assert.equal(applyAction(f, { type: 'sell', item: 'wheat', qty: 1.5 }, T0).error, 'bad_action');
   assert.ok(applyAction(f, { type: 'sell', item: 'wheat', qty: 4 }, T0).ok);
-  assert.equal(f.coins, 50 + 4 * CROPS.wheat.price);
+  assert.equal(f.coins, 50 + 4 * sellPrice('wheat', T0));
   assert.equal(siloUsed(f), 0);
   assert.equal(f.silo.wheat, undefined);
 });
@@ -171,7 +178,7 @@ test('plný sklad u výroby a rozšíření skladu', () => {
 test('stará farma bez budov se doplní', () => {
   const f = { coins: 5, xp: 0, level: 1, silo: {}, plots: [] };
   assert.equal(applyAction(f, { type: 'upgradeSilo' }, T0).error, 'no_coins');
-  assert.deepEqual(f.objects.map(o => o.kind), ['statek']);
+  assert.ok(f.objects.some(o => o.kind === 'statek'));
   assert.equal(f.siloCap, 50);
 });
 
@@ -203,7 +210,7 @@ test('starší farma dostane statek a sklad', () => {
 
 test('traktor a kombajn', () => {
   const f = farm6();
-  f.coins = 2000; f.level = 5; f.xp = 70;
+  rich(f, 6, 2000);
   assert.equal(applyAction(f, { type: 'sowAll', crop: 'wheat' }, T0).error, 'no_machine');
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'klas4' }, T0).ok);
@@ -268,7 +275,7 @@ test('sad a stromy', () => {
 test('zakázky: stejné na serveru i v prohlížeči, doručení a zrušení', () => {
   const a = newFarm(T0), b = JSON.parse(JSON.stringify(a));
   assert.equal(a.orders.length, 6);
-  assert.ok(a.orders.every(o => o.items.every(x => x.item === 'wheat')), 'na úrovni 1 jen pšenice');
+  assert.ok(a.orders.every(o => o.items.every(x => orderableItems(1).includes(x.item))), 'na úrovni 1 jen to, co jde vypěstovat');
   a.silo.wheat = 40; b.silo.wheat = 40;
   const slot = a.orders.findIndex(o => canDeliver(a, o));
   const ra = applyAction(a, { type: 'deliver', slot }, T0), rb = applyAction(b, { type: 'deliver', slot }, T0);
@@ -286,7 +293,7 @@ test('zakázky: stejné na serveru i v prohlížeči, doručení a zrušení', (
 });
 
 test('zakázky odpovídají úrovni', () => {
-  assert.deepEqual(orderableItems(1), ['wheat']);
+  assert.deepEqual(orderableItems(1).sort(), ['redkvicka', 'wheat']);
   const l5 = orderableItems(5);
   for (const id of ['corn', 'carrot', 'soy', 'chleb', 'krmivo_slepice', 'vejce', 'mleko', 'jablko', 'hruska', 'svestka']) assert.ok(l5.includes(id), id);
   assert.ok(!l5.includes('syr') && !l5.includes('tresne'));
@@ -304,7 +311,9 @@ test('prodejna strojů a převod starých strojů do garáže', () => {
   const f = farm6();
   f.coins = 5000;
   assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'locked');
-  f.level = 7; f.xp = 140;
+  rich(f, 9, f.coins); f.objects = f.objects.filter(o => o.kind !== 'stodola'); f.objects.find(o => o.kind === 'statek').lvl = 1;
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'no_garage');
+  rich(f, 9, f.coins);
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
   assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'owned');
   assert.equal(applyAction(f, { type: 'buyMachine', model: 'klas8' }, T0).error, 'locked');
@@ -314,14 +323,15 @@ test('prodejna strojů a převod starých strojů do garáže', () => {
     { id: 1, kind: 'statek', x: 7, y: 7 }, { id: 5, kind: 'traktor', x: 0, y: 0 }, { id: 6, kind: 'kombajn', x: 0, y: 3 }] };
   normalize(old);
   assert.deepEqual(old.machines, [{ id: 5, model: 'brazda60' }, { id: 6, model: 'klas4' }]);
-  assert.deepEqual(old.objects.map(o => o.kind), ['statek']);
+  assert.ok(old.objects.some(o => o.kind === 'statek') && !old.objects.some(o => o.kind === 'traktor'));
+  assert.deepEqual(old.pending.filter(k => k === 'stodola'), ['stodola'], 'stodola zdarma pro staré stroje');
 });
 
 test('velké pole: stavba s vlastní velikostí a cenou za políčko', () => {
   const f = farm6();
   f.coins = 5000;
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).error, 'locked');
-  f.level = 5; f.xp = 70;
+  rich(f, 5, 5000);
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 2, h: 4 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 7, h: 3 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 5, y: 5, w: 3, h: 3 }, T0).error, 'occupied', 'statek');
@@ -337,7 +347,7 @@ test('velké pole: stavba s vlastní velikostí a cenou za políčko', () => {
 
 test('velké pole: setí traktorem, růst, sklizeň kombajnem, vykládka', () => {
   const f = farm6();
-  f.coins = 5000; f.level = 5; f.xp = 70;
+  rich(f, 6, 5000);
   const id = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 6, h: 6 }, T0).id;
   const o = findObject(f, id);
   assert.equal(applyAction(f, { type: 'fieldSow', id, crop: 'wheat', machine: 999 }, T0).error, 'no_machine');
@@ -417,7 +427,7 @@ test('v7: tržní ceny se mění, ale jsou stejné pro server i prohlížeč', (
 
 test('v7: pluh, secí stroj a lis na velkém poli', () => {
   const f = farm6();
-  f.coins = 20000; f.level = 9; f.xp = 250;
+  rich(f, 9, 20000);
   const id = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).id;
   const o = findObject(f, id);
   const tr = applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).id;
@@ -452,14 +462,14 @@ test('v7: pluh, secí stroj a lis na velkém poli', () => {
 
 test('v7: nové plodiny a výroba', () => {
   const f = farm6();
-  f.coins = 5000; f.level = 8; f.xp = 190;
+  rich(f, 8, 5000);
   assert.ok(applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'beet' }, T0).ok);
   const mid = applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).id;
   f.silo.wheat = 3;
   assert.ok(applyAction(f, { type: 'produce', id: mid, recipe: 'mouka' }, T0).ok);
   assert.ok(applyAction(f, { type: 'collect', id: mid }, T0 + 240000).ok);
   assert.equal(f.silo.mouka, 1);
-  assert.ok(orderableItems(8).includes('cukr') && orderableItems(8).includes('buchty'));
+  assert.ok(orderableItems(8).includes('cukr') && orderableItems(9).includes('buchty') && !orderableItems(8).includes('buchty'));
 });
 
 test('v8: dokupování pozemků', () => {
@@ -467,7 +477,7 @@ test('v8: dokupování pozemků', () => {
   f.coins = 100000; f.level = 4; f.xp = 45;
   assert.equal(applyAction(f, { type: 'buyPlot', x: 5, y: -2 }, T0).error, 'out_of_farm');
   assert.equal(applyAction(f, { type: 'buyLand', id: 'n' }, T0).error, 'locked', 'první pozemek od úrovně 5');
-  f.level = 12; f.xp = 500;
+  rich(f, 12, f.coins);
   assert.equal(applyAction(f, { type: 'buyLand', id: 'nw' }, T0).error, 'land_far', 'roh až po sousedním');
   assert.equal(applyAction(f, { type: 'buyLand', id: 'xx' }, T0).error, 'bad_action');
   const c = f.coins;
@@ -482,4 +492,107 @@ test('v8: dokupování pozemků', () => {
   assert.equal(f.coins, c2 - 3000, 'druhý pozemek dražší');
   assert.ok(applyAction(f, { type: 'place', kind: 'ker', x: -1, y: -1 }, T0).ok);
   assert.ok(applyAction(f, { type: 'place', kind: 'pekarna', x: 16, y: 3 }, T0).error === 'occupied', 'přes okraj na nekoupený pozemek nejde');
+});
+
+test('v9: ekonomika – každá plodina a ovoce má využití a vše má cenu', () => {
+  const used = new Set(Object.values(RECIPES).flatMap(r => Object.keys(r.in)));
+  for (const id of [...Object.keys(CROPS), ...Object.keys(FRUITS)]) assert.ok(used.has(id), 'nevyužité: ' + id);
+  for (const it of Object.values(ITEMS)) assert.ok(it.price > 0, 'bez ceny: ' + it.id);
+  assert.ok(Object.values(CROPS).filter(c => c.cat === 'zelenina').length >= 10);
+  assert.ok(Object.keys(FRUITS).length >= 10);
+  for (const r of Object.values(RECIPES)) {
+    const out = ITEMS[r.id].price;
+    const inp = Object.entries(r.in).reduce((n, [id, q]) => n + ITEMS[id].price * q, 0);
+    assert.ok(out > inp, 'výrobek se musí vyplatit: ' + r.id);
+  }
+});
+
+test('v9: vylepšování budov a statek odemyká budovy', () => {
+  const f = farm6();
+  f.level = 5; f.xp = LEVEL_XP[5]; f.coins = 1e6;
+  assert.equal(applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).error, 'statek_low');
+  const st = f.objects.find(o => o.kind === 'statek');
+  const c = upgradeCost(st);
+  assert.equal(c.level, 2);
+  assert.ok(c.items.length >= 2 && c.coins > 0);
+  assert.equal(applyAction(f, { type: 'upgrade', id: st.id }, T0).error, 'no_inputs');
+  for (const x of c.items) f.silo[x.item] = x.qty;
+  f.siloCap = 1000;
+  assert.ok(applyAction(f, { type: 'upgrade', id: st.id }, T0).ok);
+  assert.equal(statekLevel(f), 2);
+  const mid = applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).id;
+  assert.ok(mid);
+  const mlyn = findObject(f, mid);
+  const c2 = upgradeCost(mlyn);
+  for (const x of c2.items) f.silo[x.item] = (f.silo[x.item] || 0) + x.qty;
+  assert.ok(applyAction(f, { type: 'upgrade', id: mid }, T0).ok);
+  const c3 = upgradeCost(mlyn);
+  for (const x of c3.items) f.silo[x.item] = (f.silo[x.item] || 0) + x.qty;
+  assert.equal(applyAction(f, { type: 'upgrade', id: mid }, T0).error, 'statek_low', 'budova nesmí předběhnout statek');
+  f.silo.wheat = 3;
+  applyAction(f, { type: 'produce', id: mid, recipe: 'mouka' }, T0);
+  assert.equal(mlyn.queue[0].end - T0, Math.round(240000 * 0.95), 'úroveň 2 = o 5 % rychlejší');
+  assert.deepEqual(upgradeCost(mlyn), c3, 'cena je stabilní');
+});
+
+test('v9: stodola, prodej strojů a sleva prodejny', () => {
+  const f = farm6();
+  f.level = 9; f.xp = LEVEL_XP[9]; f.coins = 1e6;
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'no_garage');
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'kolecko' }, T0).ok, 'náčiní nepotřebuje stodolu');
+  f.objects.find(o => o.kind === 'statek').lvl = 3;
+  const gid = applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).id;
+  assert.ok(gid);
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'klas4' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda120' }, T0).error, 'garage_full', 'stodola úr. 1 = 2 stroje');
+  const m = f.machines.find(x => x.model === 'klas4');
+  const c = f.coins;
+  assert.ok(applyAction(f, { type: 'sellMachine', id: m.id }, T0).ok);
+  assert.equal(f.coins, c + 300);
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda120' }, T0).ok);
+  const pr = f.objects.find(o => o.kind === 'prodejna');
+  pr.lvl = 3;
+  assert.equal(machinePrice(f, 'klas8'), Math.round(1800 * 0.94));
+});
+
+test('v9: stánek – nákup a prodej s omezeným množstvím', () => {
+  const f = farm6();
+  f.level = 6; f.xp = LEVEL_XP[6]; f.coins = 10000; f.siloCap = 500;
+  const off = stallOffers(f, T0);
+  assert.ok(off.buy.length >= 4 && off.sell.length === 3);
+  const b = off.buy[0];
+  assert.ok(b.price > ITEMS[b.item].price, 've stánku se kupuje dráž');
+  assert.equal(applyAction(f, { type: 'stallBuy', i: 0, qty: b.qty + 1 }, T0).error, 'stall_qty');
+  assert.ok(applyAction(f, { type: 'stallBuy', i: 0, qty: 2 }, T0).ok);
+  assert.equal(stallLeft(f, T0, 'b', 0, b.qty), b.qty - 2);
+  const s = off.sell[0];
+  assert.ok(s.price < ITEMS[s.item].price && s.price >= sellPrice(s.item, T0) * 0.9, 'stánek platí míň než zakázka');
+  f.silo[s.item] = 3;
+  assert.ok(applyAction(f, { type: 'stallSell', i: 0, qty: 3 }, T0).ok);
+  const later = stallOffers(f, T0 + 2 * 3600000);
+  assert.notDeepEqual(later.buy, off.buy, 'za 2 hodiny jiná nabídka');
+});
+
+test('v9: pomocník sází a sklízí sám', () => {
+  const f = farm6();
+  f.level = 4; f.xp = LEVEL_XP[4]; f.coins = 1000; f.siloCap = 500;
+  assert.equal(applyAction(f, { type: 'helperSet', crop: 'wheat' }, T0).error, 'no_helper');
+  assert.ok(applyAction(f, { type: 'hire', plan: 0, crop: 'wheat' }, T0).ok);
+  assert.equal(f.coins, 880);
+  runHelper(f, T0 + 20000);
+  assert.equal(f.plots.filter(p => p.crop).length, 2, 'první kolo: 2 políčka');
+  runHelper(f, T0 + 60000);
+  assert.equal(f.plots.filter(p => p.crop).length, 6);
+  runHelper(f, T0 + 200000);
+  assert.ok((f.silo.wheat || 0) >= 4, 'sklidil zralou pšenici');
+  const copy = JSON.parse(JSON.stringify(f));
+  runHelper(f, T0 + 3600000); runHelper(copy, T0 + 1800000); runHelper(copy, T0 + 3600000);
+  assert.deepEqual(f, copy, 'stejný výsledek, ať se počítá najednou nebo po částech');
+  const n = f.helper.n;
+  runHelper(f, T0 + 7200000);
+  assert.equal(f.helper.n, n, 'po skončení smlouvy už nepracuje');
+  f.coins = 1000;
+  applyAction(f, { type: 'buyMachine', model: 'kolecko' }, T0 + 7200000);
+  assert.equal(helperCapacity(f), 4);
 });

@@ -4,7 +4,69 @@
 const S = (body, bg = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${bg}${body}</svg>`;
 const leaf = (x, y, r, c = '#4fa63c') => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 2}" fill="${c}"/>`;
 
+// generátory podobných ikon
+const jar = (c, lid = '#c8452d') => S(`<rect x="7" y="9" width="18" height="20" rx="4" fill="#e9f2f5" stroke="#9fb7c9" stroke-width="1.4"/><rect x="9" y="13" width="14" height="14" rx="3" fill="${c}"/><rect x="8" y="4" width="16" height="6" rx="1.5" fill="${lid}"/><rect x="11" y="16" width="5" height="3" rx="1" fill="#fff" opacity=".45"/>`);
+const bottle = c => S(`<path d="M13 3h6v6c3 2 5 4 5 8v10a2 2 0 01-2 2H10a2 2 0 01-2-2V17c0-4 2-6 5-8z" fill="#e9f2f5" stroke="#9fb7c9" stroke-width="1.2"/><path d="M8.5 16h15v11a2 2 0 01-2 2h-11a2 2 0 01-2-2z" fill="${c}"/><rect x="12" y="1.5" width="8" height="3" fill="#6f4f28"/><rect x="10" y="19" width="12" height="5" fill="#fff8e7" opacity=".8"/>`);
+const cake = (top, dots) => S(`<path d="M4 18h24v8a3 3 0 01-3 3H7a3 3 0 01-3-3z" fill="#d9a05b"/><ellipse cx="16" cy="18" rx="12" ry="5" fill="${top}"/>` + [[10, 17], [16, 15], [22, 17], [13, 20], [19, 20]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="${dots}"/>`).join(''));
+const bowl = (c, bits = '') => S(`<ellipse cx="16" cy="15" rx="13" ry="4" fill="${c}"/><path d="M3 15c0 8 6 13 13 13s13-5 13-13z" fill="#f3e3c3" stroke="#c9b993" stroke-width="1.2"/>${bits}`);
+const sack = c => S(`<path d="M8 8c-3 6-4 14-2 18 1 3 4 4 10 4s9-1 10-4c2-4 1-12-2-18z" fill="${c}"/><path d="M9 8h14l-2-4H11z" fill="#c9a36a"/><path d="M10 8c3 2 9 2 12 0" stroke="#8a6434" stroke-width="1.6" fill="none"/>`);
+const berries = (c, hi, pts = [[12, 13], [20, 13], [16, 18], [11, 21], [21, 21], [16, 25]]) => S(`<path d="M16 4v8M16 6c4-3 8-2 9 0" stroke="#4f8f37" stroke-width="2" fill="none"/>` + pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.4" fill="${c}"/><circle cx="${x - 1.3}" cy="${y - 1.4}" r="1.2" fill="${hi}"/>`).join(''));
+const roundFruit = (c, hi, stem = '#6b4a25', leaf = '#4fa63c') => S(`<circle cx="16" cy="18" r="11" fill="${c}"/><ellipse cx="11.5" cy="14" rx="3" ry="4" fill="${hi}" opacity=".7"/><path d="M16 7V3" stroke="${stem}" stroke-width="2"/><ellipse cx="20" cy="5" rx="3.4" ry="1.7" fill="${leaf}"/>`);
+
 export const ICONS = {
+  // ---- v9: zelenina a ovoce ----
+  redkvicka: S('<circle cx="16" cy="20" r="8" fill="#e0405a"/><path d="M16 28v3" stroke="#f2ede0" stroke-width="2"/><ellipse cx="13" cy="17" rx="2" ry="3" fill="#f07a8a"/>' + leaf(12, 7, 2.2) + leaf(20, 7, 2.2) + leaf(16, 5, 2.4, '#5fae3a')),
+  salat: S('<circle cx="16" cy="18" r="11" fill="#6fbf4a"/><circle cx="16" cy="18" r="8" fill="#8fd45a"/><circle cx="16" cy="18" r="4.5" fill="#b7e68a"/><path d="M16 7v22M5 18h22M8 10l16 16M24 10L8 26" stroke="#5fa83f" stroke-width="1" opacity=".6"/>'),
+  rajce: roundFruit('#e0402d', '#f07a6e', '#3f8a25', '#4fa63c'),
+  okurka: S('<path d="M6 24C6 14 16 6 25 6c2 0 3 2 2 4-3 10-10 18-19 18-1 0-2-2-2-4z" fill="#3f8f3a"/><path d="M10 22c4-2 10-8 13-13" stroke="#7cc04f" stroke-width="2" fill="none"/>' + [[12, 18], [16, 15], [20, 11], [14, 22], [19, 17]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" fill="#d9f2b0"/>`).join('')),
+  cibule: S('<path d="M16 6c-2 4-10 8-10 15 0 5 4 8 10 8s10-3 10-8c0-7-8-11-10-15z" fill="#d9a441"/><path d="M16 9c-1 6-1 14 0 19M12 13c-2 4-2 10 0 14M20 13c2 4 2 10 0 14" stroke="#b07a28" stroke-width="1" fill="none"/><path d="M16 6V2" stroke="#7cc04f" stroke-width="2"/>'),
+  cesnek: S('<path d="M16 6c-3 4-11 8-11 15 0 5 5 8 11 8s11-3 11-8c0-7-8-11-11-15z" fill="#f2ede0" stroke="#d6c6a2" stroke-width="1.2"/><path d="M16 8v20M11 13c-2 4-2 10 0 14M21 13c2 4 2 10 0 14" stroke="#d6c6a2" stroke-width="1.2" fill="none"/>'),
+  paprika: S('<path d="M8 12c0-3 3-4 5-3 2-1 4-1 6 0 2-1 5 0 5 3 0 8-2 17-8 17S8 20 8 12z" fill="#e8502a"/><path d="M16 9V4h3" stroke="#3f8a25" stroke-width="2.4" fill="none"/><ellipse cx="12" cy="15" rx="1.6" ry="4" fill="#f59a7a"/>'),
+  zeli: S('<circle cx="16" cy="17" r="12" fill="#9ccf6a"/><circle cx="16" cy="17" r="8" fill="#c4e69a"/><path d="M16 5c-3 6-3 18 0 24M9 8c4 4 6 12 6 20M23 8c-4 4-6 12-6 20" stroke="#7cb04a" stroke-width="1.2" fill="none"/>'),
+  hrach: S('<path d="M4 20C8 10 20 6 28 10c-4 10-16 14-24 10z" fill="#5fae3a"/>' + [9, 14, 19, 24].map((x, i) => `<circle cx="${x}" cy="${16 - i * 1.2}" r="2.6" fill="#a8dc6a"/>`).join('') + '<path d="M28 10c1-3 2-5 1-7" stroke="#3f8a25" stroke-width="1.6" fill="none"/>'),
+  dyne: S('<ellipse cx="16" cy="19" rx="13" ry="10" fill="#f08a24"/><path d="M16 9c-3 4-3 16 0 20M10 10c-3 5-3 14 0 18M22 10c3 5 3 14 0 18" stroke="#c8661a" stroke-width="1.4" fill="none"/><rect x="14.5" y="4" width="3" height="6" rx="1" fill="#6b8a2a"/>'),
+  jahody: S('<path d="M16 29C7 22 5 14 9 10c3-3 6-1 7 0 1-1 4-3 7 0 4 4 2 12-7 19z" fill="#e0283c"/>' + [[12, 14], [16, 13], [20, 14], [14, 18], [18, 18], [16, 22], [12, 19], [20, 19]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx=".8" ry="1.1" fill="#ffe08a"/>`).join('') + '<path d="M10 9l6 2 6-2-3-3-3 2-3-2z" fill="#4fa63c"/>'),
+  meloun: S('<path d="M3 13a13 13 0 0026 0z" fill="#3f8a2e"/><path d="M5 13a11 11 0 0022 0z" fill="#f4f0d0"/><path d="M6.5 13a9.5 9.5 0 0019 0z" fill="#e8484f"/>' + [[11, 16], [16, 18], [21, 16], [14, 20], [18, 20]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx=".9" ry="1.4" fill="#2f2a26"/>`).join('')),
+  visne: berries('#8a1020', '#d9607a', [[11, 20], [21, 21]]),
+  broskev: roundFruit('#f5a37a', '#fbd0a8', '#6b4a25', '#4fa63c'),
+  orech: S('<ellipse cx="16" cy="17" rx="11" ry="12" fill="#b88a50"/><path d="M16 5v24" stroke="#8a6434" stroke-width="2"/><path d="M8 12c3 2 3 6 0 8M24 12c-3 2-3 6 0 8M11 24c2-2 3-2 5 0M16 24c2-2 3-2 5 0" stroke="#8a6434" stroke-width="1.4" fill="none"/>'),
+  maliny: berries('#d6335a', '#f07a9a'),
+  rybiz: berries('#c41e3a', '#f07a8a', [[16, 10], [14, 14], [18, 17], [14, 21], [18, 24], [16, 28]]),
+  angrest: berries('#a8c84a', '#e2f2a8', [[12, 15], [20, 15], [16, 22]]),
+  boruvky: berries('#3b4f9a', '#8a9ad8'),
+  hrozny: berries('#6b2f7a', '#b07ac8', [[10, 11], [16, 11], [22, 11], [13, 16], [19, 16], [16, 21], [10, 16], [22, 16], [16, 26]]),
+  // ---- v9: výrobky ----
+  krmivo_prasata: sack('#d9b07a'), krmivo_ovce: sack('#a8c87a'),
+  maso: S('<path d="M5 14c0-6 7-9 14-8 7 1 9 6 8 11-1 7-8 10-14 9-5-1-8-6-8-12z" fill="#d9534f"/><path d="M8 15c2-4 8-6 13-4" stroke="#f5c0b8" stroke-width="2.4" fill="none"/><circle cx="21" cy="19" r="3" fill="#f3e3c3"/>'),
+  vlna: S('<circle cx="10" cy="18" r="6" fill="#f7f3ec"/><circle cx="16" cy="13" r="7" fill="#fbf8f2"/><circle cx="22" cy="18" r="6" fill="#f2ede4"/><circle cx="16" cy="21" r="6" fill="#f7f3ec"/><path d="M10 18c2-2 4-2 6 0s4 2 6 0" stroke="#d8cfbf" stroke-width="1.2" fill="none"/>'),
+  tresnovy_kolac: cake('#b5122b', '#f07a8a'), muffiny: S('<path d="M8 16h16l-2 13H10z" fill="#c98a45"/><path d="M9 16h14M11 16l1 13M16 16v13M21 16l-1 13" stroke="#a8672a" stroke-width="1"/><path d="M6 16c0-6 4-10 10-10s10 4 10 10z" fill="#e3b06a"/>' + [[11, 11], [16, 9], [21, 11], [13, 14], [19, 14]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#3b4f9a"/>`).join('')),
+  orechovy_kolac: cake('#b88a50', '#6b4a25'),
+  maslo: S('<path d="M4 18l8-6h16l-8 6z" fill="#fff3b0"/><path d="M4 18h16v8H4z" fill="#f5e07a"/><path d="M20 18l8-6v8l-8 6z" fill="#e8cf5a"/><rect x="2" y="26" width="28" height="3" rx="1.5" fill="#c9d0d6"/>'),
+  sl_olej: bottle('#f2c22e'),
+  salat_mix: bowl('#6fbf4a', '<circle cx="11" cy="13" r="2.4" fill="#e0402d"/><circle cx="20" cy="12" r="2.4" fill="#3f8f3a"/><circle cx="16" cy="14" r="2" fill="#e0405a"/>'),
+  okurky: jar('#6f9a3a', '#3f8a25'), kecup: bottle('#c8302d'), lecho: jar('#e8702a'), kysane_zeli: jar('#e6e2b0', '#8a8f96'),
+  kompot: jar('#b8d870'), hrachovka: bowl('#9ccf4a'), dynovka: bowl('#f08a24'), broskve_sklo: jar('#f5b07a'),
+  dzus_mrkev: bottle('#f07f2a'), dzus_jablko: bottle('#f2d34a'), dzus_hruska: bottle('#d9d26a'), dzus_visne: bottle('#8a1020'),
+  most: bottle('#6b2f7a'), napoj: bottle('#f06070'),
+  povidla: jar('#4a2a5a'), dzem_malina: jar('#d6335a'), dzem_jahoda: jar('#e0283c'), marmelada: jar('#c41e3a', '#d9b43b'), dzem_merunka: jar('#f2a03d'),
+  klobasa: S('<path d="M5 22c-2-6 4-12 11-12s11 3 11 7-3 6-8 6c-4 0-6 3-10 3-2 0-3-2-4-4z" fill="#b5523b"/><path d="M9 18c3-3 8-4 13-3" stroke="#d98a6a" stroke-width="2" fill="none"/><circle cx="27" cy="17" r="1.6" fill="#8a3b2c"/>'),
+  uzene: S('<path d="M6 10c4-4 14-5 20 1 4 4 2 12-4 15-6 3-14 2-17-3-2-4-2-9 1-13z" fill="#8a3b2c"/><path d="M9 13c4-3 11-3 15 1" stroke="#c8705a" stroke-width="2.4" fill="none"/><path d="M5 22l-3 6M8 24l-1 5" stroke="#f3e3c3" stroke-width="2.4"/>'),
+  klubko: S('<circle cx="16" cy="17" r="11" fill="#b48ad0"/><path d="M7 12c6 2 12 8 16 15M6 19c6-1 12 2 16 8M10 8c4 4 8 12 9 19M20 7c-1 6 2 12 7 15" stroke="#8a5fb0" stroke-width="1.6" fill="none"/><path d="M26 22c3 2 4 5 3 8" stroke="#b48ad0" stroke-width="2" fill="none"/>'),
+  svetr: S('<path d="M10 5l-7 6 3 6 3-2v14h14V15l3 2 3-6-7-6c-1 3-4 4-6 4s-5-1-6-4z" fill="#c8452d"/><path d="M9 20h14M9 24h14" stroke="#f3e3c3" stroke-width="2"/>'),
+  deka: S('<path d="M4 8h24v18H4z" fill="#4f8fd6"/><path d="M4 13h24M4 19h24M10 8v18M18 8v18" stroke="#f3e3c3" stroke-width="2"/><path d="M4 26l-1 3M8 26v3M12 26v3M16 26v3M20 26v3M24 26v3M28 26l1 3" stroke="#2f63a0" stroke-width="1.4"/>'),
+  // ---- v9: budovy, zvířata, náčiní ----
+  pig: S('<ellipse cx="15" cy="19" rx="11" ry="8" fill="#f5b0b8"/><ellipse cx="26" cy="16" rx="5" ry="5" fill="#f5b0b8"/><ellipse cx="29" cy="17" rx="2.4" ry="2" fill="#e08a96"/><path d="M23 11l1-4 3 4" fill="#e08a96"/><circle cx="26" cy="14" r="1" fill="#333"/><path d="M4 18c-2-1-2-4 0-4" stroke="#e08a96" stroke-width="1.6" fill="none"/><path d="M8 26v4M13 26v4M18 26v4M22 26v4" stroke="#e08a96" stroke-width="2.4"/>'),
+  sheep: S('<circle cx="9" cy="18" r="6" fill="#f7f3ec"/><circle cx="15" cy="15" r="7" fill="#fbf8f2"/><circle cx="20" cy="19" r="6" fill="#f2ede4"/><circle cx="13" cy="21" r="5" fill="#f7f3ec"/><ellipse cx="26" cy="15" rx="4" ry="4.6" fill="#4a3f38"/><circle cx="27" cy="14" r=".9" fill="#fff"/><path d="M9 24v6M14 25v5M19 25v5M23 23v6" stroke="#4a3f38" stroke-width="2.2"/>'),
+  shop: S('<rect x="4" y="13" width="24" height="15" fill="#f3e3c3"/><path d="M2 13h28l-3-7H5z" fill="#c8452d"/><path d="M6 13l2-7M12 13l1-7M18 13l-1-7M24 13l-2-7" stroke="#fff" stroke-width="2"/><rect x="6" y="17" width="10" height="7" fill="#9fd0f0"/><rect x="19" y="17" width="6" height="11" fill="#6b3f1f"/>'),
+  stall: S('<path d="M3 12h26l-2-7H5z" fill="#4f8fd6"/><path d="M7 12l1-7M13 12v-7M19 12v-7M25 12l-1-7" stroke="#fff" stroke-width="2"/><path d="M5 12v16M27 12v16" stroke="#7a4e2a" stroke-width="2.4"/><rect x="4" y="19" width="24" height="5" fill="#a7703d"/><circle cx="9" cy="17" r="2.4" fill="#e0402d"/><circle cx="15" cy="17" r="2.4" fill="#f2c22e"/><circle cx="21" cy="17" r="2.4" fill="#5fae3a"/>'),
+  garage: S('<path d="M2 14L16 4l14 10v15H2z" fill="#a8483a"/><path d="M8 29V17h16v12" fill="#6b3f1f"/><path d="M8 17l16 12M24 17L8 29" stroke="#f3e3c3" stroke-width="1.6"/><path d="M16 17v12" stroke="#f3e3c3" stroke-width="1.4"/>'),
+  kolecko: S('<path d="M4 12h18l-3 9H8z" fill="#7d8a96"/><path d="M22 12l7-4M8 21l-4 6M19 21l3 6" stroke="#6b4a25" stroke-width="2.2"/><circle cx="14" cy="25" r="4.4" fill="#2f2a26"/><circle cx="14" cy="25" r="1.6" fill="#c9b77c"/><circle cx="9" cy="10" r="2.6" fill="#e3b52e"/><circle cx="15" cy="10" r="2.6" fill="#e0402d"/>'),
+  motyka: S('<path d="M7 29L24 6" stroke="#a7703d" stroke-width="2.6"/><path d="M19 6l9-3 1 6-7 1z" fill="#8a8f96"/><path d="M4 18h9l-1 10H5z" fill="#4f8fd6"/><path d="M13 20l4-2" stroke="#4f8fd6" stroke-width="2"/>'),
+  news: S('<rect x="3" y="6" width="22" height="21" rx="2" fill="#fff8e7" stroke="#a0763f" stroke-width="2"/><path d="M25 10h4v15a2 2 0 01-4 0z" fill="#e8d9b8" stroke="#a0763f" stroke-width="1.6"/><rect x="6" y="9" width="16" height="4" fill="#c8452d"/><path d="M6 16h7M6 19h7M6 22h7M15 16h7M15 19h7M15 22h7" stroke="#7a6040" stroke-width="1.4"/>'),
+  helper: S('<circle cx="16" cy="8" r="5" fill="#f2c9a0"/><path d="M10 5c2-4 10-4 12 0z" fill="#3f8a25"/><path d="M8 30V18c0-3 3-5 8-5s8 2 8 5v12z" fill="#4f8fd6"/><path d="M12 13v17M20 13v17" stroke="#2f63a0" stroke-width="2"/>'),
+  farmer: S('<circle cx="16" cy="9" r="5" fill="#f2c9a0"/><path d="M8 7h16l-3-4h-10z" fill="#d9b43b"/><path d="M8 30V18c0-3 3-5 8-5s8 2 8 5v12z" fill="#c8452d"/><path d="M12 14v16M20 14v16" stroke="#2f63a0" stroke-width="2.4"/>'),
+  star: S('<path d="M16 3l3.8 7.8 8.6 1.2-6.2 6 1.5 8.6L16 22.6 8.3 26.6l1.5-8.6-6.2-6 8.6-1.2z" fill="#f5b82e"/>'),
+
   // ---- plodiny ----
   wheat: S('<path d="M16 30V10" stroke="#b8902a" stroke-width="2"/>' + [8, 13, 18, 23].map(y => `<ellipse cx="12.5" cy="${y}" rx="3" ry="4.5" fill="#f0c83f" transform="rotate(-30 12.5 ${y})"/><ellipse cx="19.5" cy="${y}" rx="3" ry="4.5" fill="#e3b52e" transform="rotate(30 19.5 ${y})"/>`).join('') + '<ellipse cx="16" cy="5" rx="2.6" ry="4" fill="#f0c83f"/>'),
   corn: S('<path d="M9 30C9 18 12 10 16 4c4 6 7 14 7 26z" fill="#5fae3a"/><ellipse cx="16" cy="15" rx="5" ry="10" fill="#f6c63d"/><path d="M13 9h6M12 13h8M12 17h8M12 21h8" stroke="#d99a1e" stroke-width="1.3"/><path d="M8 30c2-8 5-11 8-12M24 30c-2-8-5-11-8-12" stroke="#3f8a25" stroke-width="3" fill="none"/>'),
