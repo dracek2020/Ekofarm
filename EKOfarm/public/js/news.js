@@ -1,5 +1,20 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 21, title: 'Nový vzhled', items: [
+    'Celá hra má nový vzhled: krémová okna s hnědým rámem, zelená tlačítka a větší písmo.',
+    'Spodní lišta přes celou šířku. Tlačítko otevřeného okna svítí zeleně.',
+    'Stavět má záložky Farma, Výrobny, Zvířata a Ozdoby a u každé stavby je obrázek, velikost a cena. Na postavenou budovu klepni a otevře se.',
+    'V Obchodě je u zvířat obrázek a hned vidíš, jestli máš pro ně ohradu.',
+    'Výrobny mají přehlednou frontu a recepty pod sebou. Chybějící suroviny jsou červeně.',
+    'Klepnutím na mince nebo sklad nahoře se otevře Sklad.',
+  ] },
+  { v: 20, title: 'Přehlednější ovládání', items: [
+    'Městečko, Chat, Novinky a Počasí jsou kulatá tlačítka v pravém sloupci. Z mapy je vidět víc.',
+    'Krátké zprávy se ukazují dole nad tlačítky, ne přes střed obrazovky. Připomínka denní odměny přijde jen jednou.',
+    'Když je otevřené okno, mapa za ním ztmavne a tlačítka na mapě se schovají.',
+    'Sklad je přehlednější: předměty jsou v dlaždicích rozdělené na úrodu, výrobky a semena.',
+    'Průvodce je menší a nepřekrývá tlačítka. Mince se píšou s mezerou (12 345).',
+  ] },
   { v: 19, title: 'Vykopání stromu a nová grafika', items: [
     'Strom v sadu jde vykopat a zasadit místo něj jiný. Dokud ještě nedal žádnou úrodu, dostaneš sazenici zpátky do skladu (nebo mince, když jsi ji kupoval).',
     'Sója, hrách a salát mají vlastní obrázky – už nevypadají jako okurka a zelí.',

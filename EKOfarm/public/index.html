@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=19">
+<link rel="stylesheet" href="/css/style.css?v=21">
 </head>
 <body>
 <!--APP-->
@@ -18,8 +18,8 @@
 <div id="hud" hidden>
   <div id="top">
     <div class="pill" id="lvl"><span class="lvl-num" id="lvlNum">1</span><div class="xpbar"><div id="xpFill"></div></div></div>
-    <div class="pill"><span data-ic="coin"></span><b id="coins">0</b></div>
-    <button class="pill" id="siloBtn"><span data-ic="barn"></span><b id="silo">0/50</b></button>
+    <button class="pill" id="coinBtn" aria-label="Mince – prodej ve skladu"><span data-ic="coin"></span><b id="coins">0</b><i class="plus">+</i></button>
+    <button class="pill" id="siloBtn" aria-label="Sklad"><span data-ic="barn"></span><b id="silo">0/50</b><i class="plus">+</i></button>
   </div>
   <div id="bottom">
     <button class="big" id="buildBtn"><span data-ic="hammer"></span>Stavět</button>
@@ -28,10 +28,14 @@
     <button class="big" id="siloBtn2"><span data-ic="barn"></span>Sklad</button>
     <button class="big" id="menuBtn"><span data-ic="gear"></span>Menu</button>
   </div>
-  <button class="pill" id="newsBtn"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
-  <button class="pill" id="townBtn"><span data-ic="shop"></span><b>Městečko</b></button>
-  <button class="pill" id="weatherBtn"></button>
-  <button class="pill" id="chatBtn"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
+  <div class="side" id="sideL">
+    <button class="sq" id="newsBtn" aria-label="Novinky"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
+    <button class="sq" id="weatherBtn" aria-label="Počasí"></button>
+  </div>
+  <div class="side" id="sideR">
+    <button class="sq" id="townBtn" aria-label="Městečko"><span data-ic="shop"></span><b>Městečko</b></button>
+    <button class="sq" id="chatBtn" aria-label="Chat"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
+  </div>
   <div id="tut" hidden><button class="tut-x" id="tutClose" aria-label="Zavřít">✕</button><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
     <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
   <div id="fishGame" hidden><div class="fg-box"><button class="x fg-x" id="fgClose" aria-label="Zavřít">✕</button>
@@ -51,8 +55,9 @@
     <button id="bannerOk" class="ok" hidden>✓</button><button id="bannerClose">✕</button></div>
 </div>
 
+<div id="dim"></div>
 <div id="picker" class="sheet" hidden>
-  <div class="sheet-head"><b>Co zasadit?</b><button class="x" data-close="picker">✕</button></div>
+  <div class="sheet-head"><b><span class="medal" data-ic="plot"></span><span class="ttl">Co zasadit?</span></b><button class="x" data-close="picker">✕</button></div>
   <div id="cropList" class="crops"></div>
 </div>
 
@@ -62,7 +67,7 @@
 </div>
 
 <div id="menuPanel" class="sheet" hidden>
-  <div class="sheet-head"><b id="menuName">Farma</b><button class="x" data-close="menuPanel">✕</button></div>
+  <div class="sheet-head"><b><span class="medal" data-ic="gear"></span><span class="ttl" id="menuName">Farma</span></b><button class="x" data-close="menuPanel">✕</button></div>
   <p class="muted" id="menuMode"></p>
   <button class="btn alt" id="helpBtn"><span data-ic="book"></span> Jak hrát a pravidla</button>
   <button class="btn alt" id="pushBtn" hidden></button>
@@ -133,6 +138,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=19"></script>
+<script type="module" src="/js/main.js?v=21"></script>
 </body>
 </html>
