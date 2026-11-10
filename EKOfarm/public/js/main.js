@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=18';
-import { preloadAssets, spriteName } from './sprites.js?v=18';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=18';
-import { createBackend, ApiError } from './api.js?v=18';
-import { iconize, ic } from './icons.js?v=18';
-import { NEWS } from './news.js?v=18';
-import { sfx, soundOn, setSound } from './sfx.js?v=18';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=18';
+} from './rules.js?v=19';
+import { preloadAssets, spriteName } from './sprites.js?v=19';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=19';
+import { createBackend, ApiError } from './api.js?v=19';
+import { iconize, ic } from './icons.js?v=19';
+import { NEWS } from './news.js?v=19';
+import { sfx, soundOn, setSound } from './sfx.js?v=19';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=19';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 
 
 const game = {
@@ -753,7 +753,7 @@ function renderPanel() {
       : d.type === 'garage' ? garageHtml(f, o, now())
       : d.type === 'dealer' ? dealerHtml(f, now(), o)
       : d.type === 'stall' ? stallHtml(f, o, now())
-      : d.type === 'orchard' ? orchardHtml(f, o, now())
+      : d.type === 'orchard' ? orchardHtml(f, o, now(), p.ask)
       : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
       : d.type === 'pond' ? pondHtml(f, o, now())
       : d.type === 'hive' ? hiveHtml(f, o, now())
@@ -802,10 +802,22 @@ $('panelBody').addEventListener('click', e => {
     case 'produce': act({ type: 'produce', id: game.panel.id, recipe: v }); break;
     case 'plantTree': {
       const r = act({ type: 'plantTree', id: game.panel.id, tree: v });
-      if (r.ok) { const o = findObject(f, game.panel.id); floatAt(o.x, o.y, `−${TREES[v].cost} :coin:`); closeSheets(); }
+      if (r.ok) { const o = findObject(f, game.panel.id); floatAt(o.x, o.y, r.sapling ? `−1 :z_${v}:` : `−${TREES[v].cost} :coin:`); closeSheets(); }
       break;
     }
-    case 'clearTree': act({ type: 'clearTree', id: Number(v) }); break;
+    case 'clearAsk': game.panel.ask = true; renderPanel(); break;
+    case 'clearNo': game.panel.ask = false; renderPanel(); break;
+    case 'clearTree': {   // vykopat strom; panel pak rovnou nabídne nový
+      const id = Number(v), r = act({ type: 'clearTree', id, force: true });
+      game.panel.ask = false;
+      if (r.ok) {
+        const o = findObject(f, id), b = r.back;
+        floatAt(o.x, o.y, b && b.item ? `+1 :${b.item}:` : b && b.coins ? `+${b.coins} :coin:` : ':axe: vykopáno');
+        if (b) toast(b.item ? 'Sazenice je zpátky ve skladu. Vyber nový strom.' : 'Mince za sazenici máš zpátky. Vyber nový strom.');
+      }
+      renderPanel();
+      break;
+    }
     case 'ttab': game.panel.tab = v; if (v === 'zebricek') loadBoard(); renderPanel(); break;
     case 'stab': game.panel.tab = v; renderPanel(); break;
     case 'upgrade': {

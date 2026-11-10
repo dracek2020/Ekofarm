@@ -7,14 +7,14 @@ import {
   machinePrice, isVehicle, stallOffers, stallLeft, HELPER_PLANS, HELPER_LEVEL, helperActive, helperCapacity, helperInterval, CROP_CATS, getCrop,
   have, hasInputs, countKind, maxPlots, plotPrice, siloUsed, siloUpgradePrice, queueState, animalState,
   CROP_LIST, LEVEL_XP, MAX_LEVEL, plotState,
-  TREES, TREE_LIST, FREE_PLOTS, maxOrchards, orchardPrice, treeState, orderReady, canDeliver,
+  TREES, TREE_LIST, FREE_PLOTS, maxOrchards, orchardPrice, treeState, treeRefund, orderReady, canDeliver,
   LAND_PARCELS, landPrice, landLevel, landReachable,
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=18';
-import { fmtTime } from './render.js?v=18';
-import { NEWS } from './news.js?v=18';
+} from './rules.js?v=19';
+import { fmtTime } from './render.js?v=19';
+import { NEWS } from './news.js?v=19';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -169,7 +169,7 @@ export function helperHtml(farm, now) {
     <p class="muted">${tools}</p><div class="hire">${plans}</div>`;
 }
 
-export function orchardHtml(farm, o, now) {
+export function orchardHtml(farm, o, now, ask) {
   const st = treeState(o, now);
   if (st.state === 'empty') {
     const cards = [...TREE_LIST].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'bush' ? -1 : 1) || a.level - b.level).map(t => {
@@ -188,9 +188,22 @@ export function orchardHtml(farm, o, now) {
   else if (st.state === 'ready') txt = `${t.yield}× :${fruit.icon}: je zralé – klepni na strom.`;
   else txt = `:${fruit.icon}: za ${fmtTime(st.left)}`;
   const bar = st.state === 'growing' ? `<div class="bar"><div style="width:${(st.progress * 100).toFixed(1)}%"></div></div>` : '';
+  // živý strom jde vykopat a zasadit jiný; dokud ještě neplodil, vrátí se sazenice nebo mince
+  let dig = '';
+  if (st.state === 'dead') dig = `<button class="btn" data-act="clearTree" data-v="${o.id}">:axe: Vykopat strom</button>`;
+  else if (st.state === 'ready') dig = `<p class="muted">:axe: Strom jde vykopat, až sklidíš zralé ovoce.</p>`;
+  else if (!ask) dig = `<button class="btn alt" data-act="clearAsk" data-v="${o.id}">:axe: Vykopat a zasadit jiný strom</button>`;
+  else {
+    const back = treeRefund(o);
+    const what = !back ? (o.left < t.harvests ? 'Strom už plodil, sazenice se nevrátí.' : 'Sazenice se nevrátí (strom je zasazený ze starší verze hry).')
+      : back.item ? `Sazenice :${back.item}: se ti vrátí do skladu.` : `Vrátí se ti ${back.coins} :coin: za sazenici.`;
+    dig = `<div class="ask"><p><b>Opravdu vykopat ${t.name.toLowerCase()}?</b><br>${what}</p>
+      <div class="ask-btns"><button class="btn warn" data-act="clearTree" data-v="${o.id}">:axe: Ano, vykopat</button>
+      <button class="btn alt" data-act="clearNo">Ne</button></div></div>`;
+  }
   return `<div class="row"><span class="ico">:${fruit.icon}:</span><div class="info"><b>${t.name}</b><small>${txt}</small>${bar}
       <small>Zbývá úrod: ${st.state === 'dead' ? 0 : o.left} z ${t.harvests} · ${fruit.price} :coin: za kus</small></div></div>
-    ${st.state === 'dead' ? `<button class="btn" data-act="clearTree" data-v="${o.id}">:axe: Vykopat strom</button>` : ''}
+    ${dig}
     <button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout sad</button>`;
 }
 

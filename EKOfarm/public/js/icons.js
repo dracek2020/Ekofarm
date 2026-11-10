@@ -1,6 +1,6 @@
 // EKOfarm – ikony: malované předměty z public/img/i (assets.js), zbytek vlastní SVG (UI, nové ryby a jídla).
 // V textu se píšou jako :klic: a funkce iconize() je nahradí obrázkem.
-import { hasAsset, assetUrl } from './sprites.js?v=18';
+import { hasAsset, assetUrl } from './sprites.js?v=19';
 
 const S = (body, bg = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${bg}${body}</svg>`;
 
@@ -39,20 +39,9 @@ export const ICONS = {
   // ---- v10 ----
 };
 
-// ---- v11: ryby, med, rybník, včelín, udice ----
-const fishIc = (c, belly, fin, extra = '', len = 1) => S(`<path d="M${4 + (1 - len) * 6} 16c4-7 ${12 * len} -8 ${19 * len} 0-${7 * len} 8-${15 * len} 7-${19 * len} 0z" fill="${c}"/><path d="M${6 + (1 - len) * 6} 18c5 3 ${11 * len} 3 ${16 * len} -1" stroke="${belly}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M${23 - (1 - len) * 2} 16l7-6v12z" fill="${fin}"/><path d="M13 10l4-4 3 5z" fill="${fin}"/><circle cx="${8 + (1 - len) * 6}" cy="14.5" r="1.6" fill="#2f2a26"/>${extra}`);
 Object.assign(ICONS, {
-  // ---- v15: další ryby, jídla, počasí, chat ----
-  karas: fishIc('#d9b44a', '#f5e0a0', '#b08a2a', '', 0.8),
-  cejn: S('<path d="M5 16c3-8 13-10 18-1-5 9-15 8-18 1z" fill="#b0b8a0"/><path d="M8 18c4 2 10 2 14-1" stroke="#e0e6d8" stroke-width="2" fill="none"/><path d="M22 15l8-6v13z" fill="#8a9480"/><path d="M12 8l5-3 3 5z" fill="#8a9480"/><circle cx="9" cy="14" r="1.4" fill="#2f2a26"/>'),
-  amur: fishIc('#8a9a6a', '#c8d0a8', '#6a7a4a', [11, 15, 19].map(x => `<path d="M${x} 12c1 1 1 3 0 4" stroke="#6a7a4a" stroke-width="1" fill="none"/>`).join('')),
-  uhor: S('<path d="M3 18c4-6 8 2 12-2s8-6 13 0c-4 0-6 3-9 4s-7 4-11 2c-2-1-4-2-5-4z" fill="#5a5a3a"/><path d="M6 19c4 1 9-1 13-3" stroke="#a8a070" stroke-width="1.6" fill="none"/><circle cx="25" cy="16" r="1.2" fill="#2f2a26"/>'),
-  bolen: fishIc('#a0aab8', '#e8edf3', '#7a8494', '<path d="M7 16h3" stroke="#2f2a26" stroke-width="1.6"/>', 0.95),
-  jeseter: S('<path d="M2 16c6-5 16-6 22-2l6-5v14l-6-5c-6 4-16 3-22-2z" fill="#7a8a9a"/>' + [8, 12, 16, 20].map(x => `<path d="M${x} 12l1.5-2 1.5 2z" fill="#dfe6ee"/>`).join('') + '<path d="M2 16l-1 3" stroke="#5a6a7a" stroke-width="1.4"/><circle cx="6" cy="15" r="1" fill="#2f2a26"/>'),
-  rybi_karbanatky: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/>' + [[10, 19], [17, 21], [22, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3.4" fill="#c98a4a"/><ellipse cx="${x - 1}" cy="${y - 1}" rx="2.4" ry="1.2" fill="#e0b070"/>`).join('')),
-  amur_gril: S('<path d="M3 24h26M3 20h26" stroke="#4a4f5a" stroke-width="1.6"/><path d="M5 18c4-6 14-7 19-1-5 6-15 6-19 1z" fill="#a89a5a"/><path d="M24 17l5-3v7z" fill="#8a7a4a"/><path d="M10 15l2 5M15 14l2 6M20 15l2 5" stroke="#4a3a20" stroke-width="1.6"/>'),
+  // ---- v15: jídla bez malované ikony, počasí, chat ----
   uzeny_uhor: S('<path d="M16 2v5" stroke="#7a4e2a" stroke-width="2"/><path d="M16 7c-6 2-8 6-4 9s4 7-2 9c4 2 10 1 12-3s-4-7-2-10 2-4-4-5z" fill="#8a5a2a"/><path d="M14 10c-2 2-1 4 1 5" stroke="#d9a05b" stroke-width="1.4" fill="none"/>'),
-  bolen_bylinky: S('<ellipse cx="16" cy="22" rx="14" ry="6" fill="#f3e3c3" stroke="#c9b993"/><path d="M6 20c4-5 14-6 20-1-6 5-16 5-20 1z" fill="#c8d0dc"/>' + [[10, 17], [15, 16], [20, 17]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="2" ry="1" fill="#5fae3a" transform="rotate(-30 ${x} ${y})"/>`).join('') + '<rect x="12" y="20" width="6" height="3" rx="1" fill="#f5e07a"/>'),
   kaviar: S('<ellipse cx="16" cy="24" rx="12" ry="4" fill="#9fb7c9"/><path d="M5 14h22v8a11 4 0 01-22 0z" fill="#d9e6ee" stroke="#9fb7c9"/><ellipse cx="16" cy="14" rx="11" ry="3.6" fill="#2f2a26"/>' + [[10, 14], [14, 13], [18, 14], [22, 13], [16, 15]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#6a6a7a"/>`).join('')),
   w_sun: S('<circle cx="16" cy="16" r="7" fill="#f5c542"/>' + Array.from({ length: 8 }, (_, i) => `<rect x="15" y="2" width="2" height="5" rx="1" fill="#f5a02e" transform="rotate(${i * 45} 16 16)"/>`).join('')),
   w_cloud: S('<circle cx="11" cy="11" r="6" fill="#f5c542"/><path d="M8 26a6 6 0 010-12 8 8 0 0115 2 5 5 0 011 10z" fill="#e9f2f5" stroke="#b8c7d0"/>'),

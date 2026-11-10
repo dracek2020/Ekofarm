@@ -1,5 +1,11 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 19, title: 'Vykopání stromu a nová grafika', items: [
+    'Strom v sadu jde vykopat a zasadit místo něj jiný. Dokud ještě nedal žádnou úrodu, dostaneš sazenici zpátky do skladu (nebo mince, když jsi ji kupoval).',
+    'Sója, hrách a salát mají vlastní obrázky – už nevypadají jako okurka a zelí.',
+    'Lesní stromy jsou celé, i s kmenem.',
+    'Karas, cejn, amur, úhoř, bolen, jeseter, rybí karbanátky, amur na grilu a bolen na bylinkách mají malované ikony.',
+  ] },
   { v: 18, title: 'Oprava spuštění hry', items: [
     'Hra se spustí hned a nečeká na načtení všech obrázků. Dřív se mohla zaseknout na „Načítám farmu…“ a napsat, že se nenačetla.',
     'Když se něco pokazí, hra chybu napíše na obrazovku, aby ji šlo poslat a opravit.',

@@ -694,6 +694,14 @@ export function orchardPrice(farm) {
 }
 
 // stav stromu v sadu: 'empty' | 'growing' | 'ready' | 'dead'
+// co se vrátí při vykopání živého stromu: jen dokud ještě nedal žádnou úrodu (sazenice do skladu, nebo zaplacené mince)
+export function treeRefund(o) {
+  const t = o.tree && TREES[o.tree];
+  if (!t || o.dead || o.left !== t.harvests) return null;
+  if (o.paid === 'sap') return { item: 'z_' + t.id };
+  if (typeof o.paid === 'number' && o.paid > 0) return { coins: o.paid };
+  return null;
+}
 export function treeState(obj, now) {
   if (!obj.tree) return { state: 'empty', progress: 0, left: 0 };
   if (obj.dead) return { state: 'dead', progress: 1, left: 0 };
@@ -1143,6 +1151,7 @@ export const ERRORS = {
   land_far: 'Nejdřív kup sousední pozemek.',
   wrong_machine: 'Na tuhle plodinu potřebuješ jiný stroj.',
   not_empty_tree: 'V sadu už strom roste.',
+  tree_ready: 'Nejdřív sklid zralé ovoce.',
   no_order: 'Tahle zakázka teď není.',
   missing: 'Na zakázku ti ještě něco chybí.',
 };
@@ -1379,6 +1388,7 @@ export function applyAction(farm, a, now) {
       if (!sap && farm.coins < t.cost) return fail('no_coins');
       if (sap) takeItem(farm, 'z_' + t.id, 1); else farm.coins -= t.cost;
       o.tree = t.id; o.left = t.harvests; o.dead = false; o.readyAt = now + t.first * 1000;
+      o.paid = sap ? 'sap' : t.cost;   // čím se platilo – při vykopání před první úrodou se to vrátí
       return { ok: true, sapling: sap };
     }
     case 'harvestTree': {
@@ -1394,12 +1404,21 @@ export function applyAction(farm, a, now) {
       if (o.left > 0) o.readyAt = now + t.regrow * 1000; else o.dead = true;
       return { ok: true, bees: qty > t.yield, gained: { items: [{ item: t.fruit, qty }], xp: t.xp, levelUp }, dead: o.dead };
     }
-    case 'clearTree': {
+    case 'clearTree': {   // vykopat strom: suchý kdykoli, živý jen na výslovné přání (force) a ne se zralým ovocem
       const o = findObject(farm, a.id);
       if (!o || BUILDINGS[o.kind].type !== 'orchard' || !o.tree) return fail('no_object');
-      if (!o.dead) return fail('not_ready');
-      o.tree = null; o.dead = false; o.readyAt = 0; o.left = 0;
-      return { ok: true };
+      const st = treeState(o, now).state;
+      let back = null;
+      if (st !== 'dead') {
+        if (!a.force) return fail('not_ready');
+        if (st === 'ready') return fail('tree_ready');
+        back = treeRefund(o);
+        if (back && back.item && siloFree(farm) < 1) return fail('silo_full');
+        if (back && back.item) addItem(farm, back.item, 1);
+        if (back && back.coins) farm.coins += back.coins;
+      }
+      o.tree = null; o.dead = false; o.readyAt = 0; o.left = 0; delete o.paid;
+      return { ok: true, back };
     }
     case 'buyMachine': {
       const m = own(MACHINES, a.model);

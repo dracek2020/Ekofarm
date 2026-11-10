@@ -3,6 +3,8 @@
 # Výstup: public/img/{t,c,s,b,z,m,p,i}/*.webp (2× rozlišení) a public/js/assets.js (seznam pro hru).
 # Plodiny a stromy (archy 2, 3, 6, 7) se berou z jednotlivých výřezů (stejná buňka pro všechny fáze),
 # všechno ostatní se vyřízne z kompletních archů po celých objektech – výřezy v mřížce některé obrázky ořízly.
+# Doplňkové archy 17–19 (patří do složky s kompletními archy): 17 sója, hrách a salát (nahrazují kopie okurky
+# a zelí), 18 lesní stromy (celé, s kmenem), 19 ikony 6 ryb a jídel z v15.
 # Originály se do hry nekopírují – zůstávají u hráče.
 import os, sys, json, glob
 import numpy as np
@@ -51,6 +53,27 @@ def load(arch, idx, ratio=0.25):
 
 def fit_w(im, w):
     return im.resize((w, max(1, round(im.height * w / im.width))), Image.LANCZOS)
+
+def grid_cells(arch, rows, cols):
+    """Arch, kde má jedna buňka víc kousků (několik rostlinek): řádky a sloupce podle průhledných mezer."""
+    a = np.array(Image.open(glob.glob(os.path.join(SHEETS, f'Arch_{arch:02d}_*.png'))[0]).convert('RGBA'))
+    m = a[:, :, 3] > 24
+    def bands(v):
+        out = []
+        for i in np.where(v)[0]:
+            if out and i - out[-1][1] <= 10: out[-1][1] = i + 1   # mezera do 10 px = pořád stejný pás
+            else: out.append([i, i + 1])
+        return [b for b in out if b[1] - b[0] >= 12]                # drobné smítko není pás
+    rb = bands(m.any(1))
+    if len(rb) != rows: raise SystemExit(f'Arch {arch}: čekám {rows} řádky, našel jsem {len(rb)}')
+    out = []
+    for r0, r1 in rb:
+        cb = bands(m[r0:r1].any(0))
+        if len(cb) != cols: raise SystemExit(f'Arch {arch}: čekám {cols} sloupce, našel jsem {len(cb)}')
+        for c0, c1 in cb:
+            c = a[r0:r1, c0:c1].copy(); c[c[:, :, 3] <= 8, 3] = 0
+            out.append(Image.fromarray(c))
+    return out
 
 _sheets = {}
 def sheet(arch, expect=None):
@@ -132,11 +155,24 @@ save(fit_w(trim(obj(1, 12)), 128), 't', 'cedule')
 # ---------- plodiny: celý výřez (stejné umístění ve všech fázích), 3 fáze ----------
 CROPS = ['wheat', 'redkvicka', 'salat', 'corn', 'rajce', 'carrot', 'okurka', 'potato', 'jahody', 'cibule',
          'soy', 'cesnek', 'repka', 'paprika', 'sun', 'zeli', 'beet', 'hrach', 'meloun', 'dyne']
+NEW_CROPS = ['soy', 'hrach', 'salat']   # z archu 17 (v archu 2 a 3 byly kopie okurky a zelí)
 for k, crop in enumerate(CROPS):
+    if crop in NEW_CROPS: continue
     arch, base = (2, k * 3) if k < 10 else (3, (k - 10) * 3)
     for st in range(3):
         im = load(arch, base + st + 1, 0.6)
         save(im, 'c', f'{crop}_{st}')
+# nové plodiny na stejné plátno jako ostatní (173×173, rostliny stojí na y 157 uprostřed), jedno měřítko pro
+# všechny 3 fáze – zralá rostlina je zhruba stejně široká jako zralé plodiny z archů 2 a 3
+cells17 = grid_cells(17, 3, 3)
+for r, crop in enumerate(NEW_CROPS):
+    ims = [trim(x) for x in cells17[r * 3: r * 3 + 3]]
+    s = min(146 / ims[2].width, 150 / max(x.height for x in ims))
+    for st, im in enumerate(ims):
+        im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+        c = Image.new('RGBA', (173, 173), (0, 0, 0, 0))
+        c.alpha_composite(im, (86 - im.width // 2, 158 - im.height))
+        save(c, 'c', f'{crop}_{st}')
 
 # ---------- stromy a keře do sadu (stejné měřítko pro všechny 3 stavy) ----------
 TREES = [(6, 'jablon'), (6, 'hrusen'), (6, 'svestka'), (6, 'tresen'), (6, 'visen'), (6, 'merunka'), (6, 'broskev'),
@@ -148,7 +184,7 @@ def tree_set(ims, names, kind, k=1.0, shadow=False):
     for im, name in zip(ims, names):
         im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
         c = Image.new('RGBA', (192, 240), (0, 0, 0, 0))   # 1 políčko: kmen na středu políčka (y 168+)
-        if shadow:   # měkký stín na zemi (lesní stromy; smrk je v kresbě dole rovně uříznutý, stín ho posadí na zem)
+        if shadow:   # měkký stín na zemi pod lesním stromem
             sh = Image.new('L', (192, 240), 0)
             ImageDraw.Draw(sh).ellipse([96 - im.width * 0.4, 182 - 15, 96 + im.width * 0.4, 182 + 13], fill=70)
             c.putalpha(sh.filter(ImageFilter.GaussianBlur(5)))
@@ -158,8 +194,8 @@ counter = {6: 0, 7: 0}
 for arch, tid in TREES:
     b = counter[arch]; counter[arch] += 3
     tree_set([load(arch, b + 1), load(arch, b + 2), load(arch, b + 3)], [f'{tid}_grow', f'{tid}_ready', f'{tid}_dead'], 's', BUSH.get(tid, 1.0))
-for j, n in enumerate(['les_a', 'les_b', 'les_c']):
-    tree_set([load(7, 19 + j)], [n], 's', shadow=True)
+for j, n in enumerate(['les_a', 'les_b', 'les_c']):   # dub, smrk, bříza z archu 18 (v archu 7 byly dole uříznuté)
+    tree_set([obj(18, j + 1, 3)], [n], 's', shadow=True)
 
 # ---------- zvířata, stroje, lidé (ořez, 2× velikost ve hře) ----------
 for i, (name, w) in enumerate([('slepice', 52), ('krava', 140), ('prase', 104), ('ovce', 104)], 5):
@@ -180,6 +216,7 @@ ICON_ARCH = {
     14: 'hrachovka dynovka broskve_sklo dzus_mrkev dzus_jablko dzus_hruska dzus_visne most napoj povidla dzem_malina dzem_jahoda marmelada dzem_merunka klobasa uzene klubko svetr deka slama',
     15: 'seminkovy_chleb prazena_seminka dynovy_olej navnada plast med svicka medovnik pernik rybi_polevka smazeny_kapr peceny_lin rybi_prsty uzeny_pstruh candat_maslo stika_cibule sumcovy_gulas plotice kapr lin',
     16: 'okoun pstruh candat stika sumec udice udice2 kolecko motyka',
+    19: 'karas cejn amur uhor bolen jeseter rybi_karbanatky amur_gril - - bolen_bylinky',   # „-“ = v archu je jiné jídlo, nepoužije se
 }
 def icon(im, fill=0.92):
     im = trim(im)
@@ -191,6 +228,7 @@ def icon(im, fill=0.92):
 icons = {}
 for arch, names in ICON_ARCH.items():
     for i, n in enumerate(names.split(), 1):
+        if n == '-': continue
         icons[n] = icon(obj(arch, i, len(names.split())))
         save(icons[n], 'i', n)
 # ikony budov, zvířat a strojů z herní grafiky (aby UI vypadalo stejně jako mapa)

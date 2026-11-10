@@ -51,6 +51,11 @@ img { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .row .info small { color: #7a6040; display: block; }
 .btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 3px solid var(--green-d); background: var(--green); color: #fff; font-weight: 800; font-size: 16px; box-shadow: 0 3px 0 var(--green-d); margin-top: 8px; }
 .btn.alt { background: #fff; color: var(--green-d); }
+.btn.warn { background: #c8452d; border-color: #8e2c1b; }
+.ask { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #fff3e8; border: 2px solid #e0a080; }
+.ask p { margin: 0 0 8px; }
+.ask-btns { display: flex; gap: 8px; }
+.ask-btns .btn { margin: 0; }
 .btn.sm { display: inline-block; width: auto; padding: 6px 10px; font-size: 13px; margin: 0 0 0 4px; }
 .muted { color: #7a6040; font-size: 14px; }
 .empty { text-align: center; color: #7a6040; padding: 18px; }

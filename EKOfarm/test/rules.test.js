@@ -276,6 +276,49 @@ test('sad a stromy', () => {
   assert.equal(treeState(o, t).state, 'empty');
 });
 
+test('vykopání živého stromu: vrátí sazenici nebo mince jen před první úrodou', () => {
+  const f = farm6();
+  f.coins = 1000; f.level = 3; f.xp = 25;
+  const id = applyAction(f, { type: 'place', kind: 'sad', x: 0, y: 0 }, T0).id;
+  const o = findObject(f, id);
+  // koupená sazenice (mince) → zpět mince
+  const c0 = f.coins;
+  assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
+  const cost = c0 - f.coins;
+  assert.ok(cost > 0);
+  assert.equal(applyAction(f, { type: 'clearTree', id }, T0 + 1000).error, 'not_ready', 'bez potvrzení (force) se živý strom nevykope');
+  const r = applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000);
+  assert.ok(r.ok);
+  assert.deepEqual(r.back, { coins: cost });
+  assert.equal(f.coins, c0, 'mince zpět');
+  assert.equal(treeState(o, T0 + 1000).state, 'empty');
+  // sazenice ze skladu → zpět do skladu, pak jde zasadit jiný strom
+  f.silo.z_jablon = 1;
+  assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
+  assert.equal(f.silo.z_jablon || 0, 0);
+  assert.deepEqual(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).back, { item: 'z_jablon' });
+  assert.equal(f.silo.z_jablon, 1);
+  // zralé ovoce se musí nejdřív sklidit; po první úrodě se nic nevrací
+  assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
+  const t = T0 + 1800 * 1000;
+  assert.equal(applyAction(f, { type: 'clearTree', id, force: true }, t).error, 'tree_ready');
+  assert.ok(applyAction(f, { type: 'harvestTree', id }, t).ok);
+  const coins = f.coins, silo = JSON.stringify(f.silo);
+  const r2 = applyAction(f, { type: 'clearTree', id, force: true }, t + 1000);
+  assert.ok(r2.ok);
+  assert.equal(r2.back, null);
+  assert.equal(f.coins, coins); assert.equal(JSON.stringify(f.silo), silo);
+  // strom ze starší verze (bez záznamu o platbě) → vykopat jde, nic se nevrací
+  assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
+  delete o.paid;
+  assert.equal(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).back, null);
+  // plný sklad: sazenici není kam vrátit
+  f.silo.z_jablon = 1;
+  assert.ok(applyAction(f, { type: 'plantTree', id, tree: 'jablon' }, T0).ok);
+  f.silo.wheat = f.siloCap;
+  assert.equal(applyAction(f, { type: 'clearTree', id, force: true }, T0 + 1000).error, 'silo_full');
+});
+
 test('zakázky: stejné na serveru i v prohlížeči, doručení a zrušení', () => {
   const a = newFarm(T0), b = JSON.parse(JSON.stringify(a));
   assert.equal(a.orders.length, 6);
