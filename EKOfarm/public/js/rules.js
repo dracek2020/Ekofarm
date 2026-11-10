@@ -48,16 +48,18 @@ export const TOWN_BUILDINGS = [
   { kind: 'prodejna', x: 33, y: 29 },
   { kind: 'trziste', x: 29, y: 33 },
 ];
-// domky jen pro ozdobu: x, y, barva zdí, barva střechy
+// domky jen pro ozdobu [x, y] – stojí tak, aby nezakrývaly Stánek, Prodejnu ani Tržiště
 export const TOWN_HOUSES = [
-  [25, 28, '#efe2c8', '#b5523a'], [22, 25, '#e8d6b0', '#6f8a3a'], [36, 33, '#f2e6d0', '#3f6fb5'],
-  [33, 36, '#e2d2b8', '#a8483a'], [25, 22, '#f0e0c0', '#8a5a35'], [37, 29, '#efe2c8', '#6f8a3a'], [29, 37, '#e8d6b0', '#b5523a'],
+  [22, 25], [25, 22],     // u vjezdu do městečka
+  [25, 28],               // za Tržištěm
+  [34, 25], [25, 34],     // po stranách
+  [38, 29], [29, 38],
+  [38, 35], [35, 38],     // dole u cesty
 ];
 export const TOWN_KINDS = TOWN_BUILDINGS.map(b => b.kind);
 export function townAt(x, y) {
   return TOWN_BUILDINGS.find(b => x >= b.x && x < b.x + 3 && y >= b.y && y < b.y + 3) || null;
 }
-export const townHouseAt = (x, y) => TOWN_HOUSES.find(h => x >= h[0] && x < h[0] + 2 && y >= h[1] && y < h[1] + 2) || null;
 // budova městečka jako objekt (pro kreslení, panel a vylepšení)
 export function townObject(farm, kind) {
   const b = TOWN_BUILDINGS.find(t => t.kind === kind);
@@ -80,34 +82,34 @@ export const START_PLOTS = [
 ];
 
 // ---------- data ----------
-// time = sekundy; look = jak se rostlina kreslí (t = tvar, c = barva plodu)
+// time = sekundy
 // harvester = čím se plodina sklízí na velkém poli (combine = kombajn, tractor = traktor se sklízečem)
-const crop = (id, name, cat, level, cost, time, price, xp, harvester, look) =>
-  ({ id, name, cat, level, cost, time, yield: 2, xp, price, icon: id, harvester, look });
+const crop = (id, name, cat, level, cost, time, price, xp, harvester) =>
+  ({ id, name, cat, level, cost, time, yield: 2, xp, price, icon: id, harvester });
 export const CROPS = {
   // obilí a technické plodiny
-  wheat:     crop('wheat',     'Pšenice',      'obili',    1, 1,  60,   3,  1, 'combine', { t: 'grain' }),
-  corn:      crop('corn',      'Kukuřice',     'obili',    2, 3,  300,  8,  2, 'combine', { t: 'tall' }),
-  soy:       crop('soy',       'Sója',         'obili',    5, 8,  1200, 18, 4, 'combine', { t: 'soy' }),
-  repka:     crop('repka',     'Řepka',        'obili',    6, 10, 1500, 22, 5, 'combine', { t: 'repka' }),
-  sun:       crop('sun',       'Slunečnice',   'obili',    7, 12, 1800, 26, 5, 'combine', { t: 'sun' }),
-  hrach:     crop('hrach',     'Hrách',        'zelenina', 9, 9,  1500, 21, 5, 'combine', { t: 'pod', c: '#7cc04f' }),
+  wheat:     crop('wheat',     'Pšenice',      'obili',    1, 1,  60,   3,  1, 'combine'),
+  corn:      crop('corn',      'Kukuřice',     'obili',    2, 3,  300,  8,  2, 'combine'),
+  soy:       crop('soy',       'Sója',         'obili',    5, 8,  1200, 18, 4, 'combine'),
+  repka:     crop('repka',     'Řepka',        'obili',    6, 10, 1500, 22, 5, 'combine'),
+  sun:       crop('sun',       'Slunečnice',   'obili',    7, 12, 1800, 26, 5, 'combine'),
+  hrach:     crop('hrach',     'Hrách',        'zelenina', 9, 9,  1500, 21, 5, 'combine'),
   // zelenina
-  redkvicka: crop('redkvicka', 'Ředkvička',    'zelenina', 1, 2,  120,  4,  1, 'tractor', { t: 'root', c: '#e0405a' }),
-  salat:     crop('salat',     'Salát',        'zelenina', 2, 2,  180,  5,  1, 'tractor', { t: 'leafy', c: '#8fd45a' }),
-  carrot:    crop('carrot',    'Mrkev',        'zelenina', 3, 5,  600,  12, 3, 'tractor', { t: 'carrot' }),
-  rajce:     crop('rajce',     'Rajče',        'zelenina', 3, 4,  480,  9,  2, 'tractor', { t: 'bush', c: '#e0402d' }),
-  potato:    crop('potato',    'Brambory',     'zelenina', 4, 6,  900,  15, 3, 'tractor', { t: 'potato' }),
-  okurka:    crop('okurka',    'Okurka',       'zelenina', 4, 4,  540,  10, 2, 'tractor', { t: 'vine', c: '#3f8f3a' }),
-  cibule:    crop('cibule',    'Cibule',       'zelenina', 5, 5,  720,  11, 3, 'tractor', { t: 'bulb', c: '#d9a441' }),
-  cesnek:    crop('cesnek',    'Česnek',       'zelenina', 6, 6,  900,  14, 3, 'tractor', { t: 'bulb', c: '#f2ede0' }),
-  paprika:   crop('paprika',   'Paprika',      'zelenina', 7, 7,  1080, 16, 4, 'tractor', { t: 'bush', c: '#e8502a' }),
-  beet:      crop('beet',      'Cukrová řepa', 'zelenina', 8, 14, 2400, 30, 6, 'tractor', { t: 'beet' }),
-  zeli:      crop('zeli',      'Zelí',         'zelenina', 8, 8,  1500, 20, 5, 'tractor', { t: 'leafy', c: '#b7dd8a' }),
-  dyne:      crop('dyne',      'Dýně',         'zelenina', 10, 12, 2400, 30, 6, 'tractor', { t: 'vine', c: '#f08a24' }),
+  redkvicka: crop('redkvicka', 'Ředkvička',    'zelenina', 1, 2,  120,  4,  1, 'tractor'),
+  salat:     crop('salat',     'Salát',        'zelenina', 2, 2,  180,  5,  1, 'tractor'),
+  carrot:    crop('carrot',    'Mrkev',        'zelenina', 3, 5,  600,  12, 3, 'tractor'),
+  rajce:     crop('rajce',     'Rajče',        'zelenina', 3, 4,  480,  9,  2, 'tractor'),
+  potato:    crop('potato',    'Brambory',     'zelenina', 4, 6,  900,  15, 3, 'tractor'),
+  okurka:    crop('okurka',    'Okurka',       'zelenina', 4, 4,  540,  10, 2, 'tractor'),
+  cibule:    crop('cibule',    'Cibule',       'zelenina', 5, 5,  720,  11, 3, 'tractor'),
+  cesnek:    crop('cesnek',    'Česnek',       'zelenina', 6, 6,  900,  14, 3, 'tractor'),
+  paprika:   crop('paprika',   'Paprika',      'zelenina', 7, 7,  1080, 16, 4, 'tractor'),
+  beet:      crop('beet',      'Cukrová řepa', 'zelenina', 8, 14, 2400, 30, 6, 'tractor'),
+  zeli:      crop('zeli',      'Zelí',         'zelenina', 8, 8,  1500, 20, 5, 'tractor'),
+  dyne:      crop('dyne',      'Dýně',         'zelenina', 10, 12, 2400, 30, 6, 'tractor'),
   // ovoce z pole
-  jahody:    crop('jahody',    'Jahody',       'ovoce',    4, 6,  900,  15, 3, 'tractor', { t: 'berry', c: '#e0283c' }),
-  meloun:    crop('meloun',    'Meloun',       'ovoce',    9, 14, 2700, 34, 6, 'tractor', { t: 'vine', c: '#3f8a2e' }),
+  jahody:    crop('jahody',    'Jahody',       'ovoce',    4, 6,  900,  15, 3, 'tractor'),
+  meloun:    crop('meloun',    'Meloun',       'ovoce',    9, 14, 2700, 34, 6, 'tractor'),
 };
 export const CROP_LIST = Object.values(CROPS).sort((a, b) => a.level - b.level || a.cost - b.cost);
 export const CROP_CATS = { obili: 'Obilí a olejniny', zelenina: 'Zelenina', ovoce: 'Ovoce' };
@@ -218,7 +220,7 @@ export const SEEDS = {};
 for (const c of Object.values(CROPS)) SEEDS['s_' + c.id] = { id: 's_' + c.id, name: 'Semena ' + c.name.toLowerCase(), icon: 's_' + c.id, price: c.cost, seed: c.id };
 export const SAPLINGS = {};
 for (const t of Object.values(TREES)) SAPLINGS['z_' + t.id] = { id: 'z_' + t.id, name: 'Sazenice: ' + t.name, icon: 'z_' + t.id, price: t.cost, sapling: t.id };
-export const seedOf = cropId => 's_' + cropId;
+
 
 // výrobek = id receptu, vždy 1 kus; level = úroveň hráče
 const R = (id, building, level, inp, time, xp) => ({ id, building, level, in: inp, time, xp });
@@ -333,58 +335,58 @@ export const BUILDINGS = {
   stanek:       B('stanek', 'Stánek', 'stall', 0, 0, 3, 3, 0, 1, 'stall', { town: true }),
   trziste:      B('trziste', 'Tržiště hráčů', 'market', 0, 0, 3, 3, 0, 1, 'market', { town: true }),
   // statek 1
-  semenarna:    B('semenarna', 'Semenárna', 'factory', 1, 30, 2, 2, 3, 1, 's_wheat', { color: '#c9a36a' }),
-  krmivarna:    B('krmivarna', 'Krmivárna', 'factory', 1, 40, 2, 2, 4, 1, 'krmivo_slepice', { color: '#6f9bd1' }),
-  pekarna:      B('pekarna', 'Pekárna', 'factory', 1, 60, 2, 2, 5, 1, 'chleb', { color: '#d9734e' }),
+  semenarna:    B('semenarna', 'Semenárna', 'factory', 1, 30, 2, 2, 3, 1, 's_wheat'),
+  krmivarna:    B('krmivarna', 'Krmivárna', 'factory', 1, 40, 2, 2, 4, 1, 'krmivo_slepice'),
+  pekarna:      B('pekarna', 'Pekárna', 'factory', 1, 60, 2, 2, 5, 1, 'chleb'),
   kurnik:       B('kurnik', 'Kurník', 'pen', 1, 50, 2, 2, 5, 1, 'hen', { animal: 'slepice' }),
   sad:          B('sad', 'Sad', 'orchard', 1, 0, 1, 1, 1, 0, 'tree', { info: 'Políčko pro ovocný strom nebo keř.' }),
   ker:          B('ker', 'Keř', 'deco', 1, 10, 1, 1, 1, 0, 'bush'),
   kvetiny:      B('kvetiny', 'Záhon květin', 'deco', 1, 15, 1, 1, 1, 0, 'flowers'),
   // statek 2
-  mlyn:         B('mlyn', 'Mlýn', 'factory', 2, 120, 2, 2, 6, 1, 'mouka', { color: '#e8dcc0' }),
+  mlyn:         B('mlyn', 'Mlýn', 'factory', 2, 120, 2, 2, 6, 1, 'mouka'),
   kravin:       B('kravin', 'Kravín', 'pen', 2, 150, 3, 3, 8, 1, 'cow', { animal: 'krava' }),
-  konzervarna:  B('konzervarna', 'Konzervárna', 'factory', 2, 180, 2, 2, 8, 1, 'okurky', { color: '#7fb07a' }),
-  skolka:       B('skolka', 'Školka stromků', 'factory', 2, 120, 2, 2, 5, 1, 'z_jablon', { color: '#8fbf6a' }),
+  konzervarna:  B('konzervarna', 'Konzervárna', 'factory', 2, 180, 2, 2, 8, 1, 'okurky'),
+  skolka:       B('skolka', 'Školka stromků', 'factory', 2, 120, 2, 2, 5, 1, 'z_jablon'),
   lavicka:      B('lavicka', 'Lavička', 'deco', 2, 30, 1, 1, 2, 0, 'bench'),
   // statek 3
   stodola:      B('stodola', 'Stodola na stroje', 'garage', 3, 300, 3, 2, 10, 1, 'garage'),
   velkepole:    B('velkepole', 'Velké pole', 'bigfield', 3, 0, 4, 4, 5, 0, 'field', { info: 'Pole, na kterém pracují stroje. Velikost si zvolíš.' }),
-  dzusarna:     B('dzusarna', 'Džusárna', 'factory', 3, 200, 2, 2, 8, 1, 'dzus_jablko', { color: '#f2b84a' }),
+  dzusarna:     B('dzusarna', 'Džusárna', 'factory', 3, 200, 2, 2, 8, 1, 'dzus_jablko'),
   jablon:       B('jablon', 'Kvetoucí strom', 'deco', 3, 40, 1, 1, 2, 0, 'blossom'),
   // statek 4
-  mlekarna:     B('mlekarna', 'Mlékárna', 'factory', 4, 200, 2, 2, 10, 1, 'syr', { color: '#9fb7c9' }),
-  olejna:       B('olejna', 'Olejna', 'factory', 4, 250, 2, 2, 8, 1, 'olej', { color: '#d9c25a' }),
-  marmeladarna: B('marmeladarna', 'Marmeládárna', 'factory', 4, 260, 2, 2, 9, 1, 'dzem_jahoda', { color: '#d9607a' }),
+  mlekarna:     B('mlekarna', 'Mlékárna', 'factory', 4, 200, 2, 2, 10, 1, 'syr'),
+  olejna:       B('olejna', 'Olejna', 'factory', 4, 250, 2, 2, 8, 1, 'olej'),
+  marmeladarna: B('marmeladarna', 'Marmeládárna', 'factory', 4, 260, 2, 2, 9, 1, 'dzem_jahoda'),
   fontana:      B('fontana', 'Fontána', 'deco', 4, 150, 1, 1, 5, 0, 'fountain'),
   // v11: rybník, rybárna, včelín, medárna
   rybnik:       B('rybnik', 'Rybník', 'pond', 2, 200, 3, 3, 8, 2, 'pond', { info: 'Rybaření: potřebuješ udici a návnadu.' }),
-  rybarna:      B('rybarna', 'Rybárna', 'factory', 3, 300, 2, 2, 9, 1, 'rybi_polevka', { color: '#5f8fb0' }),
+  rybarna:      B('rybarna', 'Rybárna', 'factory', 3, 300, 2, 2, 9, 1, 'rybi_polevka'),
   vcelin:       B('vcelin', 'Včelín', 'hive', 3, 250, 2, 2, 8, 2, 'hive', { info: 'Včely dělají plástve medu a sadům v okolí přidají úrodu.' }),
-  medarna:      B('medarna', 'Medárna', 'factory', 3, 280, 2, 2, 9, 1, 'med', { color: '#e0a82e' }),
+  medarna:      B('medarna', 'Medárna', 'factory', 3, 280, 2, 2, 9, 1, 'med'),
   // statek 5
   prasecak:     B('prasecak', 'Prasečák', 'pen', 5, 260, 3, 3, 9, 1, 'pig', { animal: 'prase' }),
-  cukrovar:     B('cukrovar', 'Cukrovar', 'factory', 5, 400, 2, 2, 10, 1, 'cukr', { color: '#b9c7d6' }),
+  cukrovar:     B('cukrovar', 'Cukrovar', 'factory', 5, 400, 2, 2, 10, 1, 'cukr'),
   // statek 6
-  uzenarstvi:   B('uzenarstvi', 'Uzenářství', 'factory', 6, 420, 2, 2, 10, 1, 'klobasa', { color: '#a5664a' }),
+  uzenarstvi:   B('uzenarstvi', 'Uzenářství', 'factory', 6, 420, 2, 2, 10, 1, 'klobasa'),
   // statek 7
   ovcin:        B('ovcin', 'Ovčín', 'pen', 7, 450, 3, 3, 10, 1, 'sheep', { animal: 'ovce' }),
-  textilka:     B('textilka', 'Textilka', 'factory', 7, 600, 2, 2, 12, 1, 'klubko', { color: '#b48ad0' }),
+  textilka:     B('textilka', 'Textilka', 'factory', 7, 600, 2, 2, 12, 1, 'klubko'),
 };
 export const BUILDING_LIST = Object.values(BUILDINGS);
 
 // stroje a náčiní z prodejny; speed = políček za minutu; vozidla (tractor, combine) potřebují místo ve stodole
 export const MACHINES = {
-  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 5,  cost: 250,  speed: 6,  color: '#c8452d', icon: 'tractor', info: 'Seje a orá na velkém poli, sklízí zeleninu. Zaseje i všechna malá pole.' },
-  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 6,  cost: 600,  speed: 6,  color: '#4f9a3a', icon: 'combine', info: 'Sklízí obilí, olejniny a hrách. Sklidí i všechna malá pole.' },
-  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 9,  cost: 900,  speed: 12, color: '#2f6fb5', icon: 'tractor', info: 'Dvakrát rychlejší traktor.' },
-  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 11, cost: 1800, speed: 12, color: '#d9b43b', icon: 'combine', info: 'Dvakrát rychlejší kombajn.' },
-  pluh:      { id: 'pluh',      name: 'Pluh',               type: 'plow',    level: 6,  cost: 300,  speed: 0,  color: '#8a8f96', icon: 'pluh',  info: 'Zorané velké pole dá o 50 % větší úrodu. Táhne ho traktor.' },
-  secka:     { id: 'secka',     name: 'Secí stroj',         type: 'seeder',  level: 7,  cost: 500,  speed: 0,  color: '#3f7fbf', icon: 'secka', info: 'Traktor s ním seje dvakrát rychleji.' },
-  lis:       { id: 'lis',       name: 'Lis na balíky',      type: 'baler',   level: 8,  cost: 700,  speed: 0,  color: '#d9b43b', icon: 'lis',   info: 'Po sklizni obilí slisuje slámu do balíků. Táhne ho traktor.' },
-  udice:     { id: 'udice',     name: 'Udice',              type: 'rod',     level: 3,  cost: 80,   speed: 0,  color: '#a7703d', icon: 'udice', info: 'Na rybaření v rybníku. Návnadu vyrobíš v Krmivárně.' },
-  udice2:    { id: 'udice2',    name: 'Karbonová udice',    type: 'rod',     level: 10, cost: 700,  speed: 0,  color: '#2f2a26', icon: 'udice2', info: 'Ryba se drží snáz a častěji zabere vzácná.' },
-  kolecko:   { id: 'kolecko',   name: 'Kolečko',            type: 'helper',  level: 3,  cost: 150,  speed: 0,  color: '#8a8f96', icon: 'kolecko', info: 'Pomocník s ním obslouží o 2 políčka víc najednou.' },
-  motyka:    { id: 'motyka',    name: 'Motyka a konev',     type: 'helper',  level: 4,  cost: 250,  speed: 0,  color: '#8a8f96', icon: 'motyka', info: 'Pomocník pracuje dvakrát častěji.' },
+  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 5,  cost: 250,  speed: 6,  icon: 'tractor', info: 'Seje a orá na velkém poli, sklízí zeleninu. Zaseje i všechna malá pole.' },
+  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 6,  cost: 600,  speed: 6,  icon: 'combine', info: 'Sklízí obilí, olejniny a hrách. Sklidí i všechna malá pole.' },
+  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 9,  cost: 900,  speed: 12, icon: 'tractor', info: 'Dvakrát rychlejší traktor.' },
+  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 11, cost: 1800, speed: 12, icon: 'combine', info: 'Dvakrát rychlejší kombajn.' },
+  pluh:      { id: 'pluh',      name: 'Pluh',               type: 'plow',    level: 6,  cost: 300,  speed: 0,  icon: 'pluh',  info: 'Zorané velké pole dá o 50 % větší úrodu. Táhne ho traktor.' },
+  secka:     { id: 'secka',     name: 'Secí stroj',         type: 'seeder',  level: 7,  cost: 500,  speed: 0,  icon: 'secka', info: 'Traktor s ním seje dvakrát rychleji.' },
+  lis:       { id: 'lis',       name: 'Lis na balíky',      type: 'baler',   level: 8,  cost: 700,  speed: 0,  icon: 'lis',   info: 'Po sklizni obilí slisuje slámu do balíků. Táhne ho traktor.' },
+  udice:     { id: 'udice',     name: 'Udice',              type: 'rod',     level: 3,  cost: 80,   speed: 0,  icon: 'udice', info: 'Na rybaření v rybníku. Návnadu vyrobíš v Krmivárně.' },
+  udice2:    { id: 'udice2',    name: 'Karbonová udice',    type: 'rod',     level: 10, cost: 700,  speed: 0,  icon: 'udice2', info: 'Ryba se drží snáz a častěji zabere vzácná.' },
+  kolecko:   { id: 'kolecko',   name: 'Kolečko',            type: 'helper',  level: 3,  cost: 150,  speed: 0,  icon: 'kolecko', info: 'Pomocník s ním obslouží o 2 políčka víc najednou.' },
+  motyka:    { id: 'motyka',    name: 'Motyka a konev',     type: 'helper',  level: 4,  cost: 250,  speed: 0,  icon: 'motyka', info: 'Pomocník pracuje dvakrát častěji.' },
 };
 export const MACHINE_LIST = Object.values(MACHINES);
 
@@ -531,7 +533,6 @@ export const growMs = (c, now) => Math.round(c.time * 1000 * weatherAt(now).grow
 export const dayKey = now => new Date(now + 3600000).toISOString().slice(0, 10);
 export const MACHINE_TYPE_NAME = { rod: 'udice', tractor: 'traktor', combine: 'kombajn', plow: 'pluh', seeder: 'secí stroj', baler: 'lis', helper: 'náčiní' };
 export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model].type);
-export const MACHINE_TYPE_NAME2 = { helper: 'náčiní pro pomocníka' };
 
 // celkové XP potřebné pro dosažení úrovně (index = úroveň)
 // úroveň hráče roste pořád (do 200); s budovami nesouvisí – ty odemyká Statek

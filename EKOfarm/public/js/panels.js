@@ -12,9 +12,9 @@ import {
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
-} from './rules.js?v=15';
-import { fmtTime } from './render.js?v=15';
-import { NEWS } from './news.js?v=15';
+} from './rules.js?v=17';
+import { fmtTime } from './render.js?v=17';
+import { NEWS } from './news.js?v=17';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

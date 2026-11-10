@@ -1,5 +1,19 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 17, title: 'Doladěná grafika a plynulejší mapa', items: [
+    'Mapa se posouvá plynuleji a hra méně zahřívá telefon: země se nakreslí jednou a při posouvání se jen kopíruje.',
+    'Kolem celé mapy je louka. V městečku přibyly domky a žádný už nezakrývá Stánek, Prodejnu strojů ani Tržiště.',
+    'Zvířata chodí ve výběhu před přístřeškem, rybník sedí přesně na svém místě a keře v sadu jsou menší než stromy.',
+    'Nad uschlým stromem je sekera, takže je hned vidět, co pokácet. Lesní stromy mají stín.',
+    'Ikony jsou vyříznuté celé (kolečko už není oříznuté) a obrázky ohrad a zvířat jsou ostřejší.',
+  ] },
+  { v: 16, title: 'Nová grafika celé hry', items: [
+    'Nová malovaná grafika: tráva, cesty, pole, všech 20 plodin ve 3 fázích růstu, 13 ovocných stromů a keřů, les, ploty i cedule.',
+    'Nové obrázky budov: stodola na stroje, rybník, včelín, rybárna, medárna, městečko s domky a ozdoby. Ohrady jsou prázdné výběhy a zvířata v nich chodí.',
+    'Traktory, kombajny a nářadí, farmář a pomocník mají nový vzhled. Přes 100 předmětů má novou ikonu.',
+    'Hra je rychlejší a šetrnější k baterii na iPhonu i Androidu: kreslí se jen to, co je vidět, a grafika se načte předem.',
+    'Tlačítko Zpět na Androidu zavře otevřené okno místo opuštění hry.',
+  ] },
   { v: 15, title: 'Počasí, větší ryby a chat', items: [
     'Počasí pro všechny: jasno, polojasno, déšť a horko se střídají každé 2 hodiny. Co zasadíš v dešti, roste rychleji, v horku pomaleji. Počasí vidíš vlevo nahoře.',
     '6 nových ryb (karas, cejn, amur, úhoř, bolen, jeseter) a 5 nových jídel. Každá ryba má váhu – velká dá 2 kusy, obří 3, a u každého druhu se ukazuje tvůj rekord.',

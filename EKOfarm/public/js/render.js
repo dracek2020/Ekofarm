@@ -1,7 +1,8 @@
-// EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, parcelAt, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townHouseAt, townObject } from './rules.js?v=15';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse } from './objects.js?v=15';
-import { drawIconText, drawIcon } from './icons.js?v=15';
+// EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject } from './rules.js?v=17';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=17';
+import { drawIconText, drawIcon } from './icons.js?v=17';
+import { asset } from './sprites.js?v=17';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -23,16 +24,15 @@ export function cellToScreen(gx, gy, cam, W, H) {
   return [(ix - cam.x) * cam.zoom + W / 2, (iy - cam.y) * cam.zoom + H / 2];
 }
 
-export function inFarm(gx, gy) {
-  return gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
-}
-
 // stromy kolem farmy a v divočině nekoupených pozemků (deterministické); na koupené zemi se nekreslí
 const BG_TREES = (() => {
   const out = [];
   let seed = 7;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const nearTown = (x, y) => (x >= GRID_W - 1 && y >= GRID_H - 1 && Math.abs(x - y) <= 2) || townAt(x, y) || townAt(x - 1, y) || townAt(x, y - 1) || townHouseAt(x, y) || isPlaza(x - 1, y - 1) || isPlaza(x + 1, y + 1);
+  // u cesty, na náměstí, na budovách městečka a těsně před nimi stromy nerostou (zakrývaly by je)
+  const nearTown = (x, y) => (x >= GRID_W - 1 && y >= GRID_H - 1 && Math.abs(x - y) <= 2) || isPlaza(x - 1, y - 1) || isPlaza(x + 1, y + 1)
+    || TOWN_BUILDINGS.some(b => x >= b.x - 1 && y >= b.y - 1 && x < b.x + 6 && y < b.y + 6)
+    || TOWN_HOUSES.some(h => x >= h[0] - 1 && y >= h[1] - 1 && x < h[0] + 4 && y < h[1] + 4);
   for (let gy = WORLD.y0 - 6; gy < TOWN.y1 + 4; gy++) {
     for (let gx = WORLD.x0 - 6; gx < TOWN.x1 + 4; gx++) {
       if (gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H) continue;
@@ -55,43 +55,55 @@ function diamond(ctx, cx, cy, w, h) {
   ctx.closePath();
 }
 
+// dlaždice země (obrázek); dokud se nenačte, jen barevný kosočtverec
+const BASE = '#62a240';
+const TILE_NAMES = ['trava_a', 'trava_b', 'louka_a', 'louka_b', 'cesta_a', 'cesta_b', 'dlazba', 'plot_se', 'plot_ne'];
+const hash2 = (gx, gy) => ((gx * 73856093) ^ (gy * 19349663)) >>> 0;
+function tile(ctx, name, gx, gy, color) {
+  const [x, y] = cellCenter(gx, gy);
+  const im = asset('t', name);
+  if (im) ctx.drawImage(im, x - TW / 2 - 1, y - TH / 2 - 0.5, TW + 2, (TW + 2) * im.naturalHeight / im.naturalWidth);
+  else { diamond(ctx, x, y, TW + 1, TH + 1); ctx.fillStyle = color; ctx.fill(); }
+}
+function groundTile(farm, gx, gy) {
+  const inWorld = gx >= WORLD.x0 && gy >= WORLD.y0 && gx < WORLD.x1 && gy < WORLD.y1;
+  const road = isRoad(gx, gy) || (gx >= TOWN.x1 - 1 && gy >= TOWN.y1 - 1 && Math.abs(gx - gy) <= 1);
+  const v = hash2(gx, gy) % 3 === 0 ? 'b' : 'a';
+  if (isPlaza(gx, gy) || townAt(gx, gy)) return ['dlazba', '#cdb892'];
+  if (road) return ['cesta_' + v, '#b48a58'];
+  if (inWorld) return landOwned(farm, gx, gy) ? ['trava_' + v, '#7cc251'] : ['louka_' + v, '#62a240'];
+  if (gx >= TOWN.x0 && gy >= TOWN.y0 && gx < TOWN.x1 + 3 && gy < TOWN.y1 + 3) return ['trava_' + v, '#6aae45'];
+  return ['louka_' + v, BASE];   // louka i za okrajem mapy
+}
+
+// les kolem farmy
 function drawTree(ctx, t) {
+  const im = asset('s', 'les_' + 'abc'[Math.floor(t.h * 3)]);
+  if (!im) return;
   const [x, y] = cellCenter(t.gx, t.gy);
-  const s = t.s;
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.beginPath(); ctx.ellipse(x, y, 22 * s, 10 * s, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#7a4e2a';
-  ctx.fillRect(x - 3 * s, y - 22 * s, 6 * s, 22 * s);
-  const g = t.h < 0.5 ? ['#3f8f3a', '#4ea845', '#63bd55'] : ['#2f7a3c', '#3d9150', '#52a862'];
-  ctx.fillStyle = g[0]; ctx.beginPath(); ctx.arc(x, y - 34 * s, 20 * s, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = g[1]; ctx.beginPath(); ctx.arc(x - 6 * s, y - 40 * s, 14 * s, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = g[2]; ctx.beginPath(); ctx.arc(x - 9 * s, y - 45 * s, 7 * s, 0, Math.PI * 2); ctx.fill();
+  const w = 96 * t.s, h = 120 * t.s;
+  ctx.drawImage(im, x - w / 2, y + 8 - 91 * t.s, w, h);
 }
 
 // plot kolem vlastní země – jen na hranách, kde vlastní políčko sousedí s cizím
-function drawFence(ctx, farm) {
+function drawFence(ctx, farm, vis) {
   const corner = (gx, gy) => [(gx - gy) * TW / 2, (gx + gy) * TH / 2];
-  ctx.strokeStyle = '#9b6b3c';
-  ctx.lineWidth = 3;
-  ctx.fillStyle = '#7d532c';
-  for (let gy = WORLD.y0; gy < WORLD.y1; gy++) {
-    for (let gx = WORLD.x0; gx < WORLD.x1; gx++) {
-      if (!landOwned(farm, gx, gy)) continue;
-      const edges = [];
-      if (!landOwned(farm, gx, gy - 1)) edges.push([corner(gx, gy), corner(gx + 1, gy)]);
-      if (!landOwned(farm, gx + 1, gy)) edges.push([corner(gx + 1, gy), corner(gx + 1, gy + 1)]);
-      if (!landOwned(farm, gx, gy + 1)) edges.push([corner(gx, gy + 1), corner(gx + 1, gy + 1)]);
-      if (!landOwned(farm, gx - 1, gy)) edges.push([corner(gx, gy), corner(gx, gy + 1)]);
-      for (const [a, b] of edges) {
-        for (const off of [6, 12]) { ctx.beginPath(); ctx.moveTo(a[0], a[1] - off); ctx.lineTo(b[0], b[1] - off); ctx.stroke(); }
-        ctx.fillRect(a[0] - 2, a[1] - 16, 4, 16);
-        ctx.fillRect(b[0] - 2, b[1] - 16, 4, 16);
-      }
-    }
-  }
+  const se = asset('t', 'plot_se'), ne = asset('t', 'plot_ne');
+  const seg = (a, b, im) => {
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    if (!im) { ctx.strokeStyle = '#9b6b3c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a[0], a[1] - 8); ctx.lineTo(b[0], b[1] - 8); ctx.stroke(); return; }
+    const w = TW / 2 + 8, h = w * im.naturalHeight / im.naturalWidth;
+    ctx.drawImage(im, mx - w / 2, my + TH / 4 + 3 - h, w, h);
+  };
+  eachCell({ d0: vis.d0 - 1, d1: vis.d1 + 1, s0: vis.s0, s1: vis.s1 + 3 }, (gx, gy) => {
+    if (gx < WORLD.x0 || gy < WORLD.y0 || gx >= WORLD.x1 || gy >= WORLD.y1 || !landOwned(farm, gx, gy)) return;
+    if (!landOwned(farm, gx, gy - 1)) seg(corner(gx, gy), corner(gx + 1, gy), se);
+    if (!landOwned(farm, gx - 1, gy)) seg(corner(gx, gy), corner(gx, gy + 1), ne);
+    if (!landOwned(farm, gx + 1, gy)) seg(corner(gx + 1, gy), corner(gx + 1, gy + 1), ne);
+    if (!landOwned(farm, gx, gy + 1)) seg(corner(gx, gy + 1), corner(gx + 1, gy + 1), se);
+  });
 }
 
-// jmenovka budovy v městečku
 const TOWN_NAMES = { prodejna: 'Prodejna strojů', stanek: 'Stánek', trziste: 'Tržiště' };
 function townLabel(ctx, o) {
   const [x, y] = cellCenter(o.x + 1, o.y + 1);
@@ -107,311 +119,160 @@ function townLabel(ctx, o) {
 // cedule „Na prodej“ uprostřed nekoupeného pozemku
 function drawSaleSign(ctx, farm, p) {
   const [x, y] = cellCenter(p.x + p.w / 2 - 0.5, p.y + p.h / 2 - 0.5);
-  ctx.fillStyle = '#7a4e2a';
-  ctx.fillRect(x - 2.5, y - 44, 5, 44);
-  ctx.fillStyle = '#f3e3c3'; ctx.strokeStyle = '#8a5a35'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.rect(x - 46, y - 78, 92, 38); ctx.fill(); ctx.stroke();
+  const im = asset('t', 'cedule');
+  if (im) ctx.drawImage(im, x - 48, y + 4 - 96 * im.naturalHeight / im.naturalWidth, 96, 96 * im.naturalHeight / im.naturalWidth);
   ctx.fillStyle = '#4a3218'; ctx.textAlign = 'center';
-  ctx.font = '700 12px system-ui, sans-serif';
-  ctx.fillText('NA PRODEJ', x, y - 63);
+  ctx.font = '800 12px system-ui, sans-serif';
+  ctx.fillText('NA PRODEJ', x, y - 66);
   ctx.font = '700 13px system-ui, sans-serif';
   if (farm.level < landLevel(farm)) {
-    drawIcon(ctx, 'lock', x - 30, y - 50, 14);
-    ctx.fillText(`úroveň ${landLevel(farm)}`, x + 6, y - 46);
-  } else {
-    drawIconText(ctx, `${landPrice(farm)} :coin:`, x, y - 46, 15);
-  }
+    drawIcon(ctx, 'lock', x - 30, y - 52, 14);
+    ctx.fillText(`úroveň ${landLevel(farm)}`, x + 6, y - 48);
+  } else drawIconText(ctx, `${landPrice(farm)} :coin:`, x, y - 48, 15);
 }
 
-function drawPlot(ctx, gx, gy, planted) {
-  const [x, y] = cellCenter(gx, gy);
-  const w = TW - 8, h = TH - 4, d = 5;
-  // boky
-  ctx.fillStyle = '#5c3a1c';
-  ctx.beginPath();
-  ctx.moveTo(x - w / 2, y); ctx.lineTo(x, y + h / 2); ctx.lineTo(x + w / 2, y);
-  ctx.lineTo(x + w / 2, y + d); ctx.lineTo(x, y + h / 2 + d); ctx.lineTo(x - w / 2, y + d);
-  ctx.closePath(); ctx.fill();
-  diamond(ctx, x, y, w, h);
-  ctx.fillStyle = planted ? '#6f4524' : '#8e5d33';
-  ctx.fill();
-  // brázdy
-  ctx.strokeStyle = planted ? 'rgba(40,20,5,0.35)' : 'rgba(60,30,10,0.3)';
-  ctx.lineWidth = 2;
-  for (let k = 1; k <= 3; k++) {
-    const u = k / 4;
-    ctx.beginPath();
-    ctx.moveTo(x - w / 2 + u * w / 2, y - u * h / 2 + 2);
-    ctx.lineTo(x + u * w / 2, y + h / 2 - u * h / 2 - 2);
-    ctx.stroke();
-  }
-}
-
-export function drawPlant(ctx, crop, px, py, g, ready, t) {
-  const sway = ready ? Math.sin(t / 400 + px * 0.13) * 1.6 : 0;
-  if (g < 0.2) {
-    ctx.fillStyle = '#7cc04f';
-    ctx.beginPath(); ctx.ellipse(px - 2, py - 3, 2.5, 1.5, -0.6, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(px + 2, py - 3, 2.5, 1.5, 0.6, 0, Math.PI * 2); ctx.fill();
-    return;
-  }
-  const s = Math.min(1, 0.35 + g * 0.65);
-  switch (crop) {
-    case 'wheat': {
-      const h = 18 * s;
-      ctx.strokeStyle = ready ? '#c9a53a' : '#79b84a';
-      ctx.lineWidth = 1.6;
-      for (const dx of [-3, 0, 3]) {
-        ctx.beginPath(); ctx.moveTo(px + dx, py); ctx.lineTo(px + dx * 1.3 + sway, py - h); ctx.stroke();
-        ctx.fillStyle = ready ? '#f0cf55' : '#9ccc5c';
-        ctx.beginPath(); ctx.ellipse(px + dx * 1.3 + sway, py - h - 3, 1.8, 4, 0, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'corn': {
-      const h = 26 * s;
-      ctx.strokeStyle = '#4f9a3a'; ctx.lineWidth = 2.4;
-      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + sway, py - h); ctx.stroke();
-      ctx.strokeStyle = '#66b04a'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.moveTo(px, py - h * 0.4); ctx.quadraticCurveTo(px - 8, py - h * 0.6, px - 10, py - h * 0.35); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px, py - h * 0.6); ctx.quadraticCurveTo(px + 8, py - h * 0.8, px + 10, py - h * 0.55); ctx.stroke();
-      if (ready) {
-        ctx.fillStyle = '#f6c63d';
-        ctx.beginPath(); ctx.ellipse(px + 3 + sway, py - h * 0.55, 2.6, 5.5, 0.3, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'carrot': {
-      const h = 12 * s;
-      if (ready) {
-        ctx.fillStyle = '#f07f2a';
-        ctx.beginPath(); ctx.ellipse(px, py - 1, 3.2, 2.2, 0, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.fillStyle = '#4fa63c';
-      for (const a of [-0.5, 0, 0.5]) {
-        ctx.beginPath(); ctx.ellipse(px + Math.sin(a) * 4 + sway, py - h / 2 - 1, 1.8, h / 2, a, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'soy': {
-      const r = 7 * s;
-      ctx.fillStyle = '#4c8f37';
-      ctx.beginPath(); ctx.arc(px + sway, py - r, r, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#69ab4b';
-      ctx.beginPath(); ctx.arc(px - 2 + sway, py - r - 2, r * 0.6, 0, Math.PI * 2); ctx.fill();
-      if (ready) {
-        ctx.fillStyle = '#d9d27a';
-        for (const [dx, dy] of [[-3, -4], [3, -7], [1, -2]]) {
-          ctx.beginPath(); ctx.ellipse(px + dx + sway, py + dy - r * 0.4, 1.4, 3, 0.4, 0, Math.PI * 2); ctx.fill();
-        }
-      }
-      break;
-    }
-    case 'potato': {
-      const r = 6 * s;
-      if (ready) {
-        ctx.fillStyle = '#c99a5b';
-        ctx.beginPath(); ctx.ellipse(px - 4, py, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(px + 3, py + 1, 2.6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.fillStyle = ready ? '#7a9a3a' : '#4f9a3a';
-      ctx.beginPath(); ctx.arc(px + sway, py - r, r, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#e8e2f0';
-      if (ready) for (const [dx, dy] of [[-3, -8], [3, -6]]) { ctx.beginPath(); ctx.arc(px + dx + sway, py + dy, 1.4, 0, Math.PI * 2); ctx.fill(); }
-      break;
-    }
-    case 'repka': {
-      const h = 16 * s;
-      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 1.6;
-      for (const dx of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(px + dx, py); ctx.lineTo(px + dx + sway, py - h); ctx.stroke(); }
-      ctx.fillStyle = ready ? '#8a7a3a' : g > 0.5 ? '#f5d63a' : '#9ccc5c';
-      for (const dx of [-3, 0, 3]) { ctx.beginPath(); ctx.arc(px + dx + sway, py - h - 2, 2.6, 0, Math.PI * 2); ctx.fill(); }
-      break;
-    }
-    case 'sun': {
-      const h = 26 * s;
-      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 2.2;
-      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + sway, py - h); ctx.stroke();
-      ctx.fillStyle = '#5fae3a';
-      ctx.beginPath(); ctx.ellipse(px - 4, py - h * 0.45, 4, 2, -0.5, 0, Math.PI * 2); ctx.fill();
-      if (g > 0.55) {
-        ctx.fillStyle = ready ? '#e6a817' : '#f5c22e';
-        ctx.beginPath(); ctx.arc(px + sway, py - h, 5.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#6b4a25';
-        ctx.beginPath(); ctx.arc(px + sway, py - h, 2.6, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'beet': {
-      const h = 11 * s;
-      if (ready) { ctx.fillStyle = '#efe3c8'; ctx.beginPath(); ctx.ellipse(px, py - 1, 3.4, 2.4, 0, 0, Math.PI * 2); ctx.fill(); }
-      ctx.fillStyle = '#3f8f3a';
-      for (const a of [-0.7, -0.2, 0.3, 0.8]) {
-        ctx.beginPath(); ctx.ellipse(px + Math.sin(a) * 5 + sway, py - h / 2 - 1, 2.6, h / 2, a, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    default: drawLook(ctx, (CROPS[crop] && CROPS[crop].look) || {}, px, py, g, s, ready, sway);
-  }
-}
-
-// obecné tvary rostlin pro novou zeleninu a ovoce (podle look.t a barvy plodu look.c)
-function drawLook(ctx, L, px, py, g, s, ready, sway) {
-  const c = L.c || '#e0402d';
-  const fruitOn = ready || g > 0.75;
-  switch (L.t) {
-    case 'root': {
-      if (ready) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - 1, 3, 0, Math.PI * 2); ctx.fill(); }
-      ctx.fillStyle = '#5fae3a';
-      for (const a of [-0.5, 0.5]) { ctx.beginPath(); ctx.ellipse(px + Math.sin(a) * 3 + sway, py - 6 * s, 2, 5 * s, a, 0, Math.PI * 2); ctx.fill(); }
-      break;
-    }
-    case 'leafy': {
-      const r = 7 * s;
-      ctx.fillStyle = '#5fa83f'; ctx.beginPath(); ctx.arc(px, py - r * 0.7, r, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - r * 0.8, r * 0.65, 0, Math.PI * 2); ctx.fill();
-      break;
-    }
-    case 'bush': {
-      const h = 16 * s;
-      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + sway, py - h); ctx.stroke();
-      ctx.fillStyle = '#4f9a3a';
-      ctx.beginPath(); ctx.arc(px + sway, py - h * 0.7, 6 * s, 0, Math.PI * 2); ctx.fill();
-      if (fruitOn) {
-        ctx.fillStyle = ready ? c : '#8fc45a';
-        for (const [dx, dy] of [[-3, -0.5], [3, -0.6], [0, -0.85]]) { ctx.beginPath(); ctx.arc(px + dx + sway, py + dy * h, 2.4, 0, Math.PI * 2); ctx.fill(); }
-      }
-      break;
-    }
-    case 'vine': {
-      ctx.fillStyle = '#4f9a3a';
-      for (const [dx, dy] of [[-5, -2], [4, -3], [0, -5]]) { ctx.beginPath(); ctx.ellipse(px + dx, py + dy * s, 4 * s, 2.6 * s, 0.4, 0, Math.PI * 2); ctx.fill(); }
-      if (fruitOn) {
-        const big = c !== '#3f8f3a';
-        ctx.fillStyle = ready ? c : '#8fc45a';
-        ctx.beginPath(); ctx.ellipse(px + 2, py - 1, big ? 5 : 4.5, big ? 4 : 2, big ? 0 : 0.3, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'bulb': {
-      if (ready || g > 0.6) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px, py - 1.5, 3, 0, Math.PI * 2); ctx.fill(); }
-      ctx.strokeStyle = '#5fae3a'; ctx.lineWidth = 1.6;
-      for (const dx of [-2, 0, 2]) { ctx.beginPath(); ctx.moveTo(px, py - 3); ctx.lineTo(px + dx * 2 + sway, py - 14 * s); ctx.stroke(); }
-      break;
-    }
-    case 'pod': {
-      const h = 15 * s;
-      ctx.strokeStyle = '#5fae3a'; ctx.lineWidth = 1.4;
-      for (const dx of [-3, 3]) { ctx.beginPath(); ctx.moveTo(px + dx, py); ctx.quadraticCurveTo(px + dx * 2 + sway, py - h / 2, px + dx + sway, py - h); ctx.stroke(); }
-      if (fruitOn) { ctx.fillStyle = ready ? c : '#a8dc6a'; for (const dy of [0.4, 0.7]) { ctx.beginPath(); ctx.ellipse(px + sway, py - h * dy, 1.6, 3.4, 0.3, 0, Math.PI * 2); ctx.fill(); } }
-      break;
-    }
-    case 'berry': {
-      ctx.fillStyle = '#3f8f3a';
-      for (const [dx, dy] of [[-4, -2], [4, -2], [0, -4]]) { ctx.beginPath(); ctx.ellipse(px + dx, py + dy, 3.4 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill(); }
-      if (fruitOn) { ctx.fillStyle = ready ? c : '#f2f2d0'; for (const dx of [-3, 3]) { ctx.beginPath(); ctx.arc(px + dx, py, 2, 0, Math.PI * 2); ctx.fill(); } }
-      break;
-    }
-    default:
-      ctx.fillStyle = '#5fae3a';
-      ctx.beginPath(); ctx.arc(px, py - 5 * s, 5 * s, 0, Math.PI * 2); ctx.fill();
-  }
-}
-
-function drawCrops(ctx, plot, st, t) {
-  const [cx, cy] = cellCenter(plot.x, plot.y);
-  const top = cy - TH / 2;
-  const pts = [];
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) pts.push([i, j]);
-  pts.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
-  for (const [i, j] of pts) {
-    const u = (i + 0.5) / 3, v = (j + 0.5) / 3;
-    const px = cx + (u - v) * (TW - 16) / 2;
-    const py = top + 2 + (u + v) * (TH - 6) / 2;
-    drawPlant(ctx, plot.crop, px, py, st.progress, st.state === 'ready', t);
-  }
+// malé pole: záhon a plodina z obrázku
+function drawPlot(ctx, p, now, t) {
+  const [x, y] = cellCenter(p.x, p.y);
+  const im = asset('t', 'pole');
+  if (im) ctx.drawImage(im, x - TW / 2 + 3, y - TH / 2 + 1.5, TW - 6, (TW - 6) * im.naturalHeight / im.naturalWidth);
+  else { diamond(ctx, x, y, TW - 8, TH - 4); ctx.fillStyle = '#8e5d33'; ctx.fill(); }
+  if (!p.crop) return;
+  const st = plotState(p, now);
+  drawCropImg(ctx, p.crop, x, y, cropStage(st.progress, st.state === 'ready'), t);
   if (st.state === 'ready') {
     const a = 0.5 + 0.5 * Math.sin(t / 250);
     ctx.fillStyle = `rgba(255,255,220,${0.4 + a * 0.5})`;
-    ctx.beginPath(); ctx.arc(cx + 14, cy - 24 - a * 3, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 16, y - 30 - a * 3, 2.5, 0, Math.PI * 2); ctx.fill();
   }
 }
 
-// view = { farm, now, t, cam, W, H, ghost, hoverCell, bubble, floats }
+// Které buňky jsou vidět ve výřezu světa (x0, y0, x1, y1 v izometrických pixelech). Počítá se v úhlopříčných
+// souřadnicích d = gx − gy (zleva doprava) a s = gx + gy (shora dolů) – tak se neprochází nic, co je mimo obrazovku.
+function visibleCells(x0, y0, x1, y1) {
+  return { d0: Math.floor(x0 / (TW / 2)) - 1, d1: Math.ceil(x1 / (TW / 2)) + 1, s0: Math.floor(y0 / (TH / 2)) - 3, s1: Math.ceil(y1 / (TH / 2)) + 1 };
+}
+function eachCell(vis, fn) {   // odzadu dopředu
+  for (let s = vis.s0; s <= vis.s1; s++) {
+    for (let d = vis.d0 + ((s + vis.d0) & 1); d <= vis.d1; d += 2) fn((s + d) / 2, (s - d) / 2);
+  }
+}
+
+// ---------- země: tráva, louka, cesta, náměstí a plot ----------
+function drawGroundTiles(ctx, farm, vis) {
+  eachCell(vis, (gx, gy) => { const g = groundTile(farm, gx, gy); tile(ctx, g[0], gx, gy, g[1]); });
+  drawFence(ctx, farm, vis);
+}
+// Země se nemění, proto se nakreslí jednou do zásobního plátna (o kus většího než obrazovka) a při posouvání
+// mapy se z něj jen kopíruje. Když se vyjede z okraje, zásoba se posune a dokreslí se jen nový pruh;
+// celá znovu se kreslí při změně přiblížení nebo když přibude pozemek.
+const ground = { c: null, key: '', x0: 0, y0: 0, x1: 0, y1: 0, zoom: 0 };
+const GROUND_MAX = 9e6;   // nejvýš tolik pixelů zásobního plátna (paměť telefonu)
+function drawGround(ctx, farm, cam, W, H, dpr) {
+  const vw = W / cam.zoom, vh = H / cam.zoom, left = cam.x - vw / 2, top = cam.y - vh / 2;
+  const k = cam.zoom * dpr;                                 // pixelů displeje na 1 px světa
+  const margin = Math.min(0.25, (Math.sqrt(GROUND_MAX / (W * H * dpr * dpr)) - 1) / 2);
+  const zooming = cam.zoom !== ground.zoom;
+  ground.zoom = cam.zoom;
+  if (zooming || margin < 0.05 || typeof document === 'undefined') {   // při přibližování prsty rovnou na obrazovku
+    ctx.fillStyle = BASE; ctx.fillRect(left, top, vw, vh);
+    drawGroundTiles(ctx, farm, visibleCells(left, top, left + vw, top + vh));
+    return;
+  }
+  const key = `${k}|${farm.land}|${TILE_NAMES.filter(n => asset('t', n)).length}`;
+  const stale = ground.key !== key;
+  if (stale || left < ground.x0 || top < ground.y0 || left + vw > ground.x1 || top + vh > ground.y1) {
+    if (!ground.c) ground.c = document.createElement('canvas');
+    const c = ground.c, g = c.getContext('2d', { alpha: false });
+    const cw = Math.ceil(W * dpr * (1 + 2 * margin)), ch = Math.ceil(H * dpr * (1 + 2 * margin));
+    const paint = (px, py, pw, ph) => {            // dokreslí obdélník zásoby (v pixelech displeje)
+      const wx = ground.x0 + px / k, wy = ground.y0 + py / k;
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+      g.setTransform(k, 0, 0, k, -ground.x0 * k, -ground.y0 * k);
+      g.fillStyle = BASE; g.fillRect(wx, wy, pw / k, ph / k);
+      drawGroundTiles(g, farm, visibleCells(wx, wy, wx + pw / k, wy + ph / k));
+      g.restore();
+    };
+    // nový výřez kolem obrazovky; proti starému posunutý o celé pixely displeje, aby šla stará část jen přesunout
+    const sx = Math.round((left - vw * margin - ground.x0) * k), sy = Math.round((top - vh * margin - ground.y0) * k);
+    if (!stale && c.width === cw && c.height === ch && Math.abs(sx) < cw && Math.abs(sy) < ch) {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.drawImage(c, -sx, -sy);
+      ground.x0 += sx / k; ground.y0 += sy / k;
+      if (sx) paint(sx > 0 ? cw - sx : 0, 0, Math.abs(sx), ch);
+      if (sy) paint(0, sy > 0 ? ch - sy : 0, cw, Math.abs(sy));
+    } else {
+      if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; }
+      ground.x0 = left - vw * margin; ground.y0 = top - vh * margin;
+      paint(0, 0, cw, ch);
+    }
+    ground.x1 = ground.x0 + cw / k; ground.y1 = ground.y0 + ch / k;
+    ground.key = key;
+  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);   // kopie přesně po pixelech displeje (ostrá a rychlá)
+  ctx.drawImage(ground.c, -Math.round((left - ground.x0) * k), -Math.round((top - ground.y0) * k));
+  ctx.restore();
+}
+
+// view = { farm, now, t, cam, W, H, dpr, ghost, hoverCell, bubble, floats, hour, people, weather }
 export function drawScene(ctx, view) {
   const { farm, cam, W, H, t } = view;
-  ctx.fillStyle = '#5b9e3e';
-  ctx.fillRect(0, 0, W, H);
   ctx.save();
   ctx.translate(W / 2, H / 2);
   ctx.scale(cam.zoom, cam.zoom);
   ctx.translate(-cam.x, -cam.y);
+  drawGround(ctx, farm, cam, W, H, view.dpr || 1);
 
-  // tráva: vlastní země světlá, nekoupené pozemky jako divoká louka
-  for (let gy = WORLD.y0; gy < WORLD.y1; gy++) {
-    for (let gx = WORLD.x0; gx < WORLD.x1; gx++) {
-      const own = landOwned(farm, gx, gy);
-      const [x, y] = cellCenter(gx, gy);
-      diamond(ctx, x, y, TW + 1, TH + 1);
-      ctx.fillStyle = own ? ((gx + gy) % 2 ? '#7cc251' : '#78bd4d') : ((gx * 7 + gy * 3) % 5 ? '#62a240' : '#5e9c3d');
-      ctx.fill();
-    }
-  }
-  // městečko: tráva, prašná cesta, dlážděné náměstí a plochy pod budovami
-  for (let gy = GRID_H; gy < TOWN.y1 + 3; gy++) {
-    for (let gx = GRID_W; gx < TOWN.x1 + 3; gx++) {
-      const inWorld = gx < WORLD.x1 && gy < WORLD.y1 && gx >= WORLD.x0 && gy >= WORLD.y0;
-      const road = isRoad(gx, gy) || (gx >= TOWN.x1 - 1 && gy >= TOWN.y1 - 1 && Math.abs(gx - gy) <= 1);
-      if (!road && (inWorld || gx < TOWN.x0 || gy < TOWN.y0)) continue;
-      const [x, y] = cellCenter(gx, gy);
-      diamond(ctx, x, y, TW + 1, TH + 1);
-      ctx.fillStyle = isPlaza(gx, gy) ? ((gx + gy) % 2 ? '#cdb892' : '#c4ad85')
-        : road ? ((gx * 5 + gy * 3) % 4 ? '#b48a58' : '#ad8452')
-        : townAt(gx, gy) ? '#d6c49c'
-        : ((gx * 7 + gy * 3) % 5 ? '#6aae45' : '#66a942');
-      ctx.fill();
-      if (road && !isPlaza(gx, gy) && (gx * 13 + gy * 7) % 5 === 0) {   // kamínky a vyjeté koleje
-        ctx.fillStyle = 'rgba(90,60,30,0.35)';
-        ctx.beginPath(); ctx.ellipse(x - 12, y + 3, 3, 1.6, 0, 0, Math.PI * 2); ctx.ellipse(x + 14, y - 4, 2.4, 1.2, 0, 0, Math.PI * 2); ctx.fill();
-      }
-      if (isPlaza(gx, gy)) { ctx.strokeStyle = 'rgba(120,95,60,0.35)'; ctx.lineWidth = 1; diamond(ctx, x, y, TW - 4, TH - 2); ctx.stroke(); }
-    }
-  }
-  drawFence(ctx, farm);
+  // co je na obrazovce: políčko (gx, gy) s půdorysem w × h; rezerva nahoru na vysoké budovy pod spodním okrajem
+  const vis = visibleCells(cam.x - W / 2 / cam.zoom, cam.y - H / 2 / cam.zoom, cam.x + W / 2 / cam.zoom, cam.y + H / 2 / cam.zoom);
+  const seen = (gx, gy, w = 1, h = 1) => {
+    const d = gx - gy, s = gx + gy;
+    return d + w >= vis.d0 && d - h <= vis.d1 && s + w + h >= vis.s0 && s - 10 <= vis.s1;
+  };
 
-  // pole v pořadí hloubky
-  // pole a budovy v pořadí hloubky
+  // pole, budovy, stromy a lidé v pořadí hloubky
   const ghost = view.ghost;
-  const items = farm.plots.map(p => ({ d: p.x + p.y + 1, p }));
-  for (const o of farm.objects) if (!ghost || ghost.moveId !== o.id) items.push({ d: objectDepth(o), o });
-  for (const tr of BG_TREES) if (!landOwned(farm, tr.gx, tr.gy)) items.push({ d: tr.gx + tr.gy + 1, tree: tr });
+  const items = [];
+  for (const p of farm.plots) if (seen(p.x, p.y)) items.push({ d: p.x + p.y + 1, p });
+  for (const o of farm.objects) {
+    if (ghost && ghost.moveId === o.id) continue;
+    const sz = objSize(o);
+    if (seen(o.x, o.y, sz.w, sz.h)) items.push({ d: objectDepth(o), o });
+  }
+  for (const tr of BG_TREES) if (seen(tr.gx, tr.gy) && !landOwned(farm, tr.gx, tr.gy)) items.push({ d: tr.gx + tr.gy + 1, tree: tr });
   for (const pp of view.people || []) items.push({ d: pp.gx + pp.gy + 0.05, person: pp });
-  for (const b of TOWN_BUILDINGS) { const o = townObject(farm, b.kind); items.push({ d: objectDepth(o), o }); }
-  for (const h of TOWN_HOUSES) items.push({ d: h[0] + h[1] + 2, house: h });
+  for (const b of TOWN_BUILDINGS) if (seen(b.x, b.y, 3, 3)) { const o = townObject(farm, b.kind); items.push({ d: objectDepth(o), o }); }
+  TOWN_HOUSES.forEach((h, i) => { if (seen(h[0], h[1], 2, 2)) items.push({ d: h[0] + h[1] + 2, house: h, v: i }); });
   for (const p of LAND_PARCELS) {
     if (!farm.land.includes(p.id) && landReachable(farm, p)) items.push({ d: p.x + p.y + (p.w + p.h) / 2 + 0.5, sign: p });
   }
   items.sort((a, b) => a.d - b.d);
   for (const it of items) {
-    if (it.p) {
-      const p = it.p;
-      drawPlot(ctx, p.x, p.y, !!p.crop);
-      if (p.crop) drawCrops(ctx, p, plotState(p, view.now), t);
-    } else if (it.tree) drawTree(ctx, it.tree);
+    if (it.p) drawPlot(ctx, it.p, view.now, t);
+    else if (it.tree) drawTree(ctx, it.tree);
     else if (it.person) {
       const pp = it.person;
-      const [px, py] = [(pp.gx - pp.gy) * TW / 2, (pp.gx + pp.gy) * TH / 2];
-      drawPerson(ctx, px, py, pp.shirt, pp.hat, t, pp.walking, pp.work);
-    }
-    else if (it.sign) drawSaleSign(ctx, farm, it.sign);
-    else if (it.house) drawTownHouse(ctx, it.house[0], it.house[1], it.house[2], it.house[3]);
-    else {
-      drawObject(ctx, it.o, view.now, t, farm);
-      if (it.o.town) townLabel(ctx, it.o);
+      drawPerson(ctx, (pp.gx - pp.gy) * TW / 2, (pp.gx + pp.gy) * TH / 2, pp.who, pp.dir, t, pp.walking, pp.work);
+    } else if (it.sign) drawSaleSign(ctx, farm, it.sign);
+    else if (it.house) drawTownHouse(ctx, it.house[0], it.house[1], it.v);
+    else drawObject(ctx, it.o, view.now, t, farm);
+  }
+  for (const it of items) if (it.o && it.o.town) townLabel(ctx, it.o);   // popisky městečka až navrch (domky je nezakryjí)
+  if (ghost) drawGhost(ctx, ghost, view.now, t);
+  if (view.debug) {   // ladění grafiky: obrysy políček, která budovy zabírají (window.__eko.debug = true)
+    ctx.strokeStyle = '#ff2a2a'; ctx.lineWidth = 1.5;
+    for (const it of items) {
+      if (!it.o && !it.house) continue;
+      const o = it.o || { x: it.house[0], y: it.house[1] }, sz = it.o ? objSize(it.o) : { w: 2, h: 2 };
+      const c = (gx, gy) => [(gx - gy) * TW / 2, (gx + gy) * TH / 2];
+      ctx.beginPath();
+      [c(o.x, o.y), c(o.x + sz.w, o.y), c(o.x + sz.w, o.y + sz.h), c(o.x, o.y + sz.h)].forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath(); ctx.stroke();
     }
   }
-  if (ghost) drawGhost(ctx, ghost, view.now, t);
 
   if (view.hoverCell) {
     const [gx, gy] = view.hoverCell;

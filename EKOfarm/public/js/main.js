@@ -6,16 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=15';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=15';
-import { createBackend, ApiError } from './api.js?v=15';
-import { iconize, ic } from './icons.js?v=15';
-import { NEWS } from './news.js?v=15';
-import { sfx, soundOn, setSound } from './sfx.js?v=15';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=15';
+} from './rules.js?v=17';
+import { preloadAssets, spriteName } from './sprites.js?v=17';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=17';
+import { createBackend, ApiError } from './api.js?v=17';
+import { iconize, ic } from './icons.js?v=17';
+import { NEWS } from './news.js?v=17';
+import { sfx, soundOn, setSound } from './sfx.js?v=17';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=17';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 15;
+const APP_VERSION = 17;
 
 
 const game = {
@@ -46,7 +47,7 @@ const canvas = $('game');
 const ctx = canvas.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  DPR = Math.min(window.devicePixelRatio || 1, 2);   // víc než 2× na telefonu není vidět, jen to zpomaluje
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
 }
@@ -78,8 +79,15 @@ function ghostView() {
   return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, moveId: p.moveId, ok: fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
 }
 
+// když telefon nestíhá, kreslí se 30× za sekundu místo 60× (šetří baterii)
+const perf = game.perf = { avg: 16, slow: false, last: 0 };
 function frame(t) {
-  if (game.farm) {
+  requestAnimationFrame(frame);
+  const gap = t - perf.last;
+  if (gap < (perf.slow ? 30 : 14)) return;   // nejvýš 60 snímků/s i na 120Hz displejích
+  perf.last = t;
+  if (game.farm && !document.hidden) {
+    const t0 = performance.now();
     const d = new Date();
     game.hour = game.dayNight === false ? undefined : d.getHours() + d.getMinutes() / 60;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -87,14 +95,16 @@ function frame(t) {
     game.floats = game.floats.filter(f => t - f.t0 < 1300);
     const dt = Math.min(0.1, (t - (game.lastT || t)) / 1000);
     game.lastT = t;
-    const people = game.visit ? [] : [stepWalker(game.farmer, dt, t, '#c8452d', '#d9b43b')];
-    if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, '#4f8fd6', '#3f8a25'));
+    const people = game.visit ? [] : [stepWalker(game.farmer, dt, t, 'farmar')];
+    if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, 'pomocnik'));
     drawScene(ctx, {
-      farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H,
-      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id,
+      farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
+      ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
     });
+    perf.avg = perf.avg * 0.95 + (performance.now() - t0) * 0.05;
+    if (!perf.slow && perf.avg > 14) perf.slow = true;
+    else if (perf.slow && perf.avg < 6) perf.slow = false;
   }
-  requestAnimationFrame(frame);
 }
 
 // ---------- farmář a pomocník (chodí tam, kde se pracuje) ----------
@@ -108,7 +118,7 @@ function sendWalker(w, gx, gy) {
   w.targets.push([gx + 0.5, gy + 0.5]);
   if (w.targets.length > 6) w.targets.splice(0, w.targets.length - 6);
 }
-function stepWalker(w, dt, t, shirt, hat) {
+function stepWalker(w, dt, t, who) {
   if (!w.pos) { const [hx, hy] = homeSpot(); w.pos = [hx + (w.off ? w.off[0] : 0), hy + (w.off ? w.off[1] : 0)]; }
   let walking = false;
   if (t < w.work) { /* pracuje na místě */ }
@@ -123,7 +133,7 @@ function stepWalker(w, dt, t, shirt, hat) {
     if (Math.hypot(hx - w.pos[0], hy - w.pos[1]) > 0.3) w.targets.push([hx + (w.off ? w.off[0] : 0), hy + (w.off ? w.off[1] : 0)]);
     w.work = t;
   }
-  return { gx: w.pos[0], gy: w.pos[1], shirt, hat, walking, work: t < w.work };
+  return { gx: w.pos[0], gy: w.pos[1], who, dir: w.dir || -1, walking, work: t < w.work };
 }
 // práce pomocníka se dopočítává průběžně
 setInterval(() => {
@@ -682,8 +692,23 @@ document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click
   if (b.dataset.close === 'panel') game.panel = null;
 }));
 
+// tlačítko Zpět na Androidu / gesto zpět: zavře otevřené okno místo opuštění hry
+function backGuard() {
+  if (!(history.state && history.state.eko)) { try { history.pushState({ eko: 1 }, ''); } catch { /* nevadí */ } }
+}
+window.addEventListener('popstate', () => {
+  const open = game.fishing || game.visit || game.panel || !$('picker').hidden || !$('menuPanel').hidden || game.place;
+  if (game.fishing) { if (game.fishing.phase !== 'end') fishEnd(false); closeFishing(); }
+  else if (game.visit) $('visitBack').click();
+  else { closeSheets(); cancelPlace(); setSow(null); }
+  if (open && game.farm) backGuard();   // další Zpět zase jen zavře okno
+});
+// iPhone: zabránit přiblížení celé stránky dvěma prsty (přibližuje se jen mapa)
+for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+
 // obecný panel (obchod, budova, sklad)
 function openPanel(p) {
+  backGuard();
   closeSheets();
   game.panel = p;
   renderPanel();
@@ -936,6 +961,7 @@ $('panelBody').addEventListener('click', e => {
 });
 
 function openPicker(plot) {
+  backGuard();
   closeSheets();
   game.pickPlot = plot;
   renderPicker();
@@ -1186,6 +1212,7 @@ $('menuBtn').addEventListener('click', () => {
   menuLabels();
   pushLabel();
   $('menuPanel').hidden = false;
+  backGuard();
 });
 $('logoutBtn').addEventListener('click', async () => {
   await game.backend.logout();
@@ -1219,6 +1246,7 @@ function enterGame(res) {
   game.name = res.name;
   game.google = !!res.google;
   applyServer(res);
+  farmAssets(game.farm);
   $('login').hidden = true;
   $('loading').hidden = true;
   $('hud').hidden = false;
@@ -1292,6 +1320,11 @@ async function initGoogle() {
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && game.farm) refresh(); });
 
+// grafika mapy se načítá hned při startu (s ukazatelem průběhu); budovy jen ty, co hráč má
+// (ostatní se načtou, až je postaví) – šetří paměť telefonu
+const loadingText = (n, total) => { if (!$('loading').hidden) $('loading').textContent = `Načítám farmu… ${Math.round(n / total * 100)} %`; };
+const assetsReady = preloadAssets(['t', 'c', 's', 'z', 'm', 'p'], loadingText);
+const farmAssets = farm => preloadAssets([...farm.objects.map(o => ['b', spriteName(o)]), ...['prodejna', 'stanek', 'trziste', 'domek_a', 'domek_b', 'domek_c'].map(n => ['b', n])]);
 (async function boot() {
   initGoogle();
   if (game.backend.mode === 'online' && 'serviceWorker' in navigator) {
@@ -1299,6 +1332,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && ga
   }
   try {
     const res = await game.backend.start();
+    await Promise.race([Promise.all([assetsReady, res ? farmAssets(normalize(res.farm)) : null]), new Promise(r => setTimeout(r, 15000))]);
     if (res) enterGame(res); else showLogin();
   } catch (e) {
     $('loading').textContent = e.message + ' Obnov stránku.';

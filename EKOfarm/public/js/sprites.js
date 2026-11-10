@@ -1,28 +1,45 @@
-// EKOfarm – obrázky budov (vlastní grafika hráče, public/img/b/*.webp).
-// Když obrázek chybí nebo se ještě nenačetl, budova se kreslí kódem jako dřív.
-const LEVELED = { statek: 10, sklad: 10 };   // jiný obrázek pro každou úroveň budovy
-// ohrady se kreslí kódem i s chodícími zvířaty (jako do v11); obrázek prázdného výběhu jde přidat později:
-// dát 'kurnik' apod. sem a PENS_EMPTY = true
-const SINGLE = ['semenarna', 'krmivarna', 'pekarna', 'mlyn', 'konzervarna', 'skolka',
-  'dzusarna', 'mlekarna', 'olejna', 'marmeladarna', 'cukrovar', 'uzenarstvi', 'textilka'];
-// zvířata: obrázek otočený doleva dolů, nohy na spodním okraji uprostřed; doprava se zrcadlí.
-// w = šířka ve hře (px), obrázek je ve 2× rozlišení
-// true = obrázky ohrad jsou prázdné výběhy a zvířata kreslí hra; teď mají ohrady zvířata namalovaná v obrázku
-export const PENS_EMPTY = true;
-export const ANIMAL_SPRITES = { slepice: { w: 32, h: 32 }, krava: { w: 72, h: 60 }, prase: { w: 56, h: 48 }, ovce: { w: 56, h: 48 } };
-export const SPRITE_FILES = [
-  ...Object.keys(ANIMAL_SPRITES).map(k => `img/b/zvire_${k}.webp`),
-  ...Object.entries(LEVELED).flatMap(([k, n]) => Array.from({ length: n }, (_, i) => `img/b/${k}_${i + 1}.webp`)),
-  ...SINGLE.map(k => `img/b/${k}.webp`),
-];
-const spriteCache = {};
-function spriteSrc(p) {
-  // v testovací verzi (jeden soubor) jsou obrázky vložené přímo (SPRITE_DATA z build-artifact.mjs)
+// EKOfarm – grafika hry (public/img/<druh>/<jméno>.webp, seznam v assets.js).
+// Druhy: b = budovy a ozdoby (plátno podle šablony), t = dlaždice země a plot, c = plodiny, s = stromy,
+// z = zvířata, m = stroje, p = lidé, i = ikony předmětů.
+import { ASSETS } from './assets.js?v=17';
+
+const assetSets = {};
+for (const k in ASSETS) assetSets[k] = new Set(ASSETS[k]);
+export const hasAsset = (kind, name) => !!(assetSets[kind] && assetSets[kind].has(name));
+// v testovací verzi (jeden soubor) jsou obrázky vložené přímo (SPRITE_DATA z build-artifact.mjs)
+export function assetUrl(kind, name) {
+  const p = `img/${kind}/${name}.webp`;
   return (typeof SPRITE_DATA !== 'undefined' && SPRITE_DATA[p]) || '/' + p;
 }
+const assetCache = {};
+function assetEl(kind, name) {
+  const key = kind + '/' + name;
+  let im = assetCache[key];
+  if (!im && typeof Image !== 'undefined') { im = assetCache[key] = new Image(); im.src = assetUrl(kind, name); }
+  return im;
+}
+// načtený obrázek, nebo null (ještě se načítá / neexistuje)
+export function asset(kind, name) {
+  if (!hasAsset(kind, name)) return null;
+  const im = assetEl(kind, name);
+  return im && im.complete && im.naturalWidth ? im : null;
+}
+// načte grafiku předem; items = [[druh, jméno], …] nebo druhy ['t', 'c', …]; onProgress(hotovo, celkem)
+export function preloadAssets(items, onProgress) {
+  const list = items.flatMap(x => (Array.isArray(x) ? (hasAsset(x[0], x[1]) ? [x] : []) : (ASSETS[x] || []).map(n => [x, n])));
+  let done = 0;
+  return Promise.all(list.map(([k, n]) => {
+    const im = assetEl(k, n);
+    const ok = im.decode ? im.decode() : new Promise(r => { im.onload = im.onerror = r; });
+    return ok.catch(() => {}).then(() => { done++; if (onProgress) onProgress(done, list.length); });
+  }));
+}
+
+// obrázek budovy: Statek a Sklad mají obrázek pro každou úroveň, ostatní jeden
+const LEVELED = { statek: 10, sklad: 10 };
 export function spriteName(o) {
   if (LEVELED[o.kind]) return `${o.kind}_${Math.max(1, Math.min(LEVELED[o.kind], o.lvl || 1))}`;
-  return SINGLE.includes(o.kind) ? o.kind : null;
+  return hasAsset('b', o.kind) ? o.kind : null;
 }
 // kde v obrázku začíná budova (0..1 od horního okraje) – pro bublinu nad střechou
 export function spriteTop(im) {
@@ -36,14 +53,5 @@ export function spriteTop(im) {
   } catch { /* nevadí */ }
   return im._top;
 }
-function loadSprite(name) {
-  if (typeof Image === 'undefined') return null;
-  let im = spriteCache[name];
-  if (!im) { im = spriteCache[name] = new Image(); im.src = spriteSrc(`img/b/${name}.webp`); }
-  return im.complete && im.naturalWidth ? im : null;
-}
-export const animalImage = animal => (ANIMAL_SPRITES[animal] ? loadSprite('zvire_' + animal) : null);
-export function spriteImage(o) {
-  const name = spriteName(o);
-  return name ? loadSprite(name) : null;
-}
+// šířka zvířete ve hře (px); obrázek je otočený doleva, doprava se zrcadlí
+export const ANIMAL_W = { slepice: 24, krava: 64, prase: 48, ovce: 48 };

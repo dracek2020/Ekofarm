@@ -1,8 +1,8 @@
-// EKOfarm – kreslení budov, ohrad se zvířaty a ozdob (izometricky).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, isVehicle, objLevel, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, pondStock } from './rules.js?v=15';
-import { TW, TH, drawPlant } from './render.js?v=15';
-import { drawIcon } from './icons.js?v=15';
-import { spriteImage, spriteTop, animalImage, ANIMAL_SPRITES, PENS_EMPTY } from './sprites.js?v=15';
+// EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=17';
+import { TW, TH } from './render.js?v=17';
+import { drawIcon } from './icons.js?v=17';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=17';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -15,28 +15,6 @@ function poly(ctx, pts, fill) {
   ctx.fill();
 }
 
-function shade(hex, f) {
-  const n = parseInt(hex.slice(1), 16);
-  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v * f))));
-  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
-}
-
-// krabice s jehlanovou střechou na obdélníku x0..x1, y0..y1 (v buňkách)
-function house(ctx, x0, y0, x1, y1, wallH, roofH, wall, roof) {
-  const N = iso(x0, y0), E = iso(x1, y0), S = iso(x1, y1), W = iso(x0, y1);
-  const up = ([x, y], h) => [x, y - h];
-  poly(ctx, [W, S, up(S, wallH), up(W, wallH)], shade(wall, 0.82));
-  poly(ctx, [S, E, up(E, wallH), up(S, wallH)], wall);
-  const cx = (N[0] + S[0]) / 2, cy = (N[1] + S[1]) / 2;
-  const apex = [cx, cy - wallH - roofH];
-  const [n, e, s, w] = [N, E, S, W].map(p => up(p, wallH));
-  poly(ctx, [n, e, apex], shade(roof, 0.75));
-  poly(ctx, [w, n, apex], shade(roof, 0.9));
-  poly(ctx, [w, s, apex], shade(roof, 1.0));
-  poly(ctx, [s, e, apex], shade(roof, 0.85));
-  return { W, S, E, N, apex };
-}
-
 function bubble(ctx, x, y, icon, count, faded) {
   ctx.save();
   ctx.globalAlpha = faded ? 0.75 : 1;
@@ -47,353 +25,132 @@ function bubble(ctx, x, y, icon, count, faded) {
   ctx.arc(x, y, 15, 0, Math.PI * 2);
   ctx.moveTo(x - 5, y + 13); ctx.lineTo(x, y + 21); ctx.lineTo(x + 5, y + 13);
   ctx.fill(); ctx.stroke();
-  drawIcon(ctx, icon, x, y, 21);
+  drawIcon(ctx, icon, x, y, 22);
   if (count > 1) {
     ctx.fillStyle = '#c8452d';
     ctx.beginPath(); ctx.arc(x + 12, y - 11, 8, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = '700 10px system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(count), x + 12, y - 10.5);
+    ctx.textBaseline = 'alphabetic';
   }
   ctx.restore();
 }
 
-// ---------- výrobní budova ----------
-function drawFactory(ctx, o, d, now, t) {
-  const m = 0.18;
-  const st = objectStatus(o, now);
-  const h = house(ctx, o.x + m, o.y + m, o.x + d.w - m, o.y + d.h - m, 46, 34, d.color, '#a8483a');
-  // dveře na levé stěně a okno na pravé
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  const d0 = lerp(h.W, h.S, 0.4), d1 = lerp(h.W, h.S, 0.62);
-  poly(ctx, [d0, d1, [d1[0], d1[1] - 26], [d0[0], d0[1] - 26]], '#5b3a1e');
-  const w0 = lerp(h.S, h.E, 0.35), w1 = lerp(h.S, h.E, 0.65);
-  poly(ctx, [[w0[0], w0[1] - 16], [w1[0], w1[1] - 16], [w1[0], w1[1] - 32], [w0[0], w0[1] - 32]], '#fdf3c4');
-  // cedule s ikonou
-  ctx.font = '18px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const sg = lerp(h.W, h.S, 0.82);
-  drawIcon(ctx, d.icon, sg[0], sg[1] - 30, 18);
-  // komín a kouř při výrobě
-  const ch = lerp(h.apex, h.E, 0.45);
-  poly(ctx, [[ch[0] - 5, ch[1] + 4], [ch[0] + 5, ch[1] + 4], [ch[0] + 5, ch[1] - 14], [ch[0] - 5, ch[1] - 14]], '#7a5a48');
-  if (st.busy) {
-    for (let i = 0; i < 3; i++) {
-      const k = ((t / 1400 + i / 3) % 1);
-      ctx.fillStyle = `rgba(240,240,240,${0.7 * (1 - k)})`;
-      ctx.beginPath(); ctx.arc(ch[0] + Math.sin(k * 6 + i) * 4, ch[1] - 18 - k * 34, 4 + k * 7, 0, Math.PI * 2); ctx.fill();
-    }
+// cedulka s úrovní budovy
+function levelPlate(ctx, o, d) {
+  const L = objLevel(o);
+  if (L < 2) return;
+  const sz = objSize(o);
+  const [x, y] = iso(o.x + sz.w, o.y + sz.h / 2);
+  ctx.fillStyle = '#4f8fd6'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x - 6, y - 10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = '800 10px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(L), x - 6, y - 9.5);
+  ctx.textBaseline = 'alphabetic';
+}
+
+export function objectDepth(o) {
+  const d = objSize(o);
+  if (o.kind === 'velkepole' || o.kind === 'rybnik') return o.x + o.y + 1;   // leží na zemi – kreslit brzy
+  return o.x + o.y + (d.w + d.h) / 2;
+}
+
+// místo obrázku, který se ještě nenačetl
+function placeholder(ctx, o) {
+  const sz = objSize(o);
+  poly(ctx, [iso(o.x, o.y), iso(o.x + sz.w, o.y), iso(o.x + sz.w, o.y + sz.h), iso(o.x, o.y + sz.h)], 'rgba(120,90,50,0.25)');
+}
+
+// plátno budovy podle šablony: široké jako základna, vysoké 1,25× šířky, přední roh 12 px nad spodkem
+function spriteBox(o) {
+  const sz = objSize(o);
+  const W = iso(o.x, o.y + sz.h), E = iso(o.x + sz.w, o.y), S = iso(o.x + sz.w, o.y + sz.h);
+  const w = E[0] - W[0], h = w * 1.25;
+  return { x: W[0], top: S[1] + 12 - h, w, h, cx: (W[0] + E[0]) / 2 };
+}
+
+// ---------- stroje a lidé ----------
+const TOOL_IMG = { plow: 'pluh', seeder: 'secka', baler: 'lis' };
+// stroj z obrázku; dir 1 = jede doprava dolů, −1 = doleva dolů; s = velikost
+export function drawVehicle(ctx, x, y, model, dir, t, s = 1, working = false, tool = null) {
+  const side = dir > 0 ? 'r' : 'l';
+  const bump = working ? Math.sin(t / 60) * 0.8 : 0;
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath(); ctx.ellipse(x, y, 30 * s, 12 * s, 0, 0, Math.PI * 2); ctx.fill();
+  const tim = tool && asset('m', `${TOOL_IMG[tool]}_${side}`);
+  if (tim) {   // nářadí je za traktorem
+    const w = tim.naturalWidth / 2 * s, h = tim.naturalHeight / 2 * s;
+    ctx.drawImage(tim, x - dir * 34 * s - w / 2, y - 10 * s - h + bump, w, h);
   }
-  if (d.id === 'mlyn') {
-    // větrník mlýna – točí se, když mele
-    const [bx, by] = [h.apex[0] - 6, h.apex[1] + 22];
-    const rot = st.busy ? t / 500 : 0.3;
-    ctx.strokeStyle = '#7a5a48'; ctx.lineWidth = 2.5;
-    for (let k = 0; k < 4; k++) {
-      const a = rot + k * Math.PI / 2;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(a) * 30, by + Math.sin(a) * 30); ctx.stroke();
-      ctx.save(); ctx.translate(bx, by); ctx.rotate(a);
-      ctx.fillStyle = 'rgba(250,245,230,0.92)'; ctx.fillRect(8, 0, 22, 7);
-      ctx.restore();
-    }
-    ctx.fillStyle = '#5b3a1e'; ctx.beginPath(); ctx.arc(bx, by, 3.5, 0, Math.PI * 2); ctx.fill();
-  }
-  if (st.done) {
-    const first = queueState(o, now).find(q => q.state === 'done');
-    bubble(ctx, h.apex[0], h.apex[1] - 26 + Math.sin(t / 300) * 2, ITEMS[first.r].icon, st.done);
-  }
+  const im = asset('m', `${model}_${side}`);
+  if (!im) return;
+  const w = im.naturalWidth / 2 * s, h = im.naturalHeight / 2 * s;
+  ctx.drawImage(im, x - w / 2, y - h + 4 * s + bump, w, h);
 }
 
-// ---------- ohrada se zvířaty ----------
-function drawChicken(ctx, x, y, dir, t, i) {
-  const bob = Math.abs(Math.sin(t / 180 + i)) * 1.5;
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
-  ctx.beginPath(); ctx.ellipse(x, y, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fbfaf4';
-  ctx.beginPath(); ctx.ellipse(x, y - 7 - bob, 7, 5.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + 5 * dir, y - 13 - bob, 3.6, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#d9402b';
-  ctx.beginPath(); ctx.arc(x + 5 * dir, y - 17 - bob, 1.8, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f2a52b';
-  ctx.beginPath(); ctx.moveTo(x + 8 * dir, y - 13 - bob); ctx.lineTo(x + 11 * dir, y - 12 - bob); ctx.lineTo(x + 8 * dir, y - 11 - bob); ctx.fill();
+// farmář nebo pomocník (who = 'farmar' | 'pomocnik')
+export function drawPerson(ctx, x, y, who, dir, t, walking, work) {
+  const im = asset('p', `${who}_${dir > 0 ? 'r' : 'l'}`);
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x, y, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+  if (!im) return;
+  const hop = walking ? Math.abs(Math.sin(t / 110)) * 2 : 0;
+  const squat = work ? Math.abs(Math.sin(t / 120)) * 2 : 0;
+  const w = im.naturalWidth / 2, h = im.naturalHeight / 2 - squat;
+  ctx.drawImage(im, x - w / 2, y - h - hop + 1, w, h);
 }
 
-function drawCow(ctx, x, y, dir, t, i) {
-  const bob = Math.abs(Math.sin(t / 400 + i)) * 0.8;
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
-  ctx.beginPath(); ctx.ellipse(x, y, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#3d3029';
-  for (const lx of [-8, -3, 4, 9]) ctx.fillRect(x + lx, y - 8, 2.5, 8);
-  ctx.fillStyle = '#f7f3ec';
-  ctx.beginPath(); ctx.ellipse(x, y - 13 - bob, 13, 8, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#3d3029';
-  ctx.beginPath(); ctx.ellipse(x - 4, y - 15 - bob, 4, 3, 0.4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x + 5, y - 11 - bob, 3, 2.4, -0.3, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f7f3ec';
-  ctx.beginPath(); ctx.ellipse(x + 14 * dir, y - 17 - bob, 5.5, 4.5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#f2b7a8';
-  ctx.beginPath(); ctx.ellipse(x + 17 * dir, y - 15.5 - bob, 3, 2.2, 0, 0, Math.PI * 2); ctx.fill();
-}
-
-function drawPig(ctx, x, y, dir, t, i) {
-  const bob = Math.abs(Math.sin(t / 300 + i)) * 0.8;
-  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#e08a96';
-  for (const lx of [-6, -2, 3, 7]) ctx.fillRect(x + lx, y - 6, 2.4, 6);
-  ctx.fillStyle = '#f5b0b8';
-  ctx.beginPath(); ctx.ellipse(x, y - 10 - bob, 11, 7, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x + 11 * dir, y - 12 - bob, 5, 4.6, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#e08a96';
-  ctx.beginPath(); ctx.ellipse(x + 15 * dir, y - 11.5 - bob, 2.4, 2, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(x + 9 * dir, y - 16 - bob); ctx.lineTo(x + 10 * dir, y - 20 - bob); ctx.lineTo(x + 12 * dir, y - 16 - bob); ctx.fill();
-}
-
-function drawSheep(ctx, x, y, dir, t, i) {
-  const bob = Math.abs(Math.sin(t / 350 + i)) * 0.8;
-  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#4a3f38';
-  for (const lx of [-6, -2, 3, 7]) ctx.fillRect(x + lx, y - 7, 2.2, 7);
-  ctx.fillStyle = '#f7f3ec';
-  for (const [dx, dy, r] of [[-5, -11, 6], [3, -12, 7], [8, -10, 5], [-1, -15, 5]]) { ctx.beginPath(); ctx.arc(x + dx * dir, y + dy - bob, r, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = '#4a3f38';
-  ctx.beginPath(); ctx.ellipse(x + 13 * dir, y - 14 - bob, 3.6, 4.4, 0, 0, Math.PI * 2); ctx.fill();
-}
-
-// zvířata ve výběhu: chodí po dvoře; vlastní obrázek zvířete, jinak kreslené kódem
+// ---------- ohrady: zvířata chodí po výběhu před přístřeškem (ten je na obrázku vzadu) ----------
 function drawPenAnimals(ctx, o, d, now, t) {
   const an = ANIMALS[d.animal];
-  const animals = o.animals || [];
-  const sp0 = ANIMAL_SPRITES[d.animal], img = animalImage(d.animal);
-  animals.forEach((a, i) => {
+  const img = asset('z', d.animal);
+  if (!img) return;
+  const w = ANIMAL_W[d.animal], h = w * img.naturalHeight / img.naturalWidth;
+  const list = (o.animals || []).map((a, i) => {
     const st = animalState(a, an, now);
     const sp = st.state === 'eating' ? 1 : 0.35;
-    const u = 0.55 + 0.25 * Math.sin(t / (2600 / sp) + i * 2.3);
-    const v = 0.35 + 0.18 * i + 0.1 * Math.cos(t / (3100 / sp) + i * 1.7);
-    const [x, y] = iso(o.x + u * d.w, o.y + Math.min(0.88, v) * d.h);
-    const dir = Math.cos(t / (2600 / sp) + i * 2.3) > 0 ? 1 : -1;
-    if (img) {
-      const bob = st.state === 'eating' ? Math.abs(Math.sin(t / 160 + i)) * 1.5 : 0;
-      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x, y, sp0.w * 0.38, sp0.w * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.save(); ctx.translate(x, y - bob); if (dir > 0) ctx.scale(-1, 1);
-      ctx.drawImage(img, -sp0.w / 2, -sp0.h, sp0.w, sp0.h);
-      ctx.restore();
-    } else if (d.animal === 'krava') drawCow(ctx, x, y, dir, t, i);
-    else if (d.animal === 'prase') drawPig(ctx, x, y, dir, t, i);
-    else if (d.animal === 'ovce') drawSheep(ctx, x, y, dir, t, i);
-    else drawChicken(ctx, x, y, dir, t, i);
-    if (st.state === 'ready') drawIcon(ctx, ITEMS[an.product].icon, x, y - (img ? sp0.h + 8 : d.animal === 'slepice' ? 28 : 36), 14);
-  });
+    const ph = t / (2600 / sp) + i * 2.3;
+    const u = 0.46 + 0.22 * Math.sin(ph);                                               // dost daleko od předního plotu
+    const v = 0.52 + 0.05 * (i % 4) + 0.03 * Math.cos(t / (3100 / sp) + i * 1.7);
+    const [x, y] = iso(o.x + u * d.w, o.y + v * d.h);
+    return { x, y, st, i, right: Math.cos(ph) > 0 };
+  }).sort((a, b) => a.y - b.y);   // vzadu první
+  for (const { x, y, st, i, right } of list) {
+    const bob = st.state === 'eating' ? Math.abs(Math.sin(t / 160 + i)) * 1.5 : 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x, y, w * 0.38, w * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(x, y - bob); if (right) ctx.scale(-1, 1);
+    ctx.drawImage(img, -w / 2, -h, w, h);
+    ctx.restore();
+    if (st.state === 'ready') drawIcon(ctx, ITEMS[an.product].icon, x, y - h - 8, 16);
+  }
 }
 
-function drawPen(ctx, o, d, now, t) {
-  const an = ANIMALS[d.animal];
-  const N = iso(o.x, o.y), E = iso(o.x + d.w, o.y), S = iso(o.x + d.w, o.y + d.h), W = iso(o.x, o.y + d.h);
-  poly(ctx, [N, E, S, W], { krava: '#a9c76b', prase: '#a8875a', ovce: '#b8d88a' }[d.animal] || '#c9b77c');
-  // domek v zadním rohu
-  const hs = d.w >= 3 ? 1.2 : 0.9;
-  house(ctx, o.x + 0.1, o.y + 0.1, o.x + 0.1 + hs, o.y + 0.1 + hs, 26, 18, { krava: '#b5523b', prase: '#c98a6a', ovce: '#d9c9a8' }[d.animal] || '#e7c27a', '#8a3b2c');
-  if (d.animal === 'prase') { const [mx, my] = iso(o.x + d.w * 0.7, o.y + d.h * 0.75); ctx.fillStyle = 'rgba(110,70,30,.55)'; ctx.beginPath(); ctx.ellipse(mx, my, 22, 9, 0, 0, Math.PI * 2); ctx.fill(); }
-  drawPenAnimals(ctx, o, d, now, t);
-  const animals = o.animals || [];
-  // plot
-  const rail = (a, b) => {
-    ctx.strokeStyle = '#9b6b3c'; ctx.lineWidth = 2.5;
-    for (const off of [5, 11]) { ctx.beginPath(); ctx.moveTo(a[0], a[1] - off); ctx.lineTo(b[0], b[1] - off); ctx.stroke(); }
-    ctx.fillStyle = '#7d532c';
-    const n = 4 * d.w;
-    for (let k = 0; k <= n; k++) {
-      const px = a[0] + (b[0] - a[0]) * k / n, py = a[1] + (b[1] - a[1]) * k / n;
-      ctx.fillRect(px - 1.5, py - 14, 3, 14);
-    }
-  };
-  rail(N, E); rail(N, W); rail(W, S); rail(S, E);
-  const st = objectStatus(o, now);
-  const top = iso(o.x + d.w / 2, o.y + d.h / 2);
-  const by = top[1] - 30 * d.h / 2 - 20 + Math.sin(t / 300) * 2;
-  if (st.done) bubble(ctx, top[0], by, ITEMS[an.product].icon, st.done);
-  else if (st.hungry && animals.length) bubble(ctx, top[0], by, ITEMS[an.feed].icon, 0, true);
+// ---------- včely kolem včelína ----------
+function drawBees(ctx, b, t) {
+  for (let i = 0; i < 6; i++) {
+    const a = t / (600 + i * 90) + i * 1.7;
+    const bx = b.cx + Math.cos(a) * (18 + i * 4), by = b.top + b.h * 0.55 + Math.sin(a * 1.3) * (8 + i);
+    ctx.fillStyle = '#f5c542'; ctx.beginPath(); ctx.ellipse(bx, by, 2.6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2f2a26'; ctx.fillRect(bx - 0.5, by - 1.8, 1, 3.6);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(bx, by - 2.4, 1.6, 1, 0, 0, Math.PI * 2); ctx.fill();
+  }
 }
 
-// ---------- sad se stromem ----------
-function drawOrchard(ctx, o, d, now, t) {
-  const N = iso(o.x + 0.06, o.y + 0.06), E = iso(o.x + 0.94, o.y + 0.06), S = iso(o.x + 0.94, o.y + 0.94), W = iso(o.x + 0.06, o.y + 0.94);
-  poly(ctx, [N, E, S, W], '#5fa83f');
-  ctx.strokeStyle = '#8e6b3c'; ctx.lineWidth = 2;
-  ctx.beginPath(); [N, E, S, W].forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.stroke();
+// ---------- sad: strom nebo keř na políčku ----------
+function drawOrchard(ctx, o, now, t) {
   const [cx, cy] = iso(o.x + 0.5, o.y + 0.5);
-  ctx.fillStyle = '#7a5030';
-  ctx.beginPath(); ctx.ellipse(cx, cy, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(110,70,35,0.55)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 2, 20, 9, 0, 0, Math.PI * 2); ctx.fill();
   const st = treeState(o, now);
   if (st.state === 'empty') return;
   const tr = TREES[o.tree];
-  const g = st.state === 'growing' && o.left === tr.harvests ? 0.35 + 0.65 * st.progress : 1;
-  const sway = st.state === 'ready' ? Math.sin(t / 500 + o.x) * 1.2 : 0;
-  if (tr.kind === 'bush') {           // keř: nízký a kulatý, bobule po celém keři
-    const r = 12 * g;
-    ctx.fillStyle = st.state === 'dead' ? '#8a7a5c' : '#3f8a35';
-    ctx.beginPath(); ctx.arc(cx - 6 * g, cy - r * 0.8, r * 0.75, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + 6 * g, cy - r * 0.8, r * 0.75, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = st.state === 'dead' ? '#9a8a6a' : '#4ea845';
-    ctx.beginPath(); ctx.arc(cx + sway, cy - r * 1.25, r * 0.8, 0, Math.PI * 2); ctx.fill();
-    if (st.state === 'dead') { drawIcon(ctx, 'axe', cx + 14, cy - 28, 14); return; }
-    if (st.state === 'ready' || st.progress > 0.5) {
-      ctx.fillStyle = st.state === 'ready' ? tr.color : '#b8dc8a';
-      for (const [dx, dy] of [[-10, -9], [-4, -16], [4, -12], [10, -8], [0, -22], [7, -19], [-8, -18]]) {
-        ctx.beginPath(); ctx.arc(cx + dx * g + sway, cy + dy * g, st.state === 'ready' ? 2.6 : 1.6, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    return;
+  const img = asset('s', `${tr.id}_${st.state === 'dead' ? 'dead' : st.state === 'ready' ? 'ready' : 'grow'}`);
+  const g = st.state === 'growing' && o.left === tr.harvests ? 0.5 + 0.5 * st.progress : 1;
+  if (img) {
+    const w = 96 * g, h = 120 * g;
+    ctx.drawImage(img, cx - w / 2, cy + 8 - 91 * g, w, h);
   }
-  // kmen
-  ctx.fillStyle = st.state === 'dead' ? '#6b5440' : '#7a4e2a';
-  ctx.fillRect(cx - 2.5 * g, cy - 24 * g, 5 * g, 24 * g);
-  if (st.state === 'dead') {
-    ctx.strokeStyle = '#6b5440'; ctx.lineWidth = 2.5;
-    for (const [dx, dy] of [[-9, -34], [8, -36], [0, -40]]) { ctx.beginPath(); ctx.moveTo(cx, cy - 20); ctx.lineTo(cx + dx, cy + dy); ctx.stroke(); }
-    ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center';
-    drawIcon(ctx, 'axe', cx + 14, cy - 34, 14);
-    return;
-  }
-  // koruna
-  const r = 15 * g;
-  ctx.fillStyle = '#3f8f3a'; ctx.beginPath(); ctx.arc(cx + sway, cy - 30 * g, r, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#4ea845'; ctx.beginPath(); ctx.arc(cx - 5 * g + sway, cy - 35 * g, r * 0.65, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#63bd55'; ctx.beginPath(); ctx.arc(cx - 7 * g + sway, cy - 39 * g, r * 0.3, 0, Math.PI * 2); ctx.fill();
-  // ovoce: malé při růstu, plné když je zralé
-  const fr = st.state === 'ready' ? 3.2 : st.progress > 0.5 ? 1.8 : 0;
-  if (fr) {
-    ctx.fillStyle = st.state === 'ready' ? tr.color : '#9ccc5c';
-    for (const [dx, dy] of [[-8, -26], [6, -34], [9, -22], [-2, -40], [0, -24], [-10, -36]]) {
-      ctx.beginPath(); ctx.arc(cx + dx * g + sway, cy + dy * g, fr, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-}
-
-// ---------- statek ----------
-function drawMain(ctx, o, d, now, t, farm) {
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  // dvorek
-  const N = iso(o.x, o.y), E = iso(o.x + 3, o.y), S = iso(o.x + 3, o.y + 3), W = iso(o.x, o.y + 3);
-  poly(ctx, [N, E, S, W], '#d8c79a');
-  // cestička k domu
-  poly(ctx, [iso(o.x + 1.2, o.y + 2.2), iso(o.x + 1.8, o.y + 2.2), iso(o.x + 1.8, o.y + 3), iso(o.x + 1.2, o.y + 3)], '#c2ad7c');
-  const h = house(ctx, o.x + 0.35, o.y + 0.3, o.x + 2.7, o.y + 2.2, 62, 48, '#f3e3c3', '#b9432f');
-  // trámy (hrázděné zdi)
-  ctx.strokeStyle = '#8a5a35'; ctx.lineWidth = 3;
-  for (const [a, b] of [[h.W, h.S], [h.S, h.E]]) {
-    for (const k of [0, 0.5, 1]) {
-      const p = lerp(a, b, k);
-      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0], p[1] - 62); ctx.stroke();
-    }
-    ctx.beginPath(); ctx.moveTo(a[0], a[1] - 62); ctx.lineTo(b[0], b[1] - 62); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(a[0], a[1] - 31); ctx.lineTo(b[0], b[1] - 31); ctx.stroke();
-  }
-  // dveře a okna
-  const d0 = lerp(h.W, h.S, 0.62), d1 = lerp(h.W, h.S, 0.82);
-  poly(ctx, [d0, d1, [d1[0], d1[1] - 30], [d0[0], d0[1] - 30]], '#6b3f1f');
-  for (const [a, b, k] of [[h.W, h.S, 0.22], [h.S, h.E, 0.25], [h.S, h.E, 0.72]]) {
-    const w0 = lerp(a, b, k - 0.09), w1 = lerp(a, b, k + 0.09);
-    poly(ctx, [[w0[0], w0[1] - 38], [w1[0], w1[1] - 38], [w1[0], w1[1] - 54], [w0[0], w0[1] - 54]], '#fdf3c4');
-  }
-  // komín
-  const ch = lerp(h.apex, h.N, 0.35);
-  poly(ctx, [[ch[0] - 6, ch[1] + 6], [ch[0] + 6, ch[1] + 6], [ch[0] + 6, ch[1] - 16], [ch[0] - 6, ch[1] - 16]], '#8c6a55');
-  for (let i = 0; i < 2; i++) {
-    const k = ((t / 2200 + i / 2) % 1);
-    ctx.fillStyle = `rgba(245,245,245,${0.5 * (1 - k)})`;
-    ctx.beginPath(); ctx.arc(ch[0] + Math.sin(k * 5) * 4, ch[1] - 20 - k * 30, 4 + k * 6, 0, Math.PI * 2); ctx.fill();
-  }
-  // poštovní schránka u cesty
-  const mb = iso(o.x + 2.3, o.y + 2.8);
-  ctx.fillStyle = '#7a4e2a'; ctx.fillRect(mb[0] - 1.5, mb[1] - 16, 3, 16);
-  ctx.fillStyle = '#4f8fd6'; ctx.fillRect(mb[0] - 6, mb[1] - 24, 12, 9);
-  // bublina: zakázky připravené k doručení
-  const st = objectStatus(o, now, farm);
-  if (st.done) bubble(ctx, h.apex[0], h.apex[1] - 22 + Math.sin(t / 300) * 2, 'truck', st.done);
-}
-
-// ---------- sklad (stodola se silem) ----------
-function drawStorage(ctx, o, d, now, t) {
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  // silo vzadu
-  const [sx, sy] = iso(o.x + 0.55, o.y + 0.55);
-  ctx.fillStyle = '#b8c0c7'; ctx.fillRect(sx - 13, sy - 78, 26, 72);
-  ctx.fillStyle = '#9aa3ab'; ctx.fillRect(sx + 3, sy - 78, 10, 72);
-  ctx.fillStyle = '#c9d0d6'; ctx.beginPath(); ctx.ellipse(sx, sy - 6, 13, 6, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = '#7d8a96'; ctx.beginPath(); ctx.arc(sx, sy - 78, 13, Math.PI, 0); ctx.fill();
-  // stodola
-  const h = house(ctx, o.x + 0.75, o.y + 0.65, o.x + 1.9, o.y + 1.9, 38, 26, '#b5523b', '#6f3a2a');
-  const g0 = lerp(h.W, h.S, 0.25), g1 = lerp(h.W, h.S, 0.75);
-  poly(ctx, [g0, g1, [g1[0], g1[1] - 28], [g0[0], g0[1] - 28]], '#f3e3c3');
-  ctx.strokeStyle = '#b5523b'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.moveTo(g0[0], g0[1]); ctx.lineTo(g1[0], g1[1] - 28); ctx.moveTo(g1[0], g1[1]); ctx.lineTo(g0[0], g0[1] - 28); ctx.stroke();
-}
-
-// ---------- stroje ----------
-function wheel(ctx, x, y, r) {
-  ctx.fillStyle = '#2f2a26'; ctx.beginPath(); ctx.ellipse(x, y, r * 0.75, r, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#c9b77c'; ctx.beginPath(); ctx.ellipse(x, y, r * 0.3, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
-}
-
-// stroj: dir = 1 jede doprava, -1 doleva; s = měřítko
-export function drawVehicle(ctx, cx, cy, model, dir, t, s = 0.75, working = false, tool = null) {
-  const m = MACHINES[model];
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(dir * s, s);
-  const bump = working ? Math.sin(t / 60) * 0.8 : 0;
-  ctx.translate(0, bump);
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.beginPath(); ctx.ellipse(0, 0, 40, 17, 0, 0, Math.PI * 2); ctx.fill();
-  const c = m.color, dark = shade(m.color, 0.78);
-  if (m.type === 'tractor') {
-    wheel(ctx, 18, -4, 9);
-    ctx.fillStyle = c; ctx.fillRect(-10, -30, 34, 18);            // kapota
-    ctx.fillStyle = dark; ctx.fillRect(-10, -14, 34, 4);
-    ctx.fillStyle = c; ctx.fillRect(-26, -46, 20, 34);           // kabina
-    ctx.fillStyle = '#cfe8f5'; ctx.fillRect(-23, -43, 14, 14);
-    ctx.fillStyle = '#555'; ctx.fillRect(14, -40, 4, 12);         // výfuk
-    if (working) {
-      for (let i = 0; i < 2; i++) {
-        const k = ((t / 700 + i / 2) % 1);
-        ctx.fillStyle = `rgba(90,90,90,${0.45 * (1 - k)})`;
-        ctx.beginPath(); ctx.arc(16 - k * 6, -44 - k * 18, 3 + k * 4, 0, Math.PI * 2); ctx.fill();
-      }
-      if (tool === 'plow') {           // pluh: radlice za traktorem
-        ctx.fillStyle = '#555'; ctx.fillRect(-40, -12, 14, 3);
-        ctx.fillStyle = '#8a8f96';
-        for (const x of [-52, -44, -36]) { ctx.beginPath(); ctx.moveTo(x, -12); ctx.lineTo(x + 6, -12); ctx.lineTo(x - 2, 0); ctx.closePath(); ctx.fill(); }
-      } else if (tool === 'seeder') {  // secí stroj
-        ctx.fillStyle = '#3f7fbf'; ctx.fillRect(-58, -24, 32, 14);
-        ctx.fillStyle = '#2f63a0'; ctx.fillRect(-58, -28, 32, 5);
-        ctx.fillStyle = '#555'; for (const x of [-54, -46, -38, -30]) ctx.fillRect(x, -10, 2, 8);
-      } else if (tool === 'baler') {   // lis na balíky
-        ctx.fillStyle = '#d9b43b'; ctx.fillRect(-62, -30, 34, 22);
-        ctx.fillStyle = '#f2da7a'; ctx.fillRect(-58, -26, 14, 12);
-        wheel(ctx, -50, -4, 7);
-      } else {
-        ctx.fillStyle = '#7a7a7a'; ctx.fillRect(-46, -14, 18, 6);    // brány
-      }
-    }
-    wheel(ctx, -18, -8, 15);
-    wheel(ctx, 22, -2, 9);
-  } else {
-    ctx.fillStyle = '#d9b43b'; ctx.fillRect(16, -12, 22, 10);    // žací lišta
-    ctx.strokeStyle = '#8a7020'; ctx.lineWidth = 2;
-    const rot = working ? t / 120 : 0;
-    for (let k = 0; k < 4; k++) {
-      const a = rot + k * Math.PI / 2;
-      ctx.beginPath(); ctx.moveTo(27, -18); ctx.lineTo(27 + Math.cos(a) * 9, -18 + Math.sin(a) * 9); ctx.stroke();
-    }
-    ctx.fillStyle = c; ctx.fillRect(-26, -34, 42, 24);           // tělo
-    ctx.fillStyle = dark; ctx.fillRect(-26, -14, 42, 4);
-    ctx.fillStyle = c; ctx.fillRect(-6, -52, 18, 20);            // kabina
-    ctx.fillStyle = '#cfe8f5'; ctx.fillRect(-3, -49, 12, 11);
-    ctx.fillStyle = '#d9b43b'; ctx.fillRect(-30, -42, 8, 22);    // výsypka
-    wheel(ctx, -14, -6, 12);
-    wheel(ctx, 10, -4, 8);
-  }
-  ctx.restore();
+  if (st.state === 'dead') bubble(ctx, cx, cy - 58 + Math.sin(t / 300) * 2, 'axe', 0);   // uschlý strom: pokácet
 }
 
 // ---------- velké pole ----------
@@ -402,58 +159,57 @@ function bale(ctx, x, y) {
   ctx.fillStyle = '#f2da7a'; ctx.beginPath(); ctx.ellipse(x - 3, y - 4, 4, 4, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#b8902a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x - 3, y - 4, 2, 0, Math.PI * 2); ctx.stroke();
 }
+// plodina na jednom políčku (malé pole i velké pole); stage 0 klíček, 1 roste, 2 zralé
+export function drawCropImg(ctx, crop, cx, cy, stage, t) {
+  const im = asset('c', `${crop}_${stage}`);
+  if (!im) return;
+  const w = TW * 0.92, h = w * im.naturalHeight / im.naturalWidth;
+  const sway = stage === 2 ? Math.sin(t / 500 + cx * 0.05) * 0.6 : 0;
+  ctx.drawImage(im, cx - w / 2 + sway, cy + TH * 0.42 - h, w, h);
+}
+export const cropStage = (progress, ready) => (ready ? 2 : progress < 0.25 ? 0 : 1);
 
 function drawBigField(ctx, o, d, now, t, farm) {
   const W = o.w, H = o.h, cells = W * H;
-  const N = iso(o.x, o.y), E = iso(o.x + W, o.y), S = iso(o.x + W, o.y + H), Wp = iso(o.x, o.y + H);
   const st = fieldState(o, now);
   const soil = o.soil || 'raw';
-  poly(ctx, [N, E, S, Wp], '#8a6a3f');
-  const m = 0.08;
-  const dark = ['plowed', 'sown'].includes(soil) && st.state !== 'plowing';
-  poly(ctx, [iso(o.x + m, o.y + m), iso(o.x + W - m, o.y + m), iso(o.x + W - m, o.y + H - m), iso(o.x + m, o.y + H - m)], dark ? '#6a4122' : '#8e5d33');
-  ctx.strokeStyle = dark ? 'rgba(40,18,4,0.4)' : 'rgba(50,25,8,0.22)'; ctx.lineWidth = dark ? 2.4 : 1.6;
-  for (let r = 1; r < H * 2; r++) {
-    const a = iso(o.x + m, o.y + r / 2), b = iso(o.x + W - m, o.y + r / 2);
-    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
-  }
+  poly(ctx, [iso(o.x, o.y), iso(o.x + W, o.y), iso(o.x + W, o.y + H), iso(o.x, o.y + H)], '#8a6a3f');
   const order = (gx, gy) => gy * W + (gy % 2 ? W - 1 - gx : gx);
   const working = ['sowing', 'harvesting', 'plowing', 'baling'].includes(st.state);
   const done = working ? st.progress * cells : 0;
   const crop = o.crop || (st.state === 'harvesting' && o.load ? o.load.item : null);
-  const strawField = st.state === 'empty' && o.straw;
   const balesOut = st.state === 'unload' && st.item === 'slama';
+  const tPlowed = asset('t', 'pole'), tSown = asset('t', 'pole_osete');
   for (let sum = 0; sum <= W + H - 2; sum++) {
     for (let gx = 0; gx < W; gx++) {
       const gy = sum - gx;
       if (gy < 0 || gy >= H) continue;
       const idx = order(gx, gy);
       const passed = idx < done;
-      let g = -1, ready = false, stubble = false, straw = false, plowCell = false, baleCell = false;
+      let stage = -1, stubble = false, straw = false, baleCell = false, dark = soil === 'plowed' || soil === 'sown';
       switch (st.state) {
-        case 'sowing': g = passed ? 0.05 : -1; break;
-        case 'growing': g = st.progress; break;
-        case 'ready': g = 1; ready = true; break;
-        case 'harvesting': if (passed) { stubble = true; straw = true; } else { g = 1; ready = true; } break;
-        case 'plowing': plowCell = passed; stubble = !passed && soil !== 'raw'; break;
-        case 'baling': if (passed) { stubble = true; baleCell = idx % 2 === 0; } else { stubble = true; straw = true; } break;
-        case 'unload': stubble = true; baleCell = balesOut && idx % 2 === 0; straw = !balesOut && o.straw; break;
-        default: stubble = soil === 'stubble'; straw = strawField;
+        case 'sowing': stage = passed ? 0 : -1; break;
+        case 'growing': stage = cropStage(st.progress, false); break;
+        case 'ready': stage = 2; break;
+        case 'harvesting': if (passed) { stubble = true; straw = true; dark = false; } else stage = 2; break;
+        case 'plowing': dark = passed; stubble = !passed && soil !== 'raw'; break;
+        case 'baling': stubble = true; dark = false; if (passed) baleCell = idx % 2 === 0; else straw = true; break;
+        case 'unload': stubble = true; dark = false; baleCell = balesOut && idx % 2 === 0; straw = !balesOut && o.straw; break;
+        default: stubble = soil === 'stubble'; straw = st.state === 'empty' && o.straw;
       }
       const [cx, cy] = iso(o.x + gx + 0.5, o.y + gy + 0.5);
-      if (plowCell) {
-        ctx.fillStyle = 'rgba(70,35,10,0.45)';
-        ctx.beginPath(); ctx.ellipse(cx, cy, TW / 2 - 6, TH / 2 - 3, 0, 0, Math.PI * 2); ctx.fill();
-      }
+      const tile = stage >= 0 ? tSown : dark ? tPlowed : null;
+      if (tile) ctx.drawImage(tile, cx - TW / 2, cy - TH / 2, TW, TW * tile.naturalHeight / tile.naturalWidth);
       if (baleCell) { bale(ctx, cx, cy); continue; }
-      for (const [u, v] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]]) {
-        const [px, py] = iso(o.x + gx + u, o.y + gy + v);
-        if (stubble) {
-          ctx.strokeStyle = '#c9a53a'; ctx.lineWidth = 1.4;
-          ctx.beginPath(); ctx.moveTo(px - 2, py); ctx.lineTo(px - 2, py - 3); ctx.moveTo(px + 2, py); ctx.lineTo(px + 2, py - 3); ctx.stroke();
-          if (straw) { ctx.strokeStyle = '#e8c95a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px - 5, py + 1); ctx.lineTo(px + 5, py - 1); ctx.stroke(); }
-        } else if (g >= 0 && crop) drawPlant(ctx, crop, px, py, g, ready, t);
-      }
+      if (stubble) {
+        ctx.strokeStyle = '#c9a53a'; ctx.lineWidth = 1.4; ctx.beginPath();
+        for (const [u, v] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]]) {
+          const [px, py] = iso(o.x + gx + u, o.y + gy + v);
+          ctx.moveTo(px - 2, py); ctx.lineTo(px - 2, py - 3); ctx.moveTo(px + 2, py); ctx.lineTo(px + 2, py - 3);
+          if (straw) { ctx.moveTo(px - 5, py + 1); ctx.lineTo(px + 5, py - 1); }
+        }
+        ctx.stroke();
+      } else if (stage >= 0 && crop) drawCropImg(ctx, crop, cx, cy, stage, t);
     }
   }
   if (o.job && working) {
@@ -480,313 +236,44 @@ function drawBigField(ctx, o, d, now, t, farm) {
   else if (st.state === 'unload') bubble(ctx, top[0], by, ITEMS[st.item].icon, st.stock);
 }
 
-// ---------- ozdoby ----------
-function drawDeco(ctx, o, d, now, t) {
-  const [cx, cy] = iso(o.x + 0.5, o.y + 0.5);
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
-  ctx.beginPath(); ctx.ellipse(cx, cy, 20, 9, 0, 0, Math.PI * 2); ctx.fill();
-  switch (d.id) {
-    case 'ker':
-      for (const [dx, dy, r, c] of [[-8, -8, 10, '#3f8f3a'], [8, -8, 10, '#3f8f3a'], [0, -14, 12, '#4ea845'], [-3, -18, 6, '#63bd55']]) {
-        ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx + dx, cy + dy, r, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    case 'kvetiny': {
-      const N = iso(o.x + 0.15, o.y + 0.15), E = iso(o.x + 0.85, o.y + 0.15), S = iso(o.x + 0.85, o.y + 0.85), W = iso(o.x + 0.15, o.y + 0.85);
-      poly(ctx, [N, E, S, W], '#7a5030');
-      const cols = ['#e5484d', '#f5c542', '#ffffff', '#c45fd6', '#ff8a3d'];
-      for (let i = 0; i < 9; i++) {
-        const [x, y] = iso(o.x + 0.25 + (i % 3) * 0.25, o.y + 0.25 + Math.floor(i / 3) * 0.25);
-        ctx.strokeStyle = '#4c8f37'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 7); ctx.stroke();
-        ctx.fillStyle = cols[i % cols.length];
-        ctx.beginPath(); ctx.arc(x, y - 8, 3, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'lavicka': {
-      const a = iso(o.x + 0.2, o.y + 0.5), b = iso(o.x + 0.8, o.y + 0.5);
-      ctx.strokeStyle = '#5b3a1e'; ctx.lineWidth = 3;
-      for (const p of [a, b]) { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0], p[1] - 10); ctx.stroke(); }
-      ctx.strokeStyle = '#a7703d'; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(a[0], a[1] - 10); ctx.lineTo(b[0], b[1] - 10); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(a[0] + 3, a[1] - 20); ctx.lineTo(b[0] + 3, b[1] - 20); ctx.stroke();
-      break;
-    }
-    case 'jablon':
-      ctx.fillStyle = '#7a4e2a'; ctx.fillRect(cx - 3, cy - 22, 6, 22);
-      ctx.fillStyle = '#3f8f3a'; ctx.beginPath(); ctx.arc(cx, cy - 32, 17, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#52a862'; ctx.beginPath(); ctx.arc(cx - 5, cy - 37, 10, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#d9342b';
-      for (const [dx, dy] of [[-8, -28], [6, -36], [9, -24], [-2, -42], [0, -26]]) { ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 2.6, 0, Math.PI * 2); ctx.fill(); }
-      break;
-    case 'fontana': {
-      ctx.fillStyle = '#9aa3ab'; ctx.beginPath(); ctx.ellipse(cx, cy - 4, 22, 11, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#5fb3e6'; ctx.beginPath(); ctx.ellipse(cx, cy - 6, 17, 8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#b8c0c7'; ctx.fillRect(cx - 3, cy - 22, 6, 16);
-      for (let i = 0; i < 6; i++) {
-        const k = ((t / 900 + i / 6) % 1);
-        const ang = i * Math.PI / 3;
-        ctx.fillStyle = `rgba(200,235,255,${1 - k})`;
-        ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * k * 12, cy - 24 - Math.sin(k * Math.PI) * 10 + k * 14, 2, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-  }
+// ozdobný domek v městečku (variant 0–2)
+export function drawTownHouse(ctx, gx, gy, variant) {
+  const im = asset('b', 'domek_' + 'abc'[variant % 3]);
+  if (!im) return;
+  const b = spriteBox({ kind: 'sklad', x: gx, y: gy, w: 2, h: 2 });
+  ctx.drawImage(im, b.x, b.top, b.w, b.h);
 }
 
-export function objectDepth(o) {
-  const d = objSize(o);
-  if (o.kind === 'velkepole' || o.kind === 'rybnik') return o.x + o.y + 1;   // leží na zemi – kreslit brzy
-  return o.x + o.y + (d.w + d.h) / 2;
-}
-
-// ---------- stodola, prodejna, stánek ----------
-function drawGarage(ctx, o, d, now, t, farm) {
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  const h = house(ctx, o.x + 0.1, o.y + 0.15, o.x + d.w - 0.1, o.y + d.h - 0.1, 44, 30, '#a8483a', '#6f3a2a');
-  // velká vrata na levé (přední) stěně
-  const g0 = lerp(h.W, h.S, 0.18), g1 = lerp(h.W, h.S, 0.82);
-  poly(ctx, [g0, g1, [g1[0], g1[1] - 34], [g0[0], g0[1] - 34]], '#5b3a1e');
-  ctx.strokeStyle = '#f3e3c3'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(g0[0], g0[1]); ctx.lineTo(g1[0], g1[1] - 34); ctx.moveTo(g1[0], g1[1]); ctx.lineTo(g0[0], g0[1] - 34); ctx.stroke();
-  // zaparkované stroje před stodolou (ty, co zrovna nepracují)
-  if (farm) {
-    const idle = farm.machines.filter(m => isVehicle(m.model) && !farm.objects.some(x => x.job && x.job.m === m.id && now < x.job.end));
-    idle.slice(0, 3).forEach((m, i) => {
-      const [vx, vy] = iso(o.x + 0.5 + i * 0.9, o.y + d.h + 0.35);
-      drawVehicle(ctx, vx, vy, m.model, 1, t, 0.5, false);
-    });
-  }
-}
-
-function drawDealer(ctx, o, d, now, t) {
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  const h = house(ctx, o.x + 0.2, o.y + 0.15, o.x + d.w - 0.15, o.y + d.h - 0.5, 40, 18, '#e8e2d6', '#3f6fb5');
-  // výloha a markýza
-  const w0 = lerp(h.W, h.S, 0.12), w1 = lerp(h.W, h.S, 0.88);
-  poly(ctx, [[w0[0], w0[1] - 8], [w1[0], w1[1] - 8], [w1[0], w1[1] - 28], [w0[0], w0[1] - 28]], '#9fd0f0');
-  for (let k = 0; k < 6; k++) {
-    const a = lerp(w0, w1, k / 6), b = lerp(w0, w1, (k + 1) / 6);
-    poly(ctx, [[a[0], a[1] - 30], [b[0], b[1] - 30], [b[0] + 3, b[1] - 24], [a[0] + 3, a[1] - 24]], k % 2 ? '#fff' : '#c8452d');
-  }
-  drawIcon(ctx, 'shop', h.apex[0], h.apex[1] + 14, 18);
-  const [vx, vy] = iso(o.x + d.w * 0.55, o.y + d.h - 0.3);
-  drawVehicle(ctx, vx, vy, 'brazda60', 1, t, 0.48, false);
-}
-
-function drawStall(ctx, o, d, now, t) {
-  const [cx, cy] = iso(o.x + d.w / 2, o.y + d.h / 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 40, 16, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#7a4e2a';
-  for (const dx of [-30, 30]) ctx.fillRect(cx + dx - 2, cy - 44, 4, 46);
-  ctx.fillStyle = '#a7703d'; ctx.fillRect(cx - 34, cy - 14, 68, 14);       // pult
-  ctx.fillStyle = '#8a5a35'; ctx.fillRect(cx - 34, cy - 14, 68, 3);
-  const goods = ['#e0402d', '#f2c22e', '#5fae3a', '#f08a24', '#6b2f7a', '#d9342b'];
-  goods.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx - 26 + i * 10.5, cy - 17, 4, 0, Math.PI * 2); ctx.fill(); });
-  for (let k = 0; k < 6; k++) {                                              // pruhovaná stříška
-    ctx.fillStyle = k % 2 ? '#fff' : '#4f8fd6';
-    ctx.beginPath(); ctx.moveTo(cx - 38 + k * 12.7, cy - 44); ctx.lineTo(cx - 25.3 + k * 12.7, cy - 44); ctx.lineTo(cx - 25.3 + k * 12.7 + 2, cy - 34); ctx.lineTo(cx - 38 + k * 12.7 + 2, cy - 34); ctx.fill();
-  }
-  ctx.fillStyle = '#3f6fb5'; ctx.fillRect(cx - 38, cy - 50, 78, 6);
-}
-
-// tržiště hráčů: několik stánků s různými stříškami a zbožím
-function miniStall(ctx, cx, cy, awn, goods, t, k) {
-  ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 30, 12, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#7a4e2a';
-  for (const dx of [-22, 22]) ctx.fillRect(cx + dx - 2, cy - 36, 4, 38);
-  ctx.fillStyle = '#a7703d'; ctx.fillRect(cx - 26, cy - 12, 52, 12);
-  ctx.fillStyle = '#8a5a35'; ctx.fillRect(cx - 26, cy - 12, 52, 3);
-  goods.forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx - 18 + i * 9, cy - 15, 3.6, 0, Math.PI * 2); ctx.fill(); });
-  const flap = Math.sin(t / 700 + k) * 1.2;
-  for (let i = 0; i < 5; i++) {
-    ctx.fillStyle = i % 2 ? '#fff' : awn;
-    ctx.beginPath(); ctx.moveTo(cx - 29 + i * 11.6, cy - 36); ctx.lineTo(cx - 17.4 + i * 11.6, cy - 36); ctx.lineTo(cx - 15.4 + i * 11.6, cy - 27 + flap); ctx.lineTo(cx - 27 + i * 11.6, cy - 27 + flap); ctx.fill();
-  }
-  ctx.fillStyle = awn; ctx.fillRect(cx - 30, cy - 41, 61, 5);
-}
-function drawMarket(ctx, o, d, now, t) {
-  const spots = [[0.75, 0.75, '#c8452d', ['#f2c22e', '#e0402d', '#5fae3a', '#f08a24', '#d9a05b']], [2.3, 0.85, '#5fae3a', ['#d9342b', '#c9c23a', '#5b3f8f', '#f2a03d', '#e0283c']],
-    [0.85, 2.3, '#4f8fd6', ['#e9f2f5', '#f5c542', '#b5122b', '#8fd45a', '#d9a05b']], [2.3, 2.3, '#d9b43b', ['#8a8f96', '#c8452d', '#4f8fd6', '#a7703d', '#f3e3c3']]];
-  spots.forEach(([gx, gy, awn, goods], k) => {
-    const [x, y] = iso(o.x + gx, o.y + gy);
-    ctx.save(); ctx.translate(x, y); ctx.scale(1.35, 1.35);
-    miniStall(ctx, 0, 0, awn, goods, t, k);
-    ctx.restore();
-  });
-  // cedule s ikonou
-  const [sx, sy] = iso(o.x + 1.5, o.y + 1.5);
-  ctx.fillStyle = '#7a4e2a'; ctx.fillRect(sx - 2, sy - 54, 4, 54);
-  ctx.fillStyle = '#f3e3c3'; ctx.strokeStyle = '#8a5a35'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.rect(sx - 18, sy - 76, 36, 26); ctx.fill(); ctx.stroke();
-  drawIcon(ctx, 'market', sx, sy - 63, 20);
-}
-
-// ---------- rybník ----------
-function drawPond(ctx, o, d, now, t) {
-  const c = iso(o.x + 1.5, o.y + 1.5);
-  const ell = (rx, ry, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.ellipse(c[0], c[1], rx, ry, 0, 0, Math.PI * 2); ctx.fill(); };
-  ell(136, 64, '#c9b38a');                 // písčitý břeh
-  ell(124, 57, '#3f78b8');
-  ell(104, 46, '#4f8fd6');
-  ctx.strokeStyle = 'rgba(220,240,255,0.6)'; ctx.lineWidth = 2;   // vlnky
-  for (let i = 0; i < 3; i++) {
-    const k = ((t / 2600 + i / 3) % 1);
-    ctx.globalAlpha = 1 - k;
-    ctx.beginPath(); ctx.ellipse(c[0] - 30 + i * 30, c[1] - 6 + i * 8, 8 + k * 22, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  for (const [dx, dy] of [[-62, 14], [52, -18], [70, 16]]) {         // lekníny
-    ctx.fillStyle = '#5fae3a'; ctx.beginPath(); ctx.ellipse(c[0] + dx, c[1] + dy, 11, 5, 0, 0.3, Math.PI * 2); ctx.lineTo(c[0] + dx, c[1] + dy); ctx.fill();
-    if (dx > 60) { ctx.fillStyle = '#f5a0c0'; ctx.beginPath(); ctx.arc(c[0] + dx + 2, c[1] + dy - 3, 3.2, 0, Math.PI * 2); ctx.fill(); }
-  }
-  // rákos na kraji
-  ctx.strokeStyle = '#5f8a3a'; ctx.lineWidth = 2.2;
-  for (const [dx, dy, h] of [[-118, -4, 30], [-112, 4, 36], [-104, -10, 26], [108, 20, 32], [116, 12, 26]]) {
-    const sw = Math.sin(t / 900 + dx) * 2;
-    ctx.beginPath(); ctx.moveTo(c[0] + dx, c[1] + dy); ctx.lineTo(c[0] + dx + sw, c[1] + dy - h); ctx.stroke();
-    ctx.fillStyle = '#7a4e2a'; ctx.beginPath(); ctx.ellipse(c[0] + dx + sw, c[1] + dy - h, 2.2, 6, 0, 0, Math.PI * 2); ctx.fill();
-  }
-  // ryba občas vyskočí
-  const cyc = (t / 4200 + o.id * 0.37) % 1;
-  if (cyc < 0.12) {
-    const k = cyc / 0.12;
-    const fx = c[0] - 20 + k * 40, fy = c[1] - Math.sin(k * Math.PI) * 26;
-    ctx.fillStyle = '#c9a24a'; ctx.beginPath(); ctx.ellipse(fx, fy, 8, 3.4, (k - 0.5) * 1.6, 0, Math.PI * 2); ctx.fill();
-  }
-  // malé molo
-  const m0 = iso(o.x + 2.3, o.y + 2.9), m1 = iso(o.x + 2.9, o.y + 2.9), m2 = iso(o.x + 2.9, o.y + 2.0), m3 = iso(o.x + 2.3, o.y + 2.0);
-  poly(ctx, [m0, m1, m2, m3], '#a7703d');
-  ctx.strokeStyle = '#7a4e2a'; ctx.lineWidth = 1.2;
-  for (let k = 1; k < 4; k++) { const a = [m0[0] + (m3[0] - m0[0]) * k / 4, m0[1] + (m3[1] - m0[1]) * k / 4], b = [m1[0] + (m2[0] - m1[0]) * k / 4, m1[1] + (m2[1] - m1[1]) * k / 4]; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
-  const s = pondStock(o, now);
-  if (s.count) bubble(ctx, c[0], c[1] - 70 + Math.sin(t / 300) * 2, 'kapr', s.count, s.count < s.cap);
-}
-
-// ---------- včelín: úly a poletující včely ----------
-function drawHive(ctx, o, d, now, t, farm) {
-  const box = (gx, gy, col) => {
-    const [x, y] = iso(gx, gy);
-    ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.ellipse(x, y + 2, 18, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#7a4e2a'; ctx.fillRect(x - 15, y - 6, 4, 8); ctx.fillRect(x + 11, y - 6, 4, 8);
-    for (let i = 0; i < 3; i++) {
-      ctx.fillStyle = i % 2 ? shade(col, 0.88) : col;
-      ctx.fillRect(x - 16, y - 18 - i * 11, 32, 12);
-    }
-    ctx.fillStyle = '#8a5a35'; ctx.beginPath(); ctx.moveTo(x - 20, y - 40); ctx.lineTo(x, y - 52); ctx.lineTo(x + 20, y - 40); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#4a3218'; ctx.fillRect(x - 5, y - 10, 10, 3);
-    return [x, y - 30];
-  };
-  const hives = [box(o.x + 0.6, o.y + 0.7, '#f2d07a'), box(o.x + 1.45, o.y + 1.4, '#9fd0f0')];
-  // květiny kolem
-  for (const [gx, gy, c] of [[0.3, 1.6, '#e0402d'], [0.5, 1.8, '#f5c542'], [1.7, 0.4, '#d6335a'], [1.9, 0.6, '#ffffff']]) {
-    const [x, y] = iso(o.x + gx, o.y + gy);
-    ctx.fillStyle = '#4fa63c'; ctx.fillRect(x - 0.8, y - 7, 1.6, 7);
-    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y - 8, 3, 0, Math.PI * 2); ctx.fill();
-  }
-  // včely
-  for (let i = 0; i < 6; i++) {
-    const [hx, hy] = hives[i % 2];
-    const a = t / (600 + i * 90) + i * 1.7;
-    const bx = hx + Math.cos(a) * (16 + i * 3), by = hy - 8 + Math.sin(a * 1.3) * (8 + i);
-    ctx.fillStyle = '#f5c542'; ctx.beginPath(); ctx.ellipse(bx, by, 2.6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2f2a26'; ctx.fillRect(bx - 0.5, by - 1.8, 1, 3.6);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(bx, by - 2.4, 1.6, 1, 0, 0, Math.PI * 2); ctx.fill();
-  }
-  const st = objectStatus(o, now, farm);
-  if (st.done) { const [x, y] = iso(o.x + 1, o.y + 1); bubble(ctx, x, y - 78 + Math.sin(t / 300) * 2, 'plast', st.done); }
-}
-
-// ozdobný domek v městečku
-export function drawTownHouse(ctx, gx, gy, wall, roof) {
-  const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
-  const h = house(ctx, gx + 0.2, gy + 0.2, gx + 1.8, gy + 1.8, 40, 30, wall, roof);
-  const d0 = lerp(h.W, h.S, 0.55), d1 = lerp(h.W, h.S, 0.75);
-  poly(ctx, [d0, d1, [d1[0], d1[1] - 24], [d0[0], d0[1] - 24]], '#6b3f1f');
-  for (const [a, b, k] of [[h.W, h.S, 0.25], [h.S, h.E, 0.5]]) {
-    const w0 = lerp(a, b, k - 0.1), w1 = lerp(a, b, k + 0.1);
-    poly(ctx, [[w0[0], w0[1] - 18], [w1[0], w1[1] - 18], [w1[0], w1[1] - 32], [w0[0], w0[1] - 32]], '#fdf3c4');
-  }
-}
-
-// cedulka s úrovní budovy
-function levelPlate(ctx, o, d) {
-  const L = objLevel(o);
-  if (L < 2) return;
-  const sz = { w: o.w || d.w, h: o.h || d.h };
-  const [x, y] = iso(o.x + sz.w, o.y + sz.h / 2);
-  ctx.fillStyle = '#4f8fd6'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x - 6, y - 10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.font = '800 10px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(String(L), x - 6, y - 9.5);
-  ctx.textBaseline = 'alphabetic';
-}
-
-// panáček: farmář nebo pomocník; walking = jde, work = pracuje
-export function drawPerson(ctx, x, y, shirt, hat, t, walking, work) {
-  const step = walking ? Math.sin(t / 90) : 0;
-  const bend = work ? Math.abs(Math.sin(t / 120)) * 3 : 0;
-  ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(x, y, 6, 2.6, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#2f4f8f'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x - 1.5, y - 9); ctx.lineTo(x - 2 - step * 2, y - 1); ctx.moveTo(x + 1.5, y - 9); ctx.lineTo(x + 2 + step * 2, y - 1); ctx.stroke();
-  ctx.fillStyle = shirt; ctx.fillRect(x - 4, y - 18 + bend, 8, 10);
-  ctx.strokeStyle = shirt; ctx.lineWidth = 2.2;
-  ctx.beginPath(); ctx.moveTo(x - 4, y - 16 + bend); ctx.lineTo(x - 6 + step * 2, y - 10 + bend + (work ? 3 : 0)); ctx.moveTo(x + 4, y - 16 + bend); ctx.lineTo(x + 6 - step * 2, y - 10 + bend + (work ? 3 : 0)); ctx.stroke();
-  ctx.fillStyle = '#f2c9a0'; ctx.beginPath(); ctx.arc(x, y - 21 + bend, 3.6, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = hat; ctx.beginPath(); ctx.ellipse(x, y - 24 + bend, 6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillRect(x - 3, y - 27 + bend, 6, 3);
-  ctx.lineCap = 'butt';
-}
-
-// budova jako obrázek podle šablony: plátno je široké jako základna, vysoké 1,25× šířky
-// a přední roh základny je 12 px (24 px ve 2×) nad spodním okrajem plátna
-function drawSprite(ctx, o, d, im, now, t, farm) {
-  const sz = objSize(o);
-  const W = iso(o.x, o.y + sz.h), E = iso(o.x + sz.w, o.y), S = iso(o.x + sz.w, o.y + sz.h);
-  const w = E[0] - W[0], h = w * 1.25;
-  const top = S[1] + 12 - h;
-  ctx.drawImage(im, W[0], top, w, h);
-  if (d.type === 'pen' && PENS_EMPTY) drawPenAnimals(ctx, o, d, now, t);
-  // bubliny jako u kreslených budov
-  const st = objectStatus(o, now, farm);
-  const bx = (W[0] + E[0]) / 2, by = top + h * spriteTop(im) + 6 + Math.sin(t / 300) * 2;
-  if (d.type === 'factory' && st.done) {
-    const first = queueState(o, now).find(q => q.state === 'done');
-    bubble(ctx, bx, by, ITEMS[first.r].icon, st.done);
-  } else if (d.type === 'pen') {
-    const an = ANIMALS[d.animal];
-    if (st.done) bubble(ctx, bx, by, ITEMS[an.product].icon, st.done);
-    else if (st.hungry && (o.animals || []).length) bubble(ctx, bx, by, ITEMS[an.feed].icon, 0, true);
-  } else if (d.type === 'main' && st.done) bubble(ctx, bx, by, 'truck', st.done);
-}
-
+// ---------- budovy ----------
 export function drawObject(ctx, o, now, t, farm) {
   const d = BUILDINGS[o.kind];
-  const im = spriteImage(o);
-  if (im) { drawSprite(ctx, o, d, im, now, t, farm); if (UPGRADABLE.includes(d.type)) levelPlate(ctx, o, d); return; }
-  if (d.type === 'garage') { drawGarage(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
-  if (d.type === 'dealer') { drawDealer(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
-  if (d.type === 'stall') {
-    const [cx, cy] = iso(o.x + d.w / 2, o.y + d.h / 2);
-    ctx.save(); ctx.translate(cx, cy); ctx.scale(1.5, 1.5); ctx.translate(-cx, -cy);
-    drawStall(ctx, o, d, now, t);
-    ctx.restore(); levelPlate(ctx, o, d); return;
+  if (d.type === 'bigfield') { drawBigField(ctx, o, d, now, t, farm); return; }
+  if (d.type === 'orchard') { drawOrchard(ctx, o, now, t); return; }
+  const name = spriteName(o);
+  const im = name && asset('b', name);
+  if (!im) { placeholder(ctx, o); return; }
+  const b = spriteBox(o);
+  ctx.drawImage(im, b.x, b.top, b.w, b.h);
+  const st = objectStatus(o, now, farm);
+  const by = b.top + b.h * spriteTop(im) + 6 + Math.sin(t / 300) * 2;
+  if (d.type === 'factory' && st.done) {
+    const first = queueState(o, now).find(q => q.state === 'done');
+    bubble(ctx, b.cx, by, ITEMS[first.r].icon, st.done);
+  } else if (d.type === 'pen') {
+    drawPenAnimals(ctx, o, d, now, t);
+    const an = ANIMALS[d.animal];
+    if (st.done) bubble(ctx, b.cx, by, ITEMS[an.product].icon, st.done);
+    else if (st.hungry && (o.animals || []).length) bubble(ctx, b.cx, by, ITEMS[an.feed].icon, 0, true);
+  } else if (d.type === 'main' && st.done) bubble(ctx, b.cx, by, 'truck', st.done);
+  else if (d.type === 'hive') { drawBees(ctx, b, t); if (st.done) bubble(ctx, b.cx, by, 'plast', st.done); }
+  else if (d.type === 'pond' && o.sc !== undefined) {
+    const s = pondStock(o, now);
+    if (s.count) bubble(ctx, b.cx, by + 20, 'kapr', s.count, s.count < s.cap);
   }
-  if (d.type === 'market') { drawMarket(ctx, o, d, now, t); return; }
-  if (d.type === 'pond') { drawPond(ctx, o, d, now, t); levelPlate(ctx, o, d); return; }
-  if (d.type === 'hive') { drawHive(ctx, o, d, now, t, farm); levelPlate(ctx, o, d); return; }
-  if (d.type === 'factory') drawFactory(ctx, o, d, now, t);
-  else if (d.type === 'pen') drawPen(ctx, o, d, now, t);
-  else if (d.type === 'main') drawMain(ctx, o, d, now, t, farm);
-  else if (d.type === 'orchard') drawOrchard(ctx, o, d, now, t);
-  else if (d.type === 'storage') drawStorage(ctx, o, d, now, t);
-  else if (d.type === 'bigfield') drawBigField(ctx, o, d, now, t, farm);
-  else drawDeco(ctx, o, d, now, t);
   if (UPGRADABLE.includes(d.type)) levelPlate(ctx, o, d);
 }
 
-// duch při stavění/přesunu: ghost = { kind, x, y, ok }
+// duch při stavění/přesunu: ghost = { kind, x, y, w, h, ok }
 export function drawGhost(ctx, g, now, t) {
   const d = g.kind === 'plot' ? { w: 1, h: 1 } : g.w ? { w: g.w, h: g.h } : BUILDINGS[g.kind];
   const N = iso(g.x, g.y), E = iso(g.x + d.w, g.y), S = iso(g.x + d.w, g.y + d.h), W = iso(g.x, g.y + d.h);
