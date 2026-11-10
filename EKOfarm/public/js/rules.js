@@ -1,7 +1,7 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-export const RULES_VERSION = 4;
+export const RULES_VERSION = 5;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -12,6 +12,9 @@ export const QUEUE_SIZE = 3;
 export const FREE_PLOTS = 6;        // prvních 6 polí je zdarma
 export const PLOTS_PER_LEVEL = 6;   // s každou úrovní 6 dalších polí
 export const ORDER_SLOTS = 6;
+export const FIELD_CELL_PRICE = 8;  // cena jednoho políčka velkého pole
+export const FIELD_MIN = 3;
+export const FIELD_MAX = 6;
 export const ORDER_WAIT = 3 * 60;   // s – nová zakázka po zrušení
 export const START_PLOTS = [
   [11, 8], [12, 8], [13, 8],
@@ -21,10 +24,10 @@ export const START_PLOTS = [
 // ---------- data ----------
 // time = sekundy
 export const CROPS = {
-  wheat:  { id: 'wheat',  name: 'Pšenice',  level: 1, cost: 1, time: 60,   yield: 2, xp: 1, price: 3,  icon: '🌾' },
-  corn:   { id: 'corn',   name: 'Kukuřice', level: 2, cost: 3, time: 300,  yield: 2, xp: 2, price: 8,  icon: '🌽' },
-  carrot: { id: 'carrot', name: 'Mrkev',    level: 3, cost: 5, time: 600,  yield: 2, xp: 3, price: 12, icon: '🥕' },
-  soy:    { id: 'soy',    name: 'Sója',     level: 5, cost: 8, time: 1200, yield: 2, xp: 4, price: 18, icon: '🫘' },
+  wheat:  { id: 'wheat',  name: 'Pšenice',  level: 1, cost: 1, time: 60,   yield: 2, xp: 1, price: 3,  icon: '🌾', harvester: 'combine' },
+  corn:   { id: 'corn',   name: 'Kukuřice', level: 2, cost: 3, time: 300,  yield: 2, xp: 2, price: 8,  icon: '🌽', harvester: 'combine' },
+  carrot: { id: 'carrot', name: 'Mrkev',    level: 3, cost: 5, time: 600,  yield: 2, xp: 3, price: 12, icon: '🥕' , harvester: 'tractor' },
+  soy:    { id: 'soy',    name: 'Sója',     level: 5, cost: 8, time: 1200, yield: 2, xp: 4, price: 18, icon: '🫘' , harvester: 'combine' },
 };
 export const CROP_LIST = Object.values(CROPS);
 
@@ -74,8 +77,7 @@ export const BUILDINGS = {
   statek:    { id: 'statek',    name: 'Statek',    type: 'main',    level: 1, cost: 0,   w: 3, h: 3, xp: 0,  max: 1, icon: '🏡' },
   sklad:     { id: 'sklad',     name: 'Sklad',     type: 'storage', level: 1, cost: 0,   w: 2, h: 2, xp: 0,  max: 1, icon: '🏚️' },
   sad:       { id: 'sad',       name: 'Sad',       type: 'orchard', level: 3, cost: 0,   w: 1, h: 1, xp: 1,  max: 0, icon: '🌳', info: 'Políčko pro ovocný strom.' },
-  traktor:   { id: 'traktor',   name: 'Traktor',   type: 'machine', level: 3, cost: 250, w: 2, h: 2, xp: 5,  max: 1, icon: '🚜', info: 'Zaseje jednu plodinu na všechna prázdná pole najednou.' },
-  kombajn:   { id: 'kombajn',   name: 'Kombajn',   type: 'machine', level: 5, cost: 500, w: 2, h: 2, xp: 8,  max: 1, icon: '🌾', info: 'Sklidí všechna zralá pole jedním klepnutím.' },
+  velkepole: { id: 'velkepole', name: 'Velké pole', type: 'bigfield', level: 5, cost: 0, w: 4, h: 4, xp: 5,  max: 0, icon: '🌾', info: 'Pole, na kterém pracují stroje. Velikost si zvolíš.' },
   krmivarna: { id: 'krmivarna', name: 'Krmivárna', type: 'factory', level: 2, cost: 40,  w: 2, h: 2, xp: 4,  max: 1, icon: '🥣', color: '#6f9bd1' },
   pekarna:   { id: 'pekarna',   name: 'Pekárna',   type: 'factory', level: 2, cost: 60,  w: 2, h: 2, xp: 5,  max: 1, icon: '🍞', color: '#d9734e' },
   mlekarna:  { id: 'mlekarna',  name: 'Mlékárna',  type: 'factory', level: 6, cost: 200, w: 2, h: 2, xp: 10, max: 1, icon: '🧀', color: '#9fb7c9' },
@@ -94,6 +96,16 @@ export const ANIMALS = {
   krava:   { id: 'krava',   name: 'Kráva',   acc: 'krávu',   home: 'kravin', level: 5, cost: 60, feed: 'krmivo_kravy',   product: 'mleko', time: 1800, xp: 4, max: 3, icon: '🐄' },
 };
 export const ANIMAL_LIST = Object.values(ANIMALS);
+
+// stroje z prodejny; speed = políček za minutu
+export const MACHINES = {
+  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 3, cost: 250,  speed: 6,  color: '#c8452d', icon: '🚜', info: 'Seje na velkém poli, sklízí mrkev. Zaseje i všechna malá pole.' },
+  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 7, cost: 900,  speed: 12, color: '#2f6fb5', icon: '🚜', info: 'Dvakrát rychlejší traktor.' },
+  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 5, cost: 600,  speed: 6,  color: '#4f9a3a', icon: '🌾', info: 'Sklízí obilí, kukuřici a sóju. Sklidí i všechna malá pole.' },
+  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 9, cost: 1800, speed: 12, color: '#d9b43b', icon: '🌾', info: 'Dvakrát rychlejší kombajn.' },
+};
+export const MACHINE_LIST = Object.values(MACHINES);
+export const MACHINE_TYPE_NAME = { tractor: 'traktor', combine: 'kombajn' };
 
 // celkové XP potřebné pro dosažení úrovně (index = úroveň)
 export const LEVEL_XP = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920];
@@ -119,6 +131,7 @@ export function newFarm(now) {
     siloCap: SILO_START,
     plots: [],            // 6 polí si hráč postaví sám, zdarma
     objects: [{ id: 1, kind: 'statek', x: MAIN_POS[0], y: MAIN_POS[1] }],
+    machines: [],         // stroje v garáži: { id, model }
     nextId: 2,
     pending: ['sklad'],   // budovy zdarma, které hráč ještě neumístil
     created: now,
@@ -132,6 +145,13 @@ export function normalize(farm) {
   if (!farm.nextId) farm.nextId = 1;
   if (!farm.siloCap) farm.siloCap = SILO_START;
   if (!Array.isArray(farm.pending)) farm.pending = [];
+  if (!Array.isArray(farm.machines)) farm.machines = [];
+  // v3/v4: traktor a kombajn stály na mapě – převést do garáže
+  const OLD = { traktor: 'brazda60', kombajn: 'klas4' };
+  for (const o of farm.objects.filter(o => OLD[o.kind])) {
+    if (!farm.machines.some(m => m.model === OLD[o.kind])) farm.machines.push({ id: o.id, model: OLD[o.kind] });
+  }
+  farm.objects = farm.objects.filter(o => !OLD[o.kind]);
   if (!farm.objects.some(o => o.kind === 'statek')) {
     // starší farma: statek doprostřed, nebo na nejbližší volné místo
     let pos = fits(farm, MAIN_POS[0], MAIN_POS[1], 3, 3) ? MAIN_POS : null;
@@ -216,6 +236,37 @@ export function treeState(obj, now) {
   return { state: 'growing', progress: Math.max(0, 1 - (obj.readyAt - now) / total), left: Math.ceil((obj.readyAt - now) / 1000) };
 }
 
+// ---------- stroje a velké pole ----------
+export const maxBigFields = level => (level < 5 ? 0 : 1 + Math.floor((level - 5) / 3));
+export const hasMachine = (farm, type) => farm.machines.some(m => MACHINES[m.model].type === type);
+export const findMachine = (farm, id) => farm.machines.find(m => m.id === id) || null;
+export function machineJob(farm, id, now) {
+  return farm.objects.find(o => o.job && o.job.m === id && now < o.job.end) || null;
+}
+// nejrychlejší volný stroj daného typu
+export function freeMachine(farm, type, now) {
+  return farm.machines
+    .filter(m => MACHINES[m.model].type === type && !machineJob(farm, m.id, now))
+    .sort((a, b) => MACHINES[b.model].speed - MACHINES[a.model].speed)[0] || null;
+}
+export const jobSeconds = (cells, model) => Math.ceil(cells / MACHINES[model].speed * 60);
+
+// stav velkého pole: empty | sowing | growing | ready | harvesting | unload
+export function fieldState(o, now) {
+  const cells = o.w * o.h;
+  const j = o.job;
+  if (j && now < j.end) {
+    return { state: j.type === 'sow' ? 'sowing' : 'harvesting', progress: (now - j.start) / (j.end - j.start), left: Math.ceil((j.end - now) / 1000) };
+  }
+  if (j && j.type === 'harvest') return { state: 'unload', progress: 1, left: 0, stock: cells * CROPS[o.crop].yield - (o.taken || 0) };
+  if (o.crop) {
+    if (now >= o.readyAt) return { state: 'ready', progress: 1, left: 0 };
+    const total = o.readyAt - j.end;
+    return { state: 'growing', progress: Math.max(0, (now - j.end) / total), left: Math.ceil((o.readyAt - now) / 1000) };
+  }
+  return { state: 'empty', progress: 0, left: 0 };
+}
+
 // ---------- zakázky ----------
 // deterministický generátor (stejný výsledek na serveru i v prohlížeči)
 function rnd(farm) {
@@ -265,9 +316,15 @@ export function findObject(farm, id) {
 }
 
 // objekt, který zabírá políčko x,y
+// velikost objektu (velké pole má vlastní)
+export function objSize(o) {
+  const d = BUILDINGS[o.kind];
+  return { w: o.w || d.w, h: o.h || d.h };
+}
+
 export function objectAt(farm, x, y) {
   for (const o of farm.objects) {
-    const d = BUILDINGS[o.kind];
+    const d = objSize(o);
     if (x >= o.x && x < o.x + d.w && y >= o.y && y < o.y + d.h) return o;
   }
   return null;
@@ -283,7 +340,7 @@ export function fits(farm, x, y, w, h, ignoreId = 0) {
   for (const p of farm.plots) if (p.x >= x && p.x < x + w && p.y >= y && p.y < y + h) return false;
   for (const o of farm.objects) {
     if (o.id === ignoreId) continue;
-    const d = BUILDINGS[o.kind];
+    const d = objSize(o);
     if (o.x < x + w && x < o.x + d.w && o.y < y + h && y < o.y + d.h) return false;
   }
   return true;
@@ -322,6 +379,10 @@ export function animalState(animal, def, now) {
 // souhrn pro budovu (pro bubliny nad budovou)
 export function objectStatus(obj, now, farm) {
   const d = BUILDINGS[obj.kind];
+  if (d.type === 'bigfield') {
+    const st = fieldState(obj, now).state;
+    return { done: st === 'ready' || st === 'unload' ? 1 : 0, busy: st === 'sowing' || st === 'harvesting' };
+  }
   if (d.type === 'orchard') {
     const st = treeState(obj, now).state;
     return { done: st === 'ready' ? 1 : 0, dead: st === 'dead' };
@@ -366,6 +427,11 @@ export const ERRORS = {
   fixed: 'Statek stojí pevně uprostřed farmy.',
   no_machine: 'Na tohle potřebuješ stroj z obchodu.',
   max_orchards: 'Víc sadů odemkneš na vyšší úrovni.',
+  max_fields: 'Další velké pole odemkneš na vyšší úrovni.',
+  bad_size: 'Velké pole může mít 3×3 až 6×6 políček.',
+  owned: 'Tenhle stroj už máš.',
+  machine_busy: 'Stroj právě pracuje na jiném poli.',
+  wrong_machine: 'Na tuhle plodinu potřebuješ jiný stroj.',
   not_empty_tree: 'V sadu už strom roste.',
   no_order: 'Tahle zakázka teď není.',
   missing: 'Na zakázku ti ještě něco chybí.',
@@ -403,7 +469,7 @@ export function applyAction(farm, a, now) {
       return { ok: true, gained: { items: [{ item: c.id, qty: c.yield }], xp: c.xp, levelUp } };
     }
     case 'sowAll': {
-      if (!countKind(farm, 'traktor')) return fail('no_machine');
+      if (!hasMachine(farm, 'tractor')) return fail('no_machine');
       const c = getCrop(a.crop);
       if (!c) return fail('bad_action');
       if (farm.level < c.level) return fail('locked');
@@ -419,7 +485,7 @@ export function applyAction(farm, a, now) {
       return { ok: true, count: n };
     }
     case 'harvestAll': {
-      if (!countKind(farm, 'kombajn')) return fail('no_machine');
+      if (!hasMachine(farm, 'combine')) return fail('no_machine');
       const ready = farm.plots.filter(p => plotState(p, now).state === 'ready');
       if (!ready.length) return fail('not_ready');
       const items = []; let xp = 0, n = 0;
@@ -456,14 +522,20 @@ export function applyAction(farm, a, now) {
       const d = getBuilding(a.kind);
       if (!d || d.type === 'main') return fail('bad_action');
       const free = farm.pending.includes(d.id);
-      const cost = d.type === 'orchard' ? orchardPrice(farm) : d.cost;
+      let { w, h } = d;
+      if (d.type === 'bigfield') {
+        w = a.w; h = a.h;
+        if (!isInt(w) || !isInt(h) || w < FIELD_MIN || h < FIELD_MIN || w > FIELD_MAX || h > FIELD_MAX) return fail('bad_size');
+      }
+      const cost = d.type === 'orchard' ? orchardPrice(farm) : d.type === 'bigfield' ? w * h * FIELD_CELL_PRICE : d.cost;
       if (!free) {
         if (d.type === 'storage') return fail('max_count');
         if (farm.level < d.level) return fail('locked');
         if (d.max && countKind(farm, d.id) >= d.max) return fail('max_count');
         if (d.type === 'orchard' && countKind(farm, 'sad') >= maxOrchards(farm.level)) return fail('max_orchards');
+        if (d.type === 'bigfield' && countKind(farm, 'velkepole') >= maxBigFields(farm.level)) return fail('max_fields');
       }
-      if (!fits(farm, a.x, a.y, d.w, d.h)) return fail('occupied');
+      if (!fits(farm, a.x, a.y, w, h)) return fail('occupied');
       if (!free && farm.coins < cost) return fail('no_coins');
       if (free) farm.pending.splice(farm.pending.indexOf(d.id), 1);
       else farm.coins -= cost;
@@ -471,6 +543,7 @@ export function applyAction(farm, a, now) {
       if (d.type === 'factory') o.queue = [];
       if (d.type === 'pen') o.animals = [];
       if (d.type === 'orchard') { o.tree = null; o.readyAt = 0; o.left = 0; o.dead = false; }
+      if (d.type === 'bigfield') { o.w = w; o.h = h; o.crop = null; o.job = null; o.readyAt = 0; o.taken = 0; }
       farm.objects.push(o);
       const levelUp = addXp(farm, d.xp);
       return { ok: true, id: o.id, gained: { items: [], xp: d.xp, levelUp } };
@@ -480,7 +553,8 @@ export function applyAction(farm, a, now) {
       if (!o) return fail('no_object');
       const d = BUILDINGS[o.kind];
       if (d.type === 'main') return fail('fixed');
-      if (!fits(farm, a.x, a.y, d.w, d.h, o.id)) return fail('occupied');
+      const sz = objSize(o);
+      if (!fits(farm, a.x, a.y, sz.w, sz.h, o.id)) return fail('occupied');
       o.x = a.x; o.y = a.y;
       return { ok: true };
     }
@@ -592,6 +666,66 @@ export function applyAction(farm, a, now) {
       if (!o.dead) return fail('not_ready');
       o.tree = null; o.dead = false; o.readyAt = 0; o.left = 0;
       return { ok: true };
+    }
+    case 'buyMachine': {
+      const m = own(MACHINES, a.model);
+      if (!m) return fail('bad_action');
+      if (farm.level < m.level) return fail('locked');
+      if (farm.machines.some(x => x.model === m.id)) return fail('owned');
+      if (farm.coins < m.cost) return fail('no_coins');
+      farm.coins -= m.cost;
+      const id = farm.nextId++;
+      farm.machines.push({ id, model: m.id });
+      const levelUp = addXp(farm, 5);
+      return { ok: true, id, gained: { items: [], xp: 5, levelUp } };
+    }
+    case 'fieldSow': {
+      const o = findObject(farm, a.id);
+      if (!o || BUILDINGS[o.kind].type !== 'bigfield') return fail('no_object');
+      if (fieldState(o, now).state !== 'empty') return fail('not_empty');
+      const c = getCrop(a.crop);
+      if (!c) return fail('bad_action');
+      if (farm.level < c.level) return fail('locked');
+      const m = findMachine(farm, a.machine);
+      if (!m || MACHINES[m.model].type !== 'tractor') return fail('no_machine');
+      if (machineJob(farm, m.id, now)) return fail('machine_busy');
+      const cells = o.w * o.h;
+      if (farm.coins < c.cost * cells) return fail('no_coins');
+      farm.coins -= c.cost * cells;
+      o.crop = c.id;
+      o.job = { type: 'sow', m: m.id, start: now, end: now + jobSeconds(cells, m.model) * 1000 };
+      o.readyAt = o.job.end + c.time * 1000;
+      o.taken = 0;
+      return { ok: true };
+    }
+    case 'fieldHarvest': {
+      const o = findObject(farm, a.id);
+      if (!o || BUILDINGS[o.kind].type !== 'bigfield') return fail('no_object');
+      if (fieldState(o, now).state !== 'ready') return fail('not_ready');
+      const m = findMachine(farm, a.machine);
+      if (!m) return fail('no_machine');
+      if (MACHINES[m.model].type !== CROPS[o.crop].harvester) return fail('wrong_machine');
+      if (machineJob(farm, m.id, now)) return fail('machine_busy');
+      o.job = { type: 'harvest', m: m.id, start: now, end: now + jobSeconds(o.w * o.h, m.model) * 1000 };
+      o.taken = 0;
+      return { ok: true };
+    }
+    case 'fieldUnload': {
+      const o = findObject(farm, a.id);
+      if (!o || BUILDINGS[o.kind].type !== 'bigfield') return fail('no_object');
+      const st = fieldState(o, now);
+      if (st.state !== 'unload') return fail('not_ready');
+      const c = CROPS[o.crop];
+      const n = Math.min(st.stock, siloFree(farm));
+      if (n <= 0) return fail('silo_full');
+      addItem(farm, c.id, n);
+      let xp = 0;
+      if (!o.taken) xp = c.xp * o.w * o.h;
+      o.taken += n;
+      const levelUp = xp ? addXp(farm, xp) : 0;
+      const rest = st.stock - n;
+      if (!rest) { o.crop = null; o.job = null; o.taken = 0; o.readyAt = 0; }
+      return { ok: true, rest, gained: { items: [{ item: c.id, qty: n }], xp, levelUp } };
     }
     case 'deliver': {
       const o = isInt(a.slot) ? farm.orders[a.slot] : null;

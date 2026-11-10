@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, treeState, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // farma s 6 poli na původních místech (pole jsou zdarma)
@@ -205,8 +205,8 @@ test('traktor a kombajn', () => {
   const f = farm6();
   f.coins = 2000; f.level = 5; f.xp = 70;
   assert.equal(applyAction(f, { type: 'sowAll', crop: 'wheat' }, T0).error, 'no_machine');
-  assert.ok(applyAction(f, { type: 'place', kind: 'traktor', x: 0, y: 0 }, T0).ok);
-  assert.ok(applyAction(f, { type: 'place', kind: 'kombajn', x: 0, y: 3 }, T0).ok);
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'klas4' }, T0).ok);
   applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'corn' }, T0);
   const coins = f.coins;
   const s = applyAction(f, { type: 'sowAll', crop: 'wheat' }, T0);
@@ -298,4 +298,77 @@ test('výdělek: zakázka platí víc než výkup', () => {
     const value = o.items.reduce((n, x) => n + ITEMS[x.item].price * x.qty, 0);
     assert.ok(o.coins >= value * 1.3, 'aspoň o 30 % víc');
   }
+});
+
+test('prodejna strojů a převod starých strojů do garáže', () => {
+  const f = farm6();
+  f.coins = 5000;
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'locked');
+  f.level = 7; f.xp = 140;
+  assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'owned');
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'klas8' }, T0).error, 'locked');
+  assert.equal(applyAction(f, { type: 'buyMachine', model: 'nic' }, T0).error, 'bad_action');
+  assert.equal(f.coins, 4750);
+  const old = { coins: 0, xp: 0, level: 5, silo: {}, plots: [], nextId: 9, objects: [
+    { id: 1, kind: 'statek', x: 7, y: 7 }, { id: 5, kind: 'traktor', x: 0, y: 0 }, { id: 6, kind: 'kombajn', x: 0, y: 3 }] };
+  normalize(old);
+  assert.deepEqual(old.machines, [{ id: 5, model: 'brazda60' }, { id: 6, model: 'klas4' }]);
+  assert.deepEqual(old.objects.map(o => o.kind), ['statek']);
+});
+
+test('velké pole: stavba s vlastní velikostí a cenou za políčko', () => {
+  const f = farm6();
+  f.coins = 5000;
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).error, 'locked');
+  f.level = 5; f.xp = 70;
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 2, h: 4 }, T0).error, 'bad_size');
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 7, h: 3 }, T0).error, 'bad_size');
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 5, y: 5, w: 3, h: 3 }, T0).error, 'occupied', 'statek');
+  const r = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 5, h: 3 }, T0);
+  assert.ok(r.ok);
+  assert.equal(f.coins, 5000 - 15 * 8);
+  assert.equal(objectAt(f, 4, 2).id, r.id);
+  assert.equal(objectAt(f, 5, 2), null);
+  assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 10, w: 3, h: 3 }, T0).error, 'max_fields');
+  assert.ok(applyAction(f, { type: 'move', id: r.id, x: 0, y: 11 }, T0).ok);
+  assert.equal(applyAction(f, { type: 'move', id: r.id, x: 0, y: 15 }, T0).error, 'occupied', 'nevejde se');
+});
+
+test('velké pole: setí traktorem, růst, sklizeň kombajnem, vykládka', () => {
+  const f = farm6();
+  f.coins = 5000; f.level = 5; f.xp = 70;
+  const id = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 6, h: 6 }, T0).id;
+  const o = findObject(f, id);
+  assert.equal(applyAction(f, { type: 'fieldSow', id, crop: 'wheat', machine: 999 }, T0).error, 'no_machine');
+  const tr = applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).id;
+  const kb = applyAction(f, { type: 'buyMachine', model: 'klas4' }, T0).id;
+  assert.equal(applyAction(f, { type: 'fieldSow', id, crop: 'wheat', machine: kb }, T0).error, 'no_machine', 'kombajn neseje');
+  const coins = f.coins;
+  assert.ok(applyAction(f, { type: 'fieldSow', id, crop: 'wheat', machine: tr }, T0).ok);
+  assert.equal(f.coins, coins - 36);
+  assert.equal(fieldState(o, T0 + 1000).state, 'sowing');
+  assert.equal(o.job.end - T0, 6 * 60 * 1000, '36 políček / 6 za minutu');
+  assert.equal(freeMachine(f, 'tractor', T0 + 1000), null, 'traktor pracuje');
+  assert.equal(objectStatus(o, T0 + 1000).busy, true);
+  const sowEnd = o.job.end;
+  assert.equal(fieldState(o, sowEnd + 1000).state, 'growing');
+  assert.equal(applyAction(f, { type: 'fieldHarvest', id, machine: kb }, sowEnd + 1000).error, 'not_ready');
+  const ready = sowEnd + 60000;
+  assert.equal(applyAction(f, { type: 'fieldHarvest', id, machine: tr }, ready).error, 'wrong_machine', 'obilí sklízí kombajn');
+  assert.ok(applyAction(f, { type: 'fieldHarvest', id, machine: kb }, ready).ok);
+  assert.equal(fieldState(o, ready + 1000).state, 'harvesting');
+  assert.equal(applyAction(f, { type: 'fieldUnload', id }, ready + 1000).error, 'not_ready');
+  const done = o.job.end;
+  assert.equal(fieldState(o, done).stock, 72);
+  f.silo = {};
+  let r = applyAction(f, { type: 'fieldUnload', id }, done);
+  assert.equal(r.gained.items[0].qty, 50, 'jen co se vejde');
+  assert.equal(r.gained.xp, 36);
+  assert.equal(r.rest, 22);
+  f.silo = {};
+  r = applyAction(f, { type: 'fieldUnload', id }, done);
+  assert.equal(r.gained.items[0].qty, 22);
+  assert.equal(r.gained.xp, 0, 'XP jen jednou');
+  assert.equal(fieldState(o, done).state, 'empty');
 });

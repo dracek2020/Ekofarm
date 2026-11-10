@@ -9,6 +9,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v4 (10. 11. 2026)**: nová farma začíná bez polí – **6 polí zdarma** kamkoliv (úvod: sklad → 6 polí), pak **+6 polí za úroveň** (od 7. pole 15 🪙, každé další +5). **Sady** od úrovně 3 (2 za úroveň nad 2, cena 30 + 20 × počet) s **5 stromy** (jabloň, hrušeň, švestka, třešeň, meruňka) – plodí opakovaně, pak doslouží a vykope se. **Zakázky** ve Statku (6 míst, platí o 30–70 % víc než výkup, zrušení = nová za 3 min, deterministický generátor `farm.seed`). Bublina 📦 nad statkem, když jde něco doručit.
 
+- **v5 (10. 11. 2026)**: **Prodejna strojů** (tlačítko 🚜 Stroje vlevo nahoře): Traktor Brázda 60 (úr. 3, 250 🪙, 6 políček/min), Brázda 120 (úr. 7, 900, 12/min), Kombajn Klas 4 (úr. 5, 600, 6/min), Klas 8 (úr. 9, 1800, 12/min). Stroje jsou v garáži (`farm.machines`), staré traktory/kombajny z mapy se převedou. **Velké pole** od úrovně 5 (Stavět): velikost 3×3 až 6×6 si hráč zvolí ↔/↕, 8 🪙 za políčko, počet 1 + 1 za každé 3 úrovně nad 5. Setí traktorem a sklizeň (obilí, kukuřice, sója = kombajn; mrkev = traktor) trvají podle rychlosti stroje; stroj je vidět, jak jezdí po řádcích s prachem. Úroda čeká na poli a odveze se do skladu klepnutím (po částech, když je sklad plný). Malá pole stroje obslouží z prodejny (Zasít vše / Sklidit vše).
+
 ## Ekonomika (v4)
 - **Utrácení:** osivo při setí, sazenice stromů, budovy, zvířata, stroje, pole od 7. kusu, sady, rozšíření skladu.
 - **Příjem:** výkup ve skladu (základní cena `price`) a zakázky (1,3–1,7× hodnota + XP).
@@ -24,8 +26,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `schema.sql` | Tabulky D1: `users` (heslo nebo `google_sub`), `sessions`, `farms` (stav farmy jako JSON + `version` proti souběhu) |
 | `public/js/api.js` | Spojení se serverem, plus lokální režim pro testovací verzi (`window.EKO_LOCAL`) |
 | `public/js/render.js` | Izometrické kreslení na canvas: tráva, plot, stromy, pole, rostliny, řazení podle hloubky, bublina s časem, plovoucí texty |
-| `public/js/objects.js` | Kreslení budov (dům se střechou, kouř), ohrad se zvířaty, ozdob a „ducha“ při stavění |
-| `public/js/panels.js` | HTML panelů: obchod, výrobní budova, ohrada, ozdoba, sklad (tlačítka `data-act`) |
+| `public/js/objects.js` | Kreslení budov, ohrad se zvířaty, ozdob, sadů, velkého pole se stroji (`drawVehicle`, `drawBigField`) a „ducha“ při stavění |
+| `public/js/panels.js` | HTML panelů: Stavět, obchod, prodejna strojů (`dealerHtml`), velké pole (`bigfieldHtml`), statek se zakázkami, sad, výroba, ohrada, sklad (tlačítka `data-act`) |
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |
 | `public/index.html`, `public/css/style.css` | Obrazovky a vzhled UI |
 | `tools/build-artifact.mjs` | Sestaví testovací verzi do jednoho souboru `build/ekofarm-artifact.html` |

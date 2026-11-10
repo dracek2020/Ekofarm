@@ -29,7 +29,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .big.on { background: #ffe58a; }
 .big:active, .pill:active, .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--wood-d); }
 
-#banner { position: fixed; left: 50%; transform: translateX(-50%); width: max-content; top: calc(58px + var(--safe-t)); background: rgba(74,50,24,.9); color: #fff; padding: 8px 8px 8px 16px; border-radius: 999px; display: flex; gap: 10px; align-items: center; font-weight: 600; font-size: 14px; max-width: calc(100% - 20px); }
+#banner { position: fixed; left: 50%; transform: translateX(-50%); width: max-content; top: calc(104px + var(--safe-t)); background: rgba(74,50,24,.9); color: #fff; padding: 8px 8px 8px 16px; border-radius: 999px; display: flex; gap: 10px; align-items: center; font-weight: 600; font-size: 14px; max-width: calc(100% - 20px); }
 #banner button { background: #fff3; border: 0; border-radius: 50%; width: 28px; height: 28px; }
 
 .sheet { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + var(--safe-b)); width: min(560px, calc(100% - 16px)); background: var(--paper); border: 3px solid var(--wood); border-radius: 18px; box-shadow: 0 5px 0 var(--wood-d), 0 10px 30px #0004; padding: 12px; max-height: calc(100% - 160px - var(--safe-b) - var(--safe-t)); overflow: auto; z-index: 10; animation: up .18s ease-out; }
@@ -103,3 +103,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .order .btn.sm { margin: 0; width: 100%; }
 .order .btn.off { opacity: .45; }
 .order .del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: #ead9b5; color: #6f4f28; font-weight: 800; font-size: 12px; }
+
+#dealerBtn { position: fixed; left: 8px; top: calc(56px + var(--safe-t)); }
+#bannerSize { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+#bannerSize .sz { display: inline-flex; align-items: center; gap: 3px; background: #fff2; border-radius: 999px; padding: 2px 6px; }
+#bannerSize button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: #fff; color: var(--ink); font-weight: 800; font-size: 16px; }

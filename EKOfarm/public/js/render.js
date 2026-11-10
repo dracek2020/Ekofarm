@@ -105,7 +105,7 @@ function drawPlot(ctx, gx, gy, planted) {
   }
 }
 
-function drawPlant(ctx, crop, px, py, g, ready, t) {
+export function drawPlant(ctx, crop, px, py, g, ready, t) {
   const sway = ready ? Math.sin(t / 400 + px * 0.13) * 1.6 : 0;
   if (g < 0.2) {
     ctx.fillStyle = '#7cc04f';

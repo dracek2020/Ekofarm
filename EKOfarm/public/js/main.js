@@ -4,10 +4,11 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
+  MACHINES, MACHINE_LIST, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
 } from './rules.js';
 import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js';
 import { createBackend, ApiError } from './api.js';
-import { shopHtml, buildHtml, statekHtml, orchardHtml, traktorHtml, kombajnHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js';
+import { shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js';
 
 const $ = id => document.getElementById(id);
 
@@ -59,12 +60,13 @@ function clampCam() {
 }
 
 const sizeOf = kind => (kind === 'plot' ? { w: 1, h: 1 } : BUILDINGS[kind]);
+const placeSize = () => ({ w: game.place.w, h: game.place.h });
 
 function ghostView() {
   const p = game.place;
   if (!p) return null;
-  const s = sizeOf(p.kind);
-  return { kind: p.kind, x: p.x, y: p.y, moveId: p.moveId, ok: fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
+  const s = placeSize();
+  return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, moveId: p.moveId, ok: fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
 }
 
 function frame(t) {
@@ -98,13 +100,13 @@ function afterChange(a, r) {
     let at = [a.x, a.y];
     if (a.id || r.id) {
       const o = findObject(game.farm, a.id || r.id);
-      if (o) { const d = BUILDINGS[o.kind]; at = [o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2]; }
+      if (o) { const d = objSize(o); at = [o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2]; }
     }
     const parts = g.items.map(i => `+${i.qty}${ITEMS[i.item].icon}`);
     if (g.xp) parts.push(`+${g.xp}⭐`);
     if (parts.length) floatAt(at[0], at[1], parts.join(' '));
     if (g.levelUp) {
-      const unlocked = [...CROP_LIST, ...Object.values(BUILDINGS), ...Object.values(ANIMALS), ...TREE_LIST].filter(c => c.level === g.levelUp).map(c => c.name);
+      const unlocked = [...CROP_LIST, ...Object.values(BUILDINGS), ...Object.values(ANIMALS), ...TREE_LIST, ...MACHINE_LIST].filter(c => c.level === g.levelUp).map(c => c.name);
       toast(`🎉 Úroveň ${g.levelUp}!` + (unlocked.length ? `<br><small>Nově: ${unlocked.join(', ')}</small>` : '<br><small>Můžeš koupit další pole.</small>'), 'lvlup', 3000);
     }
   }
@@ -161,12 +163,12 @@ let gesture = null;
 function inGhost(cell) {
   const p = game.place;
   if (!p) return false;
-  const s = sizeOf(p.kind);
+  const s = placeSize();
   return cell[0] >= p.x && cell[0] < p.x + s.w && cell[1] >= p.y && cell[1] < p.y + s.h;
 }
 
 function setGhost(x, y) {
-  const s = sizeOf(game.place.kind);
+  const s = placeSize();
   game.place.x = Math.max(0, Math.min(GRID_W - s.w, x));
   game.place.y = Math.max(0, Math.min(GRID_H - s.h, y));
 }
@@ -283,7 +285,7 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.
 
 function onTap([gx, gy]) {
   if (game.place) {
-    const s = sizeOf(game.place.kind);
+    const s = placeSize();
     setGhost(gx - Math.floor((s.w - 1) / 2), gy - Math.floor((s.h - 1) / 2));
     return;
   }
@@ -312,12 +314,14 @@ function tapObject(o) {
     if (st === 'empty') { openPanel({ kind: 'obj', id: o.id }); return; }
   }
   if (d.type === 'storage') { openPanel({ kind: 'silo' }); return; }
-  if (d.id === 'kombajn' && game.farm.plots.some(p => plotState(p, now()).state === 'ready')) {
-    const r = act({ type: 'harvestAll' });
-    if (r.ok && r.partial) toast(ERRORS.silo_full);
+  if (d.type === 'bigfield') {
+    if (fieldState(o, now()).state === 'unload') {
+      const r = act({ type: 'fieldUnload', id: o.id });
+      if (r.ok && r.rest) toast(`${ERRORS.silo_full}<br><small>Na poli zbývá ${r.rest} kusů.</small>`);
+    } else openPanel({ kind: 'obj', id: o.id });
     return;
   }
-  if (d.type === 'main' || d.type === 'machine') { openPanel({ kind: 'obj', id: o.id }); return; }
+  if (d.type === 'main') { openPanel({ kind: 'obj', id: o.id }); return; }
   const st = objectStatus(o, now());
   let did = false;
   if (st.done) did = act({ type: 'collect', id: o.id }).ok;
@@ -333,8 +337,7 @@ function tapObject(o) {
 }
 
 // ---------- stavění a přesun ----------
-function nearestFree(kind, cx, cy, moveId = 0) {
-  const s = sizeOf(kind);
+function nearestFree(s, cx, cy, moveId = 0) {
   let best = null, bd = Infinity;
   for (let y = 0; y <= GRID_H - s.h; y++) for (let x = 0; x <= GRID_W - s.w; x++) {
     if (!fits(game.farm, x, y, s.w, s.h, moveId)) continue;
@@ -348,12 +351,13 @@ function startPlace(kind, moveId) {
   closeSheets();
   setSow(null);
   let pos;
+  const size = moveId ? objSize(findObject(game.farm, moveId)) : kind === 'velkepole' ? { w: 4, h: 4 } : sizeOf(kind);
   if (moveId) { const o = findObject(game.farm, moveId); pos = [o.x, o.y]; }
   else {
     const [cx, cy] = screenToCell(W / 2, H / 2, game.cam, W, H);
-    pos = nearestFree(kind, cx, cy) || [cx, cy];
+    pos = nearestFree(size, cx, cy) || [cx, cy];
   }
-  game.place = { kind, moveId, x: 0, y: 0 };
+  game.place = { kind, moveId, x: 0, y: 0, w: size.w, h: size.h };
   setGhost(pos[0], pos[1]);
   updateBanner();
 }
@@ -366,17 +370,17 @@ function confirmPlace() {
     if (!r.ok) return;
     floatAt(p.x, p.y, 'Nové pole!');
     if (game.farm.plots.length >= maxPlots(game.farm.level)) { cancelPlace(); return; }
-    const next = nearestFree('plot', p.x + 1, p.y);
+    const next = nearestFree({ w: 1, h: 1 }, p.x + 1, p.y);
     if (next) setGhost(next[0], next[1]);
     updateBanner();
     return;
   }
   const r = p.moveId
     ? act({ type: 'move', id: p.moveId, x: p.x, y: p.y })
-    : act({ type: 'place', kind: p.kind, x: p.x, y: p.y });
+    : act(p.kind === 'velkepole' ? { type: 'place', kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h } : { type: 'place', kind: p.kind, x: p.x, y: p.y });
   if (!r.ok) return;
   if (!p.moveId && p.kind === 'sad' && countKind(game.farm, 'sad') < maxOrchards(game.farm.level) && game.farm.coins >= orchardPrice(game.farm)) {
-    const next = nearestFree('sad', p.x + 1, p.y);
+    const next = nearestFree({ w: 1, h: 1 }, p.x + 1, p.y);
     if (next) { setGhost(next[0], next[1]); updateBanner(); return; }
   }
   if (!p.moveId) toast(`${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} postaveno!`);
@@ -434,6 +438,7 @@ function renderPanel() {
   let title = '', body = '';
   if (p.kind === 'shop') { title = '🛒 Obchod'; body = shopHtml(f, p.tab); }
   else if (p.kind === 'build') { title = '🔨 Stavět'; body = buildHtml(f); }
+  else if (p.kind === 'dealer') { title = '🚜 Prodejna strojů'; body = dealerHtml(f, now()); }
   else if (p.kind === 'silo') { title = '🏚️ ' + siloTitle(f); body = siloHtml(f); }
   else {
     const o = findObject(f, p.id);
@@ -444,8 +449,7 @@ function renderPanel() {
       : d.type === 'pen' ? penHtml(f, o, now())
       : d.type === 'main' ? statekHtml(f, game.name, now())
       : d.type === 'orchard' ? orchardHtml(f, o, now())
-      : d.id === 'traktor' ? traktorHtml(f, o)
-      : d.id === 'kombajn' ? kombajnHtml(f, o, now())
+      : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
       : decoHtml(f, o);
   }
   $('panelTitle').textContent = title;
@@ -455,7 +459,7 @@ function renderPanel() {
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
-  if (game.panel && game.panel.kind === 'obj' && performance.now() - panelTouch > 700) renderPanel();
+  if (game.panel && (game.panel.kind === 'obj' || game.panel.kind === 'dealer') && performance.now() - panelTouch > 700) renderPanel();
 }, 1000);
 
 $('panelBody').addEventListener('click', e => {
@@ -495,6 +499,25 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'clearTree': act({ type: 'clearTree', id: Number(v) }); break;
+    case 'buyMachine': {
+      const r = act({ type: 'buyMachine', model: v });
+      if (r.ok) toast(`${MACHINES[v].icon} ${MACHINES[v].name} je v garáži!`);
+      break;
+    }
+    case 'fieldSow': {
+      const m = freeMachine(f, 'tractor', now());
+      if (!m) return toast(ERRORS.no_machine);
+      if (act({ type: 'fieldSow', id: game.panel.id, crop: v, machine: m.id }).ok) { toast(`🚜 ${MACHINES[m.model].name} vyjel sít`); closeSheets(); }
+      break;
+    }
+    case 'fieldHarvest':
+      if (act({ type: 'fieldHarvest', id: game.panel.id, machine: Number(v) }).ok) closeSheets();
+      break;
+    case 'fieldUnload': {
+      const r = act({ type: 'fieldUnload', id: Number(v) });
+      if (r.ok && r.rest) toast(`${ERRORS.silo_full}<br><small>Na poli zbývá ${r.rest} kusů.</small>`);
+      break;
+    }
     case 'deliver': {
       const r = act({ type: 'deliver', slot: Number(v) });
       if (r.ok) toast(`🚚 Zakázka doručena: +${r.coins} 🪙`);
@@ -572,6 +595,7 @@ function updateBanner() {
       ? `🟫 Pole zdarma ${f.plots.length + 1}/${FREE_PLOTS} – posuň, kam chceš, a potvrď`
       : `🟫 Nové pole za ${plotPrice(f)} 🪙 (${f.plots.length}/${maxPlots(f.level)}) – posuň a potvrď`;
     else if (p.kind === 'sad' && !p.moveId) text = `🌳 Sad za ${orchardPrice(f)} 🪙 (${countKind(f, 'sad')}/${maxOrchards(f.level)}) – posuň a potvrď`;
+    else if (p.kind === 'velkepole' && !p.moveId) text = `🌾 Velké pole ${p.w}×${p.h} = ${p.w * p.h * FIELD_CELL_PRICE} 🪙`;
     else if (p.moveId) text = `↔ ${BUILDINGS[p.kind].name}: posuň prstem a potvrď`;
     else if (f.pending.includes(p.kind)) text = `${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} zdarma – posuň, kam chceš, a potvrď`;
     else text = `${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} za ${BUILDINGS[p.kind].cost} 🪙 – posuň a potvrď`;
@@ -579,10 +603,24 @@ function updateBanner() {
     text = `${CROPS[game.sowCrop].icon} Setí: ${CROPS[game.sowCrop].name} – táhni prstem přes prázdná pole`;
   }
   $('bannerText').textContent = text;
+  $('bannerSize').hidden = !(p && p.kind === 'velkepole' && !p.moveId);
   $('bannerOk').hidden = !ok;
   $('banner').hidden = !text;
 }
 $('bannerOk').addEventListener('click', confirmPlace);
+$('bannerSize').addEventListener('click', e => {
+  const b = e.target.closest('[data-size]');
+  if (!b || !game.place) return;
+  const [dim, d] = b.dataset.size.split(':');
+  game.place[dim] = Math.max(FIELD_MIN, Math.min(FIELD_MAX, game.place[dim] + Number(d)));
+  setGhost(game.place.x, game.place.y);
+  updateBanner();
+});
+$('dealerBtn').addEventListener('click', () => {
+  cancelPlace();
+  if (game.panel && game.panel.kind === 'dealer') { closeSheets(); return; }
+  openPanel({ kind: 'dealer' });
+});
 $('bannerClose').addEventListener('click', () => { cancelPlace(); setSow(null); });
 
 $('buildBtn').addEventListener('click', () => {
