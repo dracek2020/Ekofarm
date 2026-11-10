@@ -13,6 +13,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 
 - **v6 (10. 11. 2026) – oprava**: ve v5 omylem zmizely panely výroby, ohrady a ozdoby (`factoryHtml`, `penHtml`, `decoHtml`) → hra se v prohlížeči nenačetla. Vráceno. Přidány testy `imports.test.js` (každý import existuje) a `panels.test.js` (každý panel se vykreslí), čísla verzí v adresách skriptů (`?v=N`, proti staré kopii v prohlížeči) a hláška „Hra se nenačetla“ s tlačítkem místo věčného načítání.
 
+- **v7 (10. 11. 2026)**: plodiny brambory (4), řepka (6), slunečnice (7), cukrová řepa (8); budovy Mlýn (mouka), Olejna (olej), Cukrovar (cukr), recept Buchty; nářadí v prodejně: **Pluh** (zorané pole +50 % úrody), **Secí stroj** (setí 2× rychleji), **Lis** (po obilí sláma → balíky); stavy velkého pole `raw/stubble/plowed/sown`, úlohy `plow/sow/harvest/bale`, úroda a balíky čekají v `o.load`. **Denní odměna** (7 dní, `claimDaily`), **úkoly** se 3 stupni (`ACHIEVEMENTS`, statistiky `farm.stats`), **žebříček** (`GET /api/leaderboard`), **tržní ceny** výkupu 0,7–1,4× měněné po 4 h (`marketMult`, stejné na serveru i v prohlížeči). **Vlastní SVG ikony** (`icons.js`, v textu `:klic:` → `iconize()`), **zvuky** přes WebAudio (`sfx.js`), **den a noc** podle hodin (vypínatelné v Menu). Tlačítko Úkoly s červenou tečkou.
+
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
 
@@ -32,6 +34,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `public/js/api.js` | Spojení se serverem, plus lokální režim pro testovací verzi (`window.EKO_LOCAL`) |
 | `public/js/render.js` | Izometrické kreslení na canvas: tráva, plot, stromy, pole, rostliny, řazení podle hloubky, bublina s časem, plovoucí texty |
 | `public/js/objects.js` | Kreslení budov, ohrad se zvířaty, ozdob, sadů, velkého pole se stroji (`drawVehicle`, `drawBigField`) a „ducha“ při stavění |
+| `public/js/icons.js` | Vlastní SVG ikony (`ICONS`), `ic()`, `iconize()` pro text s `:klic:`, `drawIcon`/`drawIconText` pro canvas |
+| `public/js/sfx.js` | Zvuky skládané v prohlížeči (WebAudio), zapnutí/vypnutí |
 | `public/js/panels.js` | HTML panelů: Stavět, obchod, prodejna strojů (`dealerHtml`), velké pole (`bigfieldHtml`), statek se zakázkami, sad, výroba, ohrada, sklad (tlačítka `data-act`) |
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |
 | `public/index.html`, `public/css/style.css` | Obrazovky a vzhled UI |
@@ -52,5 +56,5 @@ https://claude.ai/artifact/YSqsiMDRFJ1iyfj4KzKrsh (aktualizuje se publikováním
 
 ## Další kroky (návrh)
 - Kamarádi – návštěvy farem a stánek pro obchod mezi hráči.
-- Před vydáním: vlastní ikony místo emoji (viz `AUTORSKA_PRAVA.md`), zvuky, push notifikace, aplikace přes Capacitor.
+- Push notifikace (potřebují server s časovačem a klíče VAPID), kamarádi a stánek, aplikace přes Capacitor.
 - Licence: vše vlastní, každý nový asset zapsat do `AUTORSKA_PRAVA.md`.

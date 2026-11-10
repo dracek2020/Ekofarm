@@ -80,3 +80,16 @@ test('validace vstupů', async () => {
   r = await call('/api/register', { method: 'POST', body: { name: '<script>', password: '123456' } });
   assert.equal(r.status, 400);
 });
+
+test('žebříček', async () => {
+  const a = (await call('/api/register', { method: 'POST', body: { name: 'Prvni', password: 'tajne123' } })).data.token;
+  const b = (await call('/api/register', { method: 'POST', body: { name: 'Druhy', password: 'tajne123' } })).data.token;
+  await call('/api/actions', { method: 'POST', token: b, body: { actions: [{ type: 'claimDaily' }] } });
+  let r = await call('/api/leaderboard', { token: a });
+  assert.equal(r.status, 200);
+  assert.ok(r.data.top.length >= 2);
+  assert.ok(r.data.top.some(x => x.me && x.name === 'Prvni'));
+  assert.equal(r.data.me.xp, 0);
+  r = await call('/api/leaderboard');
+  assert.equal(r.status, 401);
+});

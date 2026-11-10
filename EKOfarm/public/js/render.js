@@ -1,6 +1,7 @@
 // EKOfarm – izometrické vykreslování farmy na canvas.
-import { GRID_W, GRID_H, CROPS, plotState } from './rules.js?v=6';
-import { drawObject, drawGhost, objectDepth } from './objects.js?v=6';
+import { GRID_W, GRID_H, CROPS, plotState } from './rules.js?v=7';
+import { drawObject, drawGhost, objectDepth } from './objects.js?v=7';
+import { drawIconText } from './icons.js?v=7';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -165,6 +166,50 @@ export function drawPlant(ctx, crop, px, py, g, ready, t) {
       }
       break;
     }
+    case 'potato': {
+      const r = 6 * s;
+      if (ready) {
+        ctx.fillStyle = '#c99a5b';
+        ctx.beginPath(); ctx.ellipse(px - 4, py, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(px + 3, py + 1, 2.6, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = ready ? '#7a9a3a' : '#4f9a3a';
+      ctx.beginPath(); ctx.arc(px + sway, py - r, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e8e2f0';
+      if (ready) for (const [dx, dy] of [[-3, -8], [3, -6]]) { ctx.beginPath(); ctx.arc(px + dx + sway, py + dy, 1.4, 0, Math.PI * 2); ctx.fill(); }
+      break;
+    }
+    case 'repka': {
+      const h = 16 * s;
+      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 1.6;
+      for (const dx of [-3, 0, 3]) { ctx.beginPath(); ctx.moveTo(px + dx, py); ctx.lineTo(px + dx + sway, py - h); ctx.stroke(); }
+      ctx.fillStyle = ready ? '#8a7a3a' : g > 0.5 ? '#f5d63a' : '#9ccc5c';
+      for (const dx of [-3, 0, 3]) { ctx.beginPath(); ctx.arc(px + dx + sway, py - h - 2, 2.6, 0, Math.PI * 2); ctx.fill(); }
+      break;
+    }
+    case 'sun': {
+      const h = 26 * s;
+      ctx.strokeStyle = '#4f8f37'; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + sway, py - h); ctx.stroke();
+      ctx.fillStyle = '#5fae3a';
+      ctx.beginPath(); ctx.ellipse(px - 4, py - h * 0.45, 4, 2, -0.5, 0, Math.PI * 2); ctx.fill();
+      if (g > 0.55) {
+        ctx.fillStyle = ready ? '#e6a817' : '#f5c22e';
+        ctx.beginPath(); ctx.arc(px + sway, py - h, 5.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#6b4a25';
+        ctx.beginPath(); ctx.arc(px + sway, py - h, 2.6, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
+    case 'beet': {
+      const h = 11 * s;
+      if (ready) { ctx.fillStyle = '#efe3c8'; ctx.beginPath(); ctx.ellipse(px, py - 1, 3.4, 2.4, 0, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#3f8f3a';
+      for (const a of [-0.7, -0.2, 0.3, 0.8]) {
+        ctx.beginPath(); ctx.ellipse(px + Math.sin(a) * 5 + sway, py - h / 2 - 1, 2.6, h / 2, a, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
   }
 }
 
@@ -262,11 +307,25 @@ export function drawScene(ctx, view) {
     ctx.font = '700 18px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(60,35,10,0.8)';
-    ctx.strokeText(f.text, sx, sy - 30 - age * 40);
     ctx.fillStyle = '#fff';
-    ctx.fillText(f.text, sx, sy - 30 - age * 40);
+    drawIconText(ctx, f.text, sx, sy - 30 - age * 40, 20, true);
     ctx.globalAlpha = 1;
   }
+
+  // den a noc podle hodin v zařízení
+  const tint = skyTint(view.hour);
+  if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, W, H); }
+}
+
+// barevný nádech podle denní doby (h = hodina s desetinami)
+export function skyTint(h) {
+  if (h === undefined) return null;
+  const night = 'rgba(20,30,90,', dusk = 'rgba(255,120,40,';
+  if (h >= 22 || h < 5) return night + '0.38)';
+  if (h >= 5 && h < 7) { const k = (h - 5) / 2; return k < 0.5 ? night + (0.38 * (1 - k * 2)).toFixed(2) + ')' : dusk + (0.12 * (1 - k)).toFixed(2) + ')'; }
+  if (h >= 19 && h < 20.5) return dusk + (0.16 * (h - 19) / 1.5).toFixed(2) + ')';
+  if (h >= 20.5 && h < 22) return night + (0.38 * (h - 20.5) / 1.5).toFixed(2) + ')';
+  return null;
 }
 
 function roundRect(ctx, x, y, w, h, r) {

@@ -4,14 +4,16 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-} from './rules.js?v=6';
-import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=6';
-import { createBackend, ApiError } from './api.js?v=6';
-import { shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=6';
+  MACHINES, MACHINE_LIST, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+} from './rules.js?v=7';
+import { drawScene, screenToCell, cellCenter, fmtTime } from './render.js?v=7';
+import { createBackend, ApiError } from './api.js?v=7';
+import { iconize, ic } from './icons.js?v=7';
+import { sfx, soundOn, setSound } from './sfx.js?v=7';
+import { tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle } from './panels.js?v=7';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 
 const game = {
@@ -73,21 +75,31 @@ function ghostView() {
 
 function frame(t) {
   if (game.farm) {
+    const d = new Date();
+    game.hour = game.dayNight === false ? undefined : d.getHours() + d.getMinutes() / 60;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (game.bubble && t > game.bubble.until) game.bubble = null;
     game.floats = game.floats.filter(f => t - f.t0 < 1300);
     drawScene(ctx, {
       farm: game.farm, now: now(), t, cam: game.cam, W, H,
-      ghost: ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats,
+      ghost: ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour,
     });
   }
   requestAnimationFrame(frame);
 }
 
 // ---------- akce ----------
+const SFX_OF = {
+  harvest: 'harvest', harvestTree: 'harvest', harvestAll: 'harvest', collect: 'harvest', fieldUnload: 'harvest', feed: 'plant',
+  plant: 'plant', sowAll: 'plant', plantTree: 'plant', clearTree: 'build',
+  sell: 'coin', deliver: 'coin', claimDaily: 'coin', claimAch: 'coin', upgradeSilo: 'coin',
+  place: 'build', buyPlot: 'build', move: 'build', buyAnimal: 'build',
+  fieldSow: 'engine', fieldHarvest: 'engine', fieldPlow: 'engine', fieldBale: 'engine', buyMachine: 'engine',
+};
 function act(a, silent) {
   const r = applyAction(game.farm, a, now());
-  if (!r.ok) { if (!silent) toast(ERRORS[r.error] || 'To teď nejde.'); return r; }
+  if (!r.ok) { if (!silent) { toast(ERRORS[r.error] || 'To teď nejde.'); sfx('error'); } return r; }
+  sfx(r.gained && r.gained.levelUp ? 'level' : SFX_OF[a.type] || 'tap');
   game.queue.push(a);
   afterChange(a, r);
   scheduleFlush();
@@ -104,15 +116,15 @@ function afterChange(a, r) {
       const o = findObject(game.farm, a.id || r.id);
       if (o) { const d = objSize(o); at = [o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2]; }
     }
-    const parts = g.items.map(i => `+${i.qty}${ITEMS[i.item].icon}`);
-    if (g.xp) parts.push(`+${g.xp}⭐`);
+    const parts = g.items.map(i => `+${i.qty}:${ITEMS[i.item].icon}:`);
+    if (g.xp) parts.push(`+${g.xp}:xp:`);
     if (parts.length) floatAt(at[0], at[1], parts.join(' '));
     if (g.levelUp) {
       const unlocked = [...CROP_LIST, ...Object.values(BUILDINGS), ...Object.values(ANIMALS), ...TREE_LIST, ...MACHINE_LIST].filter(c => c.level === g.levelUp).map(c => c.name);
-      toast(`🎉 Úroveň ${g.levelUp}!` + (unlocked.length ? `<br><small>Nově: ${unlocked.join(', ')}</small>` : '<br><small>Můžeš koupit další pole.</small>'), 'lvlup', 3000);
+      toast(`:trophy: Úroveň ${g.levelUp}!` + (unlocked.length ? `<br><small>Nově: ${unlocked.join(', ')}</small>` : '<br><small>Můžeš koupit další pole.</small>'), 'lvlup', 3000);
     }
   }
-  if (a.type === 'plant') floatAt(a.x, a.y, `−${CROPS[a.crop].cost} 🪙`);
+  if (a.type === 'plant') floatAt(a.x, a.y, `−${CROPS[a.crop].cost} :coin:`);
   updateHud();
 }
 
@@ -311,7 +323,7 @@ function tapObject(o) {
   const d = BUILDINGS[o.kind];
   if (d.type === 'orchard') {
     const st = treeState(o, now()).state;
-    if (st === 'dead') { if (act({ type: 'clearTree', id: o.id }).ok) floatAt(o.x, o.y, '🪓 vykopáno'); return; }
+    if (st === 'dead') { if (act({ type: 'clearTree', id: o.id }).ok) floatAt(o.x, o.y, ':axe: vykopáno'); return; }
     if (st === 'growing') { openPanel({ kind: 'obj', id: o.id }); return; }
     if (st === 'empty') { openPanel({ kind: 'obj', id: o.id }); return; }
   }
@@ -332,7 +344,7 @@ function tapObject(o) {
     const after = objectStatus(o, now());
     if (after.hungry && have(game.farm, an.feed) > 0) {
       const r = act({ type: 'feed', id: o.id }, true);
-      if (r.ok) { floatAt(o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2, `−${r.fed}${ITEMS[an.feed].icon}`); did = true; }
+      if (r.ok) { floatAt(o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2, `−${r.fed}:${ITEMS[an.feed].icon}:`); did = true; }
     }
   }
   if (!did) openPanel({ kind: 'obj', id: o.id });
@@ -385,7 +397,7 @@ function confirmPlace() {
     const next = nearestFree({ w: 1, h: 1 }, p.x + 1, p.y);
     if (next) { setGhost(next[0], next[1]); updateBanner(); return; }
   }
-  if (!p.moveId) toast(`${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} postaveno!`);
+  if (!p.moveId) toast(`:${BUILDINGS[p.kind].icon}: ${BUILDINGS[p.kind].name} postaveno!`);
   cancelPlace();
   startIntro();
 }
@@ -403,6 +415,7 @@ function updateHud() {
   const lp = levelProgress(f);
   $('xpFill').style.width = Math.min(100, 100 * lp.cur / lp.need) + '%';
   $('silo').textContent = `${siloUsed(f)}/${f.siloCap}`;
+  $('tasksDot').hidden = !(canClaimDaily(f, now()) || claimableAch(f));
   if (game.panel) renderPanel();
   if (!$('picker').hidden && game.pickPlot) renderPicker();
   updateBanner();
@@ -411,7 +424,7 @@ function updateHud() {
 let toastTimer = null;
 function toast(html, cls = '', ms = 1800) {
   const el = $('toast');
-  el.innerHTML = html;
+  el.innerHTML = iconize(html);
   el.className = 'show ' + cls;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.className = cls; }, ms);
@@ -438,15 +451,16 @@ function renderPanel() {
   const p = game.panel, f = game.farm;
   if (!p || !f) return;
   let title = '', body = '';
-  if (p.kind === 'shop') { title = '🛒 Obchod'; body = shopHtml(f, p.tab); }
-  else if (p.kind === 'build') { title = '🔨 Stavět'; body = buildHtml(f); }
-  else if (p.kind === 'dealer') { title = '🚜 Prodejna strojů'; body = dealerHtml(f, now()); }
-  else if (p.kind === 'silo') { title = '🏚️ ' + siloTitle(f); body = siloHtml(f); }
+  if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
+  else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f); }
+  else if (p.kind === 'dealer') { title = ':tractor: Prodejna strojů'; body = dealerHtml(f, now()); }
+  else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
+  else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board); }
   else {
     const o = findObject(f, p.id);
     if (!o) { closeSheets(); return; }
     const d = BUILDINGS[o.kind];
-    title = `${d.icon} ${d.name}`;
+    title = `:${d.icon}: ${d.name}`;
     body = d.type === 'factory' ? factoryHtml(f, o, now())
       : d.type === 'pen' ? penHtml(f, o, now())
       : d.type === 'main' ? statekHtml(f, game.name, now())
@@ -454,14 +468,14 @@ function renderPanel() {
       : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
       : decoHtml(f, o);
   }
-  $('panelTitle').textContent = title;
-  $('panelBody').innerHTML = body;
+  $('panelTitle').innerHTML = iconize(title);
+  $('panelBody').innerHTML = iconize(body);
 }
 // živé odpočty – ale ne ve chvíli, kdy hráč zrovna klepe
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
-  if (game.panel && (game.panel.kind === 'obj' || game.panel.kind === 'dealer') && performance.now() - panelTouch > 700) renderPanel();
+  if (game.panel && ['obj', 'dealer', 'silo'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
 }, 1000);
 
 $('panelBody').addEventListener('click', e => {
@@ -488,28 +502,43 @@ $('panelBody').addEventListener('click', e => {
       break;
     case 'buyAnimal': {
       const r = act({ type: 'buyAnimal', animal: v });
-      if (r.ok) toast(`${ANIMALS[v].icon} ${ANIMALS[v].name} je v ohradě!`);
+      if (r.ok) toast(`:${ANIMALS[v].icon}: ${ANIMALS[v].name} je v ohradě!`);
       break;
     }
     case 'upgradeSilo':
-      if (act({ type: 'upgradeSilo' }).ok) toast(`🏚️ Sklad má teď ${f.siloCap} míst`);
+      if (act({ type: 'upgradeSilo' }).ok) toast(`:barn: Sklad má teď ${f.siloCap} míst`);
       break;
     case 'produce': act({ type: 'produce', id: game.panel.id, recipe: v }); break;
     case 'plantTree': {
       const r = act({ type: 'plantTree', id: game.panel.id, tree: v });
-      if (r.ok) { const o = findObject(f, game.panel.id); floatAt(o.x, o.y, `−${TREES[v].cost} 🪙`); closeSheets(); }
+      if (r.ok) { const o = findObject(f, game.panel.id); floatAt(o.x, o.y, `−${TREES[v].cost} :coin:`); closeSheets(); }
       break;
     }
     case 'clearTree': act({ type: 'clearTree', id: Number(v) }); break;
+    case 'ttab': game.panel.tab = v; if (v === 'zebricek') loadBoard(); renderPanel(); break;
+    case 'claimDaily': {
+      const r = act({ type: 'claimDaily' });
+      if (r.ok) toast(`:gift: Den ${r.streak}: +${r.coins} :coin:`, 'lvlup', 2200);
+      break;
+    }
+    case 'claimAch': {
+      const r = act({ type: 'claimAch', id: v });
+      if (r.ok) toast(`:trophy: Úkol splněn: +${r.coins} :coin:`, 'lvlup', 2200);
+      break;
+    }
+    case 'fieldPlow':
+    case 'fieldBale':
+      if (act({ type: b.dataset.act, id: game.panel.id, machine: Number(v) }).ok) closeSheets();
+      break;
     case 'buyMachine': {
       const r = act({ type: 'buyMachine', model: v });
-      if (r.ok) toast(`${MACHINES[v].icon} ${MACHINES[v].name} je v garáži!`);
+      if (r.ok) toast(`:${MACHINES[v].icon}: ${MACHINES[v].name} je v garáži!`);
       break;
     }
     case 'fieldSow': {
       const m = freeMachine(f, 'tractor', now());
       if (!m) return toast(ERRORS.no_machine);
-      if (act({ type: 'fieldSow', id: game.panel.id, crop: v, machine: m.id }).ok) { toast(`🚜 ${MACHINES[m.model].name} vyjel sít`); closeSheets(); }
+      if (act({ type: 'fieldSow', id: game.panel.id, crop: v, machine: m.id }).ok) { toast(`:tractor: ${MACHINES[m.model].name} vyjel sít`); closeSheets(); }
       break;
     }
     case 'fieldHarvest':
@@ -522,13 +551,13 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'deliver': {
       const r = act({ type: 'deliver', slot: Number(v) });
-      if (r.ok) toast(`🚚 Zakázka doručena: +${r.coins} 🪙`);
+      if (r.ok) toast(`:truck: Zakázka doručena: +${r.coins} :coin:`);
       break;
     }
     case 'discard': act({ type: 'discard', slot: Number(v) }); break;
     case 'sowAll': {
       const r = act({ type: 'sowAll', crop: v });
-      if (r.ok) { toast(`🚜 Zaseto ${r.count} polí: ${CROPS[v].name}`); closeSheets(); }
+      if (r.ok) { toast(`:tractor: Zaseto ${r.count} polí: ${CROPS[v].name}`); closeSheets(); }
       break;
     }
     case 'harvestAll': {
@@ -545,7 +574,8 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'sell': {
       const qty = b.dataset.q === 'all' ? have(f, v) : 1;
-      if (qty > 0 && act({ type: 'sell', item: v, qty }).ok) toast(`+${qty * ITEMS[v].price} 🪙`);
+      const price = sellPrice(v, now());
+      if (qty > 0 && act({ type: 'sell', item: v, qty }).ok) toast(`+${qty * price} :coin:`);
       break;
     }
   }
@@ -559,15 +589,15 @@ function openPicker(plot) {
 }
 function renderPicker() {
   const f = game.farm;
-  $('cropList').innerHTML = CROP_LIST.map(c => {
+  $('cropList').innerHTML = iconize(CROP_LIST.map(c => {
     const locked = f.level < c.level;
     return `<button class="crop${locked ? ' locked' : ''}" data-crop="${c.id}">
-      <div class="ico">${c.icon}</div>
+      <div class="ico">:${c.icon}:</div>
       <div class="nm">${c.name}</div>
-      <div class="meta">${locked ? `🔒 úroveň ${c.level}` : `${c.cost} 🪙 · ⏱ ${fmtTime(c.time)}`}</div>
-      <div class="meta">${locked ? '&nbsp;' : `sklizeň ${c.yield}× · ${c.price} 🪙/ks`}</div>
+      <div class="meta">${locked ? `:lock: úroveň ${c.level}` : `${c.cost} :coin: · :clock: ${fmtTime(c.time)}`}</div>
+      <div class="meta">${locked ? '&nbsp;' : `sklizeň ${c.yield}× · ${c.price} :coin:/ks`}</div>
     </button>`;
-  }).join('');
+  }).join(''));
 }
 $('cropList').addEventListener('click', e => {
   const b = e.target.closest('[data-crop]');
@@ -594,17 +624,17 @@ function updateBanner() {
   if (p) {
     ok = true;
     if (p.kind === 'plot') text = f.plots.length < FREE_PLOTS
-      ? `🟫 Pole zdarma ${f.plots.length + 1}/${FREE_PLOTS} – posuň, kam chceš, a potvrď`
-      : `🟫 Nové pole za ${plotPrice(f)} 🪙 (${f.plots.length}/${maxPlots(f.level)}) – posuň a potvrď`;
-    else if (p.kind === 'sad' && !p.moveId) text = `🌳 Sad za ${orchardPrice(f)} 🪙 (${countKind(f, 'sad')}/${maxOrchards(f.level)}) – posuň a potvrď`;
-    else if (p.kind === 'velkepole' && !p.moveId) text = `🌾 Velké pole ${p.w}×${p.h} = ${p.w * p.h * FIELD_CELL_PRICE} 🪙`;
+      ? `:plot: Pole zdarma ${f.plots.length + 1}/${FREE_PLOTS} – posuň, kam chceš, a potvrď`
+      : `:plot: Nové pole za ${plotPrice(f)} :coin: (${f.plots.length}/${maxPlots(f.level)}) – posuň a potvrď`;
+    else if (p.kind === 'sad' && !p.moveId) text = `:tree: Sad za ${orchardPrice(f)} :coin: (${countKind(f, 'sad')}/${maxOrchards(f.level)}) – posuň a potvrď`;
+    else if (p.kind === 'velkepole' && !p.moveId) text = `:field: Velké pole ${p.w}×${p.h} = ${p.w * p.h * FIELD_CELL_PRICE} :coin:`;
     else if (p.moveId) text = `↔ ${BUILDINGS[p.kind].name}: posuň prstem a potvrď`;
-    else if (f.pending.includes(p.kind)) text = `${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} zdarma – posuň, kam chceš, a potvrď`;
-    else text = `${BUILDINGS[p.kind].icon} ${BUILDINGS[p.kind].name} za ${BUILDINGS[p.kind].cost} 🪙 – posuň a potvrď`;
+    else if (f.pending.includes(p.kind)) text = `:${BUILDINGS[p.kind].icon}: ${BUILDINGS[p.kind].name} zdarma – posuň, kam chceš, a potvrď`;
+    else text = `:${BUILDINGS[p.kind].icon}: ${BUILDINGS[p.kind].name} za ${BUILDINGS[p.kind].cost} :coin: – posuň a potvrď`;
   } else if (game.sowCrop) {
-    text = `${CROPS[game.sowCrop].icon} Setí: ${CROPS[game.sowCrop].name} – táhni prstem přes prázdná pole`;
+    text = `:${CROPS[game.sowCrop].icon}: Setí: ${CROPS[game.sowCrop].name} – táhni prstem přes prázdná pole`;
   }
-  $('bannerText').textContent = text;
+  $('bannerText').innerHTML = iconize(text);
   $('bannerSize').hidden = !(p && p.kind === 'velkepole' && !p.moveId);
   $('bannerOk').hidden = !ok;
   $('banner').hidden = !text;
@@ -618,6 +648,28 @@ $('bannerSize').addEventListener('click', e => {
   setGhost(game.place.x, game.place.y);
   updateBanner();
 });
+function loadBoard() {
+  game.board = null;
+  game.backend.leaderboard().then(b => { game.board = b; if (game.panel && game.panel.kind === 'tasks') renderPanel(); })
+    .catch(() => { game.board = { top: [], me: null }; renderPanel(); });
+}
+$('tasksBtn').addEventListener('click', () => {
+  cancelPlace();
+  if (game.panel && game.panel.kind === 'tasks') { closeSheets(); return; }
+  openPanel({ kind: 'tasks', tab: 'odmeny' });
+});
+function menuLabels() {
+  $('soundBtn').innerHTML = iconize(soundOn() ? ':sound: Zvuk: zapnutý' : ':mute: Zvuk: vypnutý');
+  $('dayBtn').innerHTML = iconize(game.dayNight === false ? ':clock: Den a noc: vypnuto' : ':clock: Den a noc podle hodin: zapnuto');
+}
+try { game.dayNight = localStorage.getItem('ekofarm_daynight') !== 'off'; } catch { game.dayNight = true; }
+$('soundBtn').addEventListener('click', () => { setSound(!soundOn()); sfx('tap'); menuLabels(); });
+$('dayBtn').addEventListener('click', () => {
+  game.dayNight = game.dayNight === false;
+  try { localStorage.setItem('ekofarm_daynight', game.dayNight ? 'on' : 'off'); } catch { /* nevadí */ }
+  menuLabels();
+});
+document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic); });
 $('dealerBtn').addEventListener('click', () => {
   cancelPlace();
   if (game.panel && game.panel.kind === 'dealer') { closeSheets(); return; }
@@ -647,6 +699,7 @@ $('menuBtn').addEventListener('click', () => {
     : 'Farma se ukládá na server, můžeš hrát z více zařízení.' + (game.google ? ' Přihlašuješ se přes Google.' : '');
   $('gLinkWrap').hidden = !(googleReady && !game.google);
   if (googleReady && !game.google) renderGoogleButton('gLinkBtn', 'signin');
+  menuLabels();
   $('menuPanel').hidden = false;
 });
 $('logoutBtn').addEventListener('click', async () => {
@@ -687,7 +740,7 @@ function enterGame(res) {
   centerCamera();
   clampCam();
   setSow(null);
-  if (res.created && res.google) toast(`Vítej na farmě, ${res.name}! 🌾`, '', 2500);
+  if (res.created && res.google) toast(`Vítej na farmě, ${res.name}! :wheat:`, '', 2500);
   startIntro();
 }
 
@@ -697,10 +750,12 @@ function startIntro() {
   if (game.place) return;
   if (f.pending.includes('sklad')) {
     startPlace('sklad');
-    toast('🏚️ Dostal jsi sklad zdarma.<br><small>Posuň ho, kam chceš, a potvrď ✓</small>', '', 3500);
+    toast(':barn: Dostal jsi sklad zdarma.<br><small>Posuň ho, kam chceš, a potvrď ✓</small>', '', 3500);
   } else if (f.plots.length < FREE_PLOTS) {
     startPlace('plot');
-    toast(`🟫 Postav si ${FREE_PLOTS - f.plots.length} polí zdarma.<br><small>Každé posuň, kam chceš, a potvrď ✓</small>`, '', 3500);
+    toast(`:plot: Postav si ${FREE_PLOTS - f.plots.length} polí zdarma.<br><small>Každé posuň, kam chceš, a potvrď ✓</small>`, '', 3500);
+  } else if (canClaimDaily(f, now())) {
+    toast(':gift: Denní odměna čeká v <b>Úkolech</b>!', '', 2800);
   }
 }
 
@@ -721,7 +776,7 @@ async function onGoogle(resp) {
     if (linking) {
       game.google = true;
       $('gLinkWrap').hidden = true;
-      toast('✔ Farma je propojená s Googlem');
+      toast('✓ Farma je propojená s Googlem');
     } else enterGame(res);
   } catch (e) {
     if (linking) toast(e.message); else $('lErr').textContent = e.message;

@@ -20,4 +20,30 @@ test('všechny panely se vykreslí', () => {
     P.dealerHtml(f, T), P.shopHtml(f, 'zvirata'), P.shopHtml(f, 'farma'), P.buildHtml(f), P.statekHtml(f, 'X', T),
   ];
   for (const h of out) assert.ok(typeof h === 'string' && h.length > 5);
+  // velké pole ve všech stavech
+  const tr = R.applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T).id;
+  const kb = R.applyAction(f, { type: 'buyMachine', model: 'klas4' }, T).id;
+  for (const m of ['pluh', 'secka', 'lis']) R.applyAction(f, { type: 'buyMachine', model: m }, T);
+  f.siloCap = 9999;
+  const fo = o(ids[4]);
+  const steps = [
+    t => R.applyAction(f, { type: 'fieldPlow', id: fo.id, machine: tr }, t),
+    t => R.applyAction(f, { type: 'fieldSow', id: fo.id, crop: 'wheat', machine: tr }, t),
+    null,
+    t => R.applyAction(f, { type: 'fieldHarvest', id: fo.id, machine: kb }, t),
+    t => R.applyAction(f, { type: 'fieldUnload', id: fo.id }, t),
+    t => R.applyAction(f, { type: 'fieldBale', id: fo.id, machine: tr }, t),
+    t => R.applyAction(f, { type: 'fieldUnload', id: fo.id }, t),
+  ];
+  let t = T;
+  const seen = new Set();
+  for (const step of steps) {
+    if (step) assert.ok(step(t).ok);
+    for (const dt of [1000, 100000, 3600000]) {
+      seen.add(R.fieldState(fo, t + dt).state);
+      assert.ok(P.bigfieldHtml(f, fo, t + dt).length > 10);
+    }
+    t += 3600000;
+  }
+  for (const s of ['plowing', 'empty', 'sowing', 'growing', 'ready', 'harvesting', 'unload', 'baling']) assert.ok(seen.has(s), 'stav ' + s);
 });

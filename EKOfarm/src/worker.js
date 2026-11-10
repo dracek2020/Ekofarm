@@ -32,6 +32,7 @@ async function route(req, env, path) {
   if (!user) return json({ error: 'auth', message: 'Přihlas se prosím znovu.' }, 401);
   if (m === 'POST' && path === '/api/logout') return logout(req, env);
   if (m === 'GET' && path === '/api/state') return getState(env, user);
+  if (m === 'GET' && path === '/api/leaderboard') return leaderboard(env, user);
   if (m === 'POST' && path === '/api/actions') return actions(req, env, user);
   return json({ error: 'not_found' }, 404);
 }
@@ -139,6 +140,19 @@ async function loadFarm(env, userId) {
 async function getState(env, user) {
   const row = await loadFarm(env, user.id);
   return json({ name: user.name, farm: row.farm, now: Date.now(), google: user.google });
+}
+
+// žebříček: 20 nejlepších farem podle XP + moje místo
+async function leaderboard(env, user) {
+  const top = await env.DB.prepare(
+    "SELECT u.id, u.name, json_extract(f.state, '$.level') AS level, json_extract(f.state, '$.xp') AS xp FROM farms f JOIN users u ON u.id = f.user_id ORDER BY xp DESC, u.id ASC LIMIT 20"
+  ).bind().all();
+  const mine = await env.DB.prepare("SELECT json_extract(state, '$.xp') AS xp FROM farms WHERE user_id = ?").bind(user.id).first();
+  const better = await env.DB.prepare("SELECT COUNT(*) AS n FROM farms WHERE json_extract(state, '$.xp') > ?").bind(mine ? mine.xp : 0).first();
+  return json({
+    top: (top.results || []).map(r => ({ name: r.name, level: r.level || 1, xp: r.xp || 0, me: r.id === user.id })),
+    me: { rank: (better ? better.n : 0) + 1, xp: mine ? mine.xp : 0 },
+  });
 }
 
 async function actions(req, env, user) {

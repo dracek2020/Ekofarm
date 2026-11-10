@@ -1,7 +1,7 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-export const RULES_VERSION = 5;
+export const RULES_VERSION = 7;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -24,29 +24,38 @@ export const START_PLOTS = [
 // ---------- data ----------
 // time = sekundy
 export const CROPS = {
-  wheat:  { id: 'wheat',  name: 'Pšenice',  level: 1, cost: 1, time: 60,   yield: 2, xp: 1, price: 3,  icon: '🌾', harvester: 'combine' },
-  corn:   { id: 'corn',   name: 'Kukuřice', level: 2, cost: 3, time: 300,  yield: 2, xp: 2, price: 8,  icon: '🌽', harvester: 'combine' },
-  carrot: { id: 'carrot', name: 'Mrkev',    level: 3, cost: 5, time: 600,  yield: 2, xp: 3, price: 12, icon: '🥕' , harvester: 'tractor' },
-  soy:    { id: 'soy',    name: 'Sója',     level: 5, cost: 8, time: 1200, yield: 2, xp: 4, price: 18, icon: '🫘' , harvester: 'combine' },
+  wheat:  { id: 'wheat',  name: 'Pšenice',  level: 1, cost: 1, time: 60,   yield: 2, xp: 1, price: 3,  icon: 'wheat', harvester: 'combine' },
+  corn:   { id: 'corn',   name: 'Kukuřice', level: 2, cost: 3, time: 300,  yield: 2, xp: 2, price: 8,  icon: 'corn', harvester: 'combine' },
+  carrot: { id: 'carrot', name: 'Mrkev',    level: 3, cost: 5, time: 600,  yield: 2, xp: 3, price: 12, icon: 'carrot' , harvester: 'tractor' },
+  soy:    { id: 'soy',    name: 'Sója',     level: 5, cost: 8, time: 1200, yield: 2, xp: 4, price: 18, icon: 'soy' , harvester: 'combine' },
+  potato: { id: 'potato', name: 'Brambory', level: 4, cost: 6,  time: 900,  yield: 2, xp: 3, price: 15, icon: 'potato', harvester: 'tractor' },
+  repka:  { id: 'repka',  name: 'Řepka',    level: 6, cost: 10, time: 1500, yield: 2, xp: 5, price: 22, icon: 'repka',  harvester: 'combine' },
+  sun:    { id: 'sun',    name: 'Slunečnice', level: 7, cost: 12, time: 1800, yield: 2, xp: 5, price: 26, icon: 'sun', harvester: 'combine' },
+  beet:   { id: 'beet',   name: 'Cukrová řepa', level: 8, cost: 14, time: 2400, yield: 2, xp: 6, price: 30, icon: 'beet', harvester: 'tractor' },
 };
 export const CROP_LIST = Object.values(CROPS);
 
 export const PRODUCTS = {
-  krmivo_slepice: { id: 'krmivo_slepice', name: 'Krmivo pro slepice', price: 12,  icon: '🥣' },
-  krmivo_kravy:   { id: 'krmivo_kravy',   name: 'Krmivo pro krávy',   price: 26,  icon: '🧺' },
-  vejce:          { id: 'vejce',          name: 'Vejce',              price: 22,  icon: '🥚' },
-  mleko:          { id: 'mleko',          name: 'Mléko',              price: 45,  icon: '🥛' },
-  chleb:          { id: 'chleb',          name: 'Chléb',              price: 25,  icon: '🍞' },
-  kolac:          { id: 'kolac',          name: 'Koláč',              price: 60,  icon: '🥧' },
-  smetana:        { id: 'smetana',        name: 'Smetana',            price: 60,  icon: '🍶' },
-  syr:            { id: 'syr',            name: 'Sýr',                price: 110, icon: '🧀' },
+  krmivo_slepice: { id: 'krmivo_slepice', name: 'Krmivo pro slepice', price: 12,  icon: 'krmivo_slepice' },
+  krmivo_kravy:   { id: 'krmivo_kravy',   name: 'Krmivo pro krávy',   price: 26,  icon: 'krmivo_kravy' },
+  vejce:          { id: 'vejce',          name: 'Vejce',              price: 22,  icon: 'vejce' },
+  mleko:          { id: 'mleko',          name: 'Mléko',              price: 45,  icon: 'mleko' },
+  chleb:          { id: 'chleb',          name: 'Chléb',              price: 25,  icon: 'chleb' },
+  kolac:          { id: 'kolac',          name: 'Koláč',              price: 60,  icon: 'kolac' },
+  smetana:        { id: 'smetana',        name: 'Smetana',            price: 60,  icon: 'smetana' },
+  syr:            { id: 'syr',            name: 'Sýr',                price: 110, icon: 'syr' },
+  mouka:          { id: 'mouka',          name: 'Mouka',              price: 15,  icon: 'mouka' },
+  olej:           { id: 'olej',           name: 'Olej',               price: 70,  icon: 'olej' },
+  cukr:           { id: 'cukr',           name: 'Cukr',               price: 75,  icon: 'cukr' },
+  buchty:         { id: 'buchty',         name: 'Buchty',             price: 160, icon: 'buchty' },
+  slama:          { id: 'slama',          name: 'Sláma',              price: 6,   icon: 'slama' },
 };
 export const FRUITS = {
-  jablko:  { id: 'jablko',  name: 'Jablko',  price: 10, icon: '🍎' },
-  hruska:  { id: 'hruska',  name: 'Hruška',  price: 14, icon: '🍐' },
-  svestka: { id: 'svestka', name: 'Švestka', price: 12, icon: '🫐' },
-  tresne:  { id: 'tresne',  name: 'Třešně',  price: 18, icon: '🍒' },
-  merunka: { id: 'merunka', name: 'Meruňka', price: 20, icon: '🍑' },
+  jablko:  { id: 'jablko',  name: 'Jablko',  price: 10, icon: 'jablko' },
+  hruska:  { id: 'hruska',  name: 'Hruška',  price: 14, icon: 'hruska' },
+  svestka: { id: 'svestka', name: 'Švestka', price: 12, icon: 'svestka' },
+  tresne:  { id: 'tresne',  name: 'Třešně',  price: 18, icon: 'tresne' },
+  merunka: { id: 'merunka', name: 'Meruňka', price: 20, icon: 'merunka' },
 };
 
 // stromy do sadu: cost = sazenice, first = první úroda (s), regrow = další úroda (s), harvests = kolikrát plodí
@@ -70,42 +79,82 @@ export const RECIPES = {
   kolac:          { id: 'kolac',          building: 'pekarna',   level: 4, in: { wheat: 2, vejce: 2 }, time: 900,  xp: 6 },
   smetana:        { id: 'smetana',        building: 'mlekarna',  level: 6, in: { mleko: 1 },           time: 600,  xp: 3 },
   syr:            { id: 'syr',            building: 'mlekarna',  level: 7, in: { mleko: 2 },           time: 1200, xp: 6 },
+  mouka:          { id: 'mouka',          building: 'mlyn',      level: 4, in: { wheat: 3 },           time: 240,  xp: 2 },
+  olej:           { id: 'olej',           building: 'olejna',    level: 6, in: { repka: 2 },           time: 600,  xp: 4 },
+  cukr:           { id: 'cukr',           building: 'cukrovar',  level: 8, in: { beet: 2 },            time: 600,  xp: 4 },
+  buchty:         { id: 'buchty',         building: 'pekarna',   level: 8, in: { mouka: 2, cukr: 1, vejce: 1 }, time: 900, xp: 7 },
 };
 
 // type: main (statek), storage (sklad), factory (výroba), pen (ohrada), machine (stroj), deco (ozdoba); max 0 = bez omezení
 export const BUILDINGS = {
-  statek:    { id: 'statek',    name: 'Statek',    type: 'main',    level: 1, cost: 0,   w: 3, h: 3, xp: 0,  max: 1, icon: '🏡' },
-  sklad:     { id: 'sklad',     name: 'Sklad',     type: 'storage', level: 1, cost: 0,   w: 2, h: 2, xp: 0,  max: 1, icon: '🏚️' },
-  sad:       { id: 'sad',       name: 'Sad',       type: 'orchard', level: 3, cost: 0,   w: 1, h: 1, xp: 1,  max: 0, icon: '🌳', info: 'Políčko pro ovocný strom.' },
-  velkepole: { id: 'velkepole', name: 'Velké pole', type: 'bigfield', level: 5, cost: 0, w: 4, h: 4, xp: 5,  max: 0, icon: '🌾', info: 'Pole, na kterém pracují stroje. Velikost si zvolíš.' },
-  krmivarna: { id: 'krmivarna', name: 'Krmivárna', type: 'factory', level: 2, cost: 40,  w: 2, h: 2, xp: 4,  max: 1, icon: '🥣', color: '#6f9bd1' },
-  pekarna:   { id: 'pekarna',   name: 'Pekárna',   type: 'factory', level: 2, cost: 60,  w: 2, h: 2, xp: 5,  max: 1, icon: '🍞', color: '#d9734e' },
-  mlekarna:  { id: 'mlekarna',  name: 'Mlékárna',  type: 'factory', level: 6, cost: 200, w: 2, h: 2, xp: 10, max: 1, icon: '🧀', color: '#9fb7c9' },
-  kurnik:    { id: 'kurnik',    name: 'Kurník',    type: 'pen',     level: 3, cost: 50,  w: 2, h: 2, xp: 5,  max: 1, icon: '🐔', animal: 'slepice' },
-  kravin:    { id: 'kravin',    name: 'Kravín',    type: 'pen',     level: 5, cost: 150, w: 3, h: 3, xp: 8,  max: 1, icon: '🐄', animal: 'krava' },
-  ker:       { id: 'ker',       name: 'Keř',          type: 'deco', level: 1, cost: 10,  w: 1, h: 1, xp: 1, max: 0, icon: '🌳' },
-  kvetiny:   { id: 'kvetiny',   name: 'Záhon květin', type: 'deco', level: 2, cost: 15,  w: 1, h: 1, xp: 1, max: 0, icon: '🌷' },
-  lavicka:   { id: 'lavicka',   name: 'Lavička',      type: 'deco', level: 3, cost: 30,  w: 1, h: 1, xp: 2, max: 0, icon: '🪑' },
-  jablon:    { id: 'jablon',    name: 'Kvetoucí strom', type: 'deco', level: 4, cost: 40,  w: 1, h: 1, xp: 2, max: 0, icon: '🍎' },
-  fontana:   { id: 'fontana',   name: 'Fontána',      type: 'deco', level: 6, cost: 150, w: 1, h: 1, xp: 5, max: 0, icon: '⛲' },
+  statek:    { id: 'statek',    name: 'Statek',    type: 'main',    level: 1, cost: 0,   w: 3, h: 3, xp: 0,  max: 1, icon: 'house' },
+  sklad:     { id: 'sklad',     name: 'Sklad',     type: 'storage', level: 1, cost: 0,   w: 2, h: 2, xp: 0,  max: 1, icon: 'barn' },
+  sad:       { id: 'sad',       name: 'Sad',       type: 'orchard', level: 3, cost: 0,   w: 1, h: 1, xp: 1,  max: 0, icon: 'tree', info: 'Políčko pro ovocný strom.' },
+  velkepole: { id: 'velkepole', name: 'Velké pole', type: 'bigfield', level: 5, cost: 0, w: 4, h: 4, xp: 5,  max: 0, icon: 'field', info: 'Pole, na kterém pracují stroje. Velikost si zvolíš.' },
+  krmivarna: { id: 'krmivarna', name: 'Krmivárna', type: 'factory', level: 2, cost: 40,  w: 2, h: 2, xp: 4,  max: 1, icon: 'krmivo_slepice', color: '#6f9bd1' },
+  pekarna:   { id: 'pekarna',   name: 'Pekárna',   type: 'factory', level: 2, cost: 60,  w: 2, h: 2, xp: 5,  max: 1, icon: 'chleb', color: '#d9734e' },
+  mlekarna:  { id: 'mlekarna',  name: 'Mlékárna',  type: 'factory', level: 6, cost: 200, w: 2, h: 2, xp: 10, max: 1, icon: 'syr', color: '#9fb7c9' },
+  mlyn:      { id: 'mlyn',      name: 'Mlýn',      type: 'factory', level: 4, cost: 120, w: 2, h: 2, xp: 6,  max: 1, icon: 'mouka', color: '#e8dcc0' },
+  olejna:    { id: 'olejna',    name: 'Olejna',    type: 'factory', level: 6, cost: 250, w: 2, h: 2, xp: 8,  max: 1, icon: 'olej',  color: '#d9c25a' },
+  cukrovar:  { id: 'cukrovar',  name: 'Cukrovar',  type: 'factory', level: 8, cost: 400, w: 2, h: 2, xp: 10, max: 1, icon: 'cukr',  color: '#b9c7d6' },
+  kurnik:    { id: 'kurnik',    name: 'Kurník',    type: 'pen',     level: 3, cost: 50,  w: 2, h: 2, xp: 5,  max: 1, icon: 'hen', animal: 'slepice' },
+  kravin:    { id: 'kravin',    name: 'Kravín',    type: 'pen',     level: 5, cost: 150, w: 3, h: 3, xp: 8,  max: 1, icon: 'cow', animal: 'krava' },
+  ker:       { id: 'ker',       name: 'Keř',          type: 'deco', level: 1, cost: 10,  w: 1, h: 1, xp: 1, max: 0, icon: 'bush' },
+  kvetiny:   { id: 'kvetiny',   name: 'Záhon květin', type: 'deco', level: 2, cost: 15,  w: 1, h: 1, xp: 1, max: 0, icon: 'flowers' },
+  lavicka:   { id: 'lavicka',   name: 'Lavička',      type: 'deco', level: 3, cost: 30,  w: 1, h: 1, xp: 2, max: 0, icon: 'bench' },
+  jablon:    { id: 'jablon',    name: 'Kvetoucí strom', type: 'deco', level: 4, cost: 40,  w: 1, h: 1, xp: 2, max: 0, icon: 'blossom' },
+  fontana:   { id: 'fontana',   name: 'Fontána',      type: 'deco', level: 6, cost: 150, w: 1, h: 1, xp: 5, max: 0, icon: 'fountain' },
 };
 export const BUILDING_LIST = Object.values(BUILDINGS);
 
 export const ANIMALS = {
-  slepice: { id: 'slepice', name: 'Slepice', acc: 'slepici', home: 'kurnik', level: 3, cost: 20, feed: 'krmivo_slepice', product: 'vejce', time: 600,  xp: 2, max: 3, icon: '🐔' },
-  krava:   { id: 'krava',   name: 'Kráva',   acc: 'krávu',   home: 'kravin', level: 5, cost: 60, feed: 'krmivo_kravy',   product: 'mleko', time: 1800, xp: 4, max: 3, icon: '🐄' },
+  slepice: { id: 'slepice', name: 'Slepice', acc: 'slepici', home: 'kurnik', level: 3, cost: 20, feed: 'krmivo_slepice', product: 'vejce', time: 600,  xp: 2, max: 3, icon: 'hen' },
+  krava:   { id: 'krava',   name: 'Kráva',   acc: 'krávu',   home: 'kravin', level: 5, cost: 60, feed: 'krmivo_kravy',   product: 'mleko', time: 1800, xp: 4, max: 3, icon: 'cow' },
 };
 export const ANIMAL_LIST = Object.values(ANIMALS);
 
 // stroje z prodejny; speed = políček za minutu
 export const MACHINES = {
-  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 3, cost: 250,  speed: 6,  color: '#c8452d', icon: '🚜', info: 'Seje na velkém poli, sklízí mrkev. Zaseje i všechna malá pole.' },
-  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 7, cost: 900,  speed: 12, color: '#2f6fb5', icon: '🚜', info: 'Dvakrát rychlejší traktor.' },
-  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 5, cost: 600,  speed: 6,  color: '#4f9a3a', icon: '🌾', info: 'Sklízí obilí, kukuřici a sóju. Sklidí i všechna malá pole.' },
-  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 9, cost: 1800, speed: 12, color: '#d9b43b', icon: '🌾', info: 'Dvakrát rychlejší kombajn.' },
+  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 3, cost: 250,  speed: 6,  color: '#c8452d', icon: 'tractor', info: 'Seje na velkém poli, sklízí mrkev. Zaseje i všechna malá pole.' },
+  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 7, cost: 900,  speed: 12, color: '#2f6fb5', icon: 'tractor', info: 'Dvakrát rychlejší traktor.' },
+  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 5, cost: 600,  speed: 6,  color: '#4f9a3a', icon: 'combine', info: 'Sklízí obilí, kukuřici a sóju. Sklidí i všechna malá pole.' },
+  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 9, cost: 1800, speed: 12, color: '#d9b43b', icon: 'combine', info: 'Dvakrát rychlejší kombajn.' },
+  pluh:      { id: 'pluh',      name: 'Pluh',               type: 'plow',    level: 5, cost: 300,  speed: 0,  color: '#8a8f96', icon: 'pluh', info: 'Zorá pole po sklizni. Zorané pole dá o 50 % větší úrodu. Táhne ho traktor.' },
+  secka:     { id: 'secka',     name: 'Secí stroj',         type: 'seeder',  level: 6, cost: 500,  speed: 0,  color: '#3f7fbf', icon: 'secka', info: 'Traktor s ním seje dvakrát rychleji.' },
+  lis:       { id: 'lis',       name: 'Lis na balíky',      type: 'baler',   level: 7, cost: 700,  speed: 0,  color: '#d9b43b', icon: 'lis', info: 'Po sklizni obilí slisuje slámu do balíků. Táhne ho traktor.' },
 };
 export const MACHINE_LIST = Object.values(MACHINES);
-export const MACHINE_TYPE_NAME = { tractor: 'traktor', combine: 'kombajn' };
+
+// ---------- odměny a úkoly ----------
+export const DAILY = [
+  { coins: 20 }, { coins: 30 }, { coins: 40 }, { coins: 60 }, { coins: 80 }, { coins: 100 }, { coins: 200, xp: 10 },
+];
+export const ACHIEVEMENTS = [
+  { id: 'harvest', name: 'Sklízeč',        stat: 'harvest', tiers: [50, 500, 5000],   coins: [50, 250, 1000], icon: 'wheat',  text: 'Sklidit plodin' },
+  { id: 'produce', name: 'Výrobce',        stat: 'produce', tiers: [20, 200, 2000],   coins: [60, 300, 1200], icon: 'chleb',  text: 'Vyrobit výrobků' },
+  { id: 'animal',  name: 'Chovatel',       stat: 'animal',  tiers: [20, 200, 2000],   coins: [60, 300, 1200], icon: 'vejce',  text: 'Sebrat vajec a mléka' },
+  { id: 'fruit',   name: 'Sadař',          stat: 'fruit',   tiers: [30, 300, 3000],   coins: [60, 300, 1200], icon: 'jablko', text: 'Sklidit ovoce' },
+  { id: 'orders',  name: 'Dodavatel',      stat: 'orders',  tiers: [10, 100, 500],    coins: [80, 400, 1500], icon: 'truck',  text: 'Doručit zakázek' },
+  { id: 'sold',    name: 'Obchodník',      stat: 'sold',    tiers: [500, 5000, 50000], coins: [50, 300, 1500], icon: 'coin',  text: 'Vydělat mincí výkupem' },
+  { id: 'jobs',    name: 'Strojník',       stat: 'jobs',    tiers: [5, 50, 300],      coins: [80, 400, 1500], icon: 'tractor', text: 'Prací strojů na velkém poli' },
+];
+const STAT_KEYS = ['harvest', 'produce', 'animal', 'fruit', 'orders', 'sold', 'jobs'];
+
+// výkupní cena se mění každé 4 hodiny (0,7× až 1,4×), stejně na serveru i v prohlížeči
+export const MARKET_PERIOD = 4 * 3600 * 1000;
+export function marketMult(id, now) {
+  const period = Math.floor(now / MARKET_PERIOD);
+  let h = 2166136261;
+  for (const ch of id + ':' + period) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  return Math.round((0.7 + (h % 1000) / 1000 * 0.7) * 100) / 100;
+}
+export const sellPrice = (id, now) => Math.max(1, Math.round(ITEMS[id].price * marketMult(id, now)));
+export const nextMarketChange = now => (Math.floor(now / MARKET_PERIOD) + 1) * MARKET_PERIOD;
+
+// den pro denní odměnu (středoevropský čas, zjednodušeně UTC+1)
+export const dayKey = now => new Date(now + 3600000).toISOString().slice(0, 10);
+export const MACHINE_TYPE_NAME = { tractor: 'traktor', combine: 'kombajn', plow: 'pluh', seeder: 'secí stroj', baler: 'lis' };
+export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model].type);
 
 // celkové XP potřebné pro dosažení úrovně (index = úroveň)
 export const LEVEL_XP = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920];
@@ -146,6 +195,10 @@ export function normalize(farm) {
   if (!farm.siloCap) farm.siloCap = SILO_START;
   if (!Array.isArray(farm.pending)) farm.pending = [];
   if (!Array.isArray(farm.machines)) farm.machines = [];
+  if (!farm.stats) farm.stats = {};
+  for (const k of STAT_KEYS) if (!farm.stats[k]) farm.stats[k] = 0;
+  if (!farm.ach) farm.ach = {};
+  if (!farm.daily) farm.daily = { day: '', streak: 0 };
   // v3/v4: traktor a kombajn stály na mapě – převést do garáže
   const OLD = { traktor: 'brazda60', kombajn: 'klas4' };
   for (const o of farm.objects.filter(o => OLD[o.kind])) {
@@ -198,7 +251,18 @@ export function siloUsed(farm) {
 export const siloFree = farm => farm.siloCap - siloUsed(farm);
 export const siloUpgradePrice = farm => 80 * ((farm.siloCap - SILO_START) / SILO_STEP + 1);
 
-function addItem(farm, id, n) { farm.silo[id] = (farm.silo[id] || 0) + n; }
+const ANIMAL_PRODUCTS = new Set(['vejce', 'mleko']);
+function statOf(id) {
+  if (CROPS[id] || id === 'slama') return 'harvest';
+  if (FRUITS[id]) return 'fruit';
+  if (ANIMAL_PRODUCTS.has(id)) return 'animal';
+  return 'produce';
+}
+function addStat(farm, key, n) { farm.stats[key] = (farm.stats[key] || 0) + n; }
+function addItem(farm, id, n) {
+  farm.silo[id] = (farm.silo[id] || 0) + n;
+  addStat(farm, statOf(id), n);
+}
 function takeItem(farm, id, n) {
   farm.silo[id] -= n;
   if (!farm.silo[id]) delete farm.silo[id];
@@ -251,18 +315,22 @@ export const jobSeconds = (cells, model) => Math.ceil(cells / MACHINES[model].sp
 
 // stav velkého pole: empty | sowing | growing | ready | harvesting | unload
 export function fieldState(o, now) {
-  const cells = o.w * o.h;
   const j = o.job;
   if (j && now < j.end) {
-    return { state: j.type === 'sow' ? 'sowing' : 'harvesting', progress: (now - j.start) / (j.end - j.start), left: Math.ceil((j.end - now) / 1000) };
+    const map = { sow: 'sowing', harvest: 'harvesting', plow: 'plowing', bale: 'baling' };
+    return { state: map[j.type], progress: (now - j.start) / (j.end - j.start), left: Math.ceil((j.end - now) / 1000) };
   }
-  if (j && j.type === 'harvest') return { state: 'unload', progress: 1, left: 0, stock: cells * CROPS[o.crop].yield - (o.taken || 0) };
+  if (o.load && o.load.qty > 0) return { state: 'unload', progress: 1, left: 0, stock: o.load.qty, item: o.load.item };
   if (o.crop) {
     if (now >= o.readyAt) return { state: 'ready', progress: 1, left: 0 };
     const total = o.readyAt - j.end;
     return { state: 'growing', progress: Math.max(0, (now - j.end) / total), left: Math.ceil((o.readyAt - now) / 1000) };
   }
-  return { state: 'empty', progress: 0, left: 0 };
+  return { state: 'empty', progress: 0, left: 0, soil: o.soil || 'raw', straw: !!o.straw };
+}
+export const hasTool = (farm, type) => farm.machines.some(m => MACHINES[m.model].type === type);
+export function fieldYield(o) {
+  return Math.round(o.w * o.h * CROPS[o.crop].yield * (o.mult || 1));
 }
 
 // ---------- zakázky ----------
@@ -429,6 +497,7 @@ export const ERRORS = {
   bad_size: 'Velké pole může mít 3×3 až 6×6 políček.',
   owned: 'Tenhle stroj už máš.',
   machine_busy: 'Stroj právě pracuje na jiném poli.',
+  claimed: 'Dnešní odměnu už máš. Přijď zítra!',
   wrong_machine: 'Na tuhle plodinu potřebuješ jiný stroj.',
   not_empty_tree: 'V sadu už strom roste.',
   no_order: 'Tahle zakázka teď není.',
@@ -513,7 +582,9 @@ export function applyAction(farm, a, now) {
       if (!it || !isInt(a.qty) || a.qty <= 0) return fail('bad_action');
       if (have(farm, it.id) < a.qty) return fail('not_enough');
       takeItem(farm, it.id, a.qty);
-      farm.coins += a.qty * it.price;
+      const earned = a.qty * sellPrice(it.id, now);
+      farm.coins += earned;
+      addStat(farm, 'sold', earned);
       return { ok: true };
     }
     case 'place': {
@@ -541,7 +612,7 @@ export function applyAction(farm, a, now) {
       if (d.type === 'factory') o.queue = [];
       if (d.type === 'pen') o.animals = [];
       if (d.type === 'orchard') { o.tree = null; o.readyAt = 0; o.left = 0; o.dead = false; }
-      if (d.type === 'bigfield') { o.w = w; o.h = h; o.crop = null; o.job = null; o.readyAt = 0; o.taken = 0; }
+      if (d.type === 'bigfield') { o.w = w; o.h = h; o.crop = null; o.job = null; o.readyAt = 0; o.load = null; o.soil = 'raw'; o.straw = false; }
       farm.objects.push(o);
       const levelUp = addXp(farm, d.xp);
       return { ok: true, id: o.id, gained: { items: [], xp: d.xp, levelUp } };
@@ -690,10 +761,14 @@ export function applyAction(farm, a, now) {
       const cells = o.w * o.h;
       if (farm.coins < c.cost * cells) return fail('no_coins');
       farm.coins -= c.cost * cells;
+      const sec = Math.ceil(jobSeconds(cells, m.model) / (hasTool(farm, 'seeder') ? 2 : 1));
+      o.mult = o.soil === 'plowed' ? 1.5 : 1;
+      o.soil = 'sown'; o.straw = false;
       o.crop = c.id;
-      o.job = { type: 'sow', m: m.id, start: now, end: now + jobSeconds(cells, m.model) * 1000 };
+      o.job = { type: 'sow', m: m.id, start: now, end: now + sec * 1000 };
       o.readyAt = o.job.end + c.time * 1000;
-      o.taken = 0;
+      o.load = null;
+      addStat(farm, 'jobs', 1);
       return { ok: true };
     }
     case 'fieldHarvest': {
@@ -705,7 +780,29 @@ export function applyAction(farm, a, now) {
       if (MACHINES[m.model].type !== CROPS[o.crop].harvester) return fail('wrong_machine');
       if (machineJob(farm, m.id, now)) return fail('machine_busy');
       o.job = { type: 'harvest', m: m.id, start: now, end: now + jobSeconds(o.w * o.h, m.model) * 1000 };
-      o.taken = 0;
+      o.load = { item: o.crop, qty: fieldYield(o), xp: CROPS[o.crop].xp * o.w * o.h };
+      o.straw = CROPS[o.crop].harvester === 'combine';
+      o.crop = null; o.readyAt = 0; o.soil = 'stubble';
+      addStat(farm, 'jobs', 1);
+      return { ok: true };
+    }
+    case 'fieldPlow':
+    case 'fieldBale': {
+      const o = findObject(farm, a.id);
+      if (!o || BUILDINGS[o.kind].type !== 'bigfield') return fail('no_object');
+      const st = fieldState(o, now);
+      if (st.state !== 'empty') return fail('not_empty');
+      const plow = a.type === 'fieldPlow';
+      if (!hasTool(farm, plow ? 'plow' : 'baler')) return fail('no_machine');
+      if (plow && o.soil === 'plowed') return fail('nothing');
+      if (!plow && !o.straw) return fail('nothing');
+      const m = findMachine(farm, a.machine);
+      if (!m || MACHINES[m.model].type !== 'tractor') return fail('no_machine');
+      if (machineJob(farm, m.id, now)) return fail('machine_busy');
+      o.job = { type: plow ? 'plow' : 'bale', m: m.id, start: now, end: now + jobSeconds(o.w * o.h, m.model) * 1000 };
+      if (plow) { o.soil = 'plowed'; o.straw = false; }
+      else { o.straw = false; o.load = { item: 'slama', qty: Math.floor(o.w * o.h / 2), xp: 0 }; }
+      addStat(farm, 'jobs', 1);
       return { ok: true };
     }
     case 'fieldUnload': {
@@ -713,17 +810,38 @@ export function applyAction(farm, a, now) {
       if (!o || BUILDINGS[o.kind].type !== 'bigfield') return fail('no_object');
       const st = fieldState(o, now);
       if (st.state !== 'unload') return fail('not_ready');
-      const c = CROPS[o.crop];
       const n = Math.min(st.stock, siloFree(farm));
       if (n <= 0) return fail('silo_full');
-      addItem(farm, c.id, n);
-      let xp = 0;
-      if (!o.taken) xp = c.xp * o.w * o.h;
-      o.taken += n;
+      addItem(farm, o.load.item, n);
+      const xp = o.load.xp || 0;
+      o.load.xp = 0;
+      o.load.qty -= n;
       const levelUp = xp ? addXp(farm, xp) : 0;
-      const rest = st.stock - n;
-      if (!rest) { o.crop = null; o.job = null; o.taken = 0; o.readyAt = 0; }
-      return { ok: true, rest, gained: { items: [{ item: c.id, qty: n }], xp, levelUp } };
+      const rest = o.load.qty;
+      const item = o.load.item;
+      if (!rest) o.load = null;
+      return { ok: true, rest, gained: { items: [{ item, qty: n }], xp, levelUp } };
+    }
+    case 'claimDaily': {
+      const today = dayKey(now);
+      if (farm.daily.day === today) return fail('claimed');
+      const yesterday = dayKey(now - 86400000);
+      const streak = farm.daily.day === yesterday ? farm.daily.streak % 7 + 1 : 1;
+      const r = DAILY[streak - 1];
+      farm.daily = { day: today, streak };
+      farm.coins += r.coins;
+      const levelUp = r.xp ? addXp(farm, r.xp) : 0;
+      return { ok: true, streak, coins: r.coins, gained: { items: [], xp: r.xp || 0, levelUp } };
+    }
+    case 'claimAch': {
+      const ach = ACHIEVEMENTS.find(x => x.id === a.id);
+      if (!ach) return fail('bad_action');
+      const tier = farm.ach[ach.id] || 0;
+      if (tier >= ach.tiers.length) return fail('nothing');
+      if ((farm.stats[ach.stat] || 0) < ach.tiers[tier]) return fail('not_ready');
+      farm.ach[ach.id] = tier + 1;
+      farm.coins += ach.coins[tier];
+      return { ok: true, coins: ach.coins[tier], tier: tier + 1 };
     }
     case 'deliver': {
       const o = isInt(a.slot) ? farm.orders[a.slot] : null;
@@ -731,6 +849,7 @@ export function applyAction(farm, a, now) {
       if (!canDeliver(farm, o)) return fail('missing');
       for (const x of o.items) takeItem(farm, x.item, x.qty);
       farm.coins += o.coins;
+      addStat(farm, 'orders', 1);
       const levelUp = addXp(farm, o.xp);
       const coins = o.coins, xp = o.xp;
       farm.orders[a.slot] = genOrder(farm, now);

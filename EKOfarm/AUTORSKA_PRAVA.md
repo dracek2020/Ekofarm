@@ -2,7 +2,7 @@
 
 Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autorských práv.
 
-## Co je ve hře teď (v3)
+## Co je ve hře teď (v7)
 | Část | Původ | Stav |
 |---|---|---|
 | Veškerý kód (`public/js`, `src`, `tools`, `test`) | napsáno pro EKOfarm | ✅ vlastní |
@@ -13,12 +13,10 @@ Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autor
 | Přihlášení přes Google | skript Google Identity Services se načítá přímo od Googlu | ✅ služba Googlu, platí jeho podmínky pro vývojáře |
 | Názvy a texty | vlastní (české názvy plodin, budov a zvířat) | ✅ |
 
-## ⚠️ Emoji ikony – vyměnit před vydáním
-Ikonky v menu a bublinách (🌾 🥚 🐔 🪙 …) jsou emoji. Kreslí je **písmo emoji v zařízení hráče** (Apple, Google, Microsoft), hra žádné obrázky emoji nedistribuuje.
-
-Při hraní je to v pořádku. Na **screenshotech do obchodů a v propagaci** by ale byla vidět kresba Applu nebo Googlu. Proto je před veřejným vydáním nahradíme:
-- **vlastními ikonami** (např. z tvého ComfyUI s komerční licencí), nebo
-- sadou s otevřenou licencí, např. Twemoji (CC BY 4.0, vyžaduje uvést autory v aplikaci).
+## Ikony a zvuky (od v7)
+- Ikony jsou **vlastní SVG** nakreslené kódem pro tuto hru (`public/js/icons.js`). Emoji se už nepoužívají.
+- Zvuky se skládají v prohlížeči z tónů (WebAudio, `public/js/sfx.js`). Hra nemá žádné zvukové soubory.
+- Názvy strojů (Brázda, Klas) jsou vymyšlené, ne skutečné značky.
 
 ## Pravidla pro další vývoj
 - Žádné obrázky, zvuky, písma ani modely bez licence, která dovoluje komerční použití. Každý nový asset zapsat sem (zdroj + licence).

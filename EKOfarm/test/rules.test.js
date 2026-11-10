@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
+import { START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, canDeliver, orderReady, orderableItems, ITEMS } from '../public/js/rules.js';
 
 const T0 = 1_700_000_000_000;
 // farma s 6 poli na původních místech (pole jsou zdarma)
@@ -371,4 +371,93 @@ test('velké pole: setí traktorem, růst, sklizeň kombajnem, vykládka', () =>
   assert.equal(r.gained.items[0].qty, 22);
   assert.equal(r.gained.xp, 0, 'XP jen jednou');
   assert.equal(fieldState(o, done).state, 'empty');
+});
+
+test('v7: denní odměna se sérií', () => {
+  const f = farm6();
+  const day = 86400000, t0 = Date.UTC(2026, 10, 10, 12);
+  let r = applyAction(f, { type: 'claimDaily' }, t0);
+  assert.equal(r.streak, 1); assert.equal(r.coins, 20);
+  assert.equal(applyAction(f, { type: 'claimDaily' }, t0 + 3600000).error, 'claimed');
+  for (let d = 1; d < 7; d++) r = applyAction(f, { type: 'claimDaily' }, t0 + d * day);
+  assert.equal(r.streak, 7); assert.equal(r.coins, 200);
+  r = applyAction(f, { type: 'claimDaily' }, t0 + 7 * day);
+  assert.equal(r.streak, 1, 'po 7. dni znovu od 1');
+  r = applyAction(f, { type: 'claimDaily' }, t0 + 9 * day);
+  assert.equal(r.streak, 1, 'vynechaný den = znovu');
+});
+
+test('v7: úkoly a statistiky', () => {
+  const f = farm6();
+  assert.equal(applyAction(f, { type: 'claimAch', id: 'harvest' }, T0).error, 'not_ready');
+  f.silo = {};
+  for (let i = 0; i < 25; i++) {
+    for (const [x, y] of START_PLOTS) { applyAction(f, { type: 'plant', x, y, crop: 'wheat' }, T0 + i * 100000); applyAction(f, { type: 'harvest', x, y }, T0 + i * 100000 + 60000); }
+    f.silo = {};
+  }
+  assert.ok(f.stats.harvest >= 50);
+  const coins = f.coins;
+  const r = applyAction(f, { type: 'claimAch', id: 'harvest' }, T0);
+  assert.ok(r.ok); assert.equal(f.coins, coins + 50);
+  assert.equal(applyAction(f, { type: 'claimAch', id: 'harvest' }, T0).error, 'not_ready', 'další stupeň 500');
+});
+
+test('v7: tržní ceny se mění, ale jsou stejné pro server i prohlížeč', () => {
+  const P = 4 * 3600000;
+  const vals = new Set();
+  for (let k = 0; k < 20; k++) { const m = marketMult('wheat', k * P); assert.ok(m >= 0.7 && m <= 1.4); vals.add(m); }
+  assert.ok(vals.size > 5, 'ceny se opravdu mění');
+  assert.equal(marketMult('syr', 123 * P), marketMult('syr', 123 * P + 1000));
+  const f = farm6(); f.silo.syr = 2;
+  const c = f.coins;
+  applyAction(f, { type: 'sell', item: 'syr', qty: 2 }, 5 * P);
+  assert.equal(f.coins, c + 2 * sellPrice('syr', 5 * P));
+  assert.equal(f.stats.sold, 2 * sellPrice('syr', 5 * P));
+});
+
+test('v7: pluh, secí stroj a lis na velkém poli', () => {
+  const f = farm6();
+  f.coins = 20000; f.level = 9; f.xp = 250;
+  const id = applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).id;
+  const o = findObject(f, id);
+  const tr = applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).id;
+  const kb = applyAction(f, { type: 'buyMachine', model: 'klas4' }, T0).id;
+  assert.equal(applyAction(f, { type: 'fieldPlow', id, machine: tr }, T0).error, 'no_machine', 'bez pluhu');
+  applyAction(f, { type: 'buyMachine', model: 'pluh' }, T0);
+  applyAction(f, { type: 'buyMachine', model: 'secka' }, T0);
+  applyAction(f, { type: 'buyMachine', model: 'lis' }, T0);
+  assert.ok(applyAction(f, { type: 'fieldPlow', id, machine: tr }, T0).ok);
+  assert.equal(fieldState(o, T0 + 1000).state, 'plowing');
+  let t = o.job.end;
+  assert.equal(fieldState(o, t).soil, 'plowed');
+  assert.ok(applyAction(f, { type: 'fieldSow', id, crop: 'wheat', machine: tr }, t).ok);
+  assert.equal(o.job.end - t, 80 * 1000, '16 políček / 6 za min = 160 s, secí stroj ×2');
+  t = o.readyAt;
+  assert.ok(applyAction(f, { type: 'fieldHarvest', id, machine: kb }, t).ok);
+  t = o.job.end;
+  assert.equal(fieldState(o, t).stock, 48, '16 × 2 × 1,5 za zorané pole');
+  f.silo = {}; f.siloCap = 500;
+  applyAction(f, { type: 'fieldUnload', id }, t);
+  assert.equal(f.silo.wheat, 48);
+  assert.equal(fieldState(o, t).straw, true, 'po obilí zůstala sláma');
+  assert.ok(applyAction(f, { type: 'fieldBale', id, machine: tr }, t).ok);
+  t = o.job.end;
+  assert.equal(fieldState(o, t).item, 'slama');
+  applyAction(f, { type: 'fieldUnload', id }, t);
+  assert.equal(f.silo.slama, 8);
+  assert.equal(fieldState(o, t).state, 'empty');
+  assert.equal(fieldState(o, t).soil, 'stubble');
+  assert.ok(f.stats.jobs >= 4);
+});
+
+test('v7: nové plodiny a výroba', () => {
+  const f = farm6();
+  f.coins = 5000; f.level = 8; f.xp = 190;
+  assert.ok(applyAction(f, { type: 'plant', x: 11, y: 8, crop: 'beet' }, T0).ok);
+  const mid = applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).id;
+  f.silo.wheat = 3;
+  assert.ok(applyAction(f, { type: 'produce', id: mid, recipe: 'mouka' }, T0).ok);
+  assert.ok(applyAction(f, { type: 'collect', id: mid }, T0 + 240000).ok);
+  assert.equal(f.silo.mouka, 1);
+  assert.ok(orderableItems(8).includes('cukr') && orderableItems(8).includes('buchty'));
 });

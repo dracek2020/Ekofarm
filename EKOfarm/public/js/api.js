@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize } from './rules.js?v=6';
+import { newFarm, applyAction, normalize } from './rules.js?v=7';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -62,6 +62,7 @@ function onlineBackend() {
     async config() {
       try { return await req('GET', '/api/config'); } catch { return {}; }
     },
+    leaderboard() { return req('GET', '/api/leaderboard'); },
     // mode 'login' = přihlásit / založit farmu, 'link' = propojit s přihlášenou farmou
     async google(credential, mode) {
       const d = await req('POST', '/api/google', { credential, mode });
@@ -86,6 +87,7 @@ function localBackend() {
     async register() { return this.start(); },
     async logout() { lsSet(LOCAL_KEY, null); },
     async config() { return {}; },
+    async leaderboard() { const f = load(); return { top: [{ name: 'Testovací farma', level: f.level, xp: f.xp, me: true }], me: { rank: 1, xp: f.xp } }; },
     async google() { throw new ApiError(400, { message: 'V testovací verzi není přihlášení přes Google.' }); },
     async send(actions) {
       const farm = load();
