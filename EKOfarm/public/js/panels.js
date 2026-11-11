@@ -13,10 +13,10 @@ import {
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
   VILL_BUY, VILL_MAX, VILL_MAX_LVL, villIv, TRADER_QTY, FARMER_MAX, FARM_CAP, workAreas, areaOf, isFarmer, isSeedItem, seedCap, seedUsed, SEEDS_PER, supplyPrice, villUpCost, villName, villJobType, villAt, findObject,
-} from './rules.js?v=25';
-import { fmtTime } from './render.js?v=25';
-import { NEWS } from './news.js?v=25';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=25';
+} from './rules.js?v=26';
+import { fmtTime } from './render.js?v=26';
+import { NEWS } from './news.js?v=26';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=26';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -132,13 +132,83 @@ function orderCard(farm, o, i, now) {
     return `<div class="order wait"><div class="ico">:truck:</div><small>Nová zakázka za<br><b>${fmtTime(Math.ceil((o.readyAt - now) / 1000))}</b></small></div>`;
   }
   const ok = canDeliver(farm, o);
-  const items = o.items.map(x => `<span class="${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}">:${ITEMS[x.item].icon}:<b>${have(farm, x.item)}/${x.qty}</b></span>`).join('');
+  const items = o.items.map(x => `<button class="needi ${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}" data-act="itemInfo" data-v="${x.item}">:${ITEMS[x.item].icon}:<b>${have(farm, x.item)}/${x.qty}</b></button>`).join('');
   return `<div class="order${ok ? ' ready' : ''}">
     <button class="del" data-act="discard" data-v="${i}" aria-label="Zrušit zakázku">✕</button>
     <div class="items">${items}</div>
     <div class="rew">${o.coins} :coin: · ${o.xp} :xp:</div>
     <button class="btn sm${ok ? '' : ' off'}" data-act="deliver" data-v="${i}">Doručit</button>
   </div>`;
+}
+
+// ---------- deník farmáře: co je která surovina, kde ji získat a k čemu je ----------
+const isFeed = id => id.startsWith('krmivo_');
+const WIKI_ANIMAL = new Set(ANIMAL_LIST.map(a => a.product).concat('plast'));
+export const WIKI_TABS = [['plodiny', 'Plodiny', 'wheat'], ['ovoce', 'Ovoce', 'jablko'], ['zvirata', 'Zvířata', 'vejce'], ['vyrobky', 'Výrobky', 'chleb'], ['ryby', 'Ryby', 'kapr'], ['zasoby', 'Zásoby', 's_wheat']];
+function wikiCat(id) {
+  if (CROPS[id]) return 'plodiny';
+  if (TREE_LIST.some(t => t.fruit === id)) return 'ovoce';
+  if (FISH_LIST.some(f => f.id === id)) return 'ryby';
+  if (isSeedItem(id)) return 'zasoby';
+  if (WIKI_ANIMAL.has(id) || isFeed(id)) return 'zvirata';
+  return 'vyrobky';
+}
+// odkud surovina je a od jaké úrovně ji jde mít
+export function itemInfo(farm, id) {
+  const it = ITEMS[id];
+  const src = [], use = [];
+  const lvls = [];            // úroveň = nejdřívější cesta, jak surovinu získat
+  const lv = l => lvls.push(l || 1);
+  const go = x => `<button class="chip" data-act="itemInfo" data-v="${x}">:${ITEMS[x].icon}: ${esc(ITEMS[x].name)}</button>`;
+  const c = CROPS[id];
+  if (c) { src.push(`:plot: Roste na <b>poli</b> – sklizeň za ${fmtTime(c.time)}, ${c.yield} ks z políčka.`); lv(c.level); }
+  const tr = TREE_LIST.find(t => t.fruit === id);
+  if (tr) { src.push(`:tree: Ovocný strom <b>${esc(tr.name)}</b> v sadu (${tr.harvests}× úroda po ${tr.yield} ks).`); lv(tr.level); }
+  const an = ANIMAL_LIST.find(a => a.product === id);
+  if (an) { src.push(`:${an.icon}: Dává ho <b>${esc(an.name)}</b> v budově ${esc(BUILDINGS[an.home].name)} – nakrm ji ${go(an.feed)}`); lv(an.level); }
+  if (id === 'plast') src.push(':hive: Sbírají ho včely ve <b>Včelíně</b> (kvetoucí sad nebo květiny poblíž pomůžou).');
+  if (id === 'slama') src.push(':field: Zbyde na <b>velkém poli</b> po sklizni obilí – slisuje ji <b>Lis</b>.');
+  const fsh = FISH_LIST.find(f => f.id === id);
+  if (fsh) { src.push(`:pond: Chytíš ho na udici v <b>rybníku</b> (potřebuješ ${go('navnada')}).`); lv(fsh.level); }
+  const r = RECIPES[id];
+  if (r) {
+    const b = BUILDINGS[r.building];
+    src.push(`:${b.icon}: Vyrábí <b>${esc(b.name)}</b>${recipeQty(r) > 1 ? ` (${recipeQty(r)} ks najednou)` : ''} z: ${Object.entries(r.in).map(([x, n]) => `${n}× ${go(x)}`).join(' ')} – ${fmtTime(r.time)}.${b.st > 1 ? ` Budova od Statku úrovně ${b.st}.` : ''}`);
+    lv(r.level);
+  }
+  if (supplyPrice({ level: 999 }, id) !== null) src.push(`:stall: Koupíš ve <b>Stánku</b> v městečku (záložka Zásoby) za ${supplyPrice({ level: 999 }, id)} :coin:.`);
+  // k čemu je
+  const rs = Object.values(RECIPES).filter(x => x.in[id]);
+  if (rs.length) use.push(`<b>Vyrobíš z toho:</b><div class="chips">${rs.map(x => go(x.id)).join('')}</div>`);
+  const eats = ANIMAL_LIST.filter(a => a.feed === id);
+  if (eats.length) use.push(`<b>Krmivo pro:</b> ${eats.map(a => `:${a.icon}: ${esc(a.name)}`).join(', ')}`);
+  if (SEEDS[id]) use.push(`<b>Osivo:</b> zasadíš ${go(SEEDS[id].seed)} bez placení mincemi. Ukládá se do zásob ve Statku.`);
+  if (SAPLINGS[id]) use.push(`<b>Sazenice:</b> zasadíš strom ${esc(TREES[SAPLINGS[id].sapling].name)} v sadu. Ukládá se do zásob ve Statku.`);
+  if (id === 'navnada') use.push('<b>Návnada</b> na rybaření – na každý nához jedna.');
+  if (!isSeedItem(id)) use.push(`Prodáš ve Skladu (teď za ${sellPrice(id, Date.now())} :coin:), hodí se do zakázek a na vylepšení budov.`);
+  return { it, src, use, level: lvls.length ? Math.min(...lvls) : 1, cat: wikiCat(id) };
+}
+export function wikiHtml(farm, tab = 'plodiny') {
+  if (!WIKI_TABS.some(t => t[0] === tab)) tab = 'plodiny';
+  const list = ITEM_LIST.filter(it => wikiCat(it.id) === tab).map(it => ({ it, lvl: itemInfo(farm, it.id).level })).sort((a, b) => a.lvl - b.lvl);
+  const tiles = list.map(({ it, lvl }) => {
+    const locked = farm.level < lvl, n = have(farm, it.id);
+    return `<button class="witem${locked ? ' locked' : ''}" data-act="itemInfo" data-v="${it.id}">
+      <span class="ico">:${it.icon}:${n ? `<i class="n">${n}</i>` : ''}</span><b>${esc(it.name)}</b>
+      <small>${locked ? `:lock: od úrovně ${lvl}` : n ? `máš ${n}` : '&nbsp;'}</small></button>`;
+  }).join('');
+  return `<p class="muted">Všechny suroviny na farmě. Klepni na kteroukoli a uvidíš, kde ji získáš a k čemu je. Zamčené se otevřou na uvedené úrovni.</p>
+    ${tabsHtml(WIKI_TABS, tab, 'wtab')}<div class="wgrid">${tiles}</div>`;
+}
+export function itemHtml(farm, id, back) {
+  const info = itemInfo(farm, id);
+  const locked = farm.level < info.level;
+  return `${back ? '<button class="btn sm alt back" data-act="itemBack">← Zpět</button>' : ''}
+    <div class="wdet"><span class="ico">:${info.it.icon}:</span><div><b>${esc(info.it.name)}</b>
+      <small>${locked ? `:lock: Otevře se na úrovni <b>${info.level}</b> (máš ${farm.level}).` : `Máš <b>${have(farm, id)}</b>${isSeedItem(id) ? ' v zásobách Statku' : ' ve Skladu'}.`}</small></div></div>
+    <div class="sect">Kde to získáš</div>${info.src.length ? info.src.map(s => `<p class="wline">${s}</p>`).join('') : '<p class="muted">Jen v zakázkách a na tržišti.</p>'}
+    <div class="sect">K čemu je</div>${info.use.map(s => `<p class="wline">${s}</p>`).join('')}
+    <button class="btn alt" data-act="openWiki">:book: Celý deník farmáře</button>`;
 }
 
 // ---------- vesničané ----------
@@ -207,12 +277,14 @@ export function upgradeBlock(farm, o) {
   const L = objLevel(o);
   const c = upgradeCost(o);
   if (!c) return `<div class="upg"><b>:star: Úroveň ${L}/${MAX_BLD_LEVEL}</b> – nejvyšší úroveň.</div>`;
-  const items = c.items.map(x => `<span class="${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}">:${ITEMS[x.item].icon}:${have(farm, x.item)}/${x.qty}</span>`).join(' ');
+  // suroviny jsou tlačítka: klepnutím se ukáže, co to je a kde to sehnat
+  const items = c.items.map(x => `<button class="needi ${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}" data-act="itemInfo" data-v="${x.item}" title="${esc(ITEMS[x.item].name)}">:${ITEMS[x.item].icon}:${have(farm, x.item)}/${x.qty}</button>`).join(' ');
   const coinOk = farm.coins >= c.coins;
   const lock = BUILDINGS[o.kind].type !== 'main' && c.level > statekLevel(farm) ? ':lock: nejdřív vylepši Statek' : '';
   const ok = !lock && coinOk && c.items.every(x => have(farm, x.item) >= x.qty);
   return `<div class="upg"><b>:star: Úroveň ${L}/${MAX_BLD_LEVEL}</b> → ${c.level}: ${upgradeEffect(o)}
     <div class="need">${items} <span class="${coinOk ? 'okq' : 'miss'}">:coin:${c.coins}</span></div>
+    <small class="muted">Klepni na surovinu – ukážu, co to je a kde ji sehnat.</small>
     ${lock ? `<small>${lock}</small>` : ''}
     <button class="btn sm${ok ? '' : ' off'}" data-act="upgrade" data-v="${o.id}"${o.town ? ' data-town="1"' : ''}>Vylepšit</button></div>`;
 }

@@ -18,7 +18,7 @@ test('všechny panely se vykreslí', () => {
   const out = [
     P.factoryHtml(f, o(ids[0]), T), P.penHtml(f, o(ids[1]), T), P.decoHtml(f, o(ids[2])),
     P.orchardHtml(f, o(ids[3]), T), P.bigfieldHtml(f, o(ids[4]), T), P.siloHtml(f), P.siloTitle(f),
-    P.dealerHtml(f, T), P.shopHtml(f, 'zvirata'), P.shopHtml(f, 'farma'), P.shopHtml(f, 'lide'), P.buildHtml(f), P.statekHtml(f, 'X', T), P.statekHtml(f, 'X', T, 'farmari'), P.statekHtml(f, 'X', T, 'zasoby'), P.stallHtml(f, null, T, 'zasoby'),
+    P.dealerHtml(f, T), P.shopHtml(f, 'zvirata'), P.shopHtml(f, 'farma'), P.shopHtml(f, 'lide'), P.buildHtml(f), P.statekHtml(f, 'X', T), P.statekHtml(f, 'X', T, 'farmari'), ...P.WIKI_TABS.map(t => P.wikiHtml(f, t[0])), ...R.ITEM_LIST.map(it => P.itemHtml(f, it.id, true)), P.statekHtml(f, 'X', T, 'zasoby'), P.stallHtml(f, null, T, 'zasoby'),
     P.garageHtml(f, o(ids[5]), T), P.stallHtml(f, R.townObject(f, 'stanek'), T),
     P.dealerHtml(f, T, R.townObject(f, 'prodejna')), P.newsHtml(), P.helperHtml(f, T),
     P.questsHtml(f, T), P.tasksHtml(f, T, 'denni'), P.tasksHtml(f, T, 'zebricek', { top: [{ name: 'A', level: 3, xp: 5 }], me: { rank: 2, level: 1 } }),

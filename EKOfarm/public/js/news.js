@@ -1,5 +1,11 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 26, title: 'Nová úroveň, deník farmáře a hezčí rybaření', items: [
+    'Při nové úrovni vyskočí okno s hvězdou, konfetami a vším, co se ti odemklo.',
+    'U vylepšení budov a v zakázkách klepni na surovinu – ukáže se, co to je, kde ji získáš a k čemu je.',
+    'Nový Deník farmáře (tlačítko pod Chatem): všechny suroviny po záložkách. U zamčených vidíš, na jaké úrovni se otevřou.',
+    'Rybaření má hezčí rybník: vlny, rákosí, kroužky kolem splávku, mrskající se ryba a zlatý ukazatel úlovku.',
+  ] },
   { v: 25, title: 'Farmáři, pracovní oblasti a zásoby', items: [
     'Ve Statku (záložka Farmáři) si koupíš až 5 farmářů po 100 mincích.',
     'Pracovní oblast tvoří aspoň 4 pole nebo 4 sady vedle sebe. Přikoupené pole oblast zvětší, 4 pole o kus dál udělají novou oblast. Na mapě ji poznáš podle čísla.',

@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=25">
+<link rel="stylesheet" href="/css/style.css?v=26">
 </head>
 <body>
 <!--APP-->
@@ -35,6 +35,7 @@
   <div class="side" id="sideR">
     <button class="sq" id="townBtn" aria-label="Městečko"><span data-ic="shop"></span><b>Městečko</b></button>
     <button class="sq" id="chatBtn" aria-label="Chat"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
+    <button class="sq" id="wikiBtn" aria-label="Deník farmáře"><span data-ic="book"></span><b>Deník</b></button>
   </div>
   <div id="tut" hidden><button class="tut-x" id="tutClose" aria-label="Zavřít">✕</button><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
     <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
@@ -91,6 +92,10 @@
 </div>
 
 <div id="toast"></div>
+<div id="lvlUp" hidden><div class="lu-box"><div class="lu-rays"></div><div class="lu-confetti" id="luConf"></div>
+  <div class="lu-star"><span>ÚROVEŇ</span><b id="luNum">2</b></div>
+  <h2>Nová úroveň!</h2><p class="muted" id="luSub"></p><div class="lu-list" id="luList"></div>
+  <button class="btn" id="luOk">Super!</button></div></div>
 <div id="loading">Načítám farmu…<noscript> Zapni prosím JavaScript.</noscript></div>
 
 <div id="errBox" hidden onclick="this.hidden=true"></div>
@@ -138,6 +143,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=25"></script>
+<script type="module" src="/js/main.js?v=26"></script>
 </body>
 </html>

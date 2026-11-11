@@ -1,22 +1,22 @@
 // EKOfarm – hlavní herní smyčka, ovládání a UI.
 import {
-  CROP_LIST, CROPS, ITEMS, BUILDINGS, ANIMALS, GRID_W, GRID_H, ERRORS, WORLD, landOwned, parcelAt, getParcel, LAND_PARCELS,
+  CROP_LIST, CROPS, ITEMS, BUILDINGS, ANIMALS, RECIPES, GRID_W, GRID_H, ERRORS, WORLD, landOwned, parcelAt, getParcel, LAND_PARCELS,
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=25';
-import { preloadAssets, spriteName } from './sprites.js?v=25';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=25';
-import { createBackend, ApiError } from './api.js?v=25';
-import { iconize, ic } from './icons.js?v=25';
-import { NEWS } from './news.js?v=25';
-import { sfx, soundOn, setSound } from './sfx.js?v=25';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg } from './panels.js?v=25';
+} from './rules.js?v=26';
+import { preloadAssets, spriteName } from './sprites.js?v=26';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=26';
+import { createBackend, ApiError } from './api.js?v=26';
+import { iconize, ic } from './icons.js?v=26';
+import { NEWS } from './news.js?v=26';
+import { sfx, soundOn, setSound } from './sfx.js?v=26';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=26';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 25;
+const APP_VERSION = 26;
 
 
 const game = {
@@ -198,10 +198,6 @@ function afterChange(a, r) {
     const parts = g.items.map(i => `+${i.qty}:${ITEMS[i.item].icon}:`);
     if (g.xp) parts.push(`+${g.xp}:xp:`);
     if (parts.length) floatAt(at[0], at[1], parts.join(' '));
-    if (g.levelUp) {
-      const unlocked = [...CROP_LIST, ...Object.values(ANIMALS), ...TREE_LIST, ...MACHINE_LIST].filter(c => c.level === g.levelUp).map(c => c.name);
-      toast(`:trophy: Úroveň ${g.levelUp}!` + (unlocked.length ? `<br><small>Nově: ${unlocked.join(', ')}</small>` : '<br><small>Nové budovy odemyká vylepšený Statek.</small>'), 'lvlup', 3000);
-    }
   }
   if (a.type === 'plant') floatAt(a.x, a.y, r.seed ? `−1 :s_${a.crop}:` : `−${CROPS[a.crop].cost} :coin:`);
   updateHud();
@@ -552,8 +548,31 @@ function syncSheets() {
   for (const id of ['buildBtn', 'shopBtn', 'tasksBtn', 'siloBtn2', 'menuBtn']) $(id).classList.toggle('on', id === on);
 }
 new MutationObserver(syncSheets).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+// okno nové úrovně: hvězda s číslem, paprsky, konfety a co se odemklo
+function showLevelUp(L, from) {
+  const items = [];
+  for (let l = from + 1; l <= L; l++) {
+    for (const c of CROP_LIST) if (c.level === l) items.push([c.icon, c.name, 'plodina']);
+    for (const t of TREE_LIST) if (t.level === l) items.push([ITEMS[t.fruit].icon, t.name, 'strom']);
+    for (const a of Object.values(ANIMALS)) if (a.level === l) items.push([a.icon, a.name, 'zvíře']);
+    for (const r of Object.values(RECIPES)) if (r.level === l && r.level > 1) items.push([ITEMS[r.id].icon, ITEMS[r.id].name, 'výrobek']);
+    for (const m of MACHINE_LIST) if (m.level === l) items.push([m.icon, m.name, 'stroj']);
+  }
+  $('luNum').textContent = L;
+  $('luSub').innerHTML = iconize(items.length ? 'Nově můžeš:' : 'Nové budovy odemyká vylepšený :house: Statek.');
+  $('luList').innerHTML = iconize(items.slice(0, 12).map(([ic, n, k]) => `<div><span>:${ic}:</span><b>${n}</b><small>${k}</small></div>`).join('')
+    + (items.length > 12 ? `<div class="more">+ dalších ${items.length - 12}</div>` : ''));
+  const colors = ['#f5b82e', '#5fae34', '#3f87d9', '#d9472f', '#ffe27a', '#ff8fb1'];
+  $('luConf').innerHTML = Array.from({ length: 28 }, (_, i) => `<i style="left:${(i * 37) % 100}%;background:${colors[i % 6]};animation-delay:${(i % 7) * 0.12}s;animation-duration:${1.6 + (i % 5) * 0.25}s"></i>`).join('');
+  $('lvlUp').hidden = false;
+  sfx('level');
+}
+$('luOk').addEventListener('click', () => { $('lvlUp').hidden = true; });
+$('lvlUp').addEventListener('click', e => { if (e.target.id === 'lvlUp') $('lvlUp').hidden = true; });
 function updateHud() {
   const f = game.farm;
+  if (game.lastLvl === undefined || game.lastLvlFarm !== f) { game.lastLvl = f.level; game.lastLvlFarm = f; }
+  else if (f.level > game.lastLvl) { const from = game.lastLvl; game.lastLvl = f.level; showLevelUp(f.level, from); }
   $('coins').textContent = fmtNum(f.coins);
   $('lvlNum').textContent = f.level;
   const lp = levelProgress(f);
@@ -776,6 +795,8 @@ function renderPanel() {
   if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f, p.tab); }
   else if (p.kind === 'news') { title = ':news: Novinky'; body = newsHtml(); }
+  else if (p.kind === 'wiki') { title = ':book: Deník farmáře'; body = wikiHtml(f, p.tab); }
+  else if (p.kind === 'item') { title = `:${ITEMS[p.id].icon}: ${ITEMS[p.id].name}`; body = itemHtml(f, p.id, !!p.back); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
   else if (p.kind === 'help') { title = ':book: Jak hrát'; body = helpHtml(f, p.tab); }
@@ -924,6 +945,11 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'openVill': openPanel({ kind: 'shop', tab: 'lide' }); break;
+    // ---- deník farmáře ----
+    case 'itemInfo': if (ITEMS[v]) { const back = game.panel && { ...game.panel }; openPanel({ kind: 'item', id: v, back }); } break;
+    case 'itemBack': if (game.panel && game.panel.back) openPanel(game.panel.back); break;
+    case 'openWiki': openPanel({ kind: 'wiki', tab: game.wikiTab }); break;
+    case 'wtab': game.panel.tab = game.wikiTab = v; renderPanel(); $('panel').scrollTop = 0; break;
     // ---- farmáři ve Statku, zásoby ----
     case 'buyFarmer': { const r = act({ type: 'buyFarmer' }); if (r.ok) toast(`:farmer: Nový farmář ${villName(findVill(f, r.id))}! Přiřaď ho k pracovní oblasti.`, '', 3000); break; }
     case 'areaAssign': { const [id, kind, a] = v.split('|'); const r = act({ type: 'assignArea', id: Number(id), kind, a: Number(a) }); if (r.ok) toast(`:farmer: ${villName(findVill(f, Number(id)))} pracuje v oblasti ${r.n}`); break; }
@@ -1300,7 +1326,8 @@ $('shopBtn').addEventListener('click', () => {
 });
 const openSilo = () => { cancelPlace(); openPanel({ kind: 'silo' }); };
 $('siloBtn').addEventListener('click', openSilo);
-$('coinBtn').addEventListener('click', openSilo);   // mince se vydělávají prodejem ve skladu
+$('coinBtn').addEventListener('click', openSilo);
+$('wikiBtn').addEventListener('click', () => { cancelPlace(); openPanel({ kind: 'wiki', tab: game.wikiTab }); });   // mince se vydělávají prodejem ve skladu
 $('siloBtn2').addEventListener('click', openSilo);
 
 $('menuBtn').addEventListener('click', () => {
