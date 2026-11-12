@@ -1,8 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=29';
+import { TEAM } from './team-config.js?v=30';
 
-export const RULES_VERSION = 17;
+export const RULES_VERSION = 18;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -636,6 +636,32 @@ export function normalize(farm) {
   if ((farm.v || 0) < 17) { for (const v of farm.vill) if (v.job) dropJob(farm, v); farm.vill = []; }
   if (!(farm.rep >= 0)) farm.rep = TEAM.rep.order * (farm.stats.orders || 0);
   if (!farm.board || !Array.isArray(farm.board.ads)) farm.board = { ads: [], k: 0, next: 0 };
+  if (!farm.keep || typeof farm.keep !== 'object') farm.keep = {};
+  if (!farm.areas || typeof farm.areas !== 'object') farm.areas = {};
+  // v30: plán práce patří pracovišti – co měl pracovník v tabulce, převezme budova nebo oblast, kde pracuje.
+  // Dělník: „vyrábět do zásoby“ → cílové zásoby výrobny; skladník: „kolik nechat“ → rezerva skladu.
+  if ((farm.v || 0) < 18) {
+    const areas = workAreas(farm);
+    for (const v of farm.vill) {
+      const plan = v.plan || {}, lim = v.lim || {};
+      if (v.area) {
+        const g = areaOf(areas, v), s = g && areaSet(farm, g);
+        if (s && !Object.keys(s.plan).length) Object.assign(s.plan, plan);
+      } else if (v.at) {
+        const o = findObject(farm, v.at), type = o && villJobType(o.kind);
+        if ((type === 'factory' || type === 'trader') && !Object.keys(o.plan || {}).length) o.plan = { ...plan };
+        if (type === 'factory') o.target = Object.keys(plan).filter(k => lim[k] > 0).map(k => [k, lim[k]]);
+        if (type === 'trader') for (const k in lim) if (lim[k] > 0) farm.keep[k] = Math.max(farm.keep[k] || 0, lim[k]);
+      }
+      delete v.plan; delete v.lim; delete v.cw; delete v.pk;
+    }
+  }
+  // nastavení oblastí, které už neexistují (pole i sady prodané)
+  const A = Object.keys(farm.areas);
+  if (A.length) {
+    const ids = new Set([...farm.plots.map(p => 'pole' + p.id), ...farm.objects.filter(o => o.kind === 'sad').map(o => 'sad' + o.id)]);
+    for (const k of A) if (!ids.has(k)) delete farm.areas[k];
+  }
   farm.v = RULES_VERSION;
   return farm;
 }
@@ -701,9 +727,9 @@ function takeItem(farm, id, n) {
 }
 // zařadí výrobek do fronty výrobny; k = násobič času – šikovnější vesničan vyrábí rychleji
 // n = kolik kusů v dávce (pracovník podle výkonu naloží víc najednou; doba je stejná) – dávka od týmu má t: 1
-function queueRecipe(o, r, now, k = 1, n = 0) {
+function queueRecipe(o, r, now, k = 1, n = 0, pause = 0) {
   const last = o.queue.length ? o.queue[o.queue.length - 1].end : 0;
-  const d = Math.round(r.time * 1000 * speedMult(o) * k);
+  const d = Math.round(r.time * 1000 * speedMult(o) * k) + pause;
   const q = { r: r.id, end: Math.max(now, last) + d, d };
   if (n) { q.n = n; q.t = 1; }
   o.queue.push(q);
@@ -987,8 +1013,8 @@ export function runHelper(farm, now) {
 // ---------- Farmářský tým: pracovníci pracují průběžně podle plánu ----------
 // Každý pracovník má vlastní čas (v.t). Vybere si úkol, ten trvá podle jeho výkonu a na konci se provede
 // (sklizeň, zasazení, naložení výroby…). Když není co dělat, čeká – a ví na co (v.w), aby to hráč viděl.
-// Plán (v.plan) je tabulka s procenty: pole – čím osázet oblast, výrobna – podíly výrobků, sklad – kolik
-// procent zásoby prodat na jednom trhu. v.lim: sklad – kolik kusů nechat, výrobna – do jaké zásoby vyrábět.
+// Plán patří pracovišti (od v30): pole – čím osázet oblast (farm.areas), výrobna – podíly výrobního času a cílové
+// zásoby (o.plan, o.target), sklad – kolik procent zásoby prodat na jednom trhu (o.plan). Rezervy skladu: farm.keep.
 // Pracovníci se nekupují: hledají se na nástěnce v Městečku a bydlí v domcích (v.prof, v.trait, v.xp po oborech).
 export const VILL_MAX = TEAM.maxTeam;
 export const MAX_VLVL = TEAM.maxLvl;
@@ -1012,7 +1038,7 @@ export const WORK = TEAM.work;
 // délka úkonu (ms) pro pracovníka v daném oboru
 export const workMs = (v, k, obor) => Math.round(WORK[k] * 1000 / (villPower(v, obor || 'pole') * (traitOf(v).work || 1)));
 // kolik vyrobí / nasbírá najednou (výkon × pečlivost)
-const villOut = (v, obor) => villPower(v, obor) * (traitOf(v).out || 1);
+export const villOut = (v, obor) => villPower(v, obor) * (traitOf(v).out || 1);
 // náročnost: jakou úroveň pracovníka chce věc, která se odemyká na úrovni hráče lvl
 export const needLvl = lvl => (TEAM.need.find(([max]) => lvl <= max) || [0, 1])[1];
 // připsat zkušenosti (poloviční mimo profesi, učenlivý +25 %); vrací novou úroveň při povýšení
@@ -1087,17 +1113,102 @@ export const isFarmer = v => !!v.area;   // pracuje v oblasti polí nebo sadů
 
 // kde a jak vesničan pracuje: { v, type: 'pole'|'sad'|'factory'|'pen'|'hive'|'trader', g (oblast) | o (budova), key }; null = nemá práci
 function villCtx(farm, v, areas) {
-  if (isFarmer(v)) { const g = areaOf(areas, v); return g ? { v, type: g.kind, obor: 'pole', L: villLevel(v, 'pole'), g, o: null, key: g.key, next: 0, wait: null } : null; }
+  if (isFarmer(v)) { const g = areaOf(areas, v); return g ? { v, type: g.kind, obor: 'pole', L: villLevel(v, 'pole'), g, set: areaSet(farm, g), o: null, key: g.key, next: 0, wait: null } : null; }
   const o = v.at && findObject(farm, v.at);
   const type = o && villJobType(o.kind);
-  return type ? { v, type, obor: OBOR[type], L: villLevel(v, OBOR[type]), g: null, o, key: o.id, next: 0, wait: null } : null;
+  return type ? { v, type, obor: OBOR[type], L: villLevel(v, OBOR[type]), g: null, set: null, o, key: o.id, next: 0, wait: null } : null;
 }
 // co se píše do tabulky plánu: 'crop' (pole), 'tree' (sad), 'recipe' (výrobna), 'item' (obchodník); null = tabulku nemá
-export function planKind(farm, v) {
-  const e = villCtx(farm, v, isFarmer(v) ? workAreas(farm) : []);
-  return !e ? null : e.type === 'pole' ? 'crop' : e.type === 'sad' ? 'tree' : e.type === 'factory' ? 'recipe' : e.type === 'trader' ? 'item' : null;
+export const planKind = (farm, w) => planKindW(wpGet(farm, w));
+export const planTotal = plan => Object.values(plan || {}).reduce((a, b) => a + b, 0);
+
+// ---------- pracoviště: budova nebo oblast, kapacita, nastavení (v30) ----------
+// Plán práce patří pracovišti, ne pracovníkovi: budova má o.plan (procenta), o.target (cílové zásoby v pořadí),
+// o.auto (přerozdělit nevyužitou kapacitu), o.used (kolik času výroby dostal který výrobek), o.log (výroba po hodinách).
+// Oblast polí / sadů má nastavení ve farm.areas[klíč] = { plan, replant }. Pracoviště se označuje textem:
+// 'b12' = budova s id 12, 'pole101' / 'sad205' = oblast, ve které je pole / sad s tím id.
+export const areaCap = g => Math.max(1, Math.floor(g.cells.length / TEAM.areaPer));
+export const wpCap = wp => (wp.g ? areaCap(wp.g) : TEAM.cap[wp.type] || 1);
+// nastavení oblasti; když se oblasti spojí nebo změní nejmenší pole, převezme nastavení oblast, ve které leží
+export function areaSet(farm, g) {
+  const A = farm.areas || (farm.areas = {});
+  if (!A[g.key]) {
+    const n = k => Number(k.slice(g.kind.length));
+    const old = Object.keys(A).filter(k => k.startsWith(g.kind) && g.ids.includes(n(k))).sort((a, b) => n(a) - n(b))[0];
+    A[g.key] = old ? A[old] : { plan: {}, replant: true };
+    if (old) delete A[old];
+  }
+  return A[g.key];
 }
-export const planSum = v => Object.values(v.plan || {}).reduce((a, b) => a + b, 0);
+export function wpGet(farm, w, areas) {
+  if (typeof w !== 'string' || !w) return null;
+  if (w[0] === 'b') {
+    const o = findObject(farm, Number(w.slice(1))), type = o && villJobType(o.kind);
+    return type ? { w, type, o, g: null, set: null } : null;
+  }
+  const kind = w.startsWith('pole') ? 'pole' : w.startsWith('sad') ? 'sad' : null;
+  if (!kind) return null;
+  const id = Number(w.slice(kind.length));
+  const g = (areas || workAreas(farm)).find(x => x.kind === kind && x.ids.includes(id));
+  return g ? { w, type: kind, o: null, g, set: areaSet(farm, g) } : null;
+}
+export const wpOfVill = v => (v.area ? v.area.kind + v.area.id : v.at ? 'b' + v.at : null);
+// kdo na pracovišti pracuje
+export function wpWorkers(farm, wp, areas) {
+  if (wp.o) return farm.vill.filter(x => x.at === wp.o.id);
+  const all = areas || workAreas(farm);
+  return farm.vill.filter(x => { const g = x.area && areaOf(all, x); return g && g.key === wp.g.key; });
+}
+// plán pracoviště (procenta) a co se do něj píše
+export const wpPlan = wp => (wp.g ? wp.set.plan : (wp.o.plan || (wp.o.plan = {})));
+export const planKindW = wp => (!wp ? null : wp.type === 'pole' ? 'crop' : wp.type === 'sad' ? 'tree' : wp.type === 'factory' ? 'recipe' : wp.type === 'trader' ? 'item' : null);
+// rezervy skladu: pod tolik kusů automatika nesáhne (výroba, prodej na trhu)
+export const keepOf = (farm, id) => (farm.keep && farm.keep[id]) || 0;
+export const availFor = (farm, id) => Math.max(0, have(farm, id) - keepOf(farm, id));
+const hasInputsKeep = (farm, r) => Object.entries(r.in).every(([id, n]) => availFor(farm, id) >= n);
+// kolik výrobku je na skladě + ve frontě + v rukou pracovníků (pro cílové zásoby)
+export function stockOf(farm, o, id) {
+  const r = RECIPES[id];
+  let n = have(farm, id);
+  for (const q of o.queue || []) if (q.r === id) n += recipeQty(r) * (q.n || 1);
+  for (const v of farm.vill) if (v.at === o.id && v.job && v.job.k === 'load' && v.job.x === id) n += recipeQty(r) * (v.job.n || 1);
+  return n;
+}
+// záznam výroby po hodinách (posledních TEAM.logH hodin)
+function logMade(o, id, n, now) {
+  const h = Math.floor(now / 3600000);
+  const log = o.log || (o.log = []);
+  let last = log[log.length - 1];
+  if (!last || last[0] !== h) { log.push(last = [h, {}]); while (log.length > TEAM.logH) log.shift(); }
+  last[1][id] = (last[1][id] || 0) + n;
+}
+const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+// smí to být v plánu pracoviště? vrací kód chyby nebo null
+function planKeyErr(farm, wp, kind, key) {
+  if (kind === 'crop') { const c = getCrop(key); return !c ? 'bad_action' : farm.level < c.level ? 'locked' : null; }
+  if (kind === 'tree') { const t = own(TREES, key); return !t ? 'bad_action' : farm.level < t.level ? 'locked' : null; }
+  if (kind === 'recipe') { const r = getRecipe(key); return !r || r.building !== wp.o.kind ? 'bad_action' : farm.level < r.level ? 'locked' : null; }
+  return !getItem(key) || isSeedItem(key) ? 'bad_action' : null;
+}
+// uvolnit místo na pracovišti: když je plné, vymění se pracovník swap (jde tam, odkud přišel v), jinak chyba
+function makeRoom(farm, v, wp, areas, swap, now) {
+  const ws = wpWorkers(farm, wp, areas).filter(x => x !== v);
+  if (ws.length < wpCap(wp)) return null;
+  const o = swap ? ws.find(x => x.id === swap) : null;
+  if (!o) return fail(swap ? 'bad_action' : 'workplace_full');
+  dropJob(farm, o);
+  o.at = v.area ? 0 : v.at || 0;
+  o.area = v.area ? { ...v.area } : null;
+  o.t = now;
+  delete o.uc;
+  return null;
+}
+// co mají ostatní pracovníci rozdělané (aby dva nešli na stejné políčko)
+function claims(farm, v) {
+  const m = new Map();
+  for (const x of farm.vill) if (x !== v && x.job) m.set(x.job.id, x.job);
+  return m;
+}
 
 // co zasadit na prázdné místo: plodina (strom) s největším schodkem proti plánu, na kterou jsou ve Statku semena.
 // Vrací id, nebo null a do PICK důvod: 'plan' (v plánu nic není), 'done' (plán je naplněný, zbytek leží ladem), 'seeds' (+ PICK.needs)
@@ -1127,9 +1238,11 @@ const idle = (w, wake = Infinity, needs = null, room = false, took = null, seedR
 const VILL_TASK = {
   // pole: nejdřív osázet prázdné (ať roste), pak sklidit to, co je zralé nejdéle
   pole(farm, e, t) {
-    const cells = e.g.cells, cnt = {};
+    const cells = e.g.cells, cnt = {}, busy = claims(farm, e.v);
     let empty = null, ripe = null, ripeAt = Infinity, wake = Infinity;
     for (const p of cells) {
+      const b = busy.get(p.id);
+      if (b) { if (b.k === 'plant') cnt[b.x] = (cnt[b.x] || 0) + 1; else if (p.crop) cnt[p.crop] = (cnt[p.crop] || 0) + 1; continue; }   // na tom už dělá kolega
       if (!p.crop) { if (!empty || p.id < empty.id) empty = p; continue; }
       cnt[p.crop] = (cnt[p.crop] || 0) + 1;
       const at = p.planted + (p.d || CROPS[p.crop].time * 1000);
@@ -1137,8 +1250,8 @@ const VILL_TASK = {
       else if (at < ripeAt || (at === ripeAt && p.id < ripe.id)) { ripe = p; ripeAt = at; }
     }
     let w = 'rest', needs = null, full = false;
-    if (empty) {
-      const c = planPick(farm, e.v.plan || {}, cnt, cells.length, CROPS, 's_', e.L);
+    if (empty && e.set.replant !== false) {
+      const c = planPick(farm, e.set.plan, cnt, cells.length, CROPS, 's_', e.L);
       if (c) return job('plant', empty.id, c);
       if (PICK.w !== 'done') { w = PICK.w; needs = PICK.needs; }
     }
@@ -1150,9 +1263,11 @@ const VILL_TASK = {
   },
   // sad: zasadit sazenici na prázdné místo, otrhat zralé, vykopat suché
   sad(farm, e, t) {
-    const cells = e.g.cells, cnt = {};
+    const cells = e.g.cells, cnt = {}, busy = claims(farm, e.v);
     let empty = null, dead = null, ripe = null, ripeAt = Infinity, wake = Infinity;
     for (const o of cells) {
+      const b = busy.get(o.id);
+      if (b) { if (b.k === 'sapling') cnt[b.x] = (cnt[b.x] || 0) + 1; else if (o.tree && !o.dead) cnt[o.tree] = (cnt[o.tree] || 0) + 1; continue; }
       if (!o.tree) { if (!empty || o.id < empty.id) empty = o; }
       else if (o.dead) { if (!dead || o.id < dead.id) dead = o; }
       else {
@@ -1162,8 +1277,8 @@ const VILL_TASK = {
       }
     }
     let w = 'rest', needs = null, full = false;
-    if (empty) {
-      const c = planPick(farm, e.v.plan || {}, cnt, cells.length, TREES, 'z_', e.L);
+    if (empty && e.set.replant !== false) {
+      const c = planPick(farm, e.set.plan, cnt, cells.length, TREES, 'z_', e.L);
       if (c) return job('sapling', empty.id, c);
       if (PICK.w !== 'done') { w = PICK.w; needs = PICK.needs; }
     }
@@ -1188,21 +1303,17 @@ const VILL_TASK = {
       }
     }
     if (q.length >= queueSize(o)) return idle(w, wake, null, room, null, seedRoom);
-    const r = factoryPick(farm, e.v, o, e.L);
+    const r = factoryPick(farm, o, e.L);
     if (r) {
-      // dávka: výkon pracovníka = kolik kusů naloží najednou (zlomky se sčítají), nejvýš na kolik jsou suroviny a do stropu
+      // dávka: výkon pracovníka = kolik kusů naloží najednou (zlomky se sčítají), nejvýš na kolik jsou suroviny nad rezervou a do cíle
       const R = RECIPES[r], u = villOut(e.v, 'vyroba') + (e.v.uc || 0);
       let n = Math.max(1, Math.floor(u));
-      for (const id in R.in) n = Math.min(n, Math.floor(have(farm, id) / R.in[id]));
-      const lim = e.v.lim && e.v.lim[r];
-      if (lim > 0) {
-        let made = have(farm, r);
-        for (const x of q) if (x.r === r) made += recipeQty(R) * (x.n || 1);
-        n = Math.min(n, Math.ceil((lim - made) / recipeQty(R)));
-      }
+      for (const id in R.in) n = Math.min(n, Math.floor(availFor(farm, id) / R.in[id]));
+      if (PICK.tg) n = Math.min(n, Math.ceil((PICK.tg - stockOf(farm, o, r)) / recipeQty(R)));
       n = Math.max(1, n);
       e.v.uc = Math.max(0, u - Math.floor(u));
       const j = job('load', o.id, r); j.n = n;
+      if (PICK.tg) j.tg = 1;
       return j;
     }
     return idle(w === 'full' ? w : PICK.w, wake, PICK.needs, room, PICK.took, seedRoom);
@@ -1231,30 +1342,40 @@ const VILL_TASK = {
     return idle('rest', t + s.next);
   },
 };
-// který výrobek z plánu teď naložit; podíly hlídá spravedlivé střídání (v.cw = kolik má který výrobek „k dobru“)
-// vrací id výrobku, nebo null a do PICK důvod: 'inputs' (+ needs), 'limit' (+ took: zásoba je plná, čeká na úbytek), 'plan'
-function factoryPick(farm, v, o, L) {
-  const plan = v.plan || {}, lim = v.lim || {}, ok = [];
-  let took = null, needs = null, sum = 0, skill = false;
+// Který výrobek teď naložit. Nejdřív cílové zásoby v pořadí (o.target: pod cílem → přednost, na cíli → nevyrábí se vůbec),
+// potom procenta (o.plan) jako podíl výrobního času: dostane ho výrobek, kterému proti plánu nejvíc času chybí (o.used).
+// Vrací id, nebo null a do PICK důvod: 'inputs' (+ needs), 'limit' (+ took: cíl je splněný, čeká na úbytek), 'skill', 'plan'.
+// PICK.tg = cíl, když se vybíralo podle cílové zásoby (dávka se omezí, aby cíl nepřelezla).
+function factoryPick(farm, o, L) {
+  const plan = o.plan || {}, tgt = o.target || [], done = new Set();
+  let took = null, needs = null, skill = false;
+  const why = () => { PICK.w = needs ? 'inputs' : took ? 'limit' : skill ? 'skill' : 'plan'; PICK.needs = needs; PICK.took = took; };
+  PICK.tg = 0;
+  for (const [id, n] of tgt) {
+    const r = RECIPES[id];
+    if (!r || r.building !== o.kind || farm.level < r.level) continue;
+    if (needLvl(r.level) > L) { skill = true; continue; }
+    if (stockOf(farm, o, id) >= n) { done.add(id); (took || (took = [])).push(id); continue; }
+    if (!hasInputsKeep(farm, r)) { needs = needs || []; for (const i in r.in) needs.push(i); continue; }
+    PICK.tg = n;
+    return id;
+  }
+  const ok = [];
+  let sum = 0, used = 0;
   for (const id in plan) {
     const r = RECIPES[id], pct = plan[id];
-    if (!(pct > 0) || !r || r.building !== o.kind || farm.level < r.level) continue;
+    if (!(pct > 0) || !r || r.building !== o.kind || farm.level < r.level || done.has(id)) continue;
     if (needLvl(r.level) > L) { skill = true; continue; }
-    if (lim[id] > 0) {
-      let n = have(farm, id);
-      for (const q of o.queue) if (q.r === id) n += recipeQty(r) * (q.n || 1);
-      if (n >= lim[id]) { (took || (took = [])).push(id); continue; }
-    }
-    if (!hasInputs(farm, r)) { needs = needs || []; for (const i in r.in) needs.push(i); continue; }
-    ok.push(id); sum += pct;
+    if (!hasInputsKeep(farm, r)) { needs = needs || []; for (const i in r.in) needs.push(i); continue; }
+    ok.push(id); sum += pct; used += (o.used && o.used[id]) || 0;
   }
-  PICK.w = needs ? 'inputs' : took ? 'limit' : skill ? 'skill' : 'plan';
-  PICK.needs = needs; PICK.took = took;
+  why();
   if (!ok.length) return null;
-  const cw = v.cw || (v.cw = {});
-  let best = null;
-  for (const id of ok) { cw[id] = (cw[id] || 0) + plan[id]; if (best === null || cw[id] > cw[best]) best = id; }
-  cw[best] -= sum;
+  let best = null, bestD = -Infinity;
+  for (const id of ok) {
+    const d = plan[id] / sum * used - ((o.used && o.used[id]) || 0);
+    if (d > bestD + 1e-9) { best = id; bestD = d; }
+  }
   return best;
 }
 // vrátit zpět do zásob bez počítání do statistik (nedokončený úkol)
@@ -1328,7 +1449,17 @@ function finishJob(farm, e, j, t, live) {
     case 'load': {
       const r = getRecipe(j.x);
       if (!r || r.building !== o.kind || o.queue.length >= queueSize(o)) return null;
-      queueRecipe(o, r, t, 1, j.n || 1);
+      const d = Math.round(r.time * 1000 * speedMult(o));
+      // procenta pod 100 % bez „přerozdělit“: budova po dávce stojí v poměru nevyužité kapacity
+      const sum = planTotal(o.plan), pause = !j.tg && !o.auto && sum > 0 && sum < 100 ? Math.round(d * (100 - sum) / sum) : 0;
+      queueRecipe(o, r, t, 1, j.n || 1, pause);
+      if (!j.tg) {
+        const u = o.used || (o.used = {});
+        u[r.id] = (u[r.id] || 0) + d;
+        let tot = 0;
+        for (const k in u) tot += u[k];
+        if (tot > TEAM.usedWindowH * 3600000) for (const k in u) u[k] = Math.round(u[k] / 2);
+      }
       return DONE;
     }
     case 'feed': {
@@ -1362,12 +1493,14 @@ function finishJob(farm, e, j, t, live) {
 export function tradeRound(farm, v, t) {
   const L = villLevel(v, 'sklad');
   const cap = Math.round(TEAM.trade.cap[L] * (v.prof === 'sklad' || traitOf(v).any ? 1 : TEAM.offProf.power) * (traitOf(v).out || 1));
-  const k = 1 + (TEAM.trade.bonus[L] || 0) / 100, lim = v.lim || {};
-  const rows = [];
+  const k = 1 + (TEAM.trade.bonus[L] || 0) / 100;
+  const o = v.at && findObject(farm, v.at), plan = (o && o.plan) || {};
+  const rows = [], rowsMax = TEAM.trade.rows[L] || 0;
   let want = 0;
-  for (const [item, pct] of Object.entries(v.plan || {})) {
+  for (const [item, pct] of Object.entries(plan)) {
     if (!ITEMS[item] || isSeedItem(item) || !(pct > 0)) continue;
-    const free = have(farm, item) - (lim[item] || 0);
+    if (rows.length >= rowsMax) break;   // víc druhů zboží pracovník zatím nezvládne
+    const free = have(farm, item) - keepOf(farm, item);
     const n = free > 0 ? Math.min(free, Math.ceil(free * pct / 100)) : 0;
     rows.push({ item, pct, want: n, n, f: 0, price: 0, coins: 0 });
     want += n;
@@ -1411,7 +1544,7 @@ export function runVillagers(farm, now, lim) {
     if (!e) { if (v.job) dropJob(farm, v); v.w = 'free'; if (!(v.t >= now)) v.t = now; continue; }
     if (!(v.t >= from)) { v.t = from; if (v.job) dropJob(farm, v); }
     if (e.type === 'trader') {
-      const on = planSum(v) > 0;
+      const on = planTotal(e.o.plan) > 0;
       v.w = on ? '' : 'plan';
       if (!on && !(v.t >= now)) v.t = now;
       e.next = on ? nextTrade(v.t) : Infinity;
@@ -1743,7 +1876,8 @@ export const ERRORS = {
   no_bed: 'Nemáš volné lůžko. Postav nebo přestav domek.',
   ads_max: 'Víc inzerátů najednou viset nemůže.',
   merits: 'Statek zatím nejde vylepšit – chybí zásluhy.',
-  plan_rows: 'Víc řádků se do tabulky nevejde. Obchodník na vyšší úrovni zvládne víc druhů zboží.',
+  plan_rows: 'Víc řádků se do tabulky nevejde.',
+  workplace_full: 'Tady už je plno – vyber, s kým se má vyměnit.',
   no_helper: 'Pomocník teď nepracuje – najmi ho ve Statku.',
   land_owned: 'Tenhle pozemek už je tvůj.',
   land_far: 'Nejdřív kup sousední pozemek.',
@@ -1922,6 +2056,7 @@ function doAction(farm, a, now) {
           const fit = Math.min(left, Math.floor(spaceFor(farm, q.r) / per));
           if (fit < 1) { full = true; seedsFull = isSeedItem(q.r); break; }
           addItem(farm, q.r, fit * per);
+          logMade(o, q.r, fit * per, now);
           items.push({ item: q.r, qty: fit * per });
           if (q.t) xpTeam += RECIPES[q.r].xp * fit; else xp += RECIPES[q.r].xp * fit;
           if (fit < left) { q.n = left - fit; full = true; break; }
@@ -2184,7 +2319,7 @@ function doAction(farm, a, now) {
     }
     case 'buyFarmer': case 'buyVill': case 'upVill':   // od v29 se pracovníci nekupují ani nevylepšují za mince
       return fail('team_search');
-    case 'assignArea': {   // kind 'pole' | 'sad', a = id pole/sadu v oblasti (0 = odvolat); v oblasti je jeden pracovník
+    case 'assignArea': {   // kind 'pole' | 'sad', a = id pole/sadu v oblasti (0 = odvolat); swap = id pracovníka, se kterým se vymění
       const v = findVill(farm, a.id);
       if (!v || !isInt(a.a)) return fail('bad_action');
       if (!a.a) { dropJob(farm, v); v.area = null; return { ok: true }; }
@@ -2192,25 +2327,26 @@ function doAction(farm, a, now) {
       const areas = workAreas(farm);
       const g = areas.find(x => x.kind === a.kind && x.ids.includes(a.a));
       if (!g) return fail('area_small');
-      for (const o of farm.vill) if (o !== v && isFarmer(o) && areaOf(areas, o) === g) { dropJob(farm, o); o.area = null; }
-      if (v.pk !== a.kind || v.at) { v.plan = {}; delete v.lim; delete v.cw; delete v.last; }   // plán polí se nehodí na sad ani do budovy
-      v.pk = a.kind;
+      if (areaOf(areas, v) === g) return { ok: true, n: g.n };   // už tam pracuje
+      const err = makeRoom(farm, v, { o: null, g }, areas, a.swap, now);
+      if (err) return err;
       dropJob(farm, v);
       v.at = 0;
       v.area = { kind: a.kind, id: a.a }; v.t = now;
       return { ok: true, n: g.n };
     }
-    case 'assignVill': {   // at = id budovy, 0 = odvolat; v budově je nejvýš jeden pracovník (jiný se uvolní)
+    case 'assignVill': {   // at = id budovy, 0 = odvolat; swap = id pracovníka, se kterým se vymění, když je místo plné
       const v = findVill(farm, a.id);
       if (!v || !isInt(a.at)) return fail('bad_action');
       if (a.at) {
-        const o = findObject(farm, a.at);
-        if (!o || !villJobType(o.kind)) return fail('bad_job');
-        const other = villAt(farm, a.at);
-        if (other && other !== v) { dropJob(farm, other); other.at = 0; }
+        const o = findObject(farm, a.at), type = o && villJobType(o.kind);
+        if (!type) return fail('bad_job');
+        if (v.at === a.at && !v.area) return { ok: true };
+        const err = makeRoom(farm, v, { o, g: null, type }, null, a.swap, now);
+        if (err) return err;
       }
-      if (v.at !== a.at || v.area) { v.plan = {}; delete v.lim; delete v.cw; delete v.last; delete v.uc; delete v.pk; }   // jiné místo = nová tabulka práce
       dropJob(farm, v);
+      delete v.uc;
       v.area = null;
       v.at = a.at; v.t = now;
       return { ok: true };
@@ -2245,7 +2381,7 @@ function doAction(farm, a, now) {
       if (now < ad.ready) return fail('not_ready');
       if (teamFree(farm) < 1) return fail('no_bed');
       farm.board.ads = farm.board.ads.filter(x => x !== ad);
-      const v = { id: c.id, prof: c.prof, trait: c.trait, xp: { [c.prof]: TEAM.xpLvl[c.lvl] }, hist: [], at: 0, area: null, plan: {}, t: now, n: 0 };
+      const v = { id: c.id, prof: c.prof, trait: c.trait, xp: { [c.prof]: TEAM.xpLvl[c.lvl] }, hist: [], at: 0, area: null, t: now, n: 0 };
       farm.vill.push(v);
       return { ok: true, id: v.id };
     }
@@ -2268,39 +2404,58 @@ function doAction(farm, a, now) {
       const levelUp = addXp(farm, next.xp);
       return { ok: true, kind: next.id, cost, gained: { items: [], xp: next.xp, levelUp } };
     }
-    case 'villPlan': {     // řádek tabulky práce: key = plodina / strom / výrobek / zboží, pct = podíl v % (0 = vyřadit z tabulky)
-      const v = findVill(farm, a.id);
-      if (!v || typeof a.key !== 'string' || !isInt(a.pct) || a.pct < 0 || a.pct > 100 || a.pct % 5) return fail('bad_action');
-      const kind = planKind(farm, v);
+    case 'villPlan': case 'villLim':   // do v29 měl plán pracovník; od v30 patří pracovišti (akce plan, planTarget, keep)
+      return fail('bad_action');
+    case 'plan': {         // řádek plánu pracoviště: w = pracoviště, key = plodina / strom / výrobek / zboží, pct = podíl v % (0 = vyřadit)
+      const wp = wpGet(farm, a.w);
+      if (!wp || typeof a.key !== 'string' || !isInt(a.pct) || a.pct < 0 || a.pct > 100 || a.pct % 5) return fail('bad_action');
+      const kind = planKindW(wp);
       if (!kind) return fail('bad_job');
-      const plan = v.plan || (v.plan = {});
-      if (!a.pct) {
-        if (Object.prototype.hasOwnProperty.call(plan, a.key)) delete plan[a.key];
-        if (v.lim) delete v.lim[a.key];
-      } else {
-        if (kind === 'crop') { const c = getCrop(a.key); if (!c) return fail('bad_action'); if (farm.level < c.level) return fail('locked'); }
-        else if (kind === 'tree') { const t = own(TREES, a.key); if (!t) return fail('bad_action'); if (farm.level < t.level) return fail('locked'); }
-        else if (kind === 'recipe') {
-          const r = getRecipe(a.key);
-          if (!r || r.building !== findObject(farm, v.at).kind) return fail('bad_action');
-          if (farm.level < r.level) return fail('locked');
-        } else if (!getItem(a.key) || isSeedItem(a.key)) return fail('bad_action');
-        const isNew = !Object.prototype.hasOwnProperty.call(plan, a.key);
-        if (isNew && Object.keys(plan).length >= (kind === 'item' ? TEAM.trade.rows[villLevel(v, 'sklad')] : PLAN_ROWS)) return fail('plan_rows');
-        if (kind !== 'item' && planSum(v) - (plan[a.key] || 0) + a.pct > 100) return fail('plan_over');   // obchodník: každé zboží zvlášť
-        plan[a.key] = a.pct;
-      }
-      delete v.cw;
+      const plan = wpPlan(wp);
+      if (!a.pct) { if (has(plan, a.key)) delete plan[a.key]; return { ok: true }; }
+      const err = planKeyErr(farm, wp, kind, a.key);
+      if (err) return fail(err);
+      if (!has(plan, a.key) && Object.keys(plan).length >= (kind === 'item' ? TEAM.trade.rows[TEAM.maxLvl] : PLAN_ROWS)) return fail('plan_rows');
+      if (kind !== 'item' && planTotal(plan) - (plan[a.key] || 0) + a.pct > 100) return fail('plan_over');   // sklad: každé zboží zvlášť
+      plan[a.key] = a.pct;
       return { ok: true };
     }
-    case 'villLim': {      // obchodník: kolik kusů si nechat; dělník: vyrábět jen do zásoby n (0 = bez omezení)
-      const v = findVill(farm, a.id);
-      if (!v || typeof a.key !== 'string' || !isInt(a.n) || a.n < 0 || a.n > 9999) return fail('bad_action');
-      if (!v.plan || !Object.prototype.hasOwnProperty.call(v.plan, a.key)) return fail('bad_action');
-      const kind = planKind(farm, v);
-      if (kind !== 'item' && kind !== 'recipe') return fail('bad_job');
-      if (!v.lim) v.lim = {};
-      if (a.n) v.lim[a.key] = a.n; else delete v.lim[a.key];
+    case 'planTarget': {   // výrobna: cílová zásoba výrobku (n = kolik kusů mít, 0 = vyřadit); cíle mají přednost před procenty
+      const wp = wpGet(farm, a.w);
+      if (!wp || typeof a.key !== 'string' || !isInt(a.n) || a.n < 0 || a.n > 9999) return fail('bad_action');
+      if (wp.type !== 'factory') return fail('bad_job');
+      const T = wp.o.target || (wp.o.target = []), i = T.findIndex(x => x[0] === a.key);
+      if (!a.n) { if (i >= 0) T.splice(i, 1); return { ok: true }; }
+      const err = planKeyErr(farm, wp, 'recipe', a.key);
+      if (err) return fail(err);
+      if (i >= 0) T[i][1] = a.n;
+      else if (T.length >= PLAN_ROWS) return fail('plan_rows');
+      else T.push([a.key, a.n]);
+      return { ok: true };
+    }
+    case 'planOrder': {    // výrobna: posunout cíl v pořadí (d = -1 nahoru, 1 dolů)
+      const wp = wpGet(farm, a.w);
+      if (!wp || wp.type !== 'factory' || (a.d !== 1 && a.d !== -1)) return fail('bad_action');
+      const T = wp.o.target || [], i = T.findIndex(x => x[0] === a.key), j = i + a.d;
+      if (i < 0 || j < 0 || j >= T.length) return fail('bad_action');
+      [T[i], T[j]] = [T[j], T[i]];
+      return { ok: true };
+    }
+    case 'planAuto': {     // výrobna: přerozdělit nevyužitou kapacitu (procenta pod 100 %) mezi výrobky v plánu
+      const wp = wpGet(farm, a.w);
+      if (!wp || wp.type !== 'factory' || typeof a.on !== 'boolean') return fail('bad_action');
+      if (a.on) wp.o.auto = true; else delete wp.o.auto;
+      return { ok: true };
+    }
+    case 'planReplant': {  // oblast: znovu osazovat volná místa (vypnuto = jen sklízí a pole nechá ladem)
+      const wp = wpGet(farm, a.w);
+      if (!wp || !wp.g || typeof a.on !== 'boolean') return fail('bad_action');
+      wp.set.replant = a.on;
+      return { ok: true };
+    }
+    case 'keep': {         // rezerva ve skladu: pod n kusů tým nesáhne (výroba ani prodej na trhu), 0 = bez rezervy
+      if (typeof a.item !== 'string' || !getItem(a.item) || !isInt(a.n) || a.n < 0 || a.n > 99999) return fail('bad_action');
+      if (a.n) farm.keep[a.item] = a.n; else delete farm.keep[a.item];
       return { ok: true };
     }
     case 'tick':           // jen dopočítá práci vesničanů (klient ji posílá, když dohání dlouhou nepřítomnost)

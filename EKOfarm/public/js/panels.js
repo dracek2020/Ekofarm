@@ -13,13 +13,13 @@ import {
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
   VILL_MAX, AREA_MIN, workAreas, areaOf, isFarmer, isSeedItem, seedCap, seedUsed, SEEDS_PER, supplyPrice, villName, villJobType, villAt, findObject,
-  workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planSum, villLevel, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
+  workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planTotal, villLevel, villOut, speedMult, stockOf, keepOf, wpGet, wpWorkers, wpCap, areaCap, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
   beds, teamCap, teamFree, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
-} from './rules.js?v=29';
-import { fmtTime } from './render.js?v=29';
-import { TEAM } from './team-config.js?v=29';
-import { NEWS } from './news.js?v=29';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=29';
+} from './rules.js?v=30';
+import { fmtTime } from './render.js?v=30';
+import { TEAM } from './team-config.js?v=30';
+import { NEWS } from './news.js?v=30';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=30';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -218,10 +218,10 @@ export function itemHtml(farm, id, back) {
 
 // ---------- Farmářský tým: pracovníci, tabulky práce, nástěnka, domky ----------
 const VILL_WHAT = {
-  factory: 'vyrábí podle tabulky: suroviny bere ze skladu, hotové nosí do skladu',
+  factory: 'vyrábí podle plánu: suroviny bere ze skladu, hotové nosí do skladu',
   pen: 'krmí zvířata krmivem ze skladu a sbírá, co dají',
   hive: 'vybírá plástve a nosí je do skladu',
-  trader: 'na trhu prodává zboží ze skladu podle tabulky',
+  trader: 'na trhu prodává zboží ze skladu podle plánu',
 };
 const num = x => String(Math.round(x * 100) / 100).replace('.', ',');
 const secText = ms => (ms < 60000 ? `${num(ms / 1000)} s` : fmtTime(Math.round(ms / 1000)));
@@ -246,26 +246,26 @@ function villDoing(farm, v, type) {
     }
   }
   switch (v.w) {
-    case 'plan': return type === 'trader' ? 'Nemá co prodávat – přidej zboží do tabulky' : type === 'factory' ? 'Nemá co vyrábět – přidej výrobek do tabulky' : 'Nemá co sázet – přidej něco do plánu';
+    case 'plan': return type === 'trader' ? 'Nemá co prodávat – přidej zboží do plánu' : type === 'factory' ? 'Nemá co vyrábět – přidej výrobek nebo cíl do plánu' : 'Nemá co sázet – přidej něco do plánu';
     case 'seeds': return type === 'sad' ? 'Ve Statku došly sazenice' : 'Ve Statku došla semena';
     case 'inputs': return 'Čeká na suroviny ve skladu';
     case 'feed': return 'Ve skladu došlo krmivo';
     case 'full': return 'Nemá kam dát hotové – sklad je plný';
-    case 'limit': return 'Zásoba je plná po strop – čeká, až ubude';
+    case 'limit': return 'Cílové zásoby jsou splněné – čeká, až ubudou';
     case 'empty': return 'V ohradě nejsou zvířata';
     case 'free': return 'Nemá práci';
-    case 'skill': return 'Na nic z tabulky ještě nemá praxi – přidej jednodušší věc';
+    case 'skill': return 'Na nic z plánu ještě nemá praxi – přidej jednodušší věc';
     case 'rest': return type === 'pole' || type === 'sad' ? 'Všechno roste – čeká, až něco dozraje' : type === 'factory' ? 'Výroba běží – čeká na hotové' : type === 'pen' ? 'Zvířata jsou nakrmená – čeká' : 'Čeká na plástve';
   }
   return 'Rozhlíží se po práci';
 }
 // řádek „co právě dělá“ s průběhem úkonu
 function villStatus(farm, v, type, now) {
-  if (type === 'trader' && planSum(v) > 0) {
+  if (type === 'trader' && planTotal((findObject(farm, v.at) || {}).plan) > 0) {
     const left = Math.max(0, Math.ceil((nextTrade(now) - now) / 1000));
     return `<div class="vstat work"><span>:market: Další trh za <b>${fmtTime(left)}</b></span><div class="bar"><div style="width:${(100 - 100 * left * 1000 / TRADE_IV).toFixed(1)}%"></div></div></div>`;
   }
-  if (type === 'trader') return '<div class="vstat warn"><span>⚠ Nemá co prodávat – přidej zboží do tabulky</span></div>';
+  if (type === 'trader') return '<div class="vstat warn"><span>⚠ Nemá co prodávat – přidej zboží do plánu</span></div>';
   const j = v.job, text = villDoing(farm, v, type);
   if (j) {
     const pr = Math.max(0, Math.min(1, (now - j.s) / Math.max(1, j.e - j.s)));
@@ -285,91 +285,127 @@ function lvlLine(v, obor) {
 const profOf = v => TEAM.profs[v.prof] || TEAM.profs.vyroba;
 const traitText = t => (TEAM.traits[t] ? `<b>${TEAM.traits[t].name}</b> – ${TEAM.traits[t].text}` : 'bez zvláštní vlastnosti');
 const whoLine = v => `:${profOf(v).icon}: <b>${esc(villName(v))}</b> · ${profOf(v).name}`;
-// přepínač −/+ : data-v = pracovník|řádek|směr (dvojtečky by iconize() v atributu změnilo na ikonu)
-const step = (act, v, key, text, lo = true, hi = true) => `<span class="stepper"><button data-act="${act}" data-v="${v.id}|${key}|-1"${lo ? '' : ' disabled'}>−</button><b>${text}</b><button data-act="${act}" data-v="${v.id}|${key}|1"${hi ? '' : ' disabled'}>+</button></span>`;
-// jeden řádek tabulky: ikona, název, procenta, ✕, pod tím údaje a případně druhý přepínač (rezerva / strop)
-// need = úroveň, kterou na tuhle věc pracovník potřebuje (víc, než má → řádek je šedý)
-function planRow(v, key, icon, name, meta, pct, canUp, second = '', need = 0) {
+// přepínač −/+ : data-v = základ|směr (dvojtečky by iconize() v atributu změnilo na ikonu)
+const step = (act, base, text, lo = true, hi = true) => `<span class="stepper"><button data-act="${act}" data-v="${base}|-1"${lo ? '' : ' disabled'}>−</button><b>${text}</b><button data-act="${act}" data-v="${base}|1"${hi ? '' : ' disabled'}>+</button></span>`;
+// řádek plánu: ikona, název, procenta (posuvník po 5 % a −/+), ✕, pod tím údaje a případně druhý přepínač (rezerva)
+// max = kolik procent řádek smí mít (do 100 % s ostatními); need = potřebná úroveň, kterou pracovník nemá → šedý řádek
+function planRow(w, key, icon, name, meta, pct, max, second = '', need = 0) {
   return `<div class="prow${need ? ' dim' : ''}"><button class="ico" data-act="itemInfo" data-v="${ITEMS[key] ? key : ''}">:${icon}:</button>
     <b class="pn">${esc(name)}</b>
-    ${step('planPct', v, key, `${pct} %`, pct > 5, canUp)}
-    <button class="del" data-act="planDel" data-v="${v.id}|${key}" aria-label="Vyřadit z tabulky">✕</button>
+    ${step('planPct', `${w}|${key}`, `<span class="pv">${pct}</span> %`, pct > 5, pct < max)}
+    <button class="del" data-act="planDel" data-v="${w}|${key}" aria-label="Vyřadit z plánu">✕</button>
+    <input class="pslide" type="range" min="0" max="100" step="5" value="${pct}" data-w="${w}" data-key="${key}" data-max="${max}" aria-label="Procenta">
     <small class="pm">${need ? `<b class="miss">umí až od úrovně ${need}</b> · ` : ''}${meta}</small>
     ${second ? `<div class="p2">${second}</div>` : ''}</div>`;
 }
 // nabídka „přidat“: [id, ikona, název, potřebná úroveň]
-const addChips = (v, list, label, L) => (list.length ? `<small><b>${label}</b></small><div class="chips">${list.map(([id, icon, n, need]) =>
-  `<button class="chip${need > L ? ' dim' : ''}" data-act="planAdd" data-v="${v.id}|${id}">+ :${icon}: ${esc(n)}${need > L ? ` · úr. ${need}` : ''}</button>`).join('')}</div>` : '');
-const sumLine = (sum, rest) => `<div class="psum${sum >= 100 ? ' full' : ''}"><div class="bar"><div style="width:${Math.min(100, sum)}%"></div></div><small>Rozděleno <b>${sum} %</b>${sum < 100 ? ` · ${rest}` : ''}</small></div>`;
-
-// tabulka výrobny: podíl každého výrobku a strop zásoby
-function factoryPlan(farm, v, o) {
-  const plan = v.plan || {}, lim = v.lim || {}, sum = planSum(v), L = villLevel(v, 'vyroba');
-  const rows = Object.keys(plan).filter(id => RECIPES[id]).map(id => {
-    const r = RECIPES[id], it = ITEMS[id], n = have(farm, id), cap = lim[id] || 0, need = needLvl(r.level);
-    const meta = `${isSeedItem(id) ? 've Statku' : 've skladu'} <b>${n}</b> · potřebuje <span class="ings">${ingredients(farm, r)}</span>`;
-    return planRow(v, id, it.icon, it.name, meta, plan[id], sum < 100,
-      `<span>strop zásoby</span>${step('planLim', v, id, cap ? `${cap} ks` : 'bez stropu', cap > 0)}`, need > L ? need : 0);
-  }).join('');
-  const add = Object.values(RECIPES).filter(r => r.building === o.kind && farm.level >= r.level && !(r.id in plan)).map(r => [r.id, ITEMS[r.id].icon, ITEMS[r.id].name, needLvl(r.level)]);
-  return `<small><b>Co vyrábět</b> – podíl výroby v procentech a strop zásoby:</small>
-    ${rows || '<small class="muted">Tabulka je prázdná. Vyber, co má vyrábět:</small>'}
-    ${rows ? sumLine(sum, 'zbytek se rozdělí mezi vybrané výrobky') : ''}
-    ${Object.keys(plan).length < PLAN_ROWS ? addChips(v, add, rows ? 'Přidat výrobek:' : '', L) : ''}
-    <small class="muted">Na úrovni ${L} naloží najednou asi ${num(villPower(v, 'vyroba'))} ${villPower(v, 'vyroba') < 2 ? 'kus' : 'kusů'} – výroba trvá stejně dlouho, jen je jí víc.</small>`;
+const addChips = (w, list, label, L, act = 'planAdd') => (list.length ? `<small><b>${label}</b></small><div class="chips">${list.map(([id, icon, n, need]) =>
+  `<button class="chip${need > L ? ' dim' : ''}" data-act="${act}" data-v="${w}|${id}">+ :${icon}: ${esc(n)}${need > L ? ` · úr. ${need}` : ''}</button>`).join('')}</div>` : '');
+// souhrn procent: výrobna – využití času (a přepínač přerozdělení), oblast – kolik oblasti je v plánu
+function useLine(w, sum, auto, factory) {
+  const idle = 100 - sum;
+  const txt = factory
+    ? (sum >= 100 ? 'Využito <b>100 %</b> výrobního času' : auto ? `Využito <b>${sum} %</b> · zbylých ${idle} % se rozdělí mezi výrobky v plánu` : `Využito <b>${sum} %</b> · <b class="miss">${idle} % času budova stojí</b>`)
+    : (sum >= 100 ? 'Rozděleno <b>100 %</b> oblasti' : `Rozděleno <b>${sum} %</b> · ${idle} % oblasti nechá ležet ladem`);
+  return `<div class="psum${sum >= 100 ? ' full' : ''}"><div class="bar"><div style="width:${Math.min(100, sum)}%"></div></div><small>${txt}</small>
+    ${factory && sum < 100 ? `<button class="chip${auto ? ' on' : ''}" data-act="planAuto" data-v="${w}">${auto ? '✓ ' : ''}Přerozdělit nevyužité</button>` : ''}</div>`;
 }
-// tabulka skladníka: kolik procent zásoby prodat na jednom trhu a kolik si nechat
-function traderPlan(farm, v, now) {
-  const plan = v.plan || {}, lim = v.lim || {}, L = villLevel(v, 'sklad'), bonus = TEAM.trade.bonus[L], rowsMax = TEAM.trade.rows[L];
-  const tr = tradeRound(farm, v, nextTrade(now));
-  const rows = tr.rows.map(r => {
-    const it = ITEMS[r.item], keep = lim[r.item] || 0;
-    const meta = `ve skladu <b>${have(farm, r.item)}</b> · příště prodá <b>${r.n}</b> ks${r.n ? ` za ${r.coins} :coin:` : ''}`;
-    return planRow(v, r.item, it.icon, it.name, meta, r.pct, r.pct < 100,
-      `<span>nechat si aspoň</span>${step('planLim', v, r.item, `${keep} ks`, keep > 0)}`);
+const rate = x => (x >= 10 ? String(Math.round(x)) : num(Math.round(x * 10) / 10));
+const hourText = h => { const d = new Date(h * 3600000).getHours(); return `${d}–${(d + 1) % 24} h`; };
+
+// plán výrobny: cílové zásoby (přednost, v pořadí) a podíl výrobního času v procentech; odhad za hodinu a přehled výroby
+function factoryPlan(farm, o, ws) {
+  const w = 'b' + o.id, plan = o.plan || {}, sum = planTotal(plan), T = o.target || [];
+  const L = ws.length ? Math.max(...ws.map(x => villLevel(x, 'vyroba'))) : 99;
+  const out = ws.reduce((a, x) => a + villOut(x, 'vyroba'), 0);   // kusů na jednu dávku
+  const inBld = Object.values(RECIPES).filter(r => r.building === o.kind && farm.level >= r.level);
+  const perH = id => { const r = RECIPES[id]; return out && sum ? plan[id] / (o.auto ? sum : 100) * 3600 / (r.time * speedMult(o)) * out * recipeQty(r) : 0; };
+  const tg = T.filter(([id]) => RECIPES[id]).map(([id, n], i) => {
+    const it = ITEMS[id], s = stockOf(farm, o, id), need = needLvl(RECIPES[id].level);
+    return `<div class="prow tg${need > L ? ' dim' : ''}"><span class="ord"><button data-act="tgtUp" data-v="${w}|${id}|-1"${i ? '' : ' disabled'} aria-label="Výš">▲</button><button data-act="tgtUp" data-v="${w}|${id}|1"${i < T.length - 1 ? '' : ' disabled'} aria-label="Níž">▼</button></span>
+      <button class="ico" data-act="itemInfo" data-v="${id}">:${it.icon}:</button><b class="pn">${esc(it.name)}</b>
+      ${step('tgtN', `${w}|${id}`, `${n} ks`, n > 1)}
+      <button class="del" data-act="tgtDel" data-v="${w}|${id}" aria-label="Vyřadit cíl">✕</button>
+      <small class="pm">${need > L ? `<b class="miss">umí až od úrovně ${need}</b> · ` : ''}má <b>${s}</b>${s >= n ? ' · <b class="okc">✓ splněno</b>' : ` · chybí ${n - s}`} · potřebuje <span class="ings">${ingredients(farm, RECIPES[id])}</span></small></div>`;
+  }).join('');
+  const tgAdd = inBld.filter(r => !T.some(x => x[0] === r.id)).map(r => [r.id, ITEMS[r.id].icon, ITEMS[r.id].name, needLvl(r.level)]);
+  const rows = Object.keys(plan).filter(id => RECIPES[id]).map(id => {
+    const r = RECIPES[id], it = ITEMS[id], ph = perH(id), need = needLvl(r.level);
+    const meta = `${isSeedItem(id) ? 've Statku' : 've skladu'} <b>${have(farm, id)}</b>${ph ? ` · asi <b>${rate(ph)}</b> za hodinu` : ''} · potřebuje <span class="ings">${ingredients(farm, r)}</span>`;
+    return planRow(w, id, it.icon, it.name, meta, plan[id], 100 - (sum - plan[id]), '', need > L ? need : 0);
+  }).join('');
+  const add = inBld.filter(r => !(r.id in plan)).map(r => [r.id, ITEMS[r.id].icon, ITEMS[r.id].name, needLvl(r.level)]);
+  const log = (o.log || []).slice().reverse().map(([h, m]) => `<small><b>${hourText(h)}</b> ${Object.entries(m).map(([id, n]) => `${n}× :${ITEMS[id] ? ITEMS[id].icon : 'box'}:`).join(' ')}</small>`).join('');
+  return `<small><b>Cílové zásoby</b> – mají přednost. Vyrábí se, dokud jich není tolik (sklad + výroba), v pořadí shora:</small>
+    ${tg || '<small class="muted">Žádný cíl – třeba „mít pořád 20 mouky“.</small>'}
+    ${T.length < PLAN_ROWS ? addChips(w, tgAdd, 'Přidat cíl:', L, 'tgtAdd') : ''}
+    <small><b>Podíl výrobního času</b> – zbytek času se dělí podle procent:</small>
+    ${rows || '<small class="muted">Procenta zatím nejsou. Vyber, co vyrábět:</small>'}
+    ${rows ? useLine(w, sum, !!o.auto, true) : ''}
+    ${Object.keys(plan).length < PLAN_ROWS ? addChips(w, add, rows ? 'Přidat výrobek:' : '', L) : ''}
+    ${ws.length ? `<small class="muted">Na úrovni ${L} naloží najednou asi ${num(out)} ${out < 2 ? 'kus' : 'kusů'} – výroba trvá stejně dlouho, jen je jí víc. Na suroviny v rezervě skladu nesáhne.</small>`
+      : '<small class="muted">Bez pracovníka se podle plánu nevyrábí – plán ale můžeš připravit předem.</small>'}
+    ${log ? `<small><b>Vyrobeno za posledních ${TEAM.logH} h</b></small><div class="plog">${log}</div>` : ''}`;
+}
+// plán skladu: kolik procent zásoby prodat na jednom trhu; rezerva ve skladu (platí pro celý tým)
+function traderPlan(farm, o, ws, now) {
+  const w = 'b' + o.id, plan = o.plan || {}, v = ws[0];
+  const L = v ? villLevel(v, 'sklad') : 0, rowsMax = v ? TEAM.trade.rows[L] : 0, bonus = v ? TEAM.trade.bonus[L] : 0;
+  const tr = v ? tradeRound(farm, v, nextTrade(now)) : null;
+  const next = new Map((tr ? tr.rows : []).map(r => [r.item, r]));
+  let i = 0;
+  const rows = Object.keys(plan).filter(id => ITEMS[id] && !isSeedItem(id) && plan[id] > 0).map(id => {
+    const it = ITEMS[id], r = next.get(id), keep = keepOf(farm, id), over = v && i++ >= rowsMax;
+    const meta = `ve skladu <b>${have(farm, id)}</b>${r ? ` · příště prodá <b>${r.n}</b> ks${r.n ? ` za ${r.coins} :coin:` : ''}` : over ? ' · <b class="miss">tolik druhů zvládne až zkušenější skladník</b>' : ''}`;
+    return planRow(w, id, it.icon, it.name, meta, plan[id], 100, `<span>rezerva ve skladu</span>${step('keepN', id, `${keep} ks`, keep > 0)}`, over ? L + 1 : 0);
   }).join('');
   const add = ITEM_LIST.filter(it => have(farm, it.id) > 0 && !isSeedItem(it.id) && !(it.id in plan)).map(it => [it.id, it.icon, it.name, 0]);
-  const room = Object.keys(plan).length < rowsMax;
-  const last = v.last ? `<small class="muted">Poslední trh v ${clock(v.last.t)}: ${v.last.it.map(([id, n]) => `${n}× :${ITEMS[id] ? ITEMS[id].icon : 'coin'}:`).join(' ')} → <b>+${v.last.c} :coin:</b></small>` : '';
-  return `<small><b>Co prodávat</b> – kolik procent zásoby jde na každý trh:</small>
-    ${rows || '<small class="muted">Tabulka je prázdná. Vyber, co má prodávat:</small>'}
-    ${rows ? `<div class="psum${tr.want > tr.cap ? ' full' : ''}"><small>Příští trh: <b>${tr.n} ks</b> za <b>${tr.coins} :coin:</b>${bonus ? ` (cena +${bonus} %)` : ''}${tr.want > tr.cap ? ` · chtěl by prodat ${tr.want} ks, unese jen ${tr.cap} – krátí poměrně` : ` · unese až ${tr.cap} ks`}</small></div>` : ''}
-    ${room ? addChips(v, add, rows ? 'Přidat zboží:' : '', L) : `<small class="muted">Plná tabulka (${rowsMax} druhů zboží). Zkušenější skladník zvládne víc.</small>`}
-    ${last}<small class="muted">Celkem prodal ${v.sold || 0} ks a vydělal ${v.earned || 0} :coin:.</small>`;
+  const last = v && v.last ? `<small class="muted">Poslední trh v ${clock(v.last.t)}: ${v.last.it.map(([id, n]) => `${n}× :${ITEMS[id] ? ITEMS[id].icon : 'coin'}:`).join(' ')} → <b>+${v.last.c} :coin:</b></small>` : '';
+  return `<small><b>Co prodávat</b> – kolik procent zásoby nad rezervou jde na každý trh:</small>
+    ${rows || '<small class="muted">Plán je prázdný. Vyber, co prodávat:</small>'}
+    ${rows && tr ? `<div class="psum${tr.want > tr.cap ? ' full' : ''}"><small>Příští trh: <b>${tr.n} ks</b> za <b>${tr.coins} :coin:</b>${bonus ? ` (cena +${bonus} %)` : ''}${tr.want > tr.cap ? ` · chtěl by prodat ${tr.want} ks, unese jen ${tr.cap} – krátí poměrně` : ` · unese až ${tr.cap} ks`} · zvládne ${rowsMax} druhů</small></div>` : ''}
+    ${Object.keys(plan).length < TEAM.trade.rows[MAX_VLVL] ? addChips(w, add, rows ? 'Přidat zboží:' : '', 99) : ''}
+    ${v ? '' : '<small class="muted">Bez skladníka se neprodává – plán ale můžeš připravit předem.</small>'}
+    <small class="muted">Rezerva platí pro celý tým: na tolik kusů nesáhne výroba ani prodej. Všechny rezervy najdeš i ve Skladu.</small>
+    ${last}${v ? `<small class="muted">${esc(villName(v))} celkem prodal ${v.sold || 0} ks a vydělal ${v.earned || 0} :coin:.</small>` : ''}`;
 }
 // volní pracovníci – nejdřív ti, jejichž profese se k práci hodí
 const freeWorkers = (farm, obor) => farm.vill.filter(x => !x.at && !x.area).sort((a, b) => (b.prof === obor) - (a.prof === obor) || villLevel(b, obor) - villLevel(a, obor));
-const assignChips = (farm, obor, val) => {
+const assignChips = (farm, obor, val, label = 'Přiřadit:') => {
   const free = freeWorkers(farm, obor);
   return free.length
-    ? `<small><b>Přiřadit:</b></small><div class="chips">${free.map(x => `<button class="chip${x.prof === obor ? ' on' : ''}" data-act="${val(x)[0]}" data-v="${val(x)[1]}">:${profOf(x).icon}: ${esc(villName(x))} · úr. ${villLevel(x, obor)}${x.prof === obor ? '' : ' (mimo profesi)'}</button>`).join('')}</div>`
-    : `<small class="muted">Nemáš volného pracovníka.</small><div class="hire"><button class="btn sm" data-act="openBoard">:sign: Hledat na nástěnce</button><button class="btn sm alt" data-act="openTeam">:helper: Tým</button></div>`;
+    ? `<small><b>${label}</b></small><div class="chips">${free.map(x => `<button class="chip${x.prof === obor ? ' on' : ''}" data-act="${val(x)[0]}" data-v="${val(x)[1]}">:${profOf(x).icon}: ${esc(villName(x))} · úr. ${villLevel(x, obor)}${x.prof === obor ? '' : ' (mimo profesi)'}</button>`).join('')}</div>`
+    : label === 'Přiřadit:' ? `<small class="muted">Nemáš volného pracovníka.</small><div class="hire"><button class="btn sm" data-act="openBoard">:sign: Hledat na nástěnce</button><button class="btn sm alt" data-act="openTeam">:helper: Tým</button></div>` : '';
 };
-// blok „Pracovník“ v okně budovy: přiřadit, tabulka práce, stav, úroveň, odvolat
+// jeden pracovník na pracovišti: kdo, úroveň, co dělá, detail / odvolat
+const personCard = (farm, v, type, obor, now, freeAct, note = '') => `<div class="who"><b>${whoLine(v)} <small class="muted">hotovo ${v.n || 0}×</small></b>
+  ${lvlLine(v, obor)}${villStatus(farm, v, type, now)}${note ? `<small class="muted">${note}</small>` : ''}
+  <div class="hire"><button class="btn sm alt" data-act="teamSel" data-v="${v.id}">Detail</button><button class="btn sm alt" data-act="${freeAct}" data-v="${v.id}">Odvolat</button></div></div>`;
+// blok „Pracovník“ v okně budovy: kdo tu pracuje (místa podle kapacity), přiřadit / vystřídat, plán pracoviště
 export function workerBlock(farm, o, now = Date.now()) {
   const type = villJobType(o.kind);
   if (!type) return '';
-  const v = villAt(farm, o.id), obor = OBOR[type];
-  const head = type === 'trader' ? 'Skladník' : 'Pracovník';
-  if (!v) {
-    return `<div class="sect">${head}</div><div class="upg worker"><small class="muted">Pracovník tu ${VILL_WHAT[type]}.</small>
-      ${assignChips(farm, obor, x => ['villAssign', `${x.id}|${o.id}`])}</div>`;
-  }
-  const table = type === 'factory' ? factoryPlan(farm, v, o) : type === 'trader' ? traderPlan(farm, v, now) : '';
-  const what = type === 'pen' || type === 'hive' ? `<small class="muted">${VILL_WHAT[type][0].toUpperCase() + VILL_WHAT[type].slice(1)} – pořád dokola, jak je co hotové.${type === 'pen' ? ` Z jednoho krmení dá zvíře ${num(TEAM.penYield[villLevel(v, 'chov')])}× víc.` : ''}</small>` : '';
-  return `<div class="sect">${head}</div><div class="upg worker"><b>${whoLine(v)} <small class="muted">hotovo ${v.n || 0}×</small></b>
-    ${lvlLine(v, obor)}${villStatus(farm, v, type, now)}${what}${table}
-    <div class="hire"><button class="btn sm alt" data-act="teamSel" data-v="${v.id}">Detail</button><button class="btn sm alt" data-act="villFree" data-v="${v.id}">Odvolat</button></div></div>`;
+  const wp = { o, g: null, type }, ws = wpWorkers(farm, wp), cap = wpCap(wp), obor = OBOR[type];
+  const head = cap > 1 ? `Pracovníci ${ws.length}/${cap}` : type === 'trader' ? 'Skladník' : 'Pracovník';
+  const people = ws.map(v => personCard(farm, v, type, obor, now, 'villFree')).join('');
+  const slots = ws.length < cap ? assignChips(farm, obor, x => ['villAssign', `${x.id}|${o.id}|0`])
+    : assignChips(farm, obor, x => ['villAssign', `${x.id}|${o.id}|${ws[ws.length - 1].id}`], `Vystřídat ${esc(villName(ws[ws.length - 1]))}:`);
+  const v = ws[0];
+  const what = !v ? `<small class="muted">Pracovník tu ${VILL_WHAT[type]}. ${cap > 1 ? `Vejde se sem ${cap} lidí.` : 'Zatím je tu místo pro jednoho.'}</small>`
+    : type === 'pen' || type === 'hive' ? `<small class="muted">${VILL_WHAT[type][0].toUpperCase() + VILL_WHAT[type].slice(1)} – pořád dokola, jak je co hotové.${type === 'pen' ? ` Z jednoho krmení dá zvíře ${num(TEAM.penYield[villLevel(v, 'chov')])}× víc.` : ''}</small>` : '';
+  const table = type === 'factory' ? factoryPlan(farm, o, ws) : type === 'trader' ? traderPlan(farm, o, ws, now) : '';
+  return `<div class="sect">${head}</div><div class="upg worker">${what}${people}${slots}</div>
+    ${table ? `<div class="sect">${type === 'trader' ? 'Plán prodeje' : 'Plán výroby'}</div><div class="upg worker plan">${table}</div>` : ''}`;
 }
 
 // ---------- obrazovka Farmářský tým ----------
 // všechna pracoviště: oblasti polí a sadů a budovy, kde jde pracovat
 function workplaces(farm) {
-  const out = [];
-  for (const g of workAreas(farm)) out.push({ k: 'a', kind: g.kind, id: g.ids[0], name: `${g.kind === 'pole' ? 'Pole' : 'Sad'} – oblast ${g.n}`, icon: g.kind === 'pole' ? 'plot' : 'tree', obor: 'pole', who: farm.vill.find(x => areaOf([g], x)) || null });
+  const out = [], areas = workAreas(farm);
+  for (const g of areas) out.push({ k: 'a', kind: g.kind, id: g.ids[0], name: `${g.kind === 'pole' ? 'Pole' : 'Sad'} – oblast ${g.n}`, icon: g.kind === 'pole' ? 'plot' : 'tree', obor: 'pole', ws: wpWorkers(farm, { o: null, g }, areas), cap: areaCap(g) });
   for (const o of farm.objects) {
-    const t = villJobType(o.kind);
-    if (t) out.push({ k: 'b', id: o.id, name: BUILDINGS[o.kind].name, icon: BUILDINGS[o.kind].icon, obor: OBOR[t], who: villAt(farm, o.id) });
+    const t = villJobType(o.kind), wp = { o, g: null, type: t };
+    if (t) out.push({ k: 'b', id: o.id, name: BUILDINGS[o.kind].name, icon: BUILDINGS[o.kind].icon, obor: OBOR[t], ws: wpWorkers(farm, wp), cap: wpCap(wp) });
   }
   return out;
 }
@@ -402,9 +438,9 @@ export function teamHtml(farm, now, f = 'all', sel = 0, ask = false) {
       <span class="ti"><b>${esc(villName(x))}</b><small>${profOf(x).name} · ${where}</small><small class="st">${type ? villDoing(farm, x, type) : 'čeká na přiřazení'}</small></span>
       <span class="tl"><b>${villMainLevel(x)}</b><small>×${num(villPower(x, obor))}</small></span><i class="dot ${dotOf(farm, x)}"></i></button>`;
   }).join('');
-  const free = workplaces(farm).filter(w => !w.who);
+  const free = workplaces(farm).filter(w => w.ws.length < w.cap);
   return teamHead(farm) + tabs + (rows ? `<div class="tlist">${rows}</div>` : `<div class="empty">${farm.vill.length ? 'Nikdo s touhle profesí.' : 'Zatím nemáš žádného pracovníka.'}</div>`)
-    + (free.length ? `<div class="sect">Volná místa</div><div class="chips">${free.map(w => `<span class="chip">:${w.icon}: ${esc(w.name)}</span>`).join('')}</div>` : '');
+    + (free.length ? `<div class="sect">Volná místa</div><div class="chips">${free.map(w => `<span class="chip">:${w.icon}: ${esc(w.name)}${w.cap > 1 ? ` · ${w.cap - w.ws.length} z ${w.cap}` : ''}</span>`).join('')}</div>` : '');
 }
 function teamDetail(farm, v, now, ask) {
   const [where, type] = placeOf(farm, v);
@@ -412,8 +448,11 @@ function teamDetail(farm, v, now, ask) {
   const hist = (v.hist || []).slice(-5).reverse().map(([t, k, L]) => `<small>${new Date(t).toLocaleDateString('cs-CZ')} · ${TEAM.profs[k] ? TEAM.profs[k].name : k} → úroveň ${L}</small>`).join('');
   const wps = workplaces(farm).sort((a, b) => (b.obor === v.prof) - (a.obor === v.prof));
   const moves = wps.map(w => {
-    const here = w.who === v, val = w.k === 'a' ? `${v.id}|a|${w.kind}|${w.id}` : `${v.id}|b|${w.id}`;
-    return `<button class="chip${here ? ' on' : ''}" data-act="teamMove" data-v="${val}"${here ? ' disabled' : ''}>:${w.icon}: ${esc(w.name)}${w.who && !here ? ` · vystřídá ${esc(villName(w.who))}` : ''}${w.obor !== v.prof && !(TEAM.traits[v.trait] || {}).any ? ' · mimo profesi' : ''}</button>`;
+    const here = w.ws.includes(v), full = !here && w.ws.length >= w.cap;
+    const base = w.k === 'a' ? `${v.id}|a|${w.kind}|${w.id}` : `${v.id}|b|${w.id}`;
+    const off = w.obor !== v.prof && !(TEAM.traits[v.trait] || {}).any ? ' · mimo profesi' : '', cnt = w.cap > 1 ? ` ${w.ws.length}/${w.cap}` : '';
+    if (!full) return `<button class="chip${here ? ' on' : ''}" data-act="teamMove" data-v="${base}|0"${here ? ' disabled' : ''}>:${w.icon}: ${esc(w.name)}${cnt}${off}</button>`;
+    return w.ws.map(x => `<button class="chip full" data-act="teamMove" data-v="${base}|${x.id}">:${w.icon}: ${esc(w.name)} · plno – vyměnit s ${esc(villName(x))}${off}</button>`).join('');
   }).join('');
   return `<button class="btn sm alt back" data-act="teamBack">← Tým</button>
     <div class="upg worker"><b>${whoLine(v)}</b><small>${traitText(v.trait)}</small>
@@ -421,7 +460,7 @@ function teamDetail(farm, v, now, ask) {
       <small class="muted">Zkušenosti dostává za hotovou práci – čím hodnotnější věc, tím víc. Ve své profesi naplno, jinde polovinu.</small></div>
     <div class="sect">Dovednosti</div>${skills}
     ${hist ? `<div class="sect">Postup</div><div class="hist">${hist}</div>` : ''}
-    <div class="sect">Přeřadit</div>${moves ? `<div class="chips">${moves}</div>` : '<small class="muted">Na farmě zatím není místo, kde by mohl pracovat.</small>'}
+    <div class="sect">Přeřadit</div>${moves ? `<small class="muted">Na plné místo jde jen výměnou – ${v.at || v.area ? `ten druhý půjde tam, kde je teď ${esc(villName(v))}` : 'ten druhý bude volný'}. Plán práce zůstává u pracoviště.</small><div class="chips">${moves}</div>` : '<small class="muted">Na farmě zatím není místo, kde by mohl pracovat.</small>'}
     <div class="hire">${v.at || v.area ? `<button class="btn sm alt" data-act="teamMove" data-v="${v.id}|0">Odvolat z práce</button>` : ''}
       ${ask ? `<button class="btn sm red" data-act="fireVill" data-v="${v.id}">Opravdu propustit</button><button class="btn sm alt" data-act="teamSel" data-v="${v.id}">Ne</button>`
         : `<button class="btn sm alt" data-act="fireAsk" data-v="${v.id}">Propustit</button>`}</div>`;
@@ -669,10 +708,9 @@ function suppliesHtml(farm) {
 function farmersHtml(farm, now = Date.now()) {
   const areas = workAreas(farm);
   const rows = areas.map(g => {
-    const v = farm.vill.find(x => areaOf(areas, x) === g);
-    const pole = g.kind === 'pole', N = g.cells.length;
-    const title = `${pole ? ':plot: Pole' : ':tree: Sad'} – oblast ${g.n} <small class="muted">(${N} ${pole ? 'políček' : 'stromů'})</small>`;
-    if (!v) return `<div class="upg worker"><b>${title}</b>${assignChips(farm, 'pole', x => ['areaAssign', `${x.id}|${g.kind}|${g.ids[0]}`])}</div>`;
+    const w = g.kind + g.ids[0], wp = wpGet(farm, w, areas), ws = wpWorkers(farm, wp, areas), cap = areaCap(g);
+    const pole = g.kind === 'pole', N = g.cells.length, set = wp.set, unit = pole ? 'políčko' : 'místo';
+    const title = `${pole ? ':plot: Pole' : ':tree: Sad'} – oblast ${g.n} <small class="muted">(${N} ${pole ? 'políček' : 'stromů'} · pracovníci ${ws.length}/${cap})</small>`;
     // co v oblasti právě je
     const cnt = {};
     let planted = 0, ripe = 0, dead = 0;
@@ -683,25 +721,29 @@ function farmersHtml(farm, now = Date.now()) {
       cnt[k] = (cnt[k] || 0) + 1; planted++;
       if ((pole ? plotState(c, now) : treeState(c, now)).state === 'ready') ripe++;
     }
-    const plan = v.plan || {}, sum = planSum(v), defs = pole ? CROPS : TREES, L = villLevel(v, 'pole');
+    const plan = set.plan, sum = planTotal(plan), defs = pole ? CROPS : TREES;
+    const L = ws.length ? Math.max(...ws.map(x => villLevel(x, 'pole'))) : 99;
     const table = Object.keys(plan).filter(id => defs[id]).map(id => {
       const d = defs[id], seed = (pole ? 's_' : 'z_') + id, sn = have(farm, seed);
       const exact = plan[id] * N / 100, cur = cnt[id] || 0, need = needLvl(d.level);
       const meta = `${Number.isInteger(exact) ? exact : 'asi ' + Math.round(exact)} z ${N} ${pole ? 'polí' : 'míst'} · teď <b>${cur}</b> · ${pole ? 'semen' : 'sazenic'} <b class="${sn ? '' : 'miss'}">${sn}</b>`;
-      return planRow(v, id, pole ? d.icon : ITEMS[d.fruit].icon, d.name, meta, plan[id], sum < 100, '', need > L ? need : 0);
+      return planRow(w, id, pole ? d.icon : ITEMS[d.fruit].icon, d.name, meta, plan[id], 100 - (sum - plan[id]), '', need > L ? need : 0);
     }).join('');
     const add = (pole ? CROP_LIST : TREE_LIST).filter(d => farm.level >= d.level && !(d.id in plan)).map(d => [d.id, pole ? d.icon : ITEMS[d.fruit].icon, d.name, needLvl(d.level)]);
-    const ms = workMs(v, pole ? 'harvest' : 'pick', 'pole');
-    return `<div class="upg worker"><b>${title}</b><b>${whoLine(v)} <small class="muted">hotovo ${v.n || 0}×</small></b>
-      ${lvlLine(v, 'pole')}${villStatus(farm, v, g.kind, now)}
-      <small class="muted">${pole ? `Osázeno ${planted}/${N}` : `Roste ${planted}/${N}`}${ripe ? ` · zralé ${ripe}` : ''}${dead ? ` · suché ${dead}` : ''} · jedno ${pole ? 'políčko' : 'místo'} mu zabere ${secText(ms)}</small>
+    const people = ws.map(v => personCard(farm, v, g.kind, 'pole', now, 'areaFree', `jedno ${unit} mu zabere ${secText(workMs(v, pole ? 'harvest' : 'pick', 'pole'))}`)).join('');
+    const slots = ws.length < cap ? assignChips(farm, 'pole', x => ['areaAssign', `${x.id}|${g.kind}|${g.ids[0]}`]) : '';
+    const nextAt = (cap + 1) * TEAM.areaPer;
+    const replant = set.replant !== false;
+    return `<div class="upg worker"><b>${title}</b>${people}${slots}
+      <small class="muted">Na každá ${TEAM.areaPer} ${pole ? 'pole' : 'místa'} jeden pracovník${ws.length >= cap ? ` – dalšího vezme oblast od ${nextAt} ${pole ? 'polí' : 'míst'}` : ''}.</small>
+      <small class="muted">${pole ? `Osázeno ${planted}/${N}` : `Roste ${planted}/${N}`}${ripe ? ` · zralé ${ripe}` : ''}${dead ? ` · suché ${dead}` : ''}</small>
       <small><b>${pole ? 'Plán osázení' : 'Plán sadu'}</b> – jakou část oblasti čím osázet:</small>
-      ${table || `<small class="muted">Plán je prázdný – jen sklízí${pole ? '' : ' a vykopává suché stromy'}. Vyber, co má sázet:</small>`}
-      ${table ? sumLine(sum, 'zbytek oblasti nechá ležet') : ''}
-      ${Object.keys(plan).length < PLAN_ROWS ? addChips(v, add, table ? (pole ? 'Přidat plodinu:' : 'Přidat strom:') : '', L) : ''}
-      <div class="hire"><button class="btn sm alt" data-act="teamSel" data-v="${v.id}">Detail</button><button class="btn sm alt" data-act="areaFree" data-v="${v.id}">Odvolat</button></div></div>`;
+      ${table || `<small class="muted">Plán je prázdný – jen sklízí${pole ? '' : ' a vykopává suché stromy'}. Vyber, co sázet:</small>`}
+      ${table ? useLine(w, sum, false, false) : ''}
+      ${Object.keys(plan).length < PLAN_ROWS ? addChips(w, add, table ? (pole ? 'Přidat plodinu:' : 'Přidat strom:') : '', L) : ''}
+      <div class="chips"><button class="chip${replant ? ' on' : ''}" data-act="planReplant" data-v="${w}">${replant ? '✓ Znovu sázet' : 'Znovu sázet: vypnuto – jen sklízí'}</button></div></div>`;
   }).join('');
-  return `<p class="muted"><b>Pracovní oblast</b> je aspoň ${AREA_MIN} pole (nebo sady) vedle sebe. Pracovník v ní pracuje pořád: co dozraje, hned sklidí, a prázdné místo osází podle <b>plánu v procentech</b> – jen ze zásob semen a sazenic ve Statku. Nejlíp to umí <b>Pěstitel</b>. Přikoupené pole oblast zvětší, 4 pole o kus dál udělají novou oblast.</p>
+  return `<p class="muted"><b>Pracovní oblast</b> je aspoň ${AREA_MIN} pole (nebo sady) vedle sebe. Pracovníci v ní pracují pořád: co dozraje, hned sklidí, a prázdné místo osází podle <b>plánu v procentech</b> – jen ze zásob semen a sazenic ve Statku. Plán patří oblasti, ne pracovníkovi. Na každá ${TEAM.areaPer} pole se vejde jeden pracovník (6 polí = 1, 8 polí = 2). Nejlíp to umí <b>Pěstitel</b>.</p>
     ${areas.length ? rows : '<p class="tip">Zatím nemáš žádnou pracovní oblast. Postav aspoň 4 pole nebo 4 sady vedle sebe.</p>'}`;
 }
 
@@ -825,7 +867,7 @@ export function decoHtml(farm, o) {
   return `<p class="muted">Ozdoba dělá farmu hezčí.</p><button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout</button>`;
 }
 
-export function siloHtml(farm, now) {
+export function siloHtml(farm, now, keepAdd = false) {
   const group = it => (SEEDS[it.id] || SAPLINGS[it.id] ? 2 : CROPS[it.id] || FRUITS_OF(it) ? 0 : 1);
   const items = ITEM_LIST.filter(it => !isSeedItem(it.id) && have(farm, it.id) > 0).sort((a, b) => group(a) - group(b));   // semena jsou ve Statku
   const trend = id => {
@@ -838,7 +880,7 @@ export function siloHtml(farm, now) {
     return `<div class="item">
       <span class="ico">:${it.icon}:<i class="n">${n}</i></span>
       <div class="nm">${esc(it.name)}</div>
-      <div class="pr">${pr} :coin: / ks${trend(it.id)}</div>
+      <div class="pr">${pr} :coin: / ks${trend(it.id)}${keepOf(farm, it.id) ? ` · <span class="kp">rezerva ${keepOf(farm, it.id)}</span>` : ''}</div>
       <div class="acts"><button class="btn sm alt" data-act="sell" data-v="${it.id}" data-q="1">1×</button>
         <button class="btn sm" data-act="sell" data-v="${it.id}" data-q="all">Vše · ${n * pr} :coin:</button></div>
     </div>`;
@@ -850,7 +892,19 @@ export function siloHtml(farm, now) {
     return list.length ? `<div class="items-h">${g}</div><div class="items">${list.map(tile).join('')}</div>` : '';
   }).join('') : '<div class="empty">Sklad je prázdný. Sklízej úrodu z polí! :wheat:</div>';
   return `<p class="muted">:clock: Výkupní ceny se mění každé 4 hodiny – další změna za <b>${fmtTime(Math.ceil((nextMarketChange(now) - now) / 1000))}</b>. Zakázky ve Statku platí vždy víc.</p>
-    ${rows}${sk ? workerBlock(farm, sk, now) + upgradeBlock(farm, sk) + `<button class="btn alt" data-act="move" data-v="${sk.id}">↔ Přesunout sklad</button>` : ''}`;
+    ${rows}${keepHtml(farm, items, keepAdd)}${sk ? workerBlock(farm, sk, now) + upgradeBlock(farm, sk) + `<button class="btn alt" data-act="move" data-v="${sk.id}">↔ Přesunout sklad</button>` : ''}`;
+}
+
+// rezervy pro tým: pod tolik kusů výroba ani skladník nesáhnou (hráč sám může dál)
+function keepHtml(farm, items, open) {
+  const K = Object.entries(farm.keep || {}).filter(([id, n]) => n > 0 && ITEMS[id]);
+  const rows = K.map(([id, n]) => `<div class="prow kp"><button class="ico" data-act="itemInfo" data-v="${id}">:${ITEMS[id].icon}:</button><b class="pn">${esc(ITEMS[id].name)}</b>
+    ${step('keepN', id, `${n} ks`, true)}<button class="del" data-act="keepN" data-v="${id}|0" aria-label="Zrušit rezervu">✕</button>
+    <small class="pm">ve skladu <b>${have(farm, id)}</b>${have(farm, id) < n ? ' · <b class="miss">pod rezervou</b>' : ''}</small></div>`).join('');
+  const free = items.filter(it => !keepOf(farm, it.id));
+  return `<div class="sect">Rezervy pro tým</div><div class="upg worker"><small class="muted">Pod tolik kusů tým nesáhne – výroba z nich nebere suroviny a skladník je neprodá. Ty sám je prodávat i používat můžeš.</small>
+    ${rows}${open ? (free.length ? `<div class="chips">${free.map(it => `<button class="chip" data-act="keepAdd" data-v="${it.id}">+ :${it.icon}: ${esc(it.name)}</button>`).join('')}</div>` : '<small class="muted">Všechno ve skladu už rezervu má.</small>') : ''}
+    <div class="hire"><button class="btn sm alt" data-act="keepOpen">${open ? 'Hotovo' : '+ Přidat rezervu'}</button></div></div>`;
 }
 
 // dokupování pozemků kolem farmy
@@ -1068,7 +1122,9 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:helper: Farmářský tým</b> (tlačítko <b>Tým</b> vpravo): pracovníci se nekupují, <b>hledají se</b>. Postav domek (<b>Chatrč</b> 2 lůžka, <b>Chata</b> 3, <b>Dům</b> 5), pak v Městečku na <b>Nástěnce</b> vyvěs inzerát a zaplať pohoštěním z farmy. Za chvíli přijdou uchazeči – každý má profesi, úroveň a jednu vlastnost. Jednoho přijmeš.')
       + p('<b>:star: Pověst farmy</b> roste za doručené zakázky a splněné denní úkoly. S lepší pověstí přijde víc a zkušenějších uchazečů, můžou viset dva inzeráty a od stupně 3 se lidé z Městečka ozvou sami.')
       + p('<b>:farmer: Profese:</b> <b>Pěstitel</b> (pole a sady), <b>Chovatel</b> (zvířata a včely), <b>Řemeslník</b> (výrobny), <b>Skladník</b> (prodej na trhu každou půlhodinu). Pracovník umí cokoli, ale ve své profesi se učí naplno a pracuje lépe.')
-      + p('<b>:star: Zkušenosti:</b> pracovník je dostává za hotovou práci – čím hodnotnější věc, tím víc. Má 12 úrovní a s každou udělá za stejný čas víc: pěstitel na úrovni 1 zvládne políčko za 12 s, na úrovni 12 za 1 s; řemeslník naloží do jedné dávky víc kusů. Náročnější výrobky, plodiny a zvířata zvládne až s praxí (v tabulce je uvidíš šedě).')
+      + p('<b>:star: Zkušenosti:</b> pracovník je dostává za hotovou práci – čím hodnotnější věc, tím víc. Má 12 úrovní a s každou udělá za stejný čas víc: pěstitel na úrovni 1 zvládne políčko za 12 s, na úrovni 12 za 1 s; řemeslník naloží do jedné dávky víc kusů. Náročnější výrobky, plodiny a zvířata zvládne až s praxí (v plánu je uvidíš šedě).')
+      + p('<b>:sign: Plán práce</b> patří pracovišti, ne člověku – když pracovníka vyměníš, plán zůstane. Ve výrobně nastavíš <b>cílové zásoby</b> (mají přednost, v pořadí shora) a <b>procenta výrobního času</b> posuvníkem. Když procenta nedají 100 %, budova zbytek času stojí – nebo zapni <b>Přerozdělit nevyužité</b>. Ve Skladu nastavíš <b>rezervy</b>: pod tolik kusů tým nesáhne.')
+      + p('<b>:plot: Kolik lidí kam:</b> ve výrobně, ohradě, včelíně a skladu je zatím místo pro jednoho. Pracovní oblast polí nebo sadů vezme jednoho pracovníka na každá 4 pole (6 polí = 1, 8 polí = 2, 12 polí = 3). Na plné místo jde jen výměnou.')
       + p('<b>:chleb: Výroba:</b> výrobny dělají z úrody výrobky (fronta až 3 kusy). Klepnutím na budovu vybereš hotové.')
       + p('<b>:hen: Zvířata:</b> potřebují ohradu a krmivo z Krmivárny. Nakrmíš klepnutím na ohradu.')
       + p('<b>:coin: Peníze:</b> nejvíc platí <b>zakázky</b> ve Statku, pak <b>stánek</b> a <b>tržiště</b>. Výkup ve Skladu platí polovinu ceny a mění se každé 4 hodiny.')

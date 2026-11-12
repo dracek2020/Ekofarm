@@ -569,3 +569,23 @@ body.sheet-open #catchUp { display: none; }
 .merit.ok span { color: var(--green-d); font-weight: 800; }
 .merit:not(.ok) .bar div { background: linear-gradient(#ffd75a, #e0a020); }
 .prow.dim .pn, .prow.dim .ico { opacity: .45; }
+
+/* ---------- v30: plán u pracoviště – posuvníky, cílové zásoby, rezervy, víc pracovníků ---------- */
+.prow .pslide { grid-column: 2 / 5; width: 100%; margin: 2px 0 0; height: 26px; accent-color: var(--green); touch-action: pan-y; }
+.prow.dim .pslide { opacity: .5; }
+.prow .stepper .pv { font: inherit; }
+.prow.tg { grid-template-columns: 24px 38px minmax(0, 1fr) auto 28px; }
+.prow.tg .ord { grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 2px; align-self: start; }
+.prow.tg .ord button { width: 24px; height: 20px; border: 0; border-radius: 6px; background: #ecdcb8; color: var(--wood-d); font-size: 10px; padding: 0; }
+.prow.tg .ord button:disabled { opacity: .35; }
+.prow.tg .pm { grid-column: 3 / 6; }
+.prow .pm b.okc { color: var(--green-d); }
+.psum .chip { align-self: flex-start; margin-top: 4px; }
+.plog { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: #fff; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; color: var(--muted); }
+.plog .ic { width: 15px; height: 15px; vertical-align: -3px; }
+.plog b { color: var(--ink); display: inline-block; min-width: 56px; }
+.upg.worker .who { display: flex; flex-direction: column; gap: 4px; padding: 6px 0 8px; border-bottom: 1px dashed var(--line); }
+.upg.worker .who:last-of-type { border-bottom: 0; }
+.upg.worker.plan { gap: 4px; }
+.chip.full { background: #f6efdc; border-style: dashed; }
+.item .pr .kp { color: var(--wood-d); font-weight: 800; }

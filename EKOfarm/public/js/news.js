@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 30, title: 'Plán práce u budov a polí, víc lidí na větších polích', items: [
+    'Plán práce teď patří budově nebo oblasti polí, ne pracovníkovi. Když někoho přeřadíš nebo vyměníš, plán zůstane – a připravit ho můžeš, i když tam zatím nikdo není. Plány z minulé verze se přenesly samy.',
+    'Kolik lidí kam: ve výrobně, ohradě, včelíně a skladu je zatím místo pro jednoho. Oblast polí nebo sadů vezme jednoho pracovníka na každá 4 pole – 6 polí obslouží jeden, 8 polí dva, 12 polí tři. Pracují spolu a nepřekážejí si.',
+    'Na plné místo se jde výměnou: v okně Tým klepni na „vyměnit s…“ a ten druhý půjde tam, odkud přišel nový.',
+    'Výroba: procenta teď znamenají podíl výrobního času a nastavíš je posuvníkem. Když nedají 100 %, budova zbytek času stojí – nebo zapni „Přerozdělit nevyužité“. U každého výrobku vidíš odhad, kolik ho bude za hodinu.',
+    'Cílové zásoby mají přednost: „mít pořád 20 mouky“ – vyrábí se v pořadí shora, dokud jich není dost. Co je na cíli, se nevyrábí.',
+    'Rezervy ve Skladu: pod nastavený počet kusů tým nesáhne – výroba z nich nebere suroviny a skladník je neprodá.',
+    'Oblast polí: přepínač „Znovu sázet“ – vypnutý znamená jen sklízet a nechat ladem. V okně výrobny je přehled, co se vyrobilo za posledních 6 hodin.',
+  ] },
   { v: 29, title: 'Farmářský tým: hledání pracovníků, domky, pověst a zásluhy', items: [
     'Tým začíná od nuly: dosavadní vesničané odešli. Nové pracovníky si najdeš na Nástěnce v Městečku – vyvěsíš inzerát a zaplatíš pohoštěním z farmy (na začátku stačí 4 pšenice). Za chvíli přijdou uchazeči a jednoho přijmeš.',
     'Pracovníci bydlí v domcích: Chatrč (200 mincí, 2 lůžka), Chata (500, 3) a Dům (1 000, 5). Chatrč jde přestavět na chatu a chatu na dům za rozdíl v ceně.',

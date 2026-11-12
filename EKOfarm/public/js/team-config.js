@@ -6,6 +6,11 @@ for (let L = 1; L <= 12; L++) MULT.push(Math.round(Math.pow(12, (L - 1) / 11) * 
 
 export const TEAM = {
   maxTeam: 30,                      // víc lidí na farmě nebude, i kdyby bylo víc lůžek
+  // kolik pracovníků může být na jednom místě (v30: ve výrobě a v ostatních budovách zatím vždy 1)
+  cap: { factory: 1, pen: 1, hive: 1, trader: 1 },
+  areaPer: 4,                       // oblast polí a sadů: 1 pracovník na každá 4 políčka (6 → 1, 8 → 2, 12 → 3)
+  usedWindowH: 4,                   // procenta = podíl výrobního času; pamatuje si asi poslední 4 h výroby
+  logH: 6,                          // přehled výroby za posledních 6 hodin
   // profese = obor, ve kterém se pracovník učí naplno (mimo něj poloviční zkušenosti a 90 % výkonu)
   profs: {
     pole:   { name: 'Pěstitel',  icon: 'farmer', text: 'pole a sady' },

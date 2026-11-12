@@ -4,19 +4,19 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, planKind, planSum, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=29';
-import { preloadAssets, spriteName } from './sprites.js?v=29';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=29';
-import { createBackend, ApiError } from './api.js?v=29';
-import { iconize, ic } from './icons.js?v=29';
-import { NEWS } from './news.js?v=29';
-import { sfx, soundOn, setSound } from './sfx.js?v=29';
-import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=29';
+} from './rules.js?v=30';
+import { preloadAssets, spriteName } from './sprites.js?v=30';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=30';
+import { createBackend, ApiError } from './api.js?v=30';
+import { iconize, ic } from './icons.js?v=30';
+import { NEWS } from './news.js?v=30';
+import { sfx, soundOn, setSound } from './sfx.js?v=30';
+import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=30';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 29;
+const APP_VERSION = 30;
 
 
 const game = {
@@ -153,7 +153,7 @@ setInterval(() => {
     if (touched.length) { for (const [x, y] of touched.slice(-4)) sendWalker(game.helperW, x, y); changed = true; }
   }
   if (villStep()) changed = true;
-  if (changed) updateHud(performance.now() - panelTouch < 700);
+  if (changed) updateHud(panelBusy());
 }, 1000);
 // jeden krok práce vesničanů v prohlížeči; vrací true, když se na farmě něco změnilo
 function villStep() {
@@ -837,6 +837,7 @@ function openPanel(p) {
 function renderPanel() {
   const p = game.panel, f = game.farm;
   if (!p || !f) return;
+  if (game.sliding) { game.panelDirty = true; return; }   // hráč táhne posuvník – překreslí se po puštění
   if (p.kind === 'chat') { renderChat(); return; }
   let title = '', body = '', img = null;
   if (p.kind === 'shop') { title = ':cart: Obchod'; body = shopHtml(f, p.tab); }
@@ -845,7 +846,7 @@ function renderPanel() {
   else if (p.kind === 'wiki') { title = ':book: Deník farmáře'; body = wikiHtml(f, p.tab); }
   else if (p.kind === 'team') { title = ':helper: Farmářský tým'; body = teamHtml(f, now(), p.f || 'all', p.sel || 0, !!p.ask); }
   else if (p.kind === 'item') { title = `:${ITEMS[p.id].icon}: ${ITEMS[p.id].name}`; body = itemHtml(f, p.id, !!p.back); }
-  else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
+  else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now(), !!p.keepAdd); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
   else if (p.kind === 'help') { title = ':book: Jak hrát'; body = helpHtml(f, p.tab); }
   else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board); }
@@ -891,9 +892,38 @@ function setTitle(title, img) {
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
-  if (game.panel && ['obj', 'silo', 'town', 'team'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
+  if (game.panel && ['obj', 'silo', 'town', 'team'].includes(game.panel.kind) && !panelBusy()) renderPanel();
 }, 1000);
 
+// krok pro počty kusů: po 5 do 20, po 10 do 100, po 50 do 500, pak po 100
+const stepN = (n, d) => { const sc = x => (x < 20 ? 5 : x < 100 ? 10 : x < 500 ? 50 : 100); return d > 0 ? n + sc(n) : n - sc(n - 1); };
+// posuvník procent v plánu: během tažení se panel nepřekresluje, změna se pošle až po puštění
+const panelBusy = () => game.sliding || performance.now() - panelTouch < 700;
+$('panelBody').addEventListener('pointerdown', e => { if (e.target.closest('.pslide')) { game.sliding = true; game.panelDirty = false; } });
+const slideEnd = () => {
+  if (!game.sliding) return;
+  game.sliding = false; panelTouch = performance.now();
+  if (game.panelDirty) setTimeout(() => { if (!game.sliding && game.panelDirty) { game.panelDirty = false; renderPanel(); } }, 50);   // po „change“
+};
+document.addEventListener('pointerup', slideEnd);
+document.addEventListener('pointercancel', slideEnd);
+const slideVal = s => Math.max(5, Math.min(Number(s.dataset.max), Math.round(Number(s.value) / 5) * 5));
+$('panelBody').addEventListener('input', e => {
+  const s = e.target.closest('.pslide');
+  if (!s) return;
+  panelTouch = performance.now();
+  const val = slideVal(s);
+  if (String(val) !== s.value) s.value = val;
+  const pv = s.closest('.prow') && s.closest('.prow').querySelector('.pv');
+  if (pv) pv.textContent = val;
+});
+$('panelBody').addEventListener('change', e => {
+  const s = e.target.closest('.pslide');
+  if (!s) return;
+  game.sliding = false; game.panelDirty = false;
+  const w = s.dataset.w, key = s.dataset.key, wp = wpGet(game.farm, w), cur = wp && wpPlan(wp)[key], pct = slideVal(s);
+  if (wp && pct !== cur) act({ type: 'plan', w, key, pct }); else renderPanel();
+});
 $('panelBody').addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
@@ -988,12 +1018,13 @@ $('panelBody').addEventListener('click', e => {
     case 'teamBack': game.panel.sel = 0; game.panel.ask = false; renderPanel(); break;
     case 'fireAsk': game.panel.ask = true; renderPanel(); break;
     case 'fireVill': { const vv = findVill(f, Number(v)); if (act({ type: 'fireVill', id: Number(v) }).ok) { toast(`:helper: ${vv ? villName(vv) : 'Pracovník'} odešel. Lůžko je volné.`); game.panel.sel = 0; game.panel.ask = false; renderPanel(); } break; }
-    case 'teamMove': {
-      const [id, k, a1, a2] = v.split('|');
-      const r = k === 'a' ? act({ type: 'assignArea', id: Number(id), kind: a1, a: Number(a2) })
-        : k === 'b' ? act({ type: 'assignVill', id: Number(id), at: Number(a1) })
+    case 'teamMove': {   // id|a|druh|pole|vyměnit s, id|b|budova|vyměnit s, id|0 = odvolat
+      const [id, k, a1, a2, a3] = v.split('|');
+      const sw = Number(k === 'a' ? a3 : a2) || 0, other = sw && findVill(f, sw);
+      const r = k === 'a' ? act({ type: 'assignArea', id: Number(id), kind: a1, a: Number(a2), swap: sw || undefined })
+        : k === 'b' ? act({ type: 'assignVill', id: Number(id), at: Number(a1), swap: sw || undefined })
         : (findVill(f, Number(id)) || {}).area ? act({ type: 'assignArea', id: Number(id), a: 0 }) : act({ type: 'assignVill', id: Number(id), at: 0 });
-      if (r.ok && k) toast(`:helper: ${villName(findVill(f, Number(id)))} jde na nové místo`);
+      if (r.ok && k) toast(`:helper: ${villName(findVill(f, Number(id)))} jde na nové místo${other ? ` · ${villName(other)} ${other.at || other.area ? 'jde za něj' : 'je volný'}` : ''}`);
       break;
     }
     case 'openBoard': openPanel({ kind: 'town', t: 'nastenka' }); break;
@@ -1013,41 +1044,49 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'dropAd': act({ type: 'dropAd', ad: Number(v) }); break;
     case 'rebuildHouse': { const r = act({ type: 'rebuildHouse', id: Number(v) }); if (r.ok) toast(`:house: Přestavěno na ${BUILDINGS[r.kind].name} · ${bedsText(BUILDINGS[r.kind].beds)}`); break; }
-    case 'villAssign': { const [id, at] = v.split('|').map(Number); if (act({ type: 'assignVill', id, at }).ok) toast(`:helper: ${villName(findVill(f, id))} tu teď pracuje`); break; }
+    case 'villAssign': { const [id, at, sw] = v.split('|').map(Number); if (act({ type: 'assignVill', id, at, swap: sw || undefined }).ok) toast(`:helper: ${villName(findVill(f, id))} tu teď pracuje`); break; }
     case 'villFree': act({ type: 'assignVill', id: Number(v), at: 0 }); break;
-    // tabulka práce: přidat řádek, změnit procenta, vyřadit, rezerva / strop zásoby
+    // plán pracoviště (w = 'b12' budova / 'pole101' oblast): procenta, cílové zásoby, přerozdělení, znovu sázet; rezervy skladu
     case 'planAdd': {
-      const [id, key] = v.split('|'), vv = findVill(f, Number(id));
-      if (!vv) break;
-      const kind = planKind(f, vv), plan = vv.plan || {}, rest = 100 - planSum(vv);
-      if (kind === 'item') { act({ type: 'villPlan', id: vv.id, key, pct: 50 }); break; }
-      if (rest >= 5) { act({ type: 'villPlan', id: vv.id, key, pct: rest }); break; }
+      const [w, key] = v.split('|'), wp = wpGet(f, w);
+      if (!wp) break;
+      const plan = wpPlan(wp), rest = 100 - planTotal(plan);
+      if (planKindW(wp) === 'item') { act({ type: 'plan', w, key, pct: 50 }); break; }
+      if (rest >= 5) { act({ type: 'plan', w, key, pct: rest }); break; }
       // všechno je rozdělené: nový řádek dostane polovinu z největšího
       const big = Object.keys(plan).sort((a, b) => plan[b] - plan[a])[0];
       const take = big ? Math.floor(plan[big] / 10) * 5 : 0;
       if (take < 5) { toast(ERRORS.plan_over); break; }
-      if (act({ type: 'villPlan', id: vv.id, key: big, pct: plan[big] - take }).ok) act({ type: 'villPlan', id: vv.id, key, pct: take });
+      if (act({ type: 'plan', w, key: big, pct: plan[big] - take }).ok) act({ type: 'plan', w, key, pct: take });
       break;
     }
     case 'planPct': {
-      const [id, key, d] = v.split('|'), vv = findVill(f, Number(id));
-      const cur = vv && vv.plan && vv.plan[key];
+      const [w, key, d] = v.split('|'), wp = wpGet(f, w), plan = wp && wpPlan(wp), cur = plan && plan[key];
       if (!cur) break;
-      let next = Number(d) > 0 ? (cur < 10 ? 10 : cur + 10) : (cur <= 10 ? 5 : cur - 10);
-      const max = planKind(f, vv) === 'item' ? 100 : 100 - (planSum(vv) - cur);
-      next = Math.max(5, Math.min(max, next));
-      if (next !== cur) act({ type: 'villPlan', id: vv.id, key, pct: next }); else if (Number(d) > 0) toast(ERRORS.plan_over);
+      const max = planKindW(wp) === 'item' ? 100 : 100 - (planTotal(plan) - cur);
+      const next = Math.max(5, Math.min(max, cur + 5 * Math.sign(Number(d))));
+      if (next !== cur) act({ type: 'plan', w, key, pct: next }); else if (Number(d) > 0) toast(ERRORS.plan_over);
       break;
     }
-    case 'planDel': { const [id, key] = v.split('|'); act({ type: 'villPlan', id: Number(id), key, pct: 0 }); break; }
-    case 'planLim': {
-      const [id, key, d] = v.split('|'), vv = findVill(f, Number(id));
-      if (!vv) break;
-      const cur = (vv.lim && vv.lim[key]) || 0, sc = n => (n < 20 ? 5 : n < 100 ? 10 : n < 500 ? 50 : 100);
-      const next = Number(d) > 0 ? cur + sc(cur) : cur - sc(cur - 1);
-      act({ type: 'villLim', id: vv.id, key, n: Math.max(0, Math.min(9999, next)) });
+    case 'planDel': { const [w, key] = v.split('|'); act({ type: 'plan', w, key, pct: 0 }); break; }
+    case 'planAuto': { const wp = wpGet(f, v); if (wp && wp.o) act({ type: 'planAuto', w: v, on: !wp.o.auto }); break; }
+    case 'planReplant': { const wp = wpGet(f, v); if (wp && wp.set) act({ type: 'planReplant', w: v, on: wp.set.replant === false }); break; }
+    case 'tgtAdd': { const [w, key] = v.split('|'); act({ type: 'planTarget', w, key, n: 10 }); break; }
+    case 'tgtDel': { const [w, key] = v.split('|'); act({ type: 'planTarget', w, key, n: 0 }); break; }
+    case 'tgtUp': { const [w, key, d] = v.split('|'); act({ type: 'planOrder', w, key, d: Number(d) }); break; }
+    case 'tgtN': {
+      const [w, key, d] = v.split('|'), wp = wpGet(f, w), row = wp && wp.o && (wp.o.target || []).find(x => x[0] === key);
+      if (!row) break;
+      act({ type: 'planTarget', w, key, n: Math.max(1, Math.min(9999, stepN(row[1], Number(d)))) });
       break;
     }
+    case 'keepN': {
+      const [item, d] = v.split('|'), cur = keepOf(f, item);
+      act({ type: 'keep', item, n: Number(d) ? Math.max(0, Math.min(99999, stepN(cur, Number(d)))) : 0 });
+      break;
+    }
+    case 'keepAdd': act({ type: 'keep', item: v, n: 10 }); break;
+    case 'keepOpen': game.panel.keepAdd = !game.panel.keepAdd; renderPanel(); break;
     case 'openVill': openPanel({ kind: 'team', f: 'all' }); break;
     // ---- deník farmáře ----
     case 'itemInfo': if (ITEMS[v]) { const back = game.panel && { ...game.panel }; openPanel({ kind: 'item', id: v, back }); } break;

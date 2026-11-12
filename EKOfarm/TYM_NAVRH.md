@@ -1,8 +1,19 @@
 # EKOfarm – Farmářský tým: analýza, návrh a plán
 
-Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu** (oddíl 0). Zbytek dokumentu je návrh dalších etap; co je hotové, je u něj napsáno.
+Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu, ve v30 plán u pracoviště a kapacity** (oddíl 0). Zbytek dokumentu je návrh dalších etap; co je hotové, je u něj napsáno.
 
-## 0. Co je hotové ve v29
+## 0. Co je hotové ve v29 a v30
+
+### v30 – plán u pracoviště
+- **Plán patří pracovišti**, ne pracovníkovi: výrobna (`o.plan`, `o.target`, `o.auto`), sklad (`o.plan`), oblast polí / sadů (`farm.areas`). Přeřazení ani výměna plán nemaže a jde ho nastavit i bez pracovníka. Plány z v29 se převedly samy (strop zásoby → cílová zásoba, rezerva skladníka → `farm.keep`).
+- **Kapacity** (rozhodnuto 12. 11.): výrobna, ohrada, včelín a sklad zatím 1 pracovník. Oblast polí nebo sadů 1 pracovník na každá 4 pole (6 → 1, 8 → 2, 12 → 3). Čísla jsou v `team-config.js` (`cap`, `areaPer`). Na plné místo jde jen výměnou (`swap`) – vyměněný jde tam, odkud přišel nový.
+- **Víc pěstitelů v jedné oblasti** pracuje spolu a nebere si stejná políčka. Přepínač „Znovu sázet“ (vypnuto = jen sklízí).
+- **Procenta = podíl výrobního času** (4.4). Pod 100 % budova zbytek času stojí, nebo se s „Přerozdělit nevyužité“ rozdělí mezi výrobky.
+- **Cílové zásoby** (4.5) mají přednost v pořadí shora, na cíli se výrobek nevyrábí. **Rezervy** `farm.keep` (4.6) hlídá výroba i skladník.
+- **Odhad za hodinu** (4.7) u každého výrobku a **přehled výroby** za posledních 6 h.
+- **Posuvníky** po 5 % s −/+ v okně budovy i v oblastech.
+
+### v29 – základ týmu
 
 - **Reset týmu bez náhrady** (2.7). Dosavadní vesničané odešli. Co měli v rukou, se vrátilo do skladu.
 - **Domky** chatrč (200 mincí / 2 lůžka), chata (500 / 3), dům (1 000 / 5). Všechny mají plochu 2×2 a dají se přestavět za rozdíl v ceně. Tým má tolik lidí, kolik je lůžek, nejvýš 30.
@@ -21,7 +32,7 @@ Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu** (oddíl 
 - **Obrazovka Farmářský tým** (tlačítko Tým): seznam, filtr podle profese, detail s dovednostmi, přeřazení a propuštění.
 - Dva nové kroky průvodce. Placený pomocník končí, najatý doběhne.
 
-**Zatím platí:** na jednom pracovišti je jeden pracovník. Víc lidí na místo, procenta jako podíl času, cílové zásoby a rezervy skladu přijdou ve v30 (oddíl 10.1).
+**Zatím platí:** ve výrobně, ohradě, včelíně a skladu je jeden pracovník (víc lidí podle úrovně budovy a síla obsluhy `S` z 4.3 jsou na později). Strojník a expedice zakázek také později.
 
 Značení stavu, které se používá v celém dokumentu:
 
@@ -313,13 +324,15 @@ Oblast se počítá z polí, která sousedí (to existuje). Její klíč je druh
 
 ### 3.3 Kapacita pracovišť (konfigurovatelné, `team-config.js`)
 
-| Pracoviště | Návrh kapacity | Poznámka |
+**Platí od v30 (rozhodnuto 12. 11.):** výrobna, ohrada, včelín a sklad 1 pracovník; oblast polí / sadů ⌊počet políček / 4⌋, aspoň 1 (6 → 1, 8 → 2, 12 → 3). Původní návrh níže zůstává jako možnost na později.
+
+| Pracoviště | Původní návrh kapacity | Poznámka |
 |---|---|---|
 | Výrobna | 1 + ⌊(úroveň budovy − 1) / 3⌋ → 1 / 2 / 3 / 4 (úrovně 1, 4, 7, 10) | stejný rytmus jako místa ve frontě |
 | Ohrada | 1 + ⌊(úroveň − 1) / 5⌋ → 1 / 2 | |
 | Včelín | 1 | |
 | Sklad | 1 | |
-| Oblast polí / sadů | ⌈počet políček / 8⌉, nejvýš 4 | 12 polí → 2 pěstitelé |
+| Oblast polí / sadů | ⌈počet políček / 8⌉, nejvýš 4 | nahrazeno: 1 na 4 pole |
 | Velké pole (strojník) | 1 | POZDĚJI |
 
 Velikost týmu: dnes nejvýš 30. Nově ji určují lůžka v domcích (2.8), nejvýš 30.
@@ -603,8 +616,8 @@ Každý balíček má nové číslo verze a jde nasadit samostatně. Hra mezi ni
 |---|---|---|
 | **v28** (tento) | 1–2 | Analýza, návrh, právní checklist. Kód beze změny. |
 | **v29 – HOTOVO** | 3 (+ základ 7) | `team-config.js`; profese, `xp` po oborech, reset uložených her; obrazovka **Farmářský tým**; **nástěnka v Městečku** (inzerát, pohoštění, uchazeči s vlastností), **pověst farmy** a zájemci, kteří se ozvou sami; **reset týmu** (2.7); **domky** chatrč, chata, dům (2.8); **odemykání za zásluhy** a nové rozložení průmyslu (2.9); konec nákupu pracovníků a placeného pomocníka; zkušenosti se začnou sbírat. |
-| **v30** | 4 + 6 | Nastavení přesunuté k pracovišti, víc pracovníků na místě (kapacita podle úrovně budovy, chyba `workplace_full`), síla obsluhy `S`, procenta jako podíl času, nevyužitá kapacita a „přerozdělit“, cílové zásoby, rezervy `farm.keep`, odhad za hodinu, log výroby, nový blok pracovníků ve výrobně (posuvníky). |
-| **v31** | 5 + 7 | Víc pěstitelů a chovatelů na místě, nastavení oblastí (`farm.areas`, `replant`), pomocník vs. oblasti, přehled chovu; úrovně 1–10 ze zkušeností, bonus profese, praxe v budově, historie. |
+| **v30 – HOTOVO** | 4 + 6 (+ část 7) | Plán u pracoviště (výrobna, sklad, `farm.areas` s `replant`), kapacity (budovy 1, oblast 1 na 4 pole, `workplace_full`, výměna `swap`), víc pěstitelů v oblasti, procenta jako podíl času, nevyužitá kapacita a „přerozdělit“, cílové zásoby v pořadí, rezervy `farm.keep`, odhad za hodinu, přehled výroby, posuvníky, převod plánů z v29. |
+| **v31** | 7 | Víc pracovníků ve výrobnách a ohradách podle úrovně budovy (síla obsluhy `S`), přehled chovu, slučování úkonů kvůli výkonu (dávka práce místo jednotlivých políček), praxe v budově. |
 | **v32** | 8 | Výkonové testy (30 pracovníků, 15 výroben, 4 oblasti), test souběžných požadavků, převody z v23–v31, kontrola UI na telefonu, tabletu a počítači, vyvážení simulací. |
 | později | – | Strojník, expedice zakázek, ekologie, portréty a animace práce. |
 
@@ -624,18 +637,18 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 | 1 | Najmutí a uložení | test existuje | rozšířit o profesi (v29) |
 | 2 | Přiřazení k budově | existuje | – |
 | 3 | Přeřazení uvolní místo a vrátí materiál | existuje | – |
-| 4 | Nelze překročit kapacitu | – | v29 |
+| 4 | Nelze překročit kapacitu | test (v30) | hotovo: `workplace_full`, výměna |
 | 5 | Zkušenosti z práce | – | v29 (sběr), v31 (úrovně) |
 | 6 | Produkce podle zkušeností | jen úroveň za mince | v30 / v31 |
 | 7 | Zastavení bez surovin | existuje | – |
-| 8 | Správné odečítání surovin | existuje | rozšířit o víc pracovníků (v30) |
+| 8 | Správné odečítání surovin | existuje + 2 pěstitelé v oblasti (v30) | – |
 | 9 | Výrobky do skladu | existuje | – |
 | 10 | Sklad nepřeteče | existuje | – |
 | 11 | Součet procent ≤ 100 % | existuje | – |
-| 12 | Uložení a obnovení nastavení | částečně | v29: přes server i po přeřazení |
+| 12 | Uložení a obnovení nastavení | test (v30): plán u pracoviště, převod z v29 | – |
 | 13 | Sklizeň až po dozrání | existuje | – |
 | 14 | Bez semen se nesází | existuje | – |
-| 15 | Cílové zásoby | strop existuje | v30 priorita |
+| 15 | Cílové zásoby | test (v30): přednost v pořadí, přesně do cíle | – |
 | 16 | Žádná duplikace při souběžných požadavcích | ochrana existuje, test ne | v32 (dva požadavky naráz proti serveru) |
 | 17 | Přerušení nezpůsobí ztrátu | částečně (vracení materiálu) | v32 |
 | 18 | Offline produkce | existuje | – |

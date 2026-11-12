@@ -112,7 +112,7 @@ test('v29: Farmářský tým, nástěnka, domky, zásluhy a tabulky práce se vy
   const ok = (a, t = T) => { const r = R.applyAction(f, a, t); assert.ok(r.ok, a.type + ' ' + r.error); return r; };
   const spot = (w, h) => { for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (R.fits(f, x, y, w, h)) return { x, y }; return null; };
   const place = kind => ok({ type: 'place', kind, ...spot(R.BUILDINGS[kind].w, R.BUILDINGS[kind].h) }).id;
-  const worker = (prof, lvl = 1, trait = null) => { const w = { id: f.nextId++, prof, trait, xp: { [prof]: TEAM.xpLvl[lvl] }, hist: [], at: 0, area: null, plan: {}, t: T, n: 0 }; f.vill.push(w); return w.id; };
+  const worker = (prof, lvl = 1, trait = null) => { const w = { id: f.nextId++, prof, trait, xp: { [prof]: TEAM.xpLvl[lvl] }, hist: [], at: 0, area: null, t: T, n: 0 }; f.vill.push(w); return w.id; };
   const sklad = f.objects.find(o => o.kind === 'sklad') || R.findObject(f, place('sklad'));
   const pek = place('pekarna'), kur = place('kurnik'), vc = place('vcelin');
   for (let i = 0; i < 4; i++) ok({ type: 'place', kind: 'sad', x: 12 + i, y: 14 });
@@ -141,28 +141,42 @@ test('v29: Farmářský tým, nástěnka, domky, zásluhy a tabulky práce se vy
   // pracovníci: řemeslník v pekárně, chovatel, včelař, skladník, pěstitel v oblasti a v sadu
   const rem = f.vill[0].id;
   ok({ type: 'assignVill', id: rem, at: pek });
-  ok({ type: 'villPlan', id: rem, key: 'chleb', pct: 60 });
-  ok({ type: 'villPlan', id: rem, key: 'tresnovy_kolac', pct: 40 });
-  ok({ type: 'villLim', id: rem, key: 'chleb', n: 20 });
+  ok({ type: 'plan', w: 'b' + pek, key: 'chleb', pct: 60 });
+  ok({ type: 'plan', w: 'b' + pek, key: 'tresnovy_kolac', pct: 20 });
+  ok({ type: 'planTarget', w: 'b' + pek, key: 'chleb', n: 20 });
   f.silo.wheat = 3;
   R.applyAction(f, { type: 'tick' }, T + 2000);
   h = P.factoryHtml(f, o(pek), T + 3000); bad(h);
-  assert.ok(h.includes('60 %') && h.includes('20 ks') && h.includes('umí až od úrovně 2') && h.includes('úroveň <b>1</b>/12') && h.includes('Chystá výrobu'));
+  assert.ok(h.includes('<span class="pv">60</span> %') && h.includes('20 ks') && h.includes('umí až od úrovně 2') && h.includes('úroveň <b>1</b>/12') && h.includes('Chystá výrobu'));
+  // v30: plán u budovy – cíle, posuvníky, využití času, přerozdělení, odhad za hodinu
+  assert.ok(h.includes('Cílové zásoby') && h.includes('data-act="tgtN"') && h.includes('class="pslide"') && h.includes('data-max="80"'));
+  assert.ok(h.includes('Využito <b>80 %</b>') && h.includes('20 % času budova stojí') && h.includes('data-act="planAuto"') && h.includes('za hodinu'));
+  ok({ type: 'planAuto', w: 'b' + pek, on: true });
+  assert.ok(P.factoryHtml(f, o(pek), T + 3000).includes('✓ Přerozdělit nevyužité'));
+  // pekárna je plná (1 místo) → nový pracovník ji jen vystřídá
+  const rem2 = worker('vyroba');
+  h = P.factoryHtml(f, o(pek), T + 3000); bad(h);
+  assert.ok(h.includes(`data-v="${rem2}|${pek}|${rem}"`) && h.includes('Vystřídat'));
+  f.vill = f.vill.filter(x => x.id !== rem2);
   const ch = worker('chov', 4, 'peclivy'), vcel = worker('chov'), sk = worker('sklad', 6), pe = worker('pole', 3), sa = worker('pole', 1, 'vsestranny');
   ok({ type: 'assignVill', id: ch, at: kur }); ok({ type: 'assignVill', id: vcel, at: vc }); ok({ type: 'assignVill', id: sk, at: sklad.id });
   f.silo.corn = 100;
-  ok({ type: 'villPlan', id: sk, key: 'corn', pct: 50 });
+  ok({ type: 'plan', w: 'b' + sklad.id, key: 'corn', pct: 50 });
+  ok({ type: 'keep', item: 'corn', n: 20 });
   h = P.siloHtml(f, T + 4000); bad(h);
   assert.ok(h.includes('Další trh za') && h.includes('úroveň <b>6</b>/12'));
+  assert.ok(h.includes('Rezervy pro tým') && h.includes('rezerva 20') && h.includes('data-act="keepN"') && h.includes('příště prodá <b>40</b>'));
+  assert.ok(P.siloHtml(f, T + 4000, true).includes('data-act="keepAdd"') === false, 'kukuřice už rezervu má, nic dalšího ve skladu není');
   h = P.penHtml(f, o(kur), T + 4000); bad(h);
   assert.ok(h.includes('Pečlivý') === false && h.includes('Ve skladu došlo krmivo') || h.includes('Krmí'));
   bad(P.hiveHtml(f, o(vc), T + 4000));
   ok({ type: 'assignArea', id: pe, kind: 'pole', a: f.plots[0].id });
   ok({ type: 'assignArea', id: sa, kind: 'sad', a: f.objects.find(x => x.kind === 'sad').id });
-  ok({ type: 'villPlan', id: pe, key: 'wheat', pct: 50 });
-  ok({ type: 'villPlan', id: pe, key: 'meloun', pct: 30 });
+  ok({ type: 'plan', w: 'pole' + f.plots[0].id, key: 'wheat', pct: 50 });
+  ok({ type: 'plan', w: 'pole' + f.plots[0].id, key: 'meloun', pct: 30 });
   h = P.statekHtml(f, 'X', T + 5000, 'farmari'); bad(h);
   assert.ok(h.includes('3 z 6 polí') && h.includes('umí až od úrovně 4') && h.includes('Plán je prázdný'));
+  assert.ok(h.includes('pracovníci 1/1') && h.includes('dalšího vezme oblast od 8 polí') && h.includes('✓ Znovu sázet') && h.includes('nechá ležet ladem'));
   // obrazovka Tým: seznam, filtr, detail s přeřazením a propuštěním
   h = P.teamHtml(f, T + 6000, 'all'); bad(h);
   assert.ok(h.includes('data-act="teamSel"') && h.includes('Pověst farmy') && (h.match(/class="trow"/g) || []).length === f.vill.length);
@@ -170,6 +184,7 @@ test('v29: Farmářský tým, nástěnka, domky, zásluhy a tabulky práce se vy
   assert.equal((h.match(/class="trow"/g) || []).length, 2);
   h = P.teamHtml(f, T + 6000, 'all', ch); bad(h);
   assert.ok(h.includes('Dovednosti') && h.includes('Pečlivý') && h.includes('data-act="teamMove"') && h.includes('data-act="fireAsk"'));
+  assert.ok(h.includes(`plno – vyměnit s`) && h.includes(`data-v="${ch}|b|${pek}|${rem}"`), 'na plné místo jen výměnou');
   assert.ok(P.teamHtml(f, T + 6000, 'all', ch, true).includes('Opravdu propustit'));
   // Statek: zásluhy pro další úroveň
   const g = R.newFarm(T);
