@@ -13,9 +13,9 @@ function stripModule(src) {
 }
 
 import { readdirSync } from 'node:fs';
-const ORDER = ['public/js/assets.js', 'public/js/team-config.js', 'public/js/rules.js', 'public/js/news.js', 'public/js/icons.js', 'public/js/sfx.js', 'public/js/render.js', 'public/js/sprites.js', 'public/js/objects.js', 'public/js/panels.js', 'public/js/api.js', 'public/js/main.js'];
+const ORDER = ['public/js/assets.js', 'public/js/team-config.js', 'public/js/events.js', 'public/js/rules.js', 'public/js/news.js', 'public/js/icons.js', 'public/js/sfx.js', 'public/js/render.js', 'public/js/sprites.js', 'public/js/objects.js', 'public/js/panels.js', 'public/js/api.js', 'public/js/main.js'];
 for (const f of readdirSync(join(ROOT, 'public/js'))) if (!ORDER.includes('public/js/' + f)) throw new Error('Soubor chybí v sestavení testovací verze: ' + f);
-const js = ['public/js/assets.js', 'public/js/team-config.js', 'public/js/rules.js', 'public/js/news.js', 'public/js/icons.js', 'public/js/sfx.js', 'public/js/render.js', 'public/js/sprites.js', 'public/js/objects.js', 'public/js/panels.js', 'public/js/api.js', 'public/js/main.js']
+const js = ['public/js/assets.js', 'public/js/team-config.js', 'public/js/events.js', 'public/js/rules.js', 'public/js/news.js', 'public/js/icons.js', 'public/js/sfx.js', 'public/js/render.js', 'public/js/sprites.js', 'public/js/objects.js', 'public/js/panels.js', 'public/js/api.js', 'public/js/main.js']
   .map(p => `// ---- ${p} ----\n` + stripModule(read(p))).join('\n');
 if (/^\s*(import|export)\s/m.test(js)) throw new Error('Zůstal import/export – uprav build.');
 const seen = {};

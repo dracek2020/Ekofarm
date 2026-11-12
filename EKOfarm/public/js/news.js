@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 36, title: 'Události, nové stroje, rybníky a rostliny v řádcích', items: [
+    'Rostliny na polích jsou nové: každá roste zvlášť ze své hrudky hlíny, sázejí se do řádků a celé zůstávají v záhonu.',
+    'Události: dvakrát denně se na farmě něco přihodí – liška, bouřka, jarmark, potulný obchodník a dalších 20 příběhů. Vybereš ze 4 odpovědí a farma tě odmění nebo potrestá, často na 3 hodiny.',
+    'Prodejna strojů: 10 traktorů, 10 kombajnů, 10 udic a po 5 secích strojích, pluzích a lisech. Lepší stroje jsou rychlejší a mají výhody – větší úrodu, úsporu osiva, víc balíků, vzácnější ryby.',
+    'Čtyři velikosti rybníku: Rybník (5 ryb), Větší rybník (8), Velký rybník (15) a Jezero (20 ryb, až se Statkem 10). Větší voda = vzácnější ryby.',
+    'Rybářský deník: odměny za první úlovek každé ryby, za mistra druhu i za celou sbírku.',
+    'Farmářský pes chodí s farmářem a při nebezpečných událostech tě ochrání.',
+    'Týdenní soutěž mezi hráči (Úkoly → Soutěž) a pomoc kamarádovi při návštěvě jeho farmy.',
+  ] },
   { v: 35, title: 'Nové budovy: pestrá farma', items: [
     'Všechny budovy na farmě jsou nově malované a každá vypadá jinak – vlastní střecha, materiál a poznávací znak, takže je poznáš i z dálky.',
     'Statek: bílé hrázděné stavení s červenou taškovou střechou a kohoutem na střeše. S každou úrovní roste – patro, křídlo, věžička s hodinami, až po panský statek se zlatými ozdobami.',

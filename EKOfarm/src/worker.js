@@ -1,5 +1,6 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
-import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V } from '../public/js/rules.js';
+import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V,
+  weekDue, weekRoll, weekNo, weekTask, WEEK_PRIZES, helpUsed, helpApply, helpReward } from '../public/js/rules.js';
 import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
 
@@ -40,6 +41,8 @@ async function route(req, env, path, url, ctx) {
   if (m === 'GET' && path === '/api/leaderboard') return leaderboard(env, user);
   if (m === 'POST' && path === '/api/actions') return actions(req, env, user);
   if (m === 'GET' && path === '/api/visit') return visit(env, url);
+  if (m === 'GET' && path === '/api/weekly') return weekly(env, user);
+  if (m === 'POST' && path === '/api/help') return help(req, env, user);
   if (m === 'GET' && path === '/api/market') return marketGet(env, user);
   if (m === 'POST' && path === '/api/market/list') return marketSell(req, env, user);
   if (m === 'POST' && path === '/api/market/cancel') return marketDeal(req, env, user, 'cancel');
@@ -193,7 +196,8 @@ async function getState(env, user) {
     const row = await loadFarm(env, user.id, true);
     const sales = row.sales;
     const out = { name: user.name, farm: row.farm, now: Date.now(), google: user.google };
-    if (!sales.length && !row.reset) return json(out);
+    const rolled = await rollWeek(env, row.farm, out.now);   // v36: nový týden soutěže (odměna za umístění)
+    if (!sales.length && !row.reset && !rolled) return json(out);
     const extra = paySales(env, user.id, row.farm, sales, out.now);
     if (await saveFarm(env, user.id, row, out.now, extra)) return json({ ...out, sales, ...(row.reset ? { reset: true } : {}) });
   }
@@ -218,6 +222,64 @@ async function leaderboard(env, user) {
   });
 }
 
+// ---------- v36: týdenní soutěž ----------
+// skóre farmy v týdnu w: aktuální týden (wk.w) nebo minulý (wk.pw), jinak 0; farmy ze staré sezóny se nepočítají
+const WK_SCORE = w => `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) < ${RESET_V} THEN 0 WHEN json_extract(f.state, '$.wk.w') = ${w} THEN COALESCE(json_extract(f.state, '$.wk.s'), 0) WHEN json_extract(f.state, '$.wk.pw') = ${w} THEN COALESCE(json_extract(f.state, '$.wk.ps'), 0) ELSE 0 END)`;
+async function weekRank(env, w, score) {
+  if (!(score > 0)) return 0;
+  const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM farms f WHERE ${WK_SCORE(Number(w) | 0)} > ?`).bind(score).first();
+  return (r ? r.n : 0) + 1;
+}
+async function rollWeek(env, farm, now) {
+  if (!weekDue(farm, now)) return false;
+  const rank = farm.wk ? await weekRank(env, farm.wk.w, farm.wk.s) : 0;
+  weekRoll(farm, now, rank || null);
+  return true;
+}
+async function weekly(env, user) {
+  const w = weekNo(Date.now());
+  const [top, prev] = await env.DB.batch([
+    env.DB.prepare(`SELECT u.id, u.name, ${WK_SCORE(w)} AS s FROM farms f JOIN users u ON u.id = f.user_id WHERE ${WK_SCORE(w)} > 0 ORDER BY s DESC, u.id ASC LIMIT 10`),
+    env.DB.prepare(`SELECT u.name, ${WK_SCORE(w - 1)} AS s FROM farms f JOIN users u ON u.id = f.user_id WHERE ${WK_SCORE(w - 1)} > 0 ORDER BY s DESC, u.id ASC LIMIT 3`),
+  ]);
+  const mine = await env.DB.prepare(`SELECT ${WK_SCORE(w)} AS s FROM farms f WHERE f.user_id = ?`).bind(user.id).first();
+  const s = mine ? mine.s || 0 : 0;
+  return json({
+    w, task: weekTask(w), prizes: WEEK_PRIZES, end: (w + 1),
+    top: (top.results || []).map(r => ({ name: r.name, s: r.s, me: r.id === user.id })),
+    prev: { task: weekTask(w - 1), top: (prev.results || []).map(r => ({ name: r.name, s: r.s })) },
+    me: { s, rank: s > 0 ? await weekRank(env, w, s) : 0 },
+  });
+}
+
+// ---------- v36: pomoc kamarádovi (1× denně urychlí jeho výrobu nebo pole; oba dostanou malou odměnu) ----------
+async function help(req, env, user) {
+  const body = await readJson(req);
+  const name = String(body.name || '').slice(0, 40);
+  const t = await env.DB.prepare('SELECT id, name FROM users WHERE name = ?').bind(name).first();
+  if (!t) return json({ error: 'not_found', message: 'Tahle farma neexistuje.' }, 404);
+  if (t.id === user.id) return json({ error: 'help_self', message: ERRORS.help_self }, 400);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const now = Date.now();
+    const me = await loadFarm(env, user.id);
+    if (helpUsed(me.farm, now)) return json({ error: 'help_used', message: ERRORS.help_used }, 400);
+    const row = await loadFarm(env, t.id);
+    if (!row || row.reset) return json({ error: 'help_nothing', message: ERRORS.help_nothing }, 400);
+    const r = helpApply(row.farm, now, user.name);
+    if (!r.ok) return json({ error: r.error, message: ERRORS[r.error] || 'Nejde to.' }, 400);
+    if (!(await saveFarm(env, t.id, row, now))) continue;          // farma kamaráda se mezitím změnila – znovu
+    // odměna pomocníkovi (když jeho farmu zrovna ukládá jiné zařízení, načte se znovu)
+    for (let k = 0; k < 3; k++) {
+      const mine = k ? await loadFarm(env, user.id) : me;
+      if (k && helpUsed(mine.farm, now)) break;
+      const rew = helpReward(mine.farm, now, t.name, r.text);
+      if (await saveFarm(env, user.id, mine, now)) return json({ ok: true, text: r.text, coins: rew.coins, xp: rew.xp, levelUp: rew.levelUp, farm: mine.farm, now });
+    }
+    return json({ ok: true, text: r.text, coins: 0, xp: 0 });
+  }
+  return BUSY();
+}
+
 // návštěva cizí farmy (jen na koukání)
 async function visit(env, url) {
   const name = String(url.searchParams.get('name') || '').slice(0, 40);
@@ -238,12 +300,13 @@ async function actions(req, env, user) {
     const row = await loadFarm(env, user.id, true);
     const sales = row.sales;
     const now = Date.now();
+    const rolled = await rollWeek(env, row.farm, now);   // v36
     const extra = paySales(env, user.id, row.farm, sales, now);
-    const before = onlyTick && !sales.length && !row.reset ? sig(row.farm) : null;
+    const before = onlyTick && !sales.length && !row.reset && !rolled ? sig(row.farm) : null;
     const lim = { left: VILL_BUDGET };   // práce vesničanů: jeden rozpočet na celý požadavek (zbytek dožene další požadavek)
     const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim));
     // nic se nezměnilo (žádná akce neprošla; nebo jen tick, při kterém tým nic nedokončil ani nezačal) → neukládat
-    if ((!results.some(r => r.ok) || (before !== null && sig(row.farm) === before)) && !sales.length && !row.reset) return json({ farm: row.farm, now, results });
+    if ((!results.some(r => r.ok) || (before !== null && sig(row.farm) === before)) && !sales.length && !row.reset && !rolled) return json({ farm: row.farm, now, results });
     if (await saveFarm(env, user.id, row, now, extra)) return json({ farm: row.farm, now, results, sales });
   }
   return BUSY();

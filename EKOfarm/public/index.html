@@ -10,7 +10,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
 <link rel="preload" href="/fonts/grandstander-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/style.css?v=35">
+<link rel="stylesheet" href="/css/style.css?v=36">
 </head>
 <body>
 <!--APP-->
@@ -33,6 +33,7 @@
     <button class="sq" id="newsBtn" aria-label="Novinky"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
     <button class="sq" id="weatherBtn" aria-label="Počasí"></button>
     <button class="sq" id="centerBtn" aria-label="Řídicí centrum"><span data-ic="house"></span><b>Centrum</b><i class="dot" id="centerDot" hidden></i></button>
+    <button class="sq" id="eventBtn" aria-label="Událost" hidden><span data-ic="bell"></span><b>Událost</b><i class="dot" id="eventDot" hidden></i></button>
   </div>
   <div class="side" id="sideR">
     <button class="sq" id="townBtn" aria-label="Městečko"><span data-ic="shop"></span><b>Městečko</b></button>
@@ -50,7 +51,7 @@
       <p class="muted" id="fgHint"></p><button class="btn alt" id="fgQuit">Pustit rybu</button></div>
     <div id="fgResult" hidden><div id="fgResultText"></div><button class="btn" id="fgAgain">Rybařit znovu</button><button class="btn alt" id="fgDone">Hotovo</button></div>
   </div></div>
-  <div id="visitBar" hidden><span id="visitText"></span><button class="btn sm" id="visitBack">Zpět domů</button></div>
+  <div id="visitBar" hidden><span id="visitText"></span><button class="btn sm" id="visitHelp">:gift: Pomoct</button><button class="btn sm" id="visitBack">Zpět domů</button></div>
   <div id="banner" hidden><span id="bannerText"></span>
     <span id="bannerSize" hidden>
       <span class="sz">↔ <button data-size="w:-1">−</button><button data-size="w:1">+</button></span>
@@ -147,6 +148,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=35"></script>
+<script type="module" src="/js/main.js?v=36"></script>
 </body>
 </html>

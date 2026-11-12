@@ -742,3 +742,20 @@ div.empty:not(.slot)::before { content: ""; display: block; width: 44px; height:
 .lg { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-left: 6px; }
 .penbox.away { background: linear-gradient(#f3f9e6, #e7f2d2); border-color: #b9d68e; }
 .penbox.away b .ic { width: 20px; height: 20px; }
+
+/* ---------- v36: události, deník, soutěž, prodejna strojů ---------- */
+.evimg { display: block; width: 100%; max-height: 30vh; object-fit: cover; border-radius: 14px; border: 3px solid #e7d3a6; margin: 2px 0 8px; }
+h3.sub { font-family: var(--display); font-size: 19px; margin: 10px 0 4px; color: #4a2f17; }
+h3.sub .ic { width: 24px; height: 24px; vertical-align: -5px; }
+.evtext { margin: 4px 0 8px; line-height: 1.4; }
+.evans-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.btn.evans { width: 100%; text-align: left; justify-content: flex-start; white-space: normal; line-height: 1.25; padding-top: 10px; padding-bottom: 10px; }
+.btn.evans small { font-weight: 700; opacity: 0.85; }
+.chip.ok { background: #e9f6d8; border-color: #9cc66a; }
+.chip.warn { background: #fde8de; border-color: #e3a084; }
+.row.dim { opacity: 0.6; }
+.miss { color: #b8432b; }
+#eventBtn .dot { background: #e0412a; }
+#visitBar { flex-wrap: wrap; justify-content: center; }
+#visitBar #visitHelp:disabled { opacity: 0.6; }
+.crop .meta b.perks { display: block; font-size: 12px; font-weight: 800; color: #4f6b2a; line-height: 1.3; }

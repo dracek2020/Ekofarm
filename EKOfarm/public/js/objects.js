@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=35';
-import { TW, TH } from './render.js?v=35';
-import { drawIcon } from './icons.js?v=35';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=35';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=36';
+import { TW, TH } from './render.js?v=36';
+import { drawIcon } from './icons.js?v=36';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=36';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -52,7 +52,7 @@ function levelPlate(ctx, o, d) {
 
 export function objectDepth(o) {
   const d = objSize(o);
-  if (o.kind === 'velkepole' || o.kind === 'rybnik') return o.x + o.y + 1;   // leží na zemi – kreslit brzy
+  if (o.kind === 'velkepole' || BUILDINGS[o.kind].type === 'pond') return o.x + o.y + 1;   // leží na zemi – kreslit brzy (v36: všechny rybníky)
   return o.x + o.y + (d.w + d.h) / 2;
 }
 
@@ -71,14 +71,13 @@ function spriteBox(o) {
 }
 
 // ---------- stroje a lidé ----------
-const TOOL_IMG = { plow: 'pluh', seeder: 'secka', baler: 'lis' };
 // stroj z obrázku; dir 1 = jede doprava dolů, −1 = doleva dolů; s = velikost
 export function drawVehicle(ctx, x, y, model, dir, t, s = 1, working = false, tool = null) {
   const side = dir > 0 ? 'r' : 'l';
   const bump = working ? Math.sin(t / 60) * 0.8 : 0;
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
   ctx.beginPath(); ctx.ellipse(x, y, 30 * s, 12 * s, 0, 0, Math.PI * 2); ctx.fill();
-  const tim = tool && asset('m', `${TOOL_IMG[tool]}_${side}`);
+  const tim = tool && asset('m', `${tool}_${side}`);   // v36: tool = model náčiní (nejlepší, které hráč má)
   if (tim) {   // nářadí je za traktorem
     const w = tim.naturalWidth / 2 * s, h = tim.naturalHeight / 2 * s;
     ctx.drawImage(tim, x - dir * 34 * s - w / 2, y - 10 * s - h + bump, w, h);
@@ -161,12 +160,49 @@ function bale(ctx, x, y) {
   ctx.strokeStyle = '#b8902a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x - 3, y - 4, 2, 0, Math.PI * 2); ctx.stroke();
 }
 // plodina na jednom políčku (malé pole i velké pole); stage 0 klíček, 1 roste, 2 zralé
-export function drawCropImg(ctx, crop, cx, cy, stage, t) {
+// v36: každá rostlina je zvlášť (obrázek jedné rostliny s hrudkou hlíny) a sází se do řádků uvnitř záhonu –
+// 3×3 rostliny, velké plodiny (dýně, meloun, zelí) 2×2. Záhon se složí jednou do zásobního plátna
+// (4 varianty s malým posunem, velikostí a zrcadlením, aby pole nevypadala stejně) a pak se jen kopíruje.
+const CROP_GRID = { dyne: 2, meloun: 2, zeli: 2 };
+const CROP_FOOT = 0.06;   // spodek hrudky je o kousek pod místem, kde rostlina „stojí“
+const cropCache = new Map();
+function cropPatch(crop, stage, variant) {
+  const key = crop + '|' + stage + '|' + variant;
+  const hit = cropCache.get(key);
+  if (hit) return hit;
   const im = asset('c', `${crop}_${stage}`);
-  if (!im) return;
-  const w = TW * 0.92, h = w * im.naturalHeight / im.naturalWidth;
-  const sway = stage === 2 ? Math.sin(t / 500 + cx * 0.05) * 0.6 : 0;
-  ctx.drawImage(im, cx - w / 2 + sway, cy + TH * 0.42 - h, w, h);
+  if (!im || typeof document === 'undefined') return null;
+  const n = CROP_GRID[crop] || 3, K = 2;
+  const pw = TW * (n === 2 ? 0.58 : 0.44), ph = pw * im.naturalHeight / im.naturalWidth;
+  const W = TW + pw, H = TH + ph + 6, ox = W / 2, oy = ph + TH / 2;
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(W * K); c.height = Math.ceil(H * K);
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.scale(K, K);
+  let sd = (variant + 1) * 9301 + crop.length * 49297 + stage * 233;
+  const rand = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+  const pts = [];
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) pts.push([(i + 0.5) / n + (rand() - 0.5) * 0.08, (j + 0.5) / n + (rand() - 0.5) * 0.08, rand()]);
+  pts.sort((a, b) => a[0] + a[1] - b[0] - b[1]);   // odzadu dopředu
+  for (const [u, v, r] of pts) {
+    const x = ox + (u - v) * TW / 2, y = oy + (u + v - 1) * TH / 2;
+    const k = 0.88 + r * 0.24, w = pw * k, h = ph * k;
+    g.fillStyle = 'rgba(45,28,12,0.22)';
+    g.beginPath(); g.ellipse(x, y + 1, w * 0.3, w * 0.11, 0, 0, Math.PI * 2); g.fill();
+    g.save(); g.translate(x, y);
+    if (r > 0.5) g.scale(-1, 1);
+    g.drawImage(im, -w / 2, -h * (1 - CROP_FOOT), w, h);
+    g.restore();
+  }
+  c._ox = ox; c._oy = oy; c._W = W; c._H = H;
+  cropCache.set(key, c);
+  return c;
+}
+export function drawCropImg(ctx, crop, cx, cy, stage, t) {
+  const c = cropPatch(crop, stage, Math.abs(Math.round(cx / 48) * 7 + Math.round(cy / 24) * 3) % 4);
+  if (!c) return;
+  ctx.drawImage(c, cx - c._ox, cy - c._oy, c._W, c._H);
 }
 export const cropStage = (progress, ready) => (ready ? 2 : progress < 0.25 ? 0 : 1);
 
@@ -227,8 +263,9 @@ function drawBigField(ctx, o, d, now, t, farm) {
     }
     const mm = farm && farm.machines.find(x => x.id === o.job.m);
     const model = mm ? mm.model : st.state === 'harvesting' ? 'klas4' : 'brazda60';
-    const hasSeeder = farm && farm.machines.some(x => MACHINES[x.model].type === 'seeder');
-    const tool = st.state === 'plowing' ? 'plow' : st.state === 'baling' ? 'baler' : st.state === 'sowing' && hasSeeder ? 'seeder' : null;
+    const ttype = st.state === 'plowing' ? 'plow' : st.state === 'baling' ? 'baler' : st.state === 'sowing' ? 'seeder' : null;
+    const tm = farm && ttype && bestOwned(farm, ttype);
+    const tool = tm ? tm.id : ttype && ttype !== 'seeder' ? { plow: 'pluh', baler: 'lis' }[ttype] : null;
     drawVehicle(ctx, vx, vy, model, fwd ? 1 : -1, t, 0.85, true, tool);
   }
   const top = iso(o.x + W / 2, o.y + H / 2);

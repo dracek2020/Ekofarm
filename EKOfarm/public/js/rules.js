@@ -1,8 +1,9 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=35';
+import { TEAM } from './team-config.js?v=36';
+import { EVENTS } from './events.js?v=36';
 
-export const RULES_VERSION = 20;
+export const RULES_VERSION = 21;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
 export const RESET_V = 20;
 export const isOldSeason = raw => !raw || (raw.v || 0) < RESET_V;
@@ -312,7 +313,7 @@ export const ANIMALS = {
 };
 export const animalCycleMs = o => Math.round(ANIMAL_CYCLE * 1000 * speedMult(o));
 // nakrmit jedno zvíře: začne nový tříhodinový cyklus
-function startCycle(x, o, t) { x.fed = t; x.dur = animalCycleMs(o); x.got = 0; }
+function startCycle(x, o, t, farm) { x.fed = t; x.dur = Math.round(animalCycleMs(o) * (farm ? fxMult(farm, 'animal', t) : 1)); x.got = 0; }   // v36: + události
 // sebrat u zvířete u kusů; po posledním výrobku cyklu má zase hlad
 function takeAnimal(x, an, u) { x.got = (x.got || 0) + u; if (x.got >= an.per) { x.fed = 0; x.got = 0; delete x.dur; } }
 export const ANIMAL_LIST = Object.values(ANIMALS);
@@ -364,7 +365,7 @@ export const BUILDINGS = {
   // statek 3
   mlyn:         B('mlyn', 'Mlýn', 'factory', 3, 120, 2, 2, 6, 1, 'mouka'),
   skolka:       B('skolka', 'Školka stromků', 'factory', 3, 120, 2, 2, 5, 1, 'z_jablon'),
-  rybnik:       B('rybnik', 'Rybník', 'pond', 3, 200, 3, 3, 8, 2, 'pond', { info: 'Rybaření: potřebuješ udici a návnadu.' }),
+  rybnik:       B('rybnik', 'Rybník', 'pond', 3, 200, 3, 3, 8, 2, 'pond', { info: 'Rybaření: potřebuješ udici a návnadu. Nejvýš 5 ryb.' }),
   chata:        B('chata', 'Chata', 'house', 3, 500, 2, 2, 5, 0, 'house', { beds: 3, next: 'dum', info: 'Bydlí v ní 3 pracovníci.' }),
   jablon:       B('jablon', 'Kvetoucí strom', 'deco', 3, 40, 1, 1, 2, 0, 'blossom'),
   // statek 4
@@ -377,6 +378,7 @@ export const BUILDINGS = {
   mlekarna:     B('mlekarna', 'Mlékárna', 'factory', 5, 200, 2, 2, 10, 1, 'syr'),
   vcelin:       B('vcelin', 'Včelín', 'hive', 5, 250, 2, 2, 8, 2, 'hive', { info: 'Včely dělají plástve medu a sadům v okolí přidají úrodu.' }),
   dum:          B('dum', 'Dům', 'house', 5, 1000, 2, 2, 8, 0, 'house', { beds: 5, info: 'Bydlí v něm 5 pracovníků.' }),
+  rybnik2:      B('rybnik2', 'Větší rybník', 'pond', 5, 600, 4, 4, 12, 1, 'pond', { info: 'Až 8 ryb, vzácné ryby o něco častěji.' }),
   // statek 6
   konzervarna:  B('konzervarna', 'Konzervárna', 'factory', 6, 180, 2, 2, 8, 1, 'okurky'),
   medarna:      B('medarna', 'Medárna', 'factory', 6, 280, 2, 2, 9, 1, 'med'),
@@ -385,6 +387,7 @@ export const BUILDINGS = {
   olejna:       B('olejna', 'Olejna', 'factory', 7, 250, 2, 2, 8, 1, 'olej'),
   marmeladarna: B('marmeladarna', 'Marmeládárna', 'factory', 7, 260, 2, 2, 9, 1, 'dzem_jahoda'),
   prasecak:     B('prasecak', 'Prasečák', 'pen', 7, 260, 3, 3, 9, 1, 'pig', { animal: 'prase' }),
+  rybnik3:      B('rybnik3', 'Velký rybník', 'pond', 7, 1500, 5, 5, 18, 1, 'pond', { info: 'Až 15 ryb, vzácné ryby častěji.' }),
   // statek 8
   cukrovar:     B('cukrovar', 'Cukrovar', 'factory', 8, 400, 2, 2, 10, 1, 'cukr'),
   uzenarstvi:   B('uzenarstvi', 'Uzenářství', 'factory', 8, 420, 2, 2, 10, 1, 'klobasa'),
@@ -392,23 +395,83 @@ export const BUILDINGS = {
   ovcin:        B('ovcin', 'Ovčín', 'pen', 9, 450, 3, 3, 10, 1, 'sheep', { animal: 'ovce' }),
   // statek 10
   textilka:     B('textilka', 'Textilka', 'factory', 10, 600, 2, 2, 12, 1, 'klubko'),
+  rybnik4:      B('rybnik4', 'Jezero', 'pond', 10, 4000, 6, 6, 25, 1, 'pond', { info: 'Až 20 ryb, vzácné ryby nejčastěji. Nejlepší místo na rybaření.' }),
 };
 export const BUILDING_LIST = Object.values(BUILDINGS);
 
 // stroje a náčiní z prodejny; speed = políček za minutu; vozidla (tractor, combine) potřebují místo ve stodole
-export const MACHINES = {
-  brazda60:  { id: 'brazda60',  name: 'Traktor Brázda 60',  type: 'tractor', level: 5,  cost: 250,  speed: 6,  icon: 'tractor', info: 'Seje a orá na velkém poli, sklízí zeleninu. Zaseje i všechna malá pole.' },
-  klas4:     { id: 'klas4',     name: 'Kombajn Klas 4',     type: 'combine', level: 6,  cost: 600,  speed: 6,  icon: 'combine', info: 'Sklízí obilí, olejniny a hrách. Sklidí i všechna malá pole.' },
-  brazda120: { id: 'brazda120', name: 'Traktor Brázda 120', type: 'tractor', level: 9,  cost: 900,  speed: 12, icon: 'tractor', info: 'Dvakrát rychlejší traktor.' },
-  klas8:     { id: 'klas8',     name: 'Kombajn Klas 8',     type: 'combine', level: 11, cost: 1800, speed: 12, icon: 'combine', info: 'Dvakrát rychlejší kombajn.' },
-  pluh:      { id: 'pluh',      name: 'Pluh',               type: 'plow',    level: 6,  cost: 300,  speed: 0,  icon: 'pluh',  info: 'Zorané velké pole dá o 50 % větší úrodu. Táhne ho traktor.' },
-  secka:     { id: 'secka',     name: 'Secí stroj',         type: 'seeder',  level: 7,  cost: 500,  speed: 0,  icon: 'secka', info: 'Traktor s ním seje dvakrát rychleji.' },
-  lis:       { id: 'lis',       name: 'Lis na balíky',      type: 'baler',   level: 8,  cost: 700,  speed: 0,  icon: 'lis',   info: 'Po sklizni obilí slisuje slámu do balíků. Táhne ho traktor.' },
-  udice:     { id: 'udice',     name: 'Udice',              type: 'rod',     level: 3,  cost: 80,   speed: 0,  icon: 'udice', info: 'Na rybaření v rybníku. Návnadu vyrobíš v Krmivárně.' },
-  udice2:    { id: 'udice2',    name: 'Karbonová udice',    type: 'rod',     level: 10, cost: 700,  speed: 0,  icon: 'udice2', info: 'Ryba se drží snáz a častěji zabere vzácná.' },
-  kolecko:   { id: 'kolecko',   name: 'Kolečko',            type: 'helper',  level: 3,  cost: 150,  speed: 0,  icon: 'kolecko', info: 'Pomocník s ním obslouží o 2 políčka víc najednou.' },
-  motyka:    { id: 'motyka',    name: 'Motyka a konev',     type: 'helper',  level: 4,  cost: 250,  speed: 0,  icon: 'motyka', info: 'Pomocník pracuje dvakrát častěji.' },
-};
+// v36: každý druh má řadu (tier 1–10, náčiní 1–5) – lepší stroj = rychlejší a s výhodou navíc. Ze stejného druhu
+// se vždy použije ten nejlepší, který hráč má (vozidla: nejrychlejší volné). Výhody:
+//   yld  = o kolik % větší úroda (traktor při setí na velkém poli, kombajn/traktor při sklizni)
+//   sow  = secí stroj: kolikrát rychleji traktor seje; save = o kolik % méně osiva na velkém poli
+//   mult = pluh: násobek úrody zoraného pole; tsp = jak rychle traktor s náčiním pracuje (orba, lisování)
+//   bale = lis: balíků slámy na políčko
+//   hold = udice: o kolik snáz se ryba drží v minihře; rare = vzácné ryby častěji; big = větší kusy; bait = % šance, že návnada zůstane
+const MCH = (id, name, type, tier, level, cost, x, info) => ({ id, name, type, tier, level, cost, speed: 0, icon: 'm_' + id, ...x, info });
+export const MACHINES = Object.fromEntries([
+  // traktory
+  MCH('brazda60',  'Traktor Brázda 60',   'tractor', 1, 5,  250,   { speed: 6 },            'Seje a orá na velkém poli, sklízí zeleninu. Zaseje i všechna malá pole.'),
+  MCH('brazda80',  'Traktor Brázda 80',   'tractor', 2, 7,  450,   { speed: 8 },            'Malý traktor se stříškou, o třetinu rychlejší.'),
+  MCH('brazda120', 'Traktor Brázda 120',  'tractor', 3, 9,  900,   { speed: 12 },           'Dvakrát rychlejší než Brázda 60.'),
+  MCH('hrouda150', 'Traktor Hrouda 150',  'tractor', 4, 12, 1400,  { speed: 14, yld: 5 },   'První traktor s kabinou. Pole, které zaseje, dá o 5 % víc.'),
+  MCH('hrouda180', 'Traktor Hrouda 180',  'tractor', 5, 15, 2100,  { speed: 16, yld: 5 },   'Silnější Hrouda se závažím vpředu.'),
+  MCH('orba220',   'Traktor Orba 220',    'tractor', 6, 19, 3000,  { speed: 19, yld: 8 },   'Velký traktor, pole dá o 8 % víc.'),
+  MCH('orba260',   'Traktor Orba 260',    'tractor', 7, 24, 4200,  { speed: 22, yld: 10 },  'Prostorná kabina a světla na střeše.'),
+  MCH('titan300',  'Traktor Kolos 300',   'tractor', 8, 30, 5800,  { speed: 25, yld: 12 },  'Zdvojená zadní kola, pole dá o 12 % víc.'),
+  MCH('titan360',  'Traktor Kolos 360',   'tractor', 9, 38, 8000,  { speed: 29, yld: 15 },  'Zdvojená kola vpředu i vzadu.'),
+  MCH('obr450',    'Traktor Obr 450',     'tractor', 10, 48, 11000, { speed: 34, yld: 20 }, 'Nejsilnější traktor na farmě, pole dá o 20 % víc.'),
+  // kombajny
+  MCH('klas4',   'Kombajn Klas 4',    'combine', 1, 6,  600,   { speed: 6 },            'Sklízí obilí, olejniny a hrách. Sklidí i všechna malá pole.'),
+  MCH('klas6',   'Kombajn Klas 6',    'combine', 2, 8,  1000,  { speed: 8 },            'O třetinu rychlejší Klas.'),
+  MCH('klas8',   'Kombajn Klas 8',    'combine', 3, 11, 1800,  { speed: 12 },           'Dvakrát rychlejší než Klas 4.'),
+  MCH('snop10',  'Kombajn Snop 10',   'combine', 4, 14, 2600,  { speed: 14, yld: 5 },   'Široká žací lišta – sklidí o 5 % víc.'),
+  MCH('snop12',  'Kombajn Snop 12',   'combine', 5, 17, 3600,  { speed: 16, yld: 5 },   'Kabina a vyprazdňovací roura.'),
+  MCH('zatva15', 'Kombajn Žatva 15',  'combine', 6, 21, 5000,  { speed: 19, yld: 8 },   'Velký kombajn, sklidí o 8 % víc.'),
+  MCH('zatva18', 'Kombajn Žatva 18',  'combine', 7, 26, 6800,  { speed: 22, yld: 10 },  'Velký zásobník na zrno.'),
+  MCH('sypka22', 'Kombajn Sýpka 22',  'combine', 8, 32, 9000,  { speed: 26, yld: 12 },  'Pásy místo zadních kol, sklidí o 12 % víc.'),
+  MCH('sypka26', 'Kombajn Sýpka 26',  'combine', 9, 40, 12000, { speed: 30, yld: 15 },  'Obří žací lišta.'),
+  MCH('zklas30', 'Kombajn Zlatý klas 30', 'combine', 10, 50, 16000, { speed: 35, yld: 20 }, 'Nejlepší kombajn na farmě, sklidí o 20 % víc.'),
+  // secí stroje (táhne traktor)
+  MCH('secka',        'Secí stroj',          'seeder', 1, 7,  500,  { sow: 2 },             'Traktor s ním seje dvakrát rychleji.'),
+  MCH('secka_zrnko',  'Secí stroj Zrnko',    'seeder', 2, 12, 900,  { sow: 2.3, save: 5 },  'Seje 2,3× rychleji a ušetří 5 % osiva.'),
+  MCH('secka_radek',  'Secí stroj Řádek',    'seeder', 3, 18, 1500, { sow: 2.6, save: 10 }, 'Seje 2,6× rychleji a ušetří 10 % osiva.'),
+  MCH('secka_presna', 'Přesný secí stroj',   'seeder', 4, 26, 2500, { sow: 3, save: 15 },   'Seje 3× rychleji a ušetří 15 % osiva.'),
+  MCH('secka_hvezda', 'Secí stroj Hvězda',   'seeder', 5, 36, 4000, { sow: 3.5, save: 20 }, 'Seje 3,5× rychleji a ušetří 20 % osiva.'),
+  // pluhy
+  MCH('pluh',       'Pluh',                   'plow', 1, 6,  300,  { mult: 1.5, tsp: 1 },    'Zorané velké pole dá o 50 % větší úrodu. Táhne ho traktor.'),
+  MCH('pluh2',      'Dvojradličný pluh',      'plow', 2, 11, 600,  { mult: 1.6, tsp: 1.2 },  'Zorané pole dá o 60 % víc, orba o 20 % rychlejší.'),
+  MCH('pluh3',      'Trojradličný pluh',      'plow', 3, 17, 1100, { mult: 1.7, tsp: 1.4 },  'Zorané pole dá o 70 % víc, orba o 40 % rychlejší.'),
+  MCH('pluh_otoc',  'Otočný pluh',            'plow', 4, 25, 2000, { mult: 1.85, tsp: 1.6 }, 'Zorané pole dá o 85 % víc, orba o 60 % rychlejší.'),
+  MCH('pluh_velky', 'Velký otočný pluh',      'plow', 5, 35, 3500, { mult: 2, tsp: 2 },      'Zorané pole dá dvojnásobnou úrodu, orba dvakrát rychlejší.'),
+  // lisy na balíky
+  MCH('lis',        'Lis na balíky',     'baler', 1, 8,  700,  { bale: 0.5, tsp: 1 },    'Po sklizni obilí slisuje slámu do balíků (1 balík na 2 políčka). Táhne ho traktor.'),
+  MCH('lis_snopek', 'Lis Snopek',        'baler', 2, 13, 1100, { bale: 0.6, tsp: 1.2 },  'Víc balíků (0,6 na políčko), o 20 % rychlejší.'),
+  MCH('lis_kostka', 'Lis Kostka',        'baler', 3, 19, 1800, { bale: 0.7, tsp: 1.4 },  'Víc balíků (0,7 na políčko), o 40 % rychlejší.'),
+  MCH('lis_valec',  'Lis Válec',         'baler', 4, 27, 2800, { bale: 0.85, tsp: 1.6 }, 'Víc balíků (0,85 na políčko), o 60 % rychlejší.'),
+  MCH('lis_velky',  'Velký lis Válec',   'baler', 5, 38, 4500, { bale: 1, tsp: 2 },      'Balík z každého políčka, dvakrát rychlejší.'),
+  // udice (minihra: hold = snazší držení; rare/big = vzácnější a větší ryby; bait = šance, že návnada zůstane)
+  MCH('udice',        'Lísková udice',        'rod', 1, 3,  80,   { hold: 1,    rare: 1,    big: 1,    bait: 0 },  'Na rybaření v rybníku. Návnadu vyrobíš v Krmivárně.'),
+  MCH('udice_bambus', 'Bambusová udice',      'rod', 2, 4,  150,  { hold: 1.05, rare: 1.1,  big: 1.05, bait: 0 },  'Lehčí udice – ryba se drží o kousek snáz.'),
+  MCH('udice_jasan',  'Jasanová udice',       'rod', 3, 6,  260,  { hold: 1.1,  rare: 1.2,  big: 1.1,  bait: 5 },  'S navijákem. Občas ušetří návnadu.'),
+  MCH('udice_sklo',   'Sklolaminátová udice', 'rod', 4, 8,  420,  { hold: 1.15, rare: 1.35, big: 1.15, bait: 5 },  'Pružná a pevná, vzácné ryby častěji.'),
+  MCH('udice2',       'Karbonová udice',      'rod', 5, 10, 700,  { hold: 1.25, rare: 1.5,  big: 1.3,  bait: 10 }, 'Ryba se drží snáz a častěji zabere vzácná i velká.'),
+  MCH('udice_tele',   'Teleskopická udice',   'rod', 6, 13, 1000, { hold: 1.3,  rare: 1.65, big: 1.35, bait: 10 }, 'Dlouhý nához až do hloubky.'),
+  MCH('prut_kapr',    'Kaprařský prut',       'rod', 7, 17, 1500, { hold: 1.35, rare: 1.8,  big: 1.4,  bait: 15 }, 'Silný prut s velkým navijákem a zvonečkem.'),
+  MCH('prut_mistr',   'Mistrovský prut',      'rod', 8, 22, 2200, { hold: 1.4,  rare: 2,    big: 1.5,  bait: 20 }, 'Ruční práce z leštěného dřeva a mosazi.'),
+  MCH('prut_stribro', 'Stříbrný prut',        'rod', 9, 28, 3200, { hold: 1.5,  rare: 2.2,  big: 1.6,  bait: 25 }, 'Vzácné ryby zaberou víc než dvakrát častěji.'),
+  MCH('prut_zlato',   'Zlatý prut',           'rod', 10, 36, 4500, { hold: 1.6, rare: 2.5,  big: 1.75, bait: 30 }, 'Nejlepší prut na farmě.'),
+  // náčiní pro pomocníka
+  MCH('kolecko', 'Kolečko',        'helper', 1, 3, 150, {}, 'Pomocník s ním obslouží o 2 políčka víc najednou.'),
+  MCH('motyka',  'Motyka a konev', 'helper', 1, 4, 250, {}, 'Pomocník pracuje dvakrát častěji.'),
+].map(m => [m.id, m]));
+MACHINES.kolecko.icon = 'kolecko'; MACHINES.motyka.icon = 'motyka';
+for (const m of Object.values(MACHINES)) if (m.type === 'rod') m.icon = m.id;   // udice mají malované ikony podle id
+// nejlepší vlastněný stroj daného druhu (náčiní a udice se nepůjčují – stačí ho mít)
+export function bestOwned(farm, type) {
+  let best = null;
+  for (const x of farm.machines) { const m = MACHINES[x.model]; if (m && m.type === type && (!best || m.tier > best.tier)) best = m; }
+  return best;
+}
 export const MACHINE_LIST = Object.values(MACHINES);
 
 // ---------- denní úkoly (8 každý den, stejné na serveru i v prohlížeči) ----------
@@ -423,7 +486,7 @@ export const QUEST_TYPES = {
   animal:  { text: 'Sebrat od zvířat', icon: 'vejce', base: 4, per: 0.4, pay: 9, need: hasAnimals },
   feed:    { text: 'Nakrmit zvířat', icon: 'krmivo_slepice', base: 4, per: 0.4, pay: 6, need: hasAnimals },
   fruit:   { text: 'Sklidit ovoce', icon: 'jablko', base: 6, per: 0.5, pay: 5, need: f => f.objects.some(o => o.kind === 'sad' && o.tree) },
-  fish:    { text: 'Ulovit ryb', icon: 'kapr', base: 3, per: 0.2, pay: 12, need: f => f.objects.some(o => o.kind === 'rybnik') && f.machines.some(m => MACHINES[m.model].type === 'rod') },
+  fish:    { text: 'Ulovit ryb', icon: 'kapr', base: 3, per: 0.2, pay: 12, need: f => f.objects.some(o => BUILDINGS[o.kind].type === 'pond') && f.machines.some(m => MACHINES[m.model].type === 'rod') },
   jobs:    { text: 'Práce strojů na velkém poli', icon: 'tractor', base: 2, per: 0.1, pay: 20, need: f => f.objects.some(o => o.kind === 'velkepole') && f.machines.some(m => MACHINES[m.model].type === 'tractor') },
 };
 export const questBonus = farm => ({ coins: 100 + 10 * farm.level, xp: 10 + farm.level });
@@ -554,7 +617,7 @@ export function weatherAt(now) {
 }
 export const nextWeather = now => (Math.floor(now / WEATHER_PERIOD) + 1) * WEATHER_PERIOD;
 // jak dlouho poroste plodina zasazená v čase now (ms)
-export const growMs = (c, now) => Math.round(c.time * 1000 * weatherAt(now).grow);
+export const growMs = (c, now, farm = null) => Math.round(c.time * 1000 * weatherAt(now).grow * (farm ? fxMult(farm, 'grow', now) : 1));   // v36: + události
 
 // den pro denní odměnu (středoevropský čas, zjednodušeně UTC+1)
 export const dayKey = now => new Date(now + 3600000).toISOString().slice(0, 10);
@@ -679,6 +742,14 @@ export function normalize(farm) {
     const ids = new Set([...farm.plots.map(p => 'pole' + p.id), ...farm.objects.filter(o => o.kind === 'sad').map(o => 'sad' + o.id)]);
     for (const k of A) if (!ids.has(k)) delete farm.areas[k];
   }
+  // v36: dočasné změny z událostí, události, rybářský deník (dosavadní rekordy = už ulovené druhy), pes
+  if (!Array.isArray(farm.fx)) farm.fx = [];
+  if (!farm.ev || typeof farm.ev !== 'object') farm.ev = { k: 0, h: [] };
+  if (!farm.fj || typeof farm.fj !== 'object') {
+    farm.fj = { c: {}, r: [] };
+    for (const id of Object.keys(farm.fishRec || {})) if (FISH[id]) { farm.fj.c[id] = 1; farm.fj.r.push('1:' + id); }
+  }
+  if (farm.dog === undefined) farm.dog = null;
   farm.v = RULES_VERSION;
   return farm;
 }
@@ -842,8 +913,9 @@ export function fieldState(o, now) {
   return { state: 'empty', progress: 0, left: 0, soil: o.soil || 'raw', straw: !!o.straw };
 }
 export const hasTool = (farm, type) => farm.machines.some(m => MACHINES[m.model].type === type);
-export function fieldYield(o) {
-  return Math.round(o.w * o.h * CROPS[o.crop].yield * (o.mult || 1));
+// v36: o.mult = pluh (zorané pole), o.ty = výhoda traktoru při setí; hy = výhoda stroje, který sklízí (v %)
+export function fieldYield(o, hy = 0) {
+  return Math.round(o.w * o.h * CROPS[o.crop].yield * (o.mult || 1) * (1 + ((o.ty || 0) + hy) / 100));
 }
 
 // ---------- úrovně budov ----------
@@ -893,7 +965,9 @@ const near = (a, b, r) => {
 };
 export const POND_IV = 10 * 60000;
 export const HIVE_IV = 20 * 60000;
-export const pondCap = o => 4 + objLevel(o);
+// v36: 4 velikosti rybníku – pevná kapacita, větší voda = vzácnější ryby; vylepšení rybníku zrychluje přibývání ryb
+export const POND = { rybnik: { cap: 5, rare: 1 }, rybnik2: { cap: 8, rare: 1.1 }, rybnik3: { cap: 15, rare: 1.25 }, rybnik4: { cap: 20, rare: 1.4 } };
+export const pondCap = o => (POND[o.kind] || POND.rybnik).cap;
 export const pondIv = o => Math.round(POND_IV * speedMult(o));
 export const pondStock = (o, now) => stockState(o, now, pondCap(o), pondIv(o));
 export const hiveCap = o => 3 + Math.floor(objLevel(o) / 2);
@@ -904,12 +978,13 @@ export const hiveStock = (farm, o, now) => stockState(o, now, hiveCap(o), hiveIv
 // sad blízko včelína dá o 1 plod víc
 export const beeBonus = (farm, o) => (farm.objects.some(x => x.kind === 'vcelin' && near(o, x, 4)) ? 1 : 0);
 
-// která ryba zabere (podle úrovně, s lepší udicí častěji vzácná)
-export function pickFish(farm, roll, now = 0) {
-  const good = farm.machines.some(m => m.model === 'udice2');
-  const wf = weatherAt(now).fish;
+// která ryba zabere (podle úrovně; vzácné častěji s lepší udicí, ve větším rybníku, v dobrém počasí a po události)
+export function pickFish(farm, roll, now = 0, o = null) {
+  const rod = bestOwned(farm, 'rod');
+  const rare = ((rod && rod.rare) || 1) * ((o && POND[o.kind] && POND[o.kind].rare) || 1);
+  const wf = weatherAt(now).fish * fxMult(farm, 'fish', now);
   const list = FISH_LIST.filter(f => f.level <= farm.level);
-  const w = f => f.w * (good && f.diff >= 0.5 ? 1.8 : 1) * (f.diff >= 0.5 ? wf : 1);
+  const w = f => f.w * (f.diff >= 0.5 ? rare * wf : 1);
   let x = roll * list.reduce((n, f) => n + w(f), 0);
   for (const f of list) { x -= w(f); if (x < 0) return f.id; }
   return list[list.length - 1].id;
@@ -932,6 +1007,8 @@ export function readyEvents(farm, from, to) {
     if (d.type === 'hive') { const s = hiveStock(farm, o, to); if (s.count >= s.cap && hiveStock(farm, o, from).count < s.cap) ev.push({ k: 'hive', text: 'Včelín je plný medu' }); }
   }
   if (farm.helper && inR(farm.helper.until)) ev.push({ k: 'helper', text: 'Pomocník skončil práci' });
+  const evn = farm.ev ? eventNow(farm, to) : null;   // v36: nová událost na farmě
+  if (evn && inR(evn.t)) ev.push({ k: 'event', text: `Na farmě se něco děje: ${EVENTS_BY[evn.id].title}` });
   const seen = new Set();
   return ev.filter(e => (e.k === 'factory' || e.k === 'pen' ? true : !seen.has(e.k) && seen.add(e.k)));
 }
@@ -969,7 +1046,7 @@ export function upgradeEffect(o) {
       return (nb.length ? `odemkne ${nb.join(', ')}; ` : '') + `až ${maxPlots(f)} polí, ${maxOrchards(f)} sadů, ${maxBigFields(f)}× velké pole, zakázky +${3 * (L - 1)} % mincí`;
     }
     case 'storage': return 'sklad +40 míst';
-    case 'pond': return `až ${4 + L} ryb v rybníku, doplňuje se o ${5 * (L - 1)} % rychleji`;
+    case 'pond': return `ryby přibývají o ${5 * (L - 1)} % rychleji (velikost rybníku se nemění)`;   // v36: kapacita podle velikosti rybníku
     case 'hive': return `až ${3 + Math.floor(L / 2)} pláství, včely o ${5 * (L - 1)} % rychlejší`;
     case 'garage': return `místo pro ${1 + L} strojů`;
     case 'dealer': return `stroje o ${3 * (L - 1)} % levněji`;
@@ -1027,7 +1104,7 @@ export function runHelper(farm, now) {
         if (!p.crop) {
           if (!payCrop(farm, c, 1)) break;
           addStat(farm, 'plant', 1);
-          p.crop = c.id; p.planted = t; p.d = growMs(c, t);
+          p.crop = c.id; p.planted = t; p.d = growMs(c, t, farm);
           h.n = (h.n || 0) + 1; cap--; touched.push([p.x, p.y]);
         }
       }
@@ -1591,7 +1668,7 @@ function cellFinish(farm, e, k, c, x, t) {
       const cr = getCrop(x);
       if (c.crop || !cr) return null;
       addStat(farm, 'plant', 1);
-      c.crop = cr.id; c.planted = t; c.d = growMs(cr, t);
+      c.crop = cr.id; c.planted = t; c.d = growMs(cr, t, farm);
       return NONE;
     }
     case 'pick': {
@@ -1652,7 +1729,7 @@ function finishJob(farm, e, j, t, live) {
       const d = Math.round(r.time * 1000 * speedMult(o));
       // procenta pod 100 % bez „přerozdělit“: budova po dávce stojí v poměru nevyužité kapacity
       const sum = planTotal(o.plan), pause = !j.tg && !o.auto && sum > 0 && sum < 100 ? Math.round(d * (100 - sum) / sum) : 0;
-      queueRecipe(o, r, t, 1, j.n || 1, pause);
+      queueRecipe(o, r, t, fxMult(farm, 'prod', t), j.n || 1, pause);
       if (!j.tg) {
         const u = o.used || (o.used = {});
         u[r.id] = (u[r.id] || 0) + d;
@@ -1668,7 +1745,7 @@ function finishJob(farm, e, j, t, live) {
       for (const i of j.xs || [j.x]) {
         const x = (o.animals || [])[i];
         if (!x || x.fed) { putBack(farm, an.feed, 1); continue; }
-        startCycle(x, o, t);
+        startCycle(x, o, t, farm);
         addStat(farm, 'feed', 1);
         n++;
       }
@@ -1725,7 +1802,8 @@ export function tradeRound(farm, v, t) {
     for (const r of [...rows].sort((a, b) => b.f - a.f)) { if (left <= 0) break; if (r.n < r.want) { r.n++; left--; } }
   }
   let coins = 0, n = 0;
-  for (const r of rows) { r.price = sellPrice(r.item, t); r.coins = Math.round(r.n * r.price * k); coins += r.coins; n += r.n; }
+  const fs = fxMult(farm, 'sell', t);   // v36: události mění výkupní ceny
+  for (const r of rows) { r.price = sellPrice(r.item, t); r.coins = Math.round(r.n * r.price * k * fs); coins += r.coins; n += r.n; }
   return { rows, n, coins, cap, want };
 }
 function tradeNow(farm, v, t) {
@@ -2078,6 +2156,11 @@ function fail(code) { return { ok: false, error: code }; }
 
 export const ERRORS = {
   bad_action: 'Neznámá akce.',
+  no_event: 'Tahle událost už neplatí.',
+  help_full: 'Kamarádovi už dnes pomohli tři lidé. Zkus to zítra.',
+  help_nothing: 'Na farmě kamaráda teď není co urychlit – nic se nevyrábí ani neroste.',
+  help_used: 'Dnes už jsi pomohl. Další pomoc můžeš poslat zítra.',
+  help_self: 'Sám sobě pomoct nemůžeš.',
   no_rod: 'Na rybaření potřebuješ udici z Prodejny strojů v městečku.',
   no_bait: 'Nemáš návnadu – vyrob ji v Krmivárně z pšenice a kukuřice.',
   no_fish: 'V rybníku teď žádná ryba nezabírá. Chvíli počkej, ryby přibývají.',
@@ -2152,9 +2235,11 @@ export function applyAction(farm, a, now, lim) {
   if (farm.helper) { runHelper(farm, now); ledger(farm, 'other', farm.coins - c, now); }
   if (farm.vill.length && !(now <= farm.vt)) runVillagers(farm, now, lim);   // ve stejném čase už dopočítáno (skladník zapisuje sám)
   ensureBoard(farm, now);
+  if (weekDue(farm, now)) weekRoll(farm, now, null);   // v36: server přepne týden dřív (s umístěním); tady jen bez odměny
   c = farm.coins;
   const r = doAction(farm, a, now);
   if (farm.coins !== c) ledger(farm, (a && ACT_SRC[a.type]) || 'other', farm.coins - c, now);   // v34: příjmy a výdaje podle akce
+  weekTick(farm);
   return r;
 }
 // samotná akce (bez dopočítání pomocníka a vesničanů – ty ji volají taky)
@@ -2173,7 +2258,7 @@ function doAction(farm, a, now) {
       addStat(farm, 'plant', 1);
       p.crop = c.id;
       p.planted = now;
-      p.d = growMs(c, now);
+      p.d = growMs(c, now, farm);
       return { ok: true, seed: pay.seeds > 0 };
     }
     case 'harvest': {
@@ -2196,7 +2281,7 @@ function doAction(farm, a, now) {
       let n = 0;
       for (const p of empty) {
         if (!payCrop(farm, c, 1)) break;
-        p.crop = c.id; p.planted = now; p.d = growMs(c, now); n++;
+        p.crop = c.id; p.planted = now; p.d = growMs(c, now, farm); n++;
       }
       if (!n) return fail('no_coins');
       addStat(farm, 'plant', n);
@@ -2233,7 +2318,7 @@ function doAction(farm, a, now) {
       if (!it || !isInt(a.qty) || a.qty <= 0) return fail('bad_action');
       if (have(farm, it.id) < a.qty) return fail('not_enough');
       takeItem(farm, it.id, a.qty);
-      const earned = a.qty * sellPrice(it.id, now);
+      const earned = Math.round(a.qty * sellPrice(it.id, now) * fxMult(farm, 'sell', now));   // v36: + události
       farm.coins += earned;
       addStat(farm, 'sold', earned);
       return { ok: true };
@@ -2297,7 +2382,7 @@ function doAction(farm, a, now) {
       if (o.queue.length >= queueSize(o)) return fail('queue_full');
       if (!hasInputs(farm, r)) return fail('no_inputs');
       for (const [id, n] of Object.entries(r.in)) takeItem(farm, id, n);
-      queueRecipe(o, r, now);
+      queueRecipe(o, r, now, fxMult(farm, 'prod', now));
       return { ok: true };
     }
     case 'collect': {
@@ -2360,7 +2445,7 @@ function doAction(farm, a, now) {
       for (const x of hungry) {
         if (have(farm, an.feed) < 1) break;
         takeItem(farm, an.feed, 1);
-        startCycle(x, o, now);
+        startCycle(x, o, now, farm);
         fed++;
       }
       if (!fed) return fail('no_feed');
@@ -2452,15 +2537,17 @@ function doAction(farm, a, now) {
       if (!m || MACHINES[m.model].type !== 'tractor') return fail('no_machine');
       if (machineJob(farm, m.id, now)) return fail('machine_busy');
       const cells = o.w * o.h;
-      const pay = payCrop(farm, c, cells);
+      const sd = bestOwned(farm, 'seeder');   // v36: lepší secí stroj seje rychleji a šetří osivo
+      const pay = payCrop(farm, c, Math.max(1, Math.ceil(cells * (1 - ((sd && sd.save) || 0) / 100))));
       if (!pay) return fail('no_coins');
       addStat(farm, 'plant', cells);
-      const sec = Math.ceil(jobSeconds(cells, m.model) / (hasTool(farm, 'seeder') ? 2 : 1));
-      o.mult = o.soil === 'plowed' ? 1.5 : 1;
+      const sec = Math.ceil(jobSeconds(cells, m.model) / (sd ? sd.sow : 1) * fxMult(farm, 'mach', now));
+      o.mult = o.soil === 'plowed' ? (o.pm || 1.5) : 1;
+      o.ty = MACHINES[m.model].yld || 0;
       o.soil = 'sown'; o.straw = false;
       o.crop = c.id;
       o.job = { type: 'sow', m: m.id, start: now, end: now + sec * 1000 };
-      o.readyAt = o.job.end + growMs(c, now);
+      o.readyAt = o.job.end + growMs(c, now, farm);
       o.load = null;
       addStat(farm, 'jobs', 1);
       return { ok: true };
@@ -2473,8 +2560,9 @@ function doAction(farm, a, now) {
       if (!m) return fail('no_machine');
       if (MACHINES[m.model].type !== CROPS[o.crop].harvester) return fail('wrong_machine');
       if (machineJob(farm, m.id, now)) return fail('machine_busy');
-      o.job = { type: 'harvest', m: m.id, start: now, end: now + jobSeconds(o.w * o.h, m.model) * 1000 };
-      o.load = { item: o.crop, qty: fieldYield(o), xp: CROPS[o.crop].xp * o.w * o.h };
+      o.job = { type: 'harvest', m: m.id, start: now, end: now + Math.round(jobSeconds(o.w * o.h, m.model) * 1000 * fxMult(farm, 'mach', now)) };
+      o.load = { item: o.crop, qty: fieldYield(o, MACHINES[m.model].yld || 0), xp: CROPS[o.crop].xp * o.w * o.h };
+      delete o.ty;
       o.straw = CROPS[o.crop].harvester === 'combine';
       o.crop = null; o.readyAt = 0; o.soil = 'stubble';
       addStat(farm, 'jobs', 1);
@@ -2487,15 +2575,16 @@ function doAction(farm, a, now) {
       const st = fieldState(o, now);
       if (st.state !== 'empty') return fail('not_empty');
       const plow = a.type === 'fieldPlow';
-      if (!hasTool(farm, plow ? 'plow' : 'baler')) return fail('no_machine');
+      const tool = bestOwned(farm, plow ? 'plow' : 'baler');   // v36: nejlepší pluh / lis
+      if (!tool) return fail('no_machine');
       if (plow && o.soil === 'plowed') return fail('nothing');
       if (!plow && !o.straw) return fail('nothing');
       const m = findMachine(farm, a.machine);
       if (!m || MACHINES[m.model].type !== 'tractor') return fail('no_machine');
       if (machineJob(farm, m.id, now)) return fail('machine_busy');
-      o.job = { type: plow ? 'plow' : 'bale', m: m.id, start: now, end: now + jobSeconds(o.w * o.h, m.model) * 1000 };
-      if (plow) { o.soil = 'plowed'; o.straw = false; }
-      else { o.straw = false; o.load = { item: 'slama', qty: Math.floor(o.w * o.h / 2), xp: 0 }; }
+      o.job = { type: plow ? 'plow' : 'bale', m: m.id, start: now, end: now + Math.round(jobSeconds(o.w * o.h, m.model) / (tool.tsp || 1) * 1000 * fxMult(farm, 'mach', now)) };
+      if (plow) { o.soil = 'plowed'; o.straw = false; o.pm = tool.mult; }
+      else { o.straw = false; o.load = { item: 'slama', qty: Math.max(1, Math.floor(o.w * o.h * tool.bale)), xp: 0 }; }
       addStat(farm, 'jobs', 1);
       return { ok: true };
     }
@@ -2778,15 +2867,17 @@ function doAction(farm, a, now) {
       const s = pondStock(o, now);
       if (s.count < 1) return fail('no_fish');
       if (have(farm, 'navnada') < 1) return fail('no_bait');
-      takeItem(farm, 'navnada', 1);
+      const rod = bestOwned(farm, 'rod');
+      const kept = rnd(farm) * 100 < (rod.bait || 0);   // v36: lepší udice občas návnadu ušetří
+      if (!kept) takeItem(farm, 'navnada', 1);
       takeStock(o, now, s.cap, pondIv(o), 1);
-      const f = FISH[pickFish(farm, rnd(farm), now)];
-      // váha: většinou menší kusy, v dobrém počasí a s lepší udicí častěji velké
-      const boost = weatherAt(now).fish * (farm.machines.some(m => m.model === 'udice2') ? 1.3 : 1);
+      const f = FISH[pickFish(farm, rnd(farm), now, o)];
+      // váha: většinou menší kusy, v dobrém počasí, s lepší udicí a po události častěji velké
+      const boost = weatherAt(now).fish * fxMult(farm, 'fish', now) * (rod.big || 1);
       const k = Math.pow(rnd(farm), 1.8 / boost);
       const kg = Math.round((f.kg[0] + (f.kg[1] - f.kg[0]) * k) * 100) / 100;
       o.hook = { f: f.id, t: now, kg };
-      return { ok: true, fish: f.id, kg };
+      return { ok: true, fish: f.id, kg, bait: kept };
     }
     case 'fishLand': {
       const o = findObject(farm, a.id);
@@ -2802,10 +2893,29 @@ function doAction(farm, a, now) {
       if (!farm.fishRec) farm.fishRec = {};
       const record = kg > (farm.fishRec[f.id] || 0);
       if (record) farm.fishRec[f.id] = kg;
-      const xp = f.xp * size.qty + (record ? 3 : 0);
+      const jr = journalCatch(farm, f.id);   // v36: rybářský deník (první úlovek, mistr druhu, celá sbírka)
+      const xp = f.xp * size.qty + (record ? 3 : 0) + jr.xp;
+      farm.coins += jr.coins;
       const levelUp = addXp(farm, xp);
-      return { ok: true, fish: f.id, kg, size: size.name, record, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
+      return { ok: true, fish: f.id, kg, size: size.name, record, journal: jr.list, coins: jr.coins, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
     }
+    case 'eventAnswer': {   // v36: odpověď na událost
+      const ev = eventNow(farm, now);
+      if (!ev || ev.slot !== a.slot || ev.id !== a.id) return fail('no_event');
+      if (!isInt(a.i) || a.i < 0 || a.i >= EVENTS_BY[ev.id].a.length) return fail('bad_action');
+      return answerEvent(farm, ev, a.i, now);
+    }
+    case 'buyDog': {
+      if (farm.dog) return fail('owned');
+      if (farm.level < DOG.level) return fail('locked');
+      if (farm.coins < DOG.cost) return fail('no_coins');
+      farm.coins -= DOG.cost;
+      farm.dog = { t: now, name: DOG.name };
+      const levelUp = addXp(farm, 10);
+      return { ok: true, gained: { items: [], xp: 10, levelUp } };
+    }
+    case 'weekSeen': { if (farm.wk) delete farm.wk.prize; return { ok: true }; }
+    case 'helpSeen': { farm.hs = now; return { ok: true }; }
     case 'tutorial': {
       if (!isInt(a.n) || a.n < 0 || a.n > TUTORIAL_DONE) return fail('bad_action');
       farm.tut = a.reset ? a.n : Math.max(farm.tut || 0, a.n);
@@ -2886,7 +2996,7 @@ export const LEDGER_H = 48;                  // hodinové souhrny mincí za posl
 export const LEDGER_SRC = {
   orders: 'Zakázky', sell: 'Výkup ve Skladu', trade: 'Skladník na trhu', market: 'Tržiště hráčů', quests: 'Úkoly a odměny', fish: 'Rybaření',
   stall: 'Stánek', build: 'Stavby a vylepšení', land: 'Pole a pozemky', seeds: 'Osivo a sazenice', animals: 'Zvířata', machines: 'Stroje',
-  team: 'Tým', other: 'Ostatní',
+  team: 'Tým', events: 'Události, pes a soutěž', other: 'Ostatní',
 };
 const ACT_SRC = {
   deliver: 'orders', sell: 'sell', claimDaily: 'quests', claimQuest: 'quests', claimAch: 'quests', fishCast: 'fish', fishLand: 'fish',
@@ -2894,6 +3004,7 @@ const ACT_SRC = {
   plant: 'seeds', sowAll: 'seeds', plantTree: 'seeds', clearTree: 'seeds', fieldSow: 'seeds', buyAnimal: 'animals',
   buyMachine: 'machines', sellMachine: 'machines', fieldPlow: 'machines', fieldBale: 'machines',
   buySupply: 'team', postAd: 'team', hireCand: 'team', rebuildHouse: 'team', hire: 'team',
+  eventAnswer: 'events', buyDog: 'events',
 };
 // zapíše změnu mincí do hodinového souhrnu (t = kdy se to stalo – u práce týmu čas úkonu, ne čas požadavku)
 function ledger(farm, src, delta, t) {
@@ -3055,3 +3166,266 @@ export function centerData(farm, now) {
     team, prod, fields, pens, alerts: farmAlerts(farm, now), away: farm.away || null,
   };
 }
+
+// =====================================================================================================
+// v36: události (2× denně, 4 odpovědi, dopad na 3 h), farmářský pes, rybářský deník, týdenní soutěž,
+// pomoc kamarádovi. Všechno se počítá jen z farmy a času – server i prohlížeč dojdou ke stejnému výsledku.
+// =====================================================================================================
+export const FX_MS = 3 * 3600000;
+// klíče dočasných změn: time = násobí dobu (< 1 = rychleji), value = násobí výnos (> 1 = lépe)
+export const FX_INFO = {
+  grow:   { name: 'Růst plodin',          time: true },
+  prod:   { name: 'Výroba',               time: true },
+  animal: { name: 'Zvířata',              time: true },
+  mach:   { name: 'Práce strojů',         time: true },
+  sell:   { name: 'Výkupní ceny',         time: false },
+  fish:   { name: 'Vzácné a velké ryby',  time: false },
+};
+// násobek dané změny teď (součin všech platných); co začne během platnosti, dostane ho natrvalo
+export function fxMult(farm, key, now) {
+  let m = 1;
+  for (const f of farm.fx || []) if (f.k === key && f.u > now) m *= f.m;
+  return m;
+}
+export const fxActive = (farm, now) => (farm.fx || []).filter(f => f.u > now);
+export function fxText(f) {
+  const i = FX_INFO[f.k]; if (!i) return '';
+  const pct = Math.round(Math.abs(1 - f.m) * 100);
+  if (i.time) return `${i.name}: o ${pct} % ${f.m < 1 ? 'rychleji' : 'pomaleji'}`;
+  return `${i.name}: ${f.m > 1 ? '+' : '−'}${pct} %`;
+}
+const fxGood = (k, m) => (FX_INFO[k].time ? m < 1 : m > 1);
+
+// ---------- události ----------
+export const EV_LEVEL = 3;            // od které úrovně hráče chodí události
+const EV_OFF = 3600000;               // místní čas jako dayKey (SEČ)
+const HALF_DAY = 12 * 3600000;
+export const EVENTS_BY = Object.fromEntries(EVENTS.map(e => [e.id, e]));
+// kdy se v daném půldni (slot) událost objeví: dopoledne 7–11 h, odpoledne/večer 15–21 h místního času
+function evTime(slot, seed) {
+  const h = (hashStr('udalost:' + seed + ':' + slot) % 1000) / 1000;
+  return slot * HALF_DAY - EV_OFF + Math.round((slot % 2 === 0 ? 7 + 4 * h : 3 + 6 * h) * 3600000);
+}
+function evNeed(farm, need) {
+  if (!need) return true;
+  if (need === 'tractor') return hasMachine(farm, 'tractor');
+  if (need === 'pond') return farm.objects.some(o => BUILDINGS[o.kind].type === 'pond');
+  if (need === 'kurnik') return farm.objects.some(o => o.kind === 'kurnik' && (o.animals || []).length);
+  if (need === 'pen') return farm.objects.some(o => BUILDINGS[o.kind].type === 'pen' && (o.animals || []).length);
+  return true;
+}
+function pickEvent(farm, slot) {
+  const ok = EVENTS.filter(e => evNeed(farm, e.need));
+  const fresh = ok.filter(e => !(farm.ev.h || []).includes(e.id));
+  const list = fresh.length ? fresh : ok;
+  return list.length ? list[hashStr('jaka:' + farm.seed + ':' + slot) % list.length].id : null;
+}
+// čekající událost: { slot, id, t (od kdy), until (kdy ji nahradí další) } nebo null
+export function eventNow(farm, now) {
+  if (farm.level < EV_LEVEL || !farm.ev) return null;
+  let slot = Math.floor((now + EV_OFF) / HALF_DAY), t = evTime(slot, farm.seed);
+  if (t > now) { slot--; t = evTime(slot, farm.seed); }
+  if (slot <= (farm.ev.k || 0)) return null;
+  const id = pickEvent(farm, slot);
+  return id ? { slot, id, t, until: evTime(slot + 1, farm.seed) + (evTime(slot + 1, farm.seed) <= now ? HALF_DAY : 0) } : null;
+}
+// mince v událostech rostou s úrovní (na úrovni 20 asi 3×)
+export const evCoins = (farm, n) => Math.round(n * (1 + (farm.level - 1) * 0.1));
+// zboží podle druhu (co farma má / co by mohla dostat)
+const PICKS = {
+  crop: id => !!CROPS[id], fruit: id => !!FRUITS[id], feed: id => id.startsWith('krmivo_'),
+  animal: id => ANIMAL_PRODUCTS.has(id), product: id => !!PRODUCTS[id] && !id.startsWith('krmivo_') && !ANIMAL_PRODUCTS.has(id),
+  any: id => !!ITEMS[id] && !isSeedItem(id),
+};
+const haveKind = (farm, pick) => Object.keys(farm.silo).filter(id => farm.silo[id] > 0 && PICKS[pick](id));
+const kindCount = (farm, pick) => haveKind(farm, pick).reduce((n, id) => n + farm.silo[id], 0);
+// lze odpověď zvolit? (mince a to, co spotřebuje)
+export function answerNeed(farm, ans) {
+  if (ans.pay && farm.coins < evCoins(farm, ans.pay)) return 'no_coins';
+  const u = ans.use;
+  if (u && (u.item ? have(farm, u.item) < u.n : kindCount(farm, u.pick) < u.n)) return 'no_inputs';
+  return null;
+}
+// odebere až n kusů (konkrétní zboží nebo náhodně z druhu); vrátí [{ item, qty }]
+function takeSome(farm, spec, n) {
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const list = spec.item ? (have(farm, spec.item) ? [spec.item] : []) : haveKind(farm, spec.pick);
+    if (!list.length) break;
+    const id = list[Math.floor(rnd(farm) * list.length)];
+    takeItem(farm, id, 1);
+    const r = out.find(x => x.item === id); if (r) r.qty++; else out.push({ item: id, qty: 1 });
+  }
+  return out;
+}
+// dárek: konkrétní zboží, nebo náhodně z toho, co hráč na své úrovni zná (semena do zásoby Statku)
+function giveSome(farm, spec, n) {
+  let pool;
+  if (spec.item) pool = [spec.item];
+  else if (spec.pick === 'seed') pool = CROP_LIST.filter(c => c.level <= farm.level).map(c => 's_' + c.id);
+  else if (spec.pick === 'product') pool = orderableItems(farm.level, statekLevel(farm)).filter(id => PICKS.product(id));
+  else if (spec.pick === 'fruit') pool = Object.values(TREES).filter(t => t.level <= farm.level).map(t => t.fruit).filter(Boolean);
+  else pool = CROP_LIST.filter(c => c.level <= farm.level).map(c => c.id);
+  if (!pool.length) pool = CROP_LIST.filter(c => c.level <= farm.level).map(c => c.id);
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const id = pool[Math.floor(rnd(farm) * pool.length)];
+    if (!ITEMS[id] || spaceFor(farm, id) < 1) continue;
+    const s = storeOf(farm, id); s[id] = (s[id] || 0) + 1;   // dárek se nepočítá do statistik (soutěž)
+    const r = out.find(x => x.item === id); if (r) r.qty++; else out.push({ item: id, qty: 1 });
+  }
+  return out;
+}
+function answerEvent(farm, ev, i, now) {
+  const e = EVENTS_BY[ev.id], ans = e.a[i];
+  const why = answerNeed(farm, ans);
+  if (why) return fail(why);
+  const dog = !!(e.danger && farm.dog);
+  const res = { ok: true, id: e.id, i, coins: 0, xp: 0, gift: [], lost: [], used: [], fx: [], dog: false };
+  if (ans.pay) { const c = evCoins(farm, ans.pay); farm.coins -= c; res.coins -= c; }
+  if (ans.use) res.used = takeSome(farm, ans.use, ans.use.n);
+  let out = ans, good = true;
+  if (ans.p !== undefined) {
+    const p = dog ? Math.min(0.95, ans.p + 0.25) : ans.p;
+    good = rnd(farm) < p; out = good ? ans.ok : ans.bad;
+    if (dog && good && rnd(farm) >= ans.p) res.dog = true;     // bez psa by to dopadlo špatně
+  }
+  res.text = out.r || '';
+  if (out.coins) {
+    let c = evCoins(farm, out.coins);
+    if (c < 0 && dog) { c = Math.round(c / 2); res.dog = true; }
+    c = Math.max(c, -farm.coins);
+    farm.coins += c; res.coins += c;
+  }
+  if (out.xp) res.xp = out.xp;
+  if (out.gift) res.gift = giveSome(farm, out.gift, out.gift.n);
+  if (out.lose) {
+    let n = out.lose.n;
+    if (dog) { n = Math.ceil(n / 2); res.dog = true; }
+    res.lost = takeSome(farm, out.lose, n);
+  }
+  for (const [k, m0] of Object.entries(out.fx || {})) {
+    let m = m0;
+    if (dog && !fxGood(k, m)) { m = 1 + (m - 1) / 2; res.dog = true; }
+    const f = { k, m: Math.round(m * 1000) / 1000, u: now + FX_MS, e: e.id };
+    farm.fx.push(f); res.fx.push(f);
+  }
+  farm.fx = farm.fx.filter(f => f.u > now).slice(-12);
+  farm.ev.k = ev.slot;
+  farm.ev.h = [e.id, ...(farm.ev.h || []).filter(x => x !== e.id)].slice(0, 8);
+  farm.ev.last = { id: e.id, i, t: now, good, text: res.text, dog: res.dog };
+  addStat(farm, 'events', 1);
+  res.levelUp = res.xp ? addXp(farm, res.xp) : 0;
+  res.gained = { items: res.gift, xp: res.xp, levelUp: res.levelUp };
+  return res;
+}
+
+// ---------- farmářský pes ----------
+export const DOG = { level: 6, cost: 800, name: 'Alík' };
+
+// ---------- rybářský deník ----------
+export const FJ_MASTER = 10;   // kolik úlovků jednoho druhu = mistr
+export const FJ_ALL = { coins: 1500, xp: 300 };
+export const FJ_ALL_MASTER = { coins: 5000, xp: 800 };
+export const fjFirst = f => ({ coins: f.xp * 3, xp: f.xp });
+export const fjMaster = f => ({ coins: f.xp * 6, xp: f.xp * 2 });
+function journalCatch(farm, id) {
+  const fj = farm.fj, f = FISH[id], list = [];
+  let coins = 0, xp = 0;
+  const n = fj.c[id] = (fj.c[id] || 0) + 1;
+  const add = (key, text, r) => { if (fj.r.includes(key)) return; fj.r.push(key); list.push({ text, coins: r.coins, xp: r.xp }); coins += r.coins; xp += r.xp; };
+  if (n >= 1) add('1:' + id, `Nová ryba v deníku: ${f.name}`, fjFirst(f));
+  if (n >= FJ_MASTER) add('m:' + id, `Mistr rybář: ${f.name} (${FJ_MASTER} úlovků)`, fjMaster(f));
+  if (FISH_LIST.every(x => fj.c[x.id])) add('all', 'Kompletní sbírka – v deníku jsou všechny ryby!', FJ_ALL);
+  if (FISH_LIST.every(x => (fj.c[x.id] || 0) >= FJ_MASTER)) add('allm', 'Mistr všech ryb!', FJ_ALL_MASTER);
+  return { list, coins, xp };
+}
+
+// ---------- týdenní soutěž ----------
+export const WEEK_MS = 7 * 86400000;
+export const weekNo = now => Math.floor((now + EV_OFF + 3 * 86400000) / WEEK_MS);   // týden začíná v pondělí 0:00
+export const weekStart = w => w * WEEK_MS - EV_OFF - 3 * 86400000;
+export const WEEK_TASKS = [
+  { k: 'harvest', name: 'Sklizeň plodin',     icon: 'wheat',  unit: 'plodin' },
+  { k: 'produce', name: 'Výroba',             icon: 'chleb',  unit: 'výrobků' },
+  { k: 'animal',  name: 'Dary zvířat',        icon: 'vejce',  unit: 'kusů' },
+  { k: 'fish',    name: 'Rybaření',           icon: 'kapr',   unit: 'ryb' },
+  { k: 'orders',  name: 'Zakázky',            icon: 'truck',  unit: 'zakázek' },
+  { k: 'fruit',   name: 'Sklizeň ovoce',      icon: 'jablko', unit: 'plodů' },
+  { k: 'sold',    name: 'Výdělek z prodeje',  icon: 'coin',   unit: 'mincí' },
+];
+export const weekTask = w => WEEK_TASKS[((w % WEEK_TASKS.length) + WEEK_TASKS.length) % WEEK_TASKS.length];
+export const WEEK_PRIZES = [{ coins: 2000, xp: 300 }, { coins: 1200, xp: 200 }, { coins: 700, xp: 120 }];
+export const weekDue = (farm, now) => !farm.wk || farm.wk.w < weekNo(now);
+// nový týden: rank = umístění v minulém týdnu (dodá server; v testovací verzi null = bez odměny)
+export function weekRoll(farm, now, rank = null) {
+  const w = weekNo(now), old = farm.wk;
+  let prize = null;
+  if (old && old.w < w && rank && rank <= WEEK_PRIZES.length && old.s > 0) {
+    prize = { ...WEEK_PRIZES[rank - 1], rank, w: old.w, k: old.k };
+    farm.coins += prize.coins;
+    addXp(farm, prize.xp);
+  }
+  const t = weekTask(w);
+  farm.wk = { w, k: t.k, b: farm.stats[t.k] || 0, s: 0, pw: old ? old.w : 0, ps: old ? old.s : 0, pr: rank || 0, prize };
+  return prize;
+}
+export function weekTick(farm) { if (farm.wk) farm.wk.s = Math.max(0, (farm.stats[farm.wk.k] || 0) - farm.wk.b); }
+
+// ---------- pomoc kamarádovi ----------
+export const HELP = { recvDay: 3, cut: 0.3, maxMs: 3600000, coins: 20, xp: 15, gotXp: 10, gotCoins: 10 };
+export const helpUsed = (farm, now) => !!(farm.hp && farm.hp.d === dayKey(now));
+// co na farmě kamaráda nejvíc pomůže: výroba s nejdelší frontou, velké pole, nebo rostoucí malá pole
+export function helpTarget(farm, now) {
+  let best = null;
+  for (const o of farm.objects) {
+    const d = BUILDINGS[o.kind];
+    if (d.type === 'factory') {
+      const q = (o.queue || []).find(x => x.end > now);
+      if (q && (!best || q.end - now > best.rem)) best = { kind: 'obj', id: o.id, name: d.name, rem: q.end - now };
+    } else if (d.type === 'bigfield' && o.crop && o.readyAt > now && !(o.job && o.job.end > now)) {
+      if (!best || o.readyAt - now > best.rem) best = { kind: 'obj', id: o.id, name: 'Velké pole', rem: o.readyAt - now };
+    }
+  }
+  const plots = farm.plots.filter(p => p.crop && p.planted + (p.d || 0) > now);
+  if (plots.length >= 3) {
+    const rem = Math.max(...plots.map(p => p.planted + (p.d || 0) - now));
+    if (!best || rem * 1.5 > best.rem) best = { kind: 'plots', n: plots.length, name: `${plots.length} polí`, rem };
+  }
+  return best;
+}
+// pomoc dostane farma kamaráda (from = jméno pomocníka)
+export function helpApply(farm, now, from) {
+  const d = dayKey(now);
+  if (!farm.hr || farm.hr.d !== d) farm.hr = { d, n: 0 };
+  if (farm.hr.n >= HELP.recvDay) return fail('help_full');
+  const t = helpTarget(farm, now);
+  if (!t) return fail('help_nothing');
+  const cut = rem => Math.min(HELP.maxMs, Math.round(rem * HELP.cut));
+  let saved = 0;
+  if (t.kind === 'plots') {
+    for (const p of farm.plots) if (p.crop && p.planted + (p.d || 0) > now) { const c = cut(p.planted + p.d - now); p.d -= c; saved = Math.max(saved, c); }
+  } else {
+    const o = findObject(farm, t.id);
+    if (BUILDINGS[o.kind].type === 'factory') {
+      const q = o.queue.find(x => x.end > now); saved = cut(q.end - now);
+      for (const x of o.queue) if (x.end > now) x.end -= saved;
+    } else { saved = cut(o.readyAt - now); o.readyAt -= saved; }
+  }
+  const text = `${t.name}: o ${fmtMin(saved)} dřív`;
+  farm.hr.n++;
+  farm.coins += HELP.gotCoins;
+  addXp(farm, HELP.gotXp);
+  farm.helped = [{ n: String(from).slice(0, 20), w: text, t: now }, ...(farm.helped || [])].slice(0, 10);
+  return { ok: true, text };
+}
+// odměna pro toho, kdo pomohl
+export function helpReward(farm, now, name, text) {
+  const coins = evCoins(farm, HELP.coins);
+  farm.hp = { d: dayKey(now), n: String(name).slice(0, 20), w: text };
+  farm.coins += coins;
+  const levelUp = addXp(farm, HELP.xp);
+  addStat(farm, 'help', 1);
+  return { coins, xp: HELP.xp, levelUp };
+}
+const fmtMin = ms => { const m = Math.round(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}` : `${Math.max(1, m)} min`; };

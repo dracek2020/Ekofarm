@@ -3,7 +3,7 @@
  "model": "GPT Image 2.5 Flare",
  "date": "2026-11-12",
  "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (vygenerovaný statek, b/statek_1)",
- "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé. Prompty budov v35 jsou celé; nastavení: Background transparent, Quality auto, 1 obrázek, rozměry Auto (čtverec).",
+ "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé. Prompty budov v35 jsou celé; nastavení: Background transparent, Quality auto, 1 obrázek, rozměry Auto (čtverec). Prompty v36 (rostliny po jedné, stroje, udice, pes, rybníky, ilustrace událostí) jsou celé.",
  "v32_game": [
   {
    "key": "t/cedule",
@@ -983,6 +983,555 @@
    "id": "asset_ZY6WcrxFdNFJppu3kTktwFEy",
    "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
    "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a two-storey worker family house: pale yellow plastered walls, a deep burgundy tile roof with a dormer window, a small balcony with flowers, a green front door, a little front garden with a white picket fence and a washing line. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  }
+ ],
+ "v36": [
+  {
+   "key": "b/rybnik2",
+   "id": "asset_2RbDRBfdvAFzZbszEcutNJvS",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game asset: the pond from the reference but a bit bigger: a clear blue pond with lily pads, reeds and cattails, smooth stones around the shore, a longer wooden fishing jetty with a rowing boat and a small wooden bench by the shore. Keep the same cozy hand-painted fairy-tale storybook style, warm sunny light and the same classic 2:1 isometric camera from the front corner as the reference. It fills a flat diamond-shaped grass tile matching a 4x4 square footprint, centered, filling most of the image. No buildings except the ones described, no people, no animals, no text, no letters, transparent background."
+  },
+  {
+   "key": "b/rybnik3",
+   "id": "asset_PoeevaHxJ1JdEiyDdmjwnPtn",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game asset: a big fishing pond: deep blue water with lily pads, a tiny grassy island with a weeping willow, a little arched wooden footbridge to the island, a jetty with a boat and fishing rods, reeds along the shore. Keep the same cozy hand-painted fairy-tale storybook style, warm sunny light and the same classic 2:1 isometric camera from the front corner as the reference. It fills a flat diamond-shaped grass tile matching a 5x5 square footprint, centered, filling most of the image. No buildings except the ones described, no people, no animals, no text, no letters, transparent background."
+  },
+  {
+   "key": "b/rybnik4",
+   "id": "asset_AFb8CRThyNBPVPnC3325L1Z5",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game asset: a large lake, the finest fishing spot on the farm: deep blue water, a cozy wooden fishing hut on stilts by the shore with a jetty and two rowing boats, a little rocky waterfall at the back corner, water lilies, reeds and a small island with a tree. Keep the same cozy hand-painted fairy-tale storybook style, warm sunny light and the same classic 2:1 isometric camera from the front corner as the reference. It fills a flat diamond-shaped grass tile matching a 6x6 square footprint, centered, filling most of the image. No buildings except the ones described, no people, no animals, no text, no letters, transparent background."
+  },
+  {
+   "key": "c1/beet",
+   "id": "asset_GK54wrBp4N2cMbrbXLHviLxi",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single sugar beet for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = small leaves. MIDDLE = a big leafy rosette. RIGHT = big leaves with a large cream-white sugar beet root showing. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/carrot",
+   "id": "asset_g3Ap4i5WhqFdVh3zZ6Hfwhf4",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single carrot for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny feathery sprout. MIDDLE = bushy feathery leaves. RIGHT = lush feathery leaves with the orange top of a big carrot showing above the soil. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/cesnek",
+   "id": "asset_Dt3b1sBM7eey9AjRD1TaZQTs",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single garlic plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = thin shoots. MIDDLE = flat green leaves. RIGHT = a white garlic bulb with green leaves. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/cibule",
+   "id": "asset_Zgwi6Ud5TcksdsHP5ZcZa35U",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single onion for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = thin green shoots. MIDDLE = taller green leaves. RIGHT = a golden-brown onion bulb with green tops. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/corn",
+   "id": "asset_xfo7C3dxZD17iTD7xzE3Mb3X",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single corn plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny corn seedling with two leaves. MIDDLE = a knee-high green corn plant. RIGHT = a tall corn plant with two yellow cobs peeking from green husks and a tassel on top. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/dyne",
+   "id": "asset_ga73Y57RgrJYPpwy4q9HfRfN",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single pumpkin vine for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling. MIDDLE = a vine with big leaves and orange flowers. RIGHT = a big round orange pumpkin with leaves and curly tendrils. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/hrach",
+   "id": "asset_tKi3kpzL1fkAQPdj5c2RLAKp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single pea plant climbing a small wooden stick for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny shoot by the stick. MIDDLE = a vine with white flowers on the stick. RIGHT = a vine full of plump green pea pods. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/jahody",
+   "id": "asset_E9X3Wxxd499Q5f2Uef6xuPLB",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single strawberry plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny plant. MIDDLE = a plant with white flowers. RIGHT = a plant with many bright red strawberries. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/meloun",
+   "id": "asset_yXpCfVCPedfneC6xMpFx2SM5",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single watermelon vine for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling. MIDDLE = a vine with yellow flowers. RIGHT = a big striped green watermelon among leaves. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/okurka",
+   "id": "asset_gsBZ93fHr29kpvgbzieWQ2Wd",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single cucumber vine for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling. MIDDLE = a vine with yellow flowers. RIGHT = a vine with several green cucumbers. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/paprika",
+   "id": "asset_fJremvaWssPBThNWGoYSgawT",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single bell pepper plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling. MIDDLE = a bushy plant with white flowers. RIGHT = a plant with shiny red and yellow bell peppers. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/potato",
+   "id": "asset_mtcrbyoUu7ZVp4qn5vSKUYCH",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single potato plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small sprout. MIDDLE = a leafy green bush. RIGHT = a bush with white flowers and a few golden potatoes peeking out of the mound. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/rajce",
+   "id": "asset_gtKeL4LEhGX6WQtSCGVMfDz9",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single tomato plant tied to a small wooden stake for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling by the stake. MIDDLE = a green plant with yellow flowers. RIGHT = a plant heavy with shiny red tomatoes. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/redkvicka",
+   "id": "asset_hwqSSTTT1p2pvi6quQ96Jg1h",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single radish for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = two tiny leaves. MIDDLE = a leafy rosette. RIGHT = leaves with a round bright red radish showing above the soil. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/repka",
+   "id": "asset_awFiHTXndgKgCTX9adyvLLKb",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single rapeseed plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small green rosette of leaves. MIDDLE = leafy green stalks with closed buds. RIGHT = a tall plant covered in bright yellow flowers. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/salat",
+   "id": "asset_XMHNwtkuiSMVzaA7bYSq6bYb",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single lettuce for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny lettuce sprout. MIDDLE = a small open lettuce head. RIGHT = a big round fresh green lettuce head. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/soy",
+   "id": "asset_XFGyPqf86biaCnCMPDuDNMGg",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single soybean bush for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny seedling with two round leaves. MIDDLE = a leafy green bush. RIGHT = a bushy plant full of fuzzy golden-green soybean pods. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/sun",
+   "id": "asset_fef6N4dDjNaTQNLVkFhEaYpc",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single sunflower for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small seedling. MIDDLE = a green stem with a closed bud. RIGHT = a tall sunflower with one big bright yellow blossom. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/wheat",
+   "id": "asset_jdRgrekmqCzs2pEixN9NFN3V",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single clump of wheat for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a tiny clump of thin green wheat shoots. MIDDLE = a green clump of young wheat stalks. RIGHT = a dense clump of tall golden ripe wheat with heavy ears. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/zeli",
+   "id": "asset_7MTE7iDxjGYdfv16W177Lx25",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single cabbage for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small sprout. MIDDLE = open green leaves. RIGHT = a big round firm green cabbage head. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "e/bourka",
+   "id": "asset_pz2wPqPNyqxzTpktdzjSB7SY",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: dark storm clouds rolling over green farm fields, wind bending the crops, a cozy farmhouse in the distance. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/dest",
+   "id": "asset_zcJFM5vka8hcaWwFymVvJp2i",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: gentle rain over lush green fields, shiny puddles and a rainbow above a farmhouse. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/dozinky",
+   "id": "asset_7d5vAzPvotW4aQ3YFoBvfNPa",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a harvest festival with a big wreath woven from wheat ears and ribbons, lanterns and baskets of fruit. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/inspektor",
+   "id": "asset_ikE6P8rK6prHnivWHdXK9yak",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a clipboard, a rubber stamp, round glasses and a magnifying glass on a wooden table on a farm porch. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/jarmark",
+   "id": "asset_iUabfMEPnspN51emzzgiM9k3",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a cheerful village market fair with colorful striped stalls, bunting flags and baskets full of produce. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/kocka",
+   "id": "asset_JmZbf2GBvSjEdQsZKex1EGyu",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a fluffy little stray kitten sitting on hay bales next to a big barn door. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/kraliky",
+   "id": "asset_Pk2PntHzstF3aRrje4ZGj4gt",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: cute rabbits nibbling lettuce and carrots in a vegetable garden. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/kroupy",
+   "id": "asset_2Nd2jUW24Ng5UHT6E6SAPAo3",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: hailstones falling on a vegetable garden, small ice balls bouncing on cabbage leaves under a dark cloud. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/liska",
+   "id": "asset_cgYDmup9rHXketKdBuNfB8W6",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a sly red fox sneaking along a white picket fence toward a little red henhouse at dusk, worried hens peeking out of the door. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/mlha",
+   "id": "asset_Uwh1otgwVThD7NNHKcVqyQnp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a misty sunrise over a farm, soft fog over the fields, dew drops on grass and spider webs. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/mysi",
+   "id": "asset_FLyNu6mSgGJe2zPeCEn7sAHt",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: little mice nibbling burlap grain sacks inside a cozy storage shed, spilled grains on the floor. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/novinar",
+   "id": "asset_hN7aJBfZhZ72ecgCCrsozExe",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: an old wooden camera on a tripod and an open notebook with a pencil in front of a pretty farm. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/obchodnik",
+   "id": "asset_U69Gv4ZMBYVAjnt8zTiYYVuJ",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a colorful wooden traveling merchant wagon full of crates, lanterns and a mysterious treasure chest, pulled by a donkey on a country road. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/porucha",
+   "id": "asset_A6EXyupePdzCzQ3s7m3w8RqC",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a small red tractor stuck in a muddy field with steam coming from its engine and tools scattered on the ground. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/poutnik",
+   "id": "asset_uMftG1GyX26QcaUheZCQmxTu",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a wooden walking stick, a worn hat and a small bundle resting on a bench by a farm gate at sunset. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/roj",
+   "id": "asset_nz7AxSTc6cjr5asfZikamHGQ",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a swarm of honeybees hanging like a buzzing cluster on an apple tree branch in a sunny orchard. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/rybari",
+   "id": "asset_oZr9q7X6HgzjEi8DUdqd7JAb",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a fishing contest at a pond with little flags, fishing rods on stands and a shiny trophy cup on a wooden table. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/skola",
+   "id": "asset_6A9BEQFpG8HU7nxuK9sFmo7s",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a row of small colorful school backpacks and a picnic basket by an open farm gate, sunny meadow with hens behind. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/sousedka",
+   "id": "asset_u1Sey5CyG3yvrHgAdpCcvo3c",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a small old cottage with flowers, an empty wicker basket by the door and a wooden handcart with a broken wheel. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/sucho",
+   "id": "asset_EcK6HudiHyhSVYqcMpx1Md2j",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a blazing sun over cracked dry soil and wilting plants, an empty watering can. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/svatba",
+   "id": "asset_ZBdMH9BcMF2E5Gx5McPosvkr",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a village wedding celebration under a big linden tree decorated with garlands and lanterns, a tall cake on a long table. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/utekle",
+   "id": "asset_8BxpAmsg6cU6eqXhsvatG3VK",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a happy runaway piglet, a calf and a lamb running across a flowery meadow past an open fence gate. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/vitr",
+   "id": "asset_pUAEhs24DJUbjSHGU1Uz2idA",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: strong wind blowing leaves through the air, a spinning windmill and laundry flapping on a line. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/zlodej",
+   "id": "asset_6tGExabkeXaegDd9e4q51KsC",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a farm at night under a big moon, a lantern-lit storage shed with its door ajar and a mysterious long shadow. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "ikony/rod",
+   "id": "asset_H9v7ZXPiKoUHx3RGr9TRkFN6",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Every fishing rod is drawn diagonally from bottom-left to top-right with its line and float. Row 1 from left to right: a simple hazel-wood fishing rod with a cork float; a bamboo fishing rod with a red float; an ash-wood fishing rod with a small wooden reel; a green fiberglass fishing rod with a reel. Row 2 from left to right: a black carbon fishing rod with a silver reel; a blue telescopic fishing rod with a reel; a sturdy carp fishing rod with a big reel and a little bell; a master fishing rod of dark polished wood with brass fittings. Row 3 from left to right: a shiny silver fishing rod with a silver reel; a golden fishing rod with a jeweled golden reel; the head of a friendly brown-and-white farm dog with floppy ears and a red collar; an open fishing journal book with a painted fish and a ribbon bookmark. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "m/brazda80",
+   "id": "asset_3XZmqHPrX93LrJejZD1pTmGL",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a small orange tractor with a little striped sunshade canopy, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background.",
+   "note": "nepoužito – traktor měl přívěs; ve hře je m/brazda80b"
+  },
+  {
+   "key": "m/brazda80b",
+   "id": "asset_9WQPCtWcdC6fvg79m1HHwKpm",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a small orange tractor with a little striped sunshade canopy, no trailer and nothing attached behind it, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/hrouda150",
+   "id": "asset_NFrppurMJSSF7TqJ9r4vNbzh",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a sturdy green tractor with a small enclosed cab with round windows, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/hrouda180",
+   "id": "asset_Qu9USk9QGpTNw79STPxY3aHL",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a strong teal tractor with a cab, a front weight block and bigger rear wheels, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/klas6",
+   "id": "asset_gmA3GB7tZ34LSTMifXVSMNUF",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a small orange combine harvester with a short reel at the front, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/lis_kostka",
+   "id": "asset_gegrMNbypoe5DUJftH7iXiLb",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a square hay baler trailer (no tractor attached) with a blue body dropping a square bale, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/lis_snopek",
+   "id": "asset_TTc3G46HUrPymceyAHjPmQb8",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a small square hay baler trailer (no tractor attached) with a green body, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/lis_valec",
+   "id": "asset_bJZsvGM5iZdikh5t1zkdip5c",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a round hay baler trailer (no tractor attached) with an orange drum, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/lis_velky",
+   "id": "asset_qyuCQqthjMKCYkTXa7FzjeA4",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a big round hay baler trailer (no tractor attached) with a golden-yellow drum and a wrapping arm, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/obr450",
+   "id": "asset_m6ZH5HuAp65rjxeaswsRwAAm",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a huge golden-yellow giant tractor with dual wheels on all corners, a big glass cab and gleaming gold and brass trim, the most powerful tractor on the farm, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/orba220",
+   "id": "asset_SmWhaa1sJuvGR9q6BgmVuo8x",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a big red-and-cream tractor with a roomy cab, twin exhaust pipes and chunky tyres, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/orba260",
+   "id": "asset_qkHhhsfrk9gBQ8LkrF9Qq9LG",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a big purple tractor with a glass cab, roof lights and very large rear wheels, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/pluh2",
+   "id": "asset_U7JaB8pw52S3KFbAkR2wZUZd",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a two-blade plough trailer (no tractor attached) with a green frame, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/pluh3",
+   "id": "asset_BYzMWy8Af8v8ubZjhtCThru4",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a three-blade plough trailer (no tractor attached) with a blue frame, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/pluh_otoc",
+   "id": "asset_pQVVnVU8JoLVGoTSkAQMR6ym",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a reversible plough trailer (no tractor attached) with shiny blades on both sides and a red frame, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/pluh_velky",
+   "id": "asset_gdM3vnnNkopLUqg5jqmreheD",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a very large reversible plough trailer (no tractor attached) with many gleaming blades and a golden frame, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/secka_hvezda",
+   "id": "asset_WpD8entDtTmFXwDhoiBRpUJ8",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a very wide golden seed drill trailer (no tractor attached) with a big hopper and star-shaped wheels, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/secka_presna",
+   "id": "asset_xTY6YiQA2b3d5RrQnG8wcsye",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a precision seed drill trailer (no tractor attached) with separate little seed bins in a row and a red frame, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/secka_radek",
+   "id": "asset_ZEqmSrxrymgiEc11WBW5pdrs",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a long seed drill trailer (no tractor attached) with a blue hopper and many small discs, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/secka_zrnko",
+   "id": "asset_Jp7N2nsaZ3tcpkhrNUAPU3X3",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a wider seed drill trailer (no tractor attached) with a green seed hopper, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/snop10",
+   "id": "asset_VHAsQfpGH4EMDCZSxgVm2stw",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a mid-size red combine harvester with a wide reel and a small grain tank, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/snop12",
+   "id": "asset_1X31838YBAESaFao6hGDztry",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a mid-size teal combine harvester with a cab and a grain unloading pipe, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/sypka22",
+   "id": "asset_wXXVr4X9WgHDe9EHCiU4PLnp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a large dark-green combine harvester with tracks instead of rear wheels and a long unloading pipe, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/sypka26",
+   "id": "asset_6muSKAyYWdUCQZEPwnEjVVaU",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a large red-and-gold combine harvester with a huge wide header and twin front wheels, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/titan300",
+   "id": "asset_C6o8SMfiot77TXxoUXNtsj3G",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a large dark-blue tractor with a tall glass cab, dual rear wheels and brass trim, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/titan360",
+   "id": "asset_NYDAEmvXpo1g4H7aneNQc6wJ",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a large forest-green tractor with dual wheels front and back, a long hood and shiny chrome details, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/zatva15",
+   "id": "asset_a1LvdLqs7jDVFdLdFttJf3hH",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a big blue combine harvester with a large glass cab and a wide header, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/zatva18",
+   "id": "asset_EBpYCKzpQgBHZwSSLwXKCF4w",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a big purple combine harvester with roof lights and a large grain tank, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "m/zklas30",
+   "id": "asset_NaF58gEEaS8yfVPPU5MioTQQ",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. A whimsical farm machine for a cozy fairy-tale farm game: a gigantic golden combine harvester with a huge wide header, dual wheels and gleaming gold trim, the best harvester on the farm, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Classic isometric 2:1 projection seen from the front corner with the same camera angle, lighting and hand-painted storybook style as the reference, soft shading, no outlines. No text, no letters, no numbers, no logos, transparent background."
+  },
+  {
+   "key": "p/pes",
+   "id": "asset_iRUhbRjggYZ2WxtcoYEKvWt4",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A cute farm dog for a cozy fairy-tale farm game: a friendly brown-and-white farm dog with floppy ears and a red collar, whole body, trotting toward the bottom-left (three-quarter view, same isometric camera as the reference). Big friendly eyes. No ground, no shadow. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
   }
  ]
 }
