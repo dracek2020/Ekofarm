@@ -16,6 +16,7 @@ function farm(level = 40) {
   for (const [x, y] of START_PLOTS) applyAction(f, { type: 'buyPlot', x, y }, T0);
   f.level = level; f.xp = LEVEL_XP[level]; f.coins = 1e6; f.siloCap = 5000;
   f.objects.find(o => o.kind === 'statek').lvl = 10;
+  f.sk = { f: 1e7, r: 1e7, v: 1e7 };   // v38: dovednosti naplno
   return f;
 }
 function placeAny(f, kind, t = T0) {
@@ -226,6 +227,7 @@ const env = { DB: fakeD1() };
 async function call(path, { method = 'GET', body, token } = {}) {
   const headers = { 'content-type': 'application/json' };
   if (token) headers.authorization = 'Bearer ' + token;
+  headers['x-eko-version'] = '999';   // v38: aktuální verze aplikace
   const res = await worker.fetch(new Request('https://x' + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), env);
   return { status: res.status, data: await res.json() };
 }

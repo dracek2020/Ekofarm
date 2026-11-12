@@ -8,6 +8,7 @@ const env = { DB: fakeD1() };
 async function call(path, { method = 'GET', body, token } = {}) {
   const headers = { 'content-type': 'application/json' };
   if (token) headers.authorization = 'Bearer ' + token;
+  headers['x-eko-version'] = '999';   // v38: aktuální verze aplikace
   const res = await worker.fetch(new Request('https://x' + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), env);
   return { status: res.status, data: await res.json() };
 }

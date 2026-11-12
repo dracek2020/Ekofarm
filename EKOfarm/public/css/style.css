@@ -40,7 +40,8 @@ img { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .pill > span { flex: none; display: grid; }
 .pill .plus { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 18px; line-height: 1;
   color: #fff; background: linear-gradient(var(--green-l), var(--green-d)); border: 2px solid #fff; box-shadow: 0 1px 2px #0004; }
-#lvl { padding-left: 0; }
+#lvl { padding-left: 0; cursor: pointer; }   /* v38: klepnutí → Úrovně a dovednosti */
+.row .bar.sk { max-width: none; }
 .lvl-num { flex: none; margin-left: -6px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 19px; color: #fff;
   background: radial-gradient(circle at 35% 30%, #74b2f0, #2c6cbc); border: 3px solid #fff; box-shadow: 0 2px 4px #0005; text-shadow: 0 1px 1px #0005; }
 .xpbar { flex: 1; height: 14px; background: #e6d6b2; border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 2px #0003; min-width: 30px; margin-right: 4px; }

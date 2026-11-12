@@ -1,5 +1,19 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 38, title: 'Dovednosti: Farmaření, Rybaření a Vaření', items: [
+    'Úrovně hráče rostou ještě pomaleji (8× pomaleji než na začátku). O svou úroveň nikdo nepřišel – zkušenosti se přepočítaly.',
+    'Nové dovednosti: Farmaření roste sklizní a chovem, Rybaření úlovky a Vaření výrobou. Počítá se i práce tvého týmu. Klepni na svou úroveň vlevo nahoře.',
+    'Farmaření odemyká traktory, kombajny, secí stroje, pluhy a lisy. Rybaření odemyká lepší udice a vzácnější ryby. Vaření odemyká další recepty ve výrobnách.',
+    'První udici koupíš, až budeš mít rybník.',
+    'Zasadil jsi něco omylem? Klepni dvakrát na rostoucí políčko a vyber Zrušit výsev (u velkého pole Zrušit osetí). Osivo a mince propadnou, ale můžeš hned sázet znovu.',
+  ] },
+  { v: 37, title: 'Pomalejší úrovně a odemykání podle Statku', items: [
+    'Úrovně hráče rostou 3× pomaleji. O svou úroveň nikdo nepřišel – zkušenosti se přepočítaly tak, že úroveň i rozdělaný postup zůstaly.',
+    'Plodiny, ovocné stromy, zvířata, ryby a výrobky teď odemyká vylepšení Statku, ne úroveň hráče. Výrobek se odemkne až spolu s budovou, která ho vyrábí, a se surovinami, ze kterých se dělá.',
+    'Po vylepšení Statku se ukáže, co všechno nového můžeš: budovy, plodiny, stromy, zvířata, ryby i výrobky.',
+    'Úroveň hráče dál odemyká stroje, pozemky, psa a události a je potřeba na vylepšení Statku.',
+    'Sad se staví od Statku 2, spolu s prvními stromy.',
+  ] },
   { v: 36, title: 'Události, nové stroje, rybníky a rostliny v řádcích', items: [
     'Rostliny na polích jsou nové: každá roste zvlášť ze své hrudky hlíny, sázejí se do řádků a celé zůstávají v záhonu.',
     'Události: dvakrát denně se na farmě něco přihodí – liška, bouřka, jarmark, potulný obchodník a dalších 20 příběhů. Vybereš ze 4 odpovědí a farma tě odmění nebo potrestá, často na 3 hodiny.',

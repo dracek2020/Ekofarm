@@ -16,5 +16,5 @@ for (const f of readdirSync(join(ROOT, 'public/js')).filter(f => f.endsWith('.js
   fix('public/js/' + f, /from '(\.\/[\w-]+\.js)(\?v=\d+)?'/g, `from '$1?v=${v}'`);
 }
 fix('public/index.html', /(\/js\/main\.js|\/css\/style\.css)(\?v=\d+)?"/g, `$1?v=${v}"`);
-fix('public/js/main.js', /export const APP_VERSION = \d+;|const APP_VERSION = \d+;/, `const APP_VERSION = ${v};`);
+fix('public/js/api.js', /export const APP_VERSION = \d+;/, `export const APP_VERSION = ${v};`);   // v38: verzi posílá api.js serveru
 console.log('verze', v);

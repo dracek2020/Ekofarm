@@ -26,6 +26,7 @@ const env = { DB: fakeD1(), GOOGLE_CLIENT_ID: CLIENT };
 async function call(path, { method = 'GET', body, tok } = {}) {
   const headers = { 'content-type': 'application/json' };
   if (tok) headers.authorization = 'Bearer ' + tok;
+  headers['x-eko-version'] = '999';   // v38: aktuální verze aplikace
   const res = await worker.fetch(new Request('https://x' + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), env);
   return { status: res.status, data: await res.json() };
 }

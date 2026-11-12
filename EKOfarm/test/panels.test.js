@@ -11,6 +11,7 @@ test('všechny panely se vykreslí', () => {
   const T = 1e12;
   const f = R.newFarm(T); f.level = 12; f.xp = R.LEVEL_XP[12]; f.coins = 99999;
   f.objects.find(x => x.kind === 'statek').lvl = 10;
+  f.sk = { f: 1e7, r: 1e7, v: 1e7 };   // v38: dovednosti naplno
   const ids = [['pekarna', 0, 0], ['kurnik', 0, 4], ['ker', 4, 0], ['sad', 5, 0], ['velkepole', 0, 11], ['stodola', 13, 13]]
     .map(([kind, x, y]) => { const r = R.applyAction(f, { type: 'place', kind, x, y, w: 4, h: 4 }, T); assert.ok(r.ok, kind); return r.id; });
   R.applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T);
@@ -113,6 +114,7 @@ test('v29: Farmářský tým, nástěnka, domky, zásluhy a tabulky práce se vy
   const T = 1_700_000_000_000;
   const f = R.newFarm(T); f.level = 12; f.xp = R.LEVEL_XP[12]; f.coins = 99999; f.siloCap = 9999;
   f.objects.find(x => x.kind === 'statek').lvl = 10;
+  f.sk = { f: 1e7, r: 1e7, v: 1e7 };   // v38: dovednosti naplno
   f.objects = f.objects.filter(o => o.kind !== 'sad');
   for (const [x, y] of R.START_PLOTS) R.applyAction(f, { type: 'buyPlot', x, y }, T);
   const ok = (a, t = T) => { const r = R.applyAction(f, a, t); assert.ok(r.ok, a.type + ' ' + r.error); return r; };

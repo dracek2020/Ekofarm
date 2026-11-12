@@ -1,5 +1,6 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo } from './rules.js?v=36';
+import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo } from './rules.js?v=38';
+export const APP_VERSION = 38;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -23,7 +24,7 @@ export class ApiError extends Error {
 
 function onlineBackend() {
   async function req(method, path, body) {
-    const headers = { 'content-type': 'application/json' };
+    const headers = { 'content-type': 'application/json', 'x-eko-version': String(APP_VERSION) };   // v38: server odmítne starou verzi
     const t = lsGet(TOKEN_KEY);
     if (t) headers.authorization = 'Bearer ' + t;
     let res;

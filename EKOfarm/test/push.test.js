@@ -52,7 +52,7 @@ test('v11: co je hotové mezi dvěma časy', () => {
 test('v11: odběr upozornění a kolo časovače (s podvrženou push službou)', async () => {
   const env = { DB: fakeD1(), ...VAPID };
   const call = async (path, { method = 'GET', body, token } = {}) => {
-    const res = await worker.fetch(new Request('https://x' + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined }), env, { waitUntil() {} });
+    const res = await worker.fetch(new Request('https://x' + path, { method, headers: { 'content-type': 'application/json', 'x-eko-version': '999', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined }), env, { waitUntil() {} });
     return { status: res.status, data: await res.json() };
   };
   assert.equal((await call('/api/config')).data.vapidPublic, VAPID.VAPID_PUBLIC);

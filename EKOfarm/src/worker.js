@@ -1,6 +1,6 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
 import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V,
-  weekDue, weekRoll, weekNo, weekTask, WEEK_PRIZES, helpUsed, helpApply, helpReward } from '../public/js/rules.js';
+  weekDue, weekRoll, weekNo, weekTask, WEEK_PRIZES, helpUsed, helpApply, helpReward, CLIENT_MIN } from '../public/js/rules.js';
 import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
 
@@ -37,6 +37,11 @@ async function route(req, env, path, url, ctx) {
   const user = await auth(req, env);
   if (!user) return json({ error: 'auth', message: 'Přihlas se prosím znovu.' }, 401);
   if (m === 'POST' && path === '/api/logout') return logout(req, env);
+  // v38: stará verze hry v prohlížeči (bez hlavičky nebo nižší než CLIENT_MIN) nesmí ukládat podle starých pravidel –
+  // stará aplikace ukáže hlášku a zkouší znovu, nová se sama znovu načte
+  if ((path === '/api/state' || path === '/api/actions') && !(Number(req.headers.get('x-eko-version')) >= CLIENT_MIN)) {
+    return json({ error: 'old_client', message: 'Je tu nová verze hry. Zavři ji a otevři znovu.' }, 409);
+  }
   if (m === 'GET' && path === '/api/state') return getState(env, user);
   if (m === 'GET' && path === '/api/leaderboard') return leaderboard(env, user);
   if (m === 'POST' && path === '/api/actions') return actions(req, env, user);
@@ -207,7 +212,8 @@ async function getState(env, user) {
 // žebříček: 30 nejlepších farem podle úrovně (a XP) + moje místo
 // v34: farmy ze staré sezóny (dokud se hráč nepřihlásí a farma se neresetuje) se počítají jako úroveň 1 bez XP
 const LV = `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= ${RESET_V} THEN json_extract(f.state, '$.level') ELSE 1 END)`;
-const XP = `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= ${RESET_V} THEN json_extract(f.state, '$.xp') ELSE 0 END)`;
+// v37/v38: farmy, které se od zpomalení úrovní ještě nenačetly, mají XP ve starém měřítku – přepočet jako při načtení (×8, z v37 ×8/3)
+const XP = `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= 23 THEN json_extract(f.state, '$.xp') WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= 22 THEN json_extract(f.state, '$.xp') * 8 / 3 WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= ${RESET_V} THEN json_extract(f.state, '$.xp') * 8 ELSE 0 END)`;
 async function leaderboard(env, user) {
   const [top, mine] = await env.DB.batch([
     env.DB.prepare(`SELECT u.id, u.name, ${LV} AS level, ${XP} AS xp FROM farms f JOIN users u ON u.id = f.user_id ORDER BY level DESC, xp DESC, u.id ASC LIMIT 30`),

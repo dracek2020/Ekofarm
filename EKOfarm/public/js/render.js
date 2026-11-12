@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=36';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=36';
-import { drawIconText, drawIcon } from './icons.js?v=36';
-import { asset } from './sprites.js?v=36';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=38';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=38';
+import { drawIconText, drawIcon } from './icons.js?v=38';
+import { asset } from './sprites.js?v=38';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -391,7 +391,7 @@ export function drawScene(ctx, view) {
     if (st && st.state === 'growing') {
       const [sx, sy] = cellToScreen(b.gx, b.gy, cam, W, H);
       const c = CROPS[p.crop];
-      const bw = 150, bh = 52, bx = sx - bw / 2, by = sy - 40 * cam.zoom - bh;
+      const bw = 150, bh = 66, bx = sx - bw / 2, by = sy - 40 * cam.zoom - bh;   // v38: + řádek s nápovědou
       ctx.fillStyle = 'rgba(255,250,235,0.96)';
       roundRect(ctx, bx, by, bw, bh, 12); ctx.fill();
       ctx.strokeStyle = '#a0763f'; ctx.lineWidth = 2; ctx.stroke();
@@ -401,6 +401,8 @@ export function drawScene(ctx, view) {
       ctx.fillText(`${c.name} · ${fmtTime(st.left)}`, sx, by + 21);
       ctx.fillStyle = '#e4d6b8'; roundRect(ctx, bx + 14, by + 32, bw - 28, 9, 4.5); ctx.fill();
       ctx.fillStyle = '#6fbf3f'; roundRect(ctx, bx + 14, by + 32, (bw - 28) * st.progress, 9, 4.5); ctx.fill();
+      ctx.fillStyle = '#8a6a40'; ctx.font = '500 11px system-ui, sans-serif';
+      ctx.fillText('klepni znovu = možnosti', sx, by + 58);
     }
   }
 
