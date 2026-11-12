@@ -101,3 +101,79 @@ test('v16: grafika – každá budova, plodina, strom, stroj, zvíře a člověk
   for (const n of ['domek_a', 'domek_b', 'domek_c']) assert.ok(has('b', n));
   for (const c of R.CROP_LIST) assert.ok(has('i', 's_' + c.id), 'semena ' + c.id);
 });
+
+test('v27: tabulky práce vesničanů se vykreslí ve všech stavech', () => {
+  const T = 1_700_000_000_000;
+  const f = R.newFarm(T); f.level = 12; f.xp = R.LEVEL_XP[12]; f.coins = 99999; f.siloCap = 9999;
+  f.objects.find(x => x.kind === 'statek').lvl = 10;
+  f.objects = f.objects.filter(o => o.kind !== 'sad');
+  for (const [x, y] of R.START_PLOTS) R.applyAction(f, { type: 'buyPlot', x, y }, T);
+  const ok = (a, t = T) => { const r = R.applyAction(f, a, t); assert.ok(r.ok, a.type + ' ' + r.error); return r; };
+  const spot = (w, h) => { for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (R.fits(f, x, y, w, h)) return { x, y }; return null; };
+  const place = kind => ok({ type: 'place', kind, ...spot(R.BUILDINGS[kind].w, R.BUILDINGS[kind].h) }).id;
+  const hire = at => { const id = ok({ type: 'buyVill' }).id; ok({ type: 'assignVill', id, at }); return id; };
+  const sklad = f.objects.find(o => o.kind === 'sklad') || R.findObject(f, place('sklad'));
+  const pek = place('pekarna'), kur = place('kurnik'), vc = place('vcelin');
+  for (let i = 0; i < 4; i++) ok({ type: 'place', kind: 'sad', x: 12 + i, y: 14 });
+  ok({ type: 'buyAnimal', animal: 'slepice' });
+  const o = id => R.findObject(f, id);
+  // bez vesničana: nabídka koupit / přiřadit
+  assert.ok(P.factoryHtml(f, o(pek), T).includes('data-act="openVill"'));
+  const free = ok({ type: 'buyVill' }).id;
+  assert.ok(P.factoryHtml(f, o(pek), T).includes(`data-v="${free}|${pek}"`), 'volného jde přiřadit');
+  // výrobna: prázdná tabulka → přidat výrobek; s plánem řádky, strop, úrovně
+  ok({ type: 'assignVill', id: free, at: pek });
+  let h = P.factoryHtml(f, o(pek), T);
+  assert.ok(h.includes('data-act="planAdd"') && h.includes(`${free}|chleb`) && h.includes('class="lvls"'));
+  ok({ type: 'villPlan', id: free, key: 'chleb', pct: 60 });
+  ok({ type: 'villLim', id: free, key: 'chleb', n: 20 });
+  f.silo.wheat = 3;
+  R.applyAction(f, { type: 'tick' }, T + 1000);
+  h = P.factoryHtml(f, o(pek), T + 5000);
+  assert.ok(h.includes('60 %') && h.includes('20 ks') && h.includes('Rozděleno <b>60 %</b>') && h.includes('data-act="planPct"') && h.includes('data-act="planLim"') && h.includes('data-act="planDel"'));
+  assert.ok(h.includes('Chystá výrobu'), 'stav: právě pracuje');
+  R.applyAction(f, { type: 'tick' }, T + 60_000);
+  assert.ok(P.factoryHtml(f, o(pek), T + 60_000).includes('Čeká na suroviny'), 'stav: čeká na suroviny');
+  // obchodník: tabulka s procenty, rezervou, odhadem a posledním trhem
+  const tr = hire(sklad.id);
+  assert.ok(P.siloHtml(f, T).includes('Nemá co prodávat'));
+  f.silo.corn = 100;
+  ok({ type: 'villPlan', id: tr, key: 'corn', pct: 50 });
+  ok({ type: 'villLim', id: tr, key: 'corn', n: 10 });
+  h = P.siloHtml(f, T + 1000);
+  assert.ok(h.includes('Další trh za') && h.includes('příště prodá <b>30</b> ks') && h.includes('krátí poměrně') && h.includes('10 ks'), 'odhad příštího trhu');
+  const M = R.nextTrade(T);
+  R.applyAction(f, { type: 'tick' }, M + 1000);
+  h = P.siloHtml(f, M + 2000);
+  assert.ok(h.includes('Poslední trh v') && h.includes('Celkem prodal 30 ks'));
+  // ohrada a včelín
+  const pv = hire(kur);
+  R.applyAction(f, { type: 'tick' }, M + 5000);
+  assert.ok(P.penHtml(f, o(kur), M + 5000).includes('Ve skladu došlo krmivo'));
+  hire(vc);
+  assert.ok(P.hiveHtml(f, o(vc), M + 5000).includes('class="lvls"'));
+  // farmáři: pole a sad, plán v procentech
+  assert.ok(P.statekHtml(f, 'X', M, 'farmari').includes('Nemáš volného farmáře'));
+  const fa = ok({ type: 'buyFarmer' }, M).id, fb = ok({ type: 'buyFarmer' }, M).id;
+  assert.ok(P.statekHtml(f, 'X', M, 'farmari').includes('data-act="areaAssign"'));
+  ok({ type: 'assignArea', id: fa, kind: 'pole', a: f.plots[0].id }, M);
+  ok({ type: 'assignArea', id: fb, kind: 'sad', a: f.objects.find(x => x.kind === 'sad').id }, M);
+  R.applyAction(f, { type: 'tick' }, M + 6000);
+  h = P.statekHtml(f, 'X', M + 6000, 'farmari');
+  assert.ok(h.includes('Plán je prázdný') && h.includes(`${fa}|wheat`) && h.includes(`${fb}|jablon`));
+  ok({ type: 'villPlan', id: fa, key: 'wheat', pct: 50 }, M + 6000);
+  ok({ type: 'villPlan', id: fa, key: 'corn', pct: 30 }, M + 6000);
+  ok({ type: 'villPlan', id: fb, key: 'jablon', pct: 100 }, M + 6000);
+  R.applyAction(f, { type: 'tick' }, M + 7000);
+  h = P.statekHtml(f, 'X', M + 7000, 'farmari');
+  assert.ok(h.includes('3 z 6 polí') && h.includes('asi 2 z 6 polí') && h.includes('Rozděleno <b>80 %</b>') && h.includes('Ve Statku došla semena') && h.includes('Ve Statku došly sazenice'));
+  f.seeds = { s_wheat: 5, z_jablon: 2 };
+  R.applyAction(f, { type: 'tick' }, M + 9000);
+  h = P.statekHtml(f, 'X', M + 10_000, 'farmari');
+  assert.ok(h.includes('Sází') && h.includes('vstat work'), 'stav: sází');
+  // přehled v obchodě
+  h = P.shopHtml(f, 'lide');
+  assert.ok(h.includes('obchodník') && h.includes('Otevřít'));
+  // žádný text nesmí zůstat nevyplněný
+  for (const x of [P.factoryHtml(f, o(pek), M), P.siloHtml(f, M), P.penHtml(f, o(kur), M), P.hiveHtml(f, o(vc), M), P.statekHtml(f, 'X', M, 'farmari'), P.shopHtml(f, 'lide')]) assert.ok(!/undefined|NaN|\[object/.test(x), x.match(/.{40}(undefined|NaN|\[object).{40}/s)?.[0]);
+});

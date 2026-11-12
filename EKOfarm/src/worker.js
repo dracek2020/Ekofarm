@@ -1,5 +1,5 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
-import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents } from '../public/js/rules.js';
+import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET } from '../public/js/rules.js';
 import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
 
@@ -225,7 +225,8 @@ async function actions(req, env, user) {
     const sales = await pendingSales(env, user.id);
     const extra = paySales(env, user.id, row.farm, sales);
     const now = Date.now();
-    const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now));
+    const lim = { left: VILL_BUDGET };   // práce vesničanů: jeden rozpočet na celý požadavek (zbytek dožene další požadavek)
+    const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim));
     if (!results.some(r => r.ok) && !sales.length) return json({ farm: row.farm, now, results });
     if (await saveFarm(env, user.id, row, now, extra)) return json({ farm: row.farm, now, results, sales });
   }

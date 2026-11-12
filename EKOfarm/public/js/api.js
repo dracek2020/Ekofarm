@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize } from './rules.js?v=26';
+import { newFarm, applyAction, normalize, VILL_BUDGET } from './rules.js?v=27';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -107,7 +107,8 @@ function localBackend() {
     async send(actions) {
       const farm = load();
       const now = Date.now();
-      const results = actions.map(a => applyAction(farm, a, a && a.type === 'harvest' ? now + 2000 : now));
+      const lim = { left: VILL_BUDGET };   // stejně jako server: jeden rozpočet práce vesničanů na požadavek
+      const results = actions.map(a => applyAction(farm, a, a && a.type === 'harvest' ? now + 2000 : now, lim));
       lsSet(LOCAL_KEY, JSON.stringify(farm));
       return { farm, now, results };
     },

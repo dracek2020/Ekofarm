@@ -1,7 +1,7 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
 
-export const RULES_VERSION = 15;
+export const RULES_VERSION = 16;
 export const GRID_W = 17;
 export const GRID_H = 17;
 export const MAIN_POS = [7, 7];   // Statek 3×3 přesně uprostřed mřížky 17×17
@@ -520,11 +520,14 @@ export const WEATHER = {
   dest:      { id: 'dest',      name: 'Déšť',          icon: 'w_rain',  w: 22, grow: 0.8,  fish: 1.8, text: 'Co zasadíš v dešti, roste o 20 % rychleji. Ryby berou a častěji zabere velká.' },
   horko:     { id: 'horko',     name: 'Horko a sucho', icon: 'w_hot',   w: 13, grow: 1.15, fish: 0.7, text: 'Co zasadíš v horku, roste o 15 % pomaleji. Ryby moc neberou.' },
 };
+let weatherP = -1, weatherW = null;   // naposledy spočítané období (ptá se na to každé zasazení)
 export function weatherAt(now) {
   const p = Math.floor(now / WEATHER_PERIOD);
-  let x = (hashStr('pocasi:' + p) % 1000) / 1000 * 100;
-  for (const w of Object.values(WEATHER)) { x -= w.w; if (x < 0) return w; }
-  return WEATHER.jasno;
+  if (p === weatherP) return weatherW;
+  let x = (hashStr('pocasi:' + p) % 1000) / 1000 * 100, out = WEATHER.jasno;
+  for (const w of Object.values(WEATHER)) { x -= w.w; if (x < 0) { out = w; break; } }
+  weatherP = p; weatherW = out;
+  return out;
 }
 export const nextWeather = now => (Math.floor(now / WEATHER_PERIOD) + 1) * WEATHER_PERIOD;
 // jak dlouho poroste plodina zasazená v čase now (ms)
@@ -573,9 +576,27 @@ export function newFarm(now) {
 }
 
 // doplní chybějící části u starších farem
+// v27: místo jedné zvolené práce má vesničan tabulku s procenty (plán) – převod starých uložených her
+function migrateVill(farm, v) {
+  v.plan = {};
+  const o = v.at && farm.objects.find(x => x.id === v.at), type = o && villJobType(o.kind);
+  if (v.role === 'farm') {
+    const k = v.area && v.area.kind === 'sad' ? v.tr : v.c;
+    if (k && (CROPS[k] || TREES[k])) v.plan[k] = 100;
+    if (v.area) v.pk = v.area.kind;
+  } else if (type === 'trader' && v.sell && typeof v.sell === 'object') {   // obchodník: prodávej polovinu, nech si, co měl nastaveno
+    for (const [id, keep] of Object.entries(v.sell)) {
+      if (!ITEMS[id] || isSeedItem(id) || Object.keys(v.plan).length >= (TRADE_ROWS[v.lvl] || 4)) continue;
+      v.plan[id] = 50;
+      if (keep > 0) (v.lim || (v.lim = {}))[id] = keep;
+    }
+  } else if (type === 'factory' && v.r && RECIPES[v.r] && RECIPES[v.r].building === o.kind) v.plan[v.r] = 100;
+  delete v.sell; delete v.r; delete v.c; delete v.tr;
+}
 export function normalize(farm) {
   if (!Array.isArray(farm.objects)) farm.objects = [];
   if (!Array.isArray(farm.vill)) farm.vill = [];
+  for (const v of farm.vill) if (!v.plan) migrateVill(farm, v);
   if (!farm.seeds || typeof farm.seeds !== 'object') farm.seeds = {};
   for (const k of Object.keys(farm.silo || {})) if (isSeedItem(k)) { farm.seeds[k] = (farm.seeds[k] || 0) + farm.silo[k]; delete farm.silo[k]; }   // přestěhovat ze Skladu
   for (const p of farm.plots || []) if (!p.id) p.id = farm.nextId++;                                                                          // pole mají id (pracovní oblasti)
@@ -639,7 +660,8 @@ export function levelProgress(farm) {
 function addXp(farm, n) {
   const before = farm.level;
   farm.xp += n;
-  farm.level = levelForXp(farm.xp);
+  if (before >= 1 && farm.xp >= LEVEL_XP[before]) { while (farm.level < MAX_LEVEL && farm.xp >= LEVEL_XP[farm.level + 1]) farm.level++; }
+  else farm.level = levelForXp(farm.xp);
   return farm.level > before ? farm.level : 0;
 }
 
@@ -661,7 +683,8 @@ function statOf(id) {
 }
 function addStat(farm, key, n) { farm.stats[key] = (farm.stats[key] || 0) + n; }
 // semena a sazenice se neskladují ve Skladu, ale v zásobě Statku (farm.seeds): 3 kusy na každé pole a sad
-export const isSeedItem = id => typeof id === 'string' && (id in SEEDS || id in SAPLINGS);
+const SEED_ITEMS = new Set([...Object.keys(SEEDS), ...Object.keys(SAPLINGS)]);
+export const isSeedItem = id => SEED_ITEMS.has(id);
 const storeOf = (farm, id) => (isSeedItem(id) ? farm.seeds : farm.silo);
 export const SEEDS_PER = 3;
 export const seedCap = farm => SEEDS_PER * (farm.plots.length + farm.objects.filter(o => o.kind === 'sad').length);
@@ -672,11 +695,23 @@ function addItem(farm, id, n) {
   const s = storeOf(farm, id);
   s[id] = (s[id] || 0) + n;
   addStat(farm, statOf(id), n);
+  if (villHook) villHook.add.push(id);
 }
 function takeItem(farm, id, n) {
   const s = storeOf(farm, id);
   s[id] -= n;
   if (!s[id]) delete s[id];
+  if (villHook) { villHook.take.push(id); if (s === farm.seeds) villHook.seedRoom = true; else villHook.room = true; }
+}
+// zařadí výrobek do fronty výrobny; k = násobič času – šikovnější vesničan vyrábí rychleji
+function queueRecipe(o, r, now, k = 1) {
+  const last = o.queue.length ? o.queue[o.queue.length - 1].end : 0;
+  const d = Math.round(r.time * 1000 * speedMult(o) * k);
+  o.queue.push({ r: r.id, end: Math.max(now, last) + d, d });
+}
+// zasadí strom do sadu; paid = čím se platilo ('sap' = sazenicí, jinak mince) – při vykopání před první úrodou se to vrátí
+function setTree(o, t, now, paid) {
+  o.tree = t.id; o.left = t.harvests; o.dead = false; o.readyAt = now + t.first * 1000; o.paid = paid;
 }
 export const have = (farm, id) => storeOf(farm, id)[id] || 0;
 // zaplatí osivo na n políček: nejdřív semena ze skladu, zbytek mincemi; null = nemá na to
@@ -950,20 +985,29 @@ export function runHelper(farm, now) {
   return touched;
 }
 
-// ---------- vesničané: pracovníci v budovách (automatizace farmy) ----------
-// Koupíš ho (úroveň 1), přiřadíš do budovy a nastavíš práci. Bere suroviny ze skladu a hotové nosí do skladu.
-// Výrobna: vyrábí zvolený výrobek. Ohrada: krmí a sbírá. Včelín: sbírá plástve. Sklad: obchodník prodává.
+// ---------- vesničané: průběžná práce podle plánu ----------
+// Každý vesničan má vlastní čas (v.t). Vybere si úkol, ten trvá podle jeho úrovně a na konci se provede
+// (sklizeň, zasazení, naložení výroby…). Když není co dělat, čeká – a ví na co (v.w), aby to hráč viděl.
+// Plán (v.plan) je tabulka s procenty: farmář – čím osázet oblast, dělník – podíly výrobků, obchodník – kolik
+// procent zásoby prodat na jednom trhu. v.lim: obchodník – kolik kusů nechat, dělník – do jaké zásoby vyrábět.
 export const VILL_BUY = 100;                          // cena nového vesničana (úroveň 1)
 export const VILL_MAX_LVL = 5;
 export const villUpCost = lvl => 100 * lvl;           // vylepšení na další úroveň: na 2 → 100, na 3 → 200, na 4 → 300, na 5 → 400
-export const VILL_IV = [0, 120, 90, 60, 45, 30];      // jak často obejde budovu (s) podle úrovně
-export const TRADER_IV = [0, 1800, 1500, 1200, 900, 600];   // obchodník prodává jen jednou za 30 / 25 / 20 / 15 / 10 min
-export const TRADER_QTY = [0, 10, 15, 20, 30, 40];   // kolik kusů obchodník prodá najednou
-// za kolik sekund vesničan v budově obejde svou práci
-export const villIv = (v, o) => (o && villJobType(o.kind) === 'trader' ? TRADER_IV : VILL_IV)[v.lvl];
 export const VILL_MAX = 30;
-const VILL_CATCHUP = 24 * 3600 * 1000;               // po dlouhé nepřítomnosti se dopočítá nejvýš den práce
-const VILL_TICKS = 150;                               // … a nejvýš tolik obchůzek na vesničana (pak řidší)
+export const VILL_SPEED = [0, 1, 1.25, 1.6, 2, 2.5];  // rychlost práce podle úrovně
+export const VILL_CRAFT = [0, 0, 8, 15, 22, 30];      // o kolik % rychleji běží výroba a zvířata, o která se stará
+// délka jednoho úkonu v sekundách na úrovni 1
+export const WORK = { harvest: 20, plant: 20, pick: 25, dig: 40, sapling: 40, haul: 15, load: 15, feed: 12, gather: 12, comb: 20 };
+export const workMs = (v, k) => Math.round(WORK[k] * 1000 / VILL_SPEED[v.lvl]);
+const craftMult = v => 1 - (VILL_CRAFT[v.lvl] || 0) / 100;
+export const TRADE_IV = 30 * 60 * 1000;               // trh je každou půlhodinu
+export const TRADE_CAP = [0, 30, 50, 80, 120, 180];   // kolik kusů obchodník na jednom trhu prodá
+export const TRADE_BONUS = [0, 0, 5, 10, 18, 25];     // o kolik % lepší cenu vyjedná
+export const TRADE_ROWS = [0, 4, 6, 8, 10, 12];       // kolik druhů zboží zvládne nabízet
+export const PLAN_ROWS = 12;                          // nejvíc řádků v tabulce farmáře a dělníka
+export const VILL_BUDGET = 800;                       // nejvýš tolik úkonů na jedno dopočítání (server má na požadavek málo času)
+const VILL_CATCHUP = 24 * 3600 * 1000;                // po dlouhé nepřítomnosti se dopočítá nejvýš den práce
+export const nextTrade = t => (Math.floor(t / TRADE_IV) + 1) * TRADE_IV;
 const VILL_NAMES = ['Anička', 'Pepa', 'Mařenka', 'Franta', 'Božena', 'Vašek', 'Jarka', 'Honza', 'Liduška', 'Tonda', 'Věrka', 'Kuba', 'Zdenka', 'Lojza', 'Hanka', 'Míla'];
 export const villName = v => VILL_NAMES[(v.id * 7 + 3) % VILL_NAMES.length];
 // jakou práci jde v budově dělat
@@ -981,49 +1025,11 @@ export function supplyPrice(farm, id) {
 export const villAt = (farm, objId) => (farm.vill || []).find(v => v.at === objId) || null;
 export const findVill = (farm, id) => (farm.vill || []).find(v => v.id === id) || null;
 
-// jedna obchůzka vesničana v čase t; vrací true, když něco udělal
-function villWork(farm, v, o, t) {
-  const ok = r => !!(r && r.ok);
-  let did = false;
-  switch (villJobType(o.kind)) {
-    case 'factory': {
-      if (o.queue.length && o.queue[0].end <= t) did = ok(doAction(farm, { type: 'collect', id: o.id }, t));
-      const r = v.r && RECIPES[v.r];
-      if (r && r.building === o.kind) {
-        while (o.queue.length < queueSize(o) && farm.level >= r.level && hasInputs(farm, r)) {
-          if (!ok(doAction(farm, { type: 'produce', id: o.id, recipe: r.id }, t))) break;
-          did = true;
-        }
-      }
-      break;
-    }
-    case 'pen':
-      if (ok(doAction(farm, { type: 'collect', id: o.id }, t))) did = true;
-      if (o.animals.some(x => !x.fed) && ok(doAction(farm, { type: 'feed', id: o.id }, t))) did = true;
-      break;
-    case 'hive':
-      if (hiveStock(farm, o, t).count > 0 && ok(doAction(farm, { type: 'collect', id: o.id }, t))) did = true;
-      break;
-    case 'trader': {
-      let left = TRADER_QTY[v.lvl] || 0;
-      for (const [item, keep] of Object.entries(v.sell || {})) {
-        if (left <= 0) break;
-        const n = Math.min(left, have(farm, item) - keep);
-        if (n <= 0) continue;
-        const price = sellPrice(item, t);
-        if (ok(doAction(farm, { type: 'sell', item, qty: n }, t))) { left -= n; did = true; v.earned = (v.earned || 0) + n * price; }
-      }
-      break;
-    }
-  }
-  return did;
-}
 // ---------- farmáři ze Statku a pracovní oblasti ----------
 // Oblast = aspoň 4 pole (nebo sady) vedle sebe (sousedé přes hranu). Přikoupené pole oblast zvětší, další skupina
 // o kus dál je nová oblast. Číslo oblasti podle nejstaršího pole/sadu, farmář je přiřazený k jednomu jejímu kusu.
 export const FARMER_MAX = 5;
 export const AREA_MIN = 4;
-export const FARM_CAP = [0, 4, 6, 9, 12, 16];   // kolik políček / stromů obslouží za obchůzku podle úrovně
 export function workAreas(farm) {
   const groups = (cells, kind) => {
     const key = (x, y) => x * 4096 + y, map = new Map(cells.map(c => [key(c.x, c.y), c]));
@@ -1050,69 +1056,351 @@ export function workAreas(farm) {
 export const areaOf = (areas, v) => (v.area ? areas.find(g => g.kind === v.area.kind && g.ids.includes(v.area.id)) || null : null);
 export const isFarmer = v => v.role === 'farm';
 export const farmerCount = farm => farm.vill.filter(isFarmer).length;
-// obchůzka farmáře: sklidit zralé, u sadu vykopat suché, zasadit zvolené – jen ze zásob ve Statku (bez placení mincemi)
-function farmerWork(farm, v, g, t) {
-  const ok = r => !!(r && r.ok);
-  let cap = FARM_CAP[v.lvl] || 0, did = false;
-  if (g.kind === 'pole') {
-    const plots = g.ids.map(id => farm.plots.find(p => p.id === id)).filter(Boolean);
-    for (const p of plots) {
-      if (cap <= 0) break;
-      if (p.crop && plotState(p, t).state === 'ready' && ok(doAction(farm, { type: 'harvest', x: p.x, y: p.y }, t))) { cap--; did = true; }
+
+// kde a jak vesničan pracuje: { v, type: 'pole'|'sad'|'factory'|'pen'|'hive'|'trader', g (oblast) | o (budova), key }; null = nemá práci
+function villCtx(farm, v, areas) {
+  if (isFarmer(v)) { const g = areaOf(areas, v); return g ? { v, type: g.kind, g, o: null, key: g.key, next: 0, wait: null } : null; }
+  const o = v.at && findObject(farm, v.at);
+  const type = o && villJobType(o.kind);
+  return type ? { v, type, g: null, o, key: o.id, next: 0, wait: null } : null;
+}
+// co se píše do tabulky plánu: 'crop' (pole), 'tree' (sad), 'recipe' (výrobna), 'item' (obchodník); null = tabulku nemá
+export function planKind(farm, v) {
+  const e = villCtx(farm, v, isFarmer(v) ? workAreas(farm) : []);
+  return !e ? null : e.type === 'pole' ? 'crop' : e.type === 'sad' ? 'tree' : e.type === 'factory' ? 'recipe' : e.type === 'trader' ? 'item' : null;
+}
+export const planSum = v => Object.values(v.plan || {}).reduce((a, b) => a + b, 0);
+
+// co zasadit na prázdné místo: plodina (strom) s největším schodkem proti plánu, na kterou jsou ve Statku semena.
+// Vrací id, nebo null a do PICK důvod: 'plan' (v plánu nic není), 'done' (plán je naplněný, zbytek leží ladem), 'seeds' (+ PICK.needs)
+const PICK = { w: '', needs: null, took: null };
+function planPick(farm, plan, cnt, total, defs, pre) {
+  let best = null, bestD = 0, any = false, needs = null;
+  for (const id in plan) {
+    const pct = plan[id], d = defs[id];
+    if (!(pct > 0) || !d || farm.level < d.level) continue;
+    any = true;
+    const miss = pct * total / 100 - (cnt[id] || 0);
+    if (miss <= 1e-9) continue;
+    if (!(farm.seeds[pre + id] > 0)) { (needs || (needs = [])).push(pre + id); continue; }
+    if (miss > bestD) { best = id; bestD = miss; }
+  }
+  PICK.w = needs ? 'seeds' : any ? 'done' : 'plan';
+  PICK.needs = needs;
+  return best;
+}
+// úkol vesničana: k = co dělá, id = kde (pole / sad / budova), x = čeho se týká (plodina, strom, výrobek, pořadí zvířete), s–e = od kdy do kdy
+const job = (k, id, x = 0) => ({ k, id, x, s: 0, e: 0 });
+// čekání: w = důvod (pro hráče), wake = kdy se to změní samo, needs = které suroviny pomůžou, took = úbytek čeho pomůže,
+// room / seedRoom = čeká na místo ve Skladu / v zásobě semen
+const idle = (w, wake = Infinity, needs = null, room = false, took = null, seedRoom = false) => ({ k: '', w, wake, needs, room, took, seedRoom });
+// Výběr úkolu v čase t: vrací job(…) nebo idle(…).
+const VILL_TASK = {
+  // pole: nejdřív osázet prázdné (ať roste), pak sklidit to, co je zralé nejdéle
+  pole(farm, e, t) {
+    const cells = e.g.cells, cnt = {};
+    let empty = null, ripe = null, ripeAt = Infinity, wake = Infinity;
+    for (const p of cells) {
+      if (!p.crop) { if (!empty || p.id < empty.id) empty = p; continue; }
+      cnt[p.crop] = (cnt[p.crop] || 0) + 1;
+      const at = p.planted + (p.d || CROPS[p.crop].time * 1000);
+      if (at > t) { if (at < wake) wake = at; }
+      else if (at < ripeAt || (at === ripeAt && p.id < ripe.id)) { ripe = p; ripeAt = at; }
     }
-    const c = v.c && CROPS[v.c];
-    if (c) for (const p of plots) {
-      if (cap <= 0 || have(farm, 's_' + c.id) < 1) break;
-      if (!p.crop && ok(doAction(farm, { type: 'plant', x: p.x, y: p.y, crop: c.id }, t))) { cap--; did = true; }
+    let w = 'rest', needs = null, full = false;
+    if (empty) {
+      const c = planPick(farm, e.v.plan || {}, cnt, cells.length, CROPS, 's_');
+      if (c) return job('plant', empty.id, c);
+      if (PICK.w !== 'done') { w = PICK.w; needs = PICK.needs; }
     }
-  } else {
-    const trees = g.ids.map(id => findObject(farm, id)).filter(Boolean);
-    for (const o of trees) {
-      if (cap <= 0) break;
-      const st = treeState(o, t).state;
-      if (st === 'ready' && ok(doAction(farm, { type: 'harvestTree', id: o.id }, t))) { cap--; did = true; }
-      else if (st === 'dead' && ok(doAction(farm, { type: 'clearTree', id: o.id }, t))) { cap--; did = true; }
+    if (ripe) {
+      if (siloFree(farm) >= CROPS[ripe.crop].yield) return job('harvest', ripe.id);
+      w = 'full'; full = true;
     }
-    const tr = v.tr && TREES[v.tr];
-    if (tr) for (const o of trees) {
-      if (cap <= 0 || have(farm, 'z_' + tr.id) < 1) break;
-      if (!o.tree && ok(doAction(farm, { type: 'plantTree', id: o.id, tree: tr.id }, t))) { cap--; did = true; }
+    return idle(w, wake, needs, full);
+  },
+  // sad: zasadit sazenici na prázdné místo, otrhat zralé, vykopat suché
+  sad(farm, e, t) {
+    const cells = e.g.cells, cnt = {};
+    let empty = null, dead = null, ripe = null, ripeAt = Infinity, wake = Infinity;
+    for (const o of cells) {
+      if (!o.tree) { if (!empty || o.id < empty.id) empty = o; }
+      else if (o.dead) { if (!dead || o.id < dead.id) dead = o; }
+      else {
+        cnt[o.tree] = (cnt[o.tree] || 0) + 1;
+        if (o.readyAt > t) { if (o.readyAt < wake) wake = o.readyAt; }
+        else if (o.readyAt < ripeAt || (o.readyAt === ripeAt && o.id < ripe.id)) { ripe = o; ripeAt = o.readyAt; }
+      }
+    }
+    let w = 'rest', needs = null, full = false;
+    if (empty) {
+      const c = planPick(farm, e.v.plan || {}, cnt, cells.length, TREES, 'z_');
+      if (c) return job('sapling', empty.id, c);
+      if (PICK.w !== 'done') { w = PICK.w; needs = PICK.needs; }
+    }
+    if (ripe) {
+      if (siloFree(farm) >= TREES[ripe.tree].yield + beeBonus(farm, ripe)) return job('pick', ripe.id);
+      w = 'full'; full = true;
+    }
+    if (dead) return job('dig', dead.id);
+    return idle(w, wake, needs, full);
+  },
+  // výrobna: odnést hotové do skladu, pak naložit další výrobek podle podílů v plánu
+  factory(farm, e, t) {
+    const o = e.o, q = o.queue;
+    let w = 'rest', wake = Infinity, room = false, seedRoom = false;
+    if (q.length) {
+      if (q[0].end > t) wake = q[0].end;
+      else {
+        const r = RECIPES[q[0].r];
+        if (spaceFor(farm, r.id) >= recipeQty(r)) return job('haul', o.id);
+        w = 'full';
+        if (isSeedItem(r.id)) seedRoom = true; else room = true;
+      }
+    }
+    if (q.length >= queueSize(o)) return idle(w, wake, null, room, null, seedRoom);
+    const r = factoryPick(farm, e.v, o);
+    if (r) return job('load', o.id, r);
+    return idle(w === 'full' ? w : PICK.w, wake, PICK.needs, room, PICK.took, seedRoom);
+  },
+  // ohrada: nakrmit hladové (ať pracují), pak posbírat hotové – zvíře po zvířeti
+  pen(farm, e, t) {
+    const o = e.o, an = ANIMALS[BUILDINGS[o.kind].animal], list = o.animals || [];
+    let hungry = -1, ready = -1, readyAt = Infinity, wake = Infinity;
+    for (let i = 0; i < list.length; i++) {
+      const x = list[i];
+      if (!x.fed) { if (hungry < 0) hungry = i; continue; }
+      const at = x.fed + (x.dur || an.time * 1000);
+      if (at > t) { if (at < wake) wake = at; } else if (at < readyAt) { ready = i; readyAt = at; }
+    }
+    if (hungry >= 0 && have(farm, an.feed) >= 1) return job('feed', o.id, hungry);
+    if (ready >= 0 && siloFree(farm) >= 1) return job('gather', o.id, ready);
+    if (ready >= 0) return idle('full', wake, hungry >= 0 ? [an.feed] : null, true);
+    if (hungry >= 0) return idle('feed', wake, [an.feed]);
+    return idle(list.length ? 'rest' : 'empty', wake);
+  },
+  // včelín: vybrat plástve, jakmile nějaké jsou
+  hive(farm, e, t) {
+    const s = hiveStock(farm, e.o, t);
+    if (s.count > 0) return siloFree(farm) >= 1 ? job('comb', e.o.id) : idle('full', Infinity, null, true);
+    return idle('rest', t + s.next);
+  },
+};
+// který výrobek z plánu teď naložit; podíly hlídá spravedlivé střídání (v.cw = kolik má který výrobek „k dobru“)
+// vrací id výrobku, nebo null a do PICK důvod: 'inputs' (+ needs), 'limit' (+ took: zásoba je plná, čeká na úbytek), 'plan'
+function factoryPick(farm, v, o) {
+  const plan = v.plan || {}, lim = v.lim || {}, ok = [];
+  let took = null, needs = null, sum = 0;
+  for (const id in plan) {
+    const r = RECIPES[id], pct = plan[id];
+    if (!(pct > 0) || !r || r.building !== o.kind || farm.level < r.level) continue;
+    if (lim[id] > 0) {
+      let n = have(farm, id);
+      for (const q of o.queue) if (q.r === id) n += recipeQty(r);
+      if (n >= lim[id]) { (took || (took = [])).push(id); continue; }
+    }
+    if (!hasInputs(farm, r)) { needs = needs || []; for (const i in r.in) needs.push(i); continue; }
+    ok.push(id); sum += pct;
+  }
+  PICK.w = needs ? 'inputs' : took ? 'limit' : 'plan';
+  PICK.needs = needs; PICK.took = took;
+  if (!ok.length) return null;
+  const cw = v.cw || (v.cw = {});
+  let best = null;
+  for (const id of ok) { cw[id] = (cw[id] || 0) + plan[id]; if (best === null || cw[id] > cw[best]) best = id; }
+  cw[best] -= sum;
+  return best;
+}
+// vrátit zpět do zásob bez počítání do statistik (nedokončený úkol)
+function putBack(farm, id, n) { const s = storeOf(farm, id); s[id] = (s[id] || 0) + n; if (villHook) villHook.add.push(id); }
+// Začátek úkolu: vesničan si vezme, co k němu potřebuje (semínko, sazenici, suroviny, krmivo) – nikdo jiný už to nevezme.
+function takeFor(farm, e, j) {
+  switch (j.k) {
+    case 'plant': takeItem(farm, 's_' + j.x, 1); break;
+    case 'sapling': takeItem(farm, 'z_' + j.x, 1); break;
+    case 'load': { const r = RECIPES[j.x]; for (const id in r.in) takeItem(farm, id, r.in[id]); break; }
+    case 'feed': takeItem(farm, ANIMALS[BUILDINGS[e.o.kind].animal].feed, 1); break;
+  }
+}
+// Úkol se nedokončil (hráč byl rychlejší, vesničan přeřazen…): co si vzal, vrátí.
+function giveBack(farm, v) {
+  const j = v.job;
+  if (!j) return;
+  if (j.k === 'plant') putBack(farm, 's_' + j.x, 1);
+  else if (j.k === 'sapling') putBack(farm, 'z_' + j.x, 1);
+  else if (j.k === 'load' && RECIPES[j.x]) { const r = RECIPES[j.x]; for (const id in r.in) putBack(farm, id, r.in[id]); }
+  else if (j.k === 'feed') { const o = findObject(farm, j.id), d = o && BUILDINGS[o.kind]; if (d && d.animal) putBack(farm, ANIMALS[d.animal].feed, 1); }
+}
+// vesničan přestane dělat, co dělal (přeřazení, zrušená oblast)
+function dropJob(farm, v) { giveBack(farm, v); v.job = null; }
+// Dokončení úkolu v čase t. Všechno se znovu ověří – mezitím mohl zasáhnout hráč. Vrací výsledek, nebo null (nepovedlo se).
+const DONE = { ok: true };
+function finishJob(farm, e, j, t, live) {
+  if (e.g) {
+    let c = null;
+    for (const x of e.g.cells) if (x.id === j.id) { c = x; break; }
+    if (!c) return null;
+    switch (j.k) {
+      case 'harvest': {
+        const cr = c.crop && CROPS[c.crop];
+        if (!cr || t - c.planted < (c.d || cr.time * 1000) || siloFree(farm) < cr.yield) return null;
+        const qty = harvestPlot(farm, c);
+        addXp(farm, cr.xp);
+        return live ? { ok: true, gained: { items: [{ item: cr.id, qty }], xp: cr.xp } } : DONE;
+      }
+      case 'plant': {
+        const cr = getCrop(j.x);
+        if (c.crop || !cr) return null;
+        addStat(farm, 'plant', 1);
+        c.crop = cr.id; c.planted = t; c.d = growMs(cr, t);
+        return DONE;
+      }
+      case 'pick': return doAction(farm, { type: 'harvestTree', id: c.id }, t);
+      case 'dig': return c.dead ? doAction(farm, { type: 'clearTree', id: c.id }, t) : null;
+      case 'sapling': {
+        const tr = own(TREES, j.x);
+        if (c.tree || !tr) return null;
+        setTree(c, tr, t, 'sap');
+        return DONE;
+      }
+    }
+    return null;
+  }
+  const o = e.o;
+  if (j.id !== o.id) return null;
+  switch (j.k) {
+    case 'haul': case 'comb': return doAction(farm, { type: 'collect', id: o.id }, t);
+    case 'load': {
+      const r = getRecipe(j.x);
+      if (!r || r.building !== o.kind || o.queue.length >= queueSize(o)) return null;
+      queueRecipe(o, r, t, craftMult(e.v));
+      return DONE;
+    }
+    case 'feed': {
+      const an = ANIMALS[BUILDINGS[o.kind].animal], x = (o.animals || [])[j.x];
+      if (!x || x.fed) return null;
+      x.fed = t;
+      x.dur = Math.round(an.time * 1000 * speedMult(o) * craftMult(e.v));
+      addStat(farm, 'feed', 1);
+      return DONE;
+    }
+    case 'gather': {
+      const an = ANIMALS[BUILDINGS[o.kind].animal], x = (o.animals || [])[j.x];
+      if (!x || !x.fed || t < x.fed + (x.dur || an.time * 1000) || siloFree(farm) < 1) return null;
+      x.fed = 0;
+      addItem(farm, an.product, 1);
+      addXp(farm, an.xp);
+      return live ? { ok: true, gained: { items: [{ item: an.product, qty: 1 }], xp: an.xp } } : DONE;
     }
   }
-  return did;
+  return null;
 }
 
-// dopočítá práci všech vesničanů do času now (po obchůzkách, v pořadí času – výrobky jednoho může použít druhý)
-export function runVillagers(farm, now) {
-  const worked = [];
-  const list = [];
-  const areas = farm.vill.some(isFarmer) ? workAreas(farm) : [];
-  for (const v of farm.vill || []) {
-    if (isFarmer(v)) {
-      const g = areaOf(areas, v);
-      if (!g) { v.t = Math.max(v.t || 0, now); continue; }
-      const from = Math.max(v.t || now, now - VILL_CATCHUP);
-      const iv = Math.max(VILL_IV[v.lvl] * 1000, (now - from) / VILL_TICKS);
-      list.push({ v, g, iv, next: from + iv });
-      continue;
-    }
-    const o = v.at && findObject(farm, v.at);
-    if (!o || !villJobType(o.kind)) { v.t = Math.max(v.t || 0, now); continue; }
-    const from = Math.max(v.t || now, now - VILL_CATCHUP);
-    const iv = Math.max(villIv(v, o) * 1000, (now - from) / VILL_TICKS);
-    list.push({ v, o, iv, next: from + iv });
+// ---------- obchodník a trh ----------
+// Co obchodník prodá na trhu v čase t: z každého zboží v tabulce zvolené procento toho, co je nad rezervou.
+// Dohromady nejvýš TRADE_CAP kusů – když je toho víc, zkrátí se všechno stejným poměrem. Vyšší úroveň = lepší cena.
+export function tradeRound(farm, v, t) {
+  const cap = TRADE_CAP[v.lvl] || 0, k = 1 + (TRADE_BONUS[v.lvl] || 0) / 100, lim = v.lim || {};
+  const rows = [];
+  let want = 0;
+  for (const [item, pct] of Object.entries(v.plan || {})) {
+    if (!ITEMS[item] || isSeedItem(item) || !(pct > 0)) continue;
+    const free = have(farm, item) - (lim[item] || 0);
+    const n = free > 0 ? Math.min(free, Math.ceil(free * pct / 100)) : 0;
+    rows.push({ item, pct, want: n, n, f: 0, price: 0, coins: 0 });
+    want += n;
   }
-  for (let guard = 0; list.length && guard < 6000; guard++) {
-    let k = 0;
-    for (let i = 1; i < list.length; i++) if (list[i].next < list[k].next) k = i;
-    const e = list[k];
-    if (e.next > now) break;
-    if (e.g ? farmerWork(farm, e.v, e.g, e.next) : villWork(farm, e.v, e.o, e.next)) { e.v.n = (e.v.n || 0) + 1; worked.push(e.g ? e.g.key : e.o.id); }
-    e.v.t = e.next;
-    e.next += e.iv;
+  if (want > cap) {
+    let left = cap;
+    for (const r of rows) { const x = r.want * cap / want; r.n = Math.floor(x); r.f = x - r.n; left -= r.n; }
+    for (const r of [...rows].sort((a, b) => b.f - a.f)) { if (left <= 0) break; if (r.n < r.want) { r.n++; left--; } }
   }
-  return worked;
+  let coins = 0, n = 0;
+  for (const r of rows) { r.price = sellPrice(r.item, t); r.coins = Math.round(r.n * r.price * k); coins += r.coins; n += r.n; }
+  return { rows, n, coins, cap, want };
 }
+function tradeNow(farm, v, t) {
+  const tr = tradeRound(farm, v, t);
+  if (!tr.n) return null;
+  for (const r of tr.rows) if (r.n) takeItem(farm, r.item, r.n);
+  farm.coins += tr.coins;
+  addStat(farm, 'sold', tr.coins);
+  v.earned = (v.earned || 0) + tr.coins;
+  v.sold = (v.sold || 0) + tr.n;
+  v.last = { t, n: tr.n, c: tr.coins, it: tr.rows.filter(r => r.n).map(r => [r.item, r.n, r.coins]) };
+  return { ok: true, coins: tr.coins };
+}
+
+// Dopočítá práci všech vesničanů do času now – událost po události v pořadí času (co jeden sklidí, může druhý hned zpracovat).
+// lim = { left } je společný rozpočet úkonů (server ho má jeden na celý požadavek). Vrací { did: poslední úkony, n, behind }.
+// behind = rozpočet došel dřív, než se došlo do „teď“ – zbytek se dopočítá příště (klient pak posílá akci tick).
+let villHook = null;   // během dopočítávání: co přibylo a ubylo ve skladu, kde se uvolnilo místo (probouzí čekající)
+const hits = (a, b) => { for (const x of a) if (b.includes(x)) return true; return false; };
+export function runVillagers(farm, now, lim) {
+  const out = { did: [], n: 0, behind: false };
+  const vs = farm.vill;
+  if (!vs || !vs.length) return out;
+  if (!lim) lim = { left: VILL_BUDGET };
+  const areas = vs.some(isFarmer) ? workAreas(farm) : [];
+  const from = now - VILL_CATCHUP, list = [];
+  for (const v of vs) {
+    const e = villCtx(farm, v, areas);
+    if (!e) { if (v.job) dropJob(farm, v); v.w = 'free'; if (!(v.t >= now)) v.t = now; continue; }
+    if (!(v.t >= from)) { v.t = from; if (v.job) dropJob(farm, v); }
+    if (e.type === 'trader') {
+      const on = planSum(v) > 0;
+      v.w = on ? '' : 'plan';
+      if (!on && !(v.t >= now)) v.t = now;
+      e.next = on ? nextTrade(v.t) : Infinity;
+    } else e.next = v.job ? v.job.e : v.t;
+    e.wait = null;
+    list.push(e);
+  }
+  let S = now, steps = 0;
+  const hook = villHook = { add: [], take: [], room: false, seedRoom: false };
+  try {
+    for (;;) {
+      let e = null;
+      for (const x of list) if (e === null || x.next < e.next) e = x;
+      if (e === null || e.next > now) break;
+      if (lim.left <= 0 || ++steps > 8 * VILL_BUDGET) { out.behind = true; S = e.next; break; }
+      const t = e.next, v = e.v, live = now - t < 4000;
+      let r = null, k = 'trade', jid = 0;
+      if (e.type === 'trader') { r = tradeNow(farm, v, t); v.t = t; e.next = t + TRADE_IV; }
+      else {
+        const j = v.job;
+        if (j) {
+          k = j.k; jid = j.id;
+          r = finishJob(farm, e, j, t, live);
+          if (!r || !r.ok) giveBack(farm, v);
+          v.job = null;
+        }
+        v.t = t;
+        const task = VILL_TASK[e.type](farm, e, t);
+        if (task.k) { task.s = t; task.e = t + workMs(v, task.k); takeFor(farm, e, task); v.job = task; v.w = ''; e.next = task.e; e.wait = null; }
+        else { v.w = task.w; e.next = task.wake > t ? task.wake : Infinity; e.wait = task.needs || task.took || task.room || task.seedRoom ? task : null; }
+      }
+      if (r && r.ok) {
+        v.n = (v.n || 0) + 1; lim.left--; out.n++;
+        if (live) { out.did.push({ v: v.id, key: e.key, k, id: jid, g: r.gained || null, coins: r.coins || 0 }); if (out.did.length > 24) out.did.shift(); }
+      }
+      if (hook.add.length || hook.take.length) {     // probudit ty, kdo čekali právě na tohle (surovinu, místo, úbytek zásoby)
+        for (const x of list) {
+          const w = x.wait;
+          if (w === null || x === e) continue;
+          if ((w.room && hook.room) || (w.seedRoom && hook.seedRoom) || (w.needs && hits(w.needs, hook.add)) || (w.took && hits(w.took, hook.take))) { x.next = t; x.v.t = t; x.wait = null; }
+        }
+        hook.add.length = 0; hook.take.length = 0; hook.room = false; hook.seedRoom = false;
+      }
+    }
+  } finally { villHook = null; }
+  for (const e of list) if (!e.v.job && e.type !== 'trader' && e.next > S && !(e.v.t >= S)) e.v.t = S;
+  farm.vt = S;
+  if (lim.did) for (const d of out.did) lim.did.push(d);   // prohlížeč si z toho bere čísla nad políčky a zprávu o trhu
+  return out;
+}
+// o kolik je práce vesničanů pozadu za časem now (ms); větší číslo = ještě se dopočítává dlouhá nepřítomnost
+export const villLag = (farm, now) => (farm.vill && farm.vill.length && farm.vt ? Math.max(0, now - farm.vt) : 0);
 
 // ---------- stánek ----------
 export const STALL_PERIOD = 2 * 3600 * 1000;
@@ -1331,6 +1619,8 @@ export const ERRORS = {
   area_small: 'Pracovní oblast musí mít aspoň 4 políčka vedle sebe.',
   vill_lvl_max: 'Vesničan už má nejvyšší úroveň.',
   bad_job: 'Tady vesničan pracovat nemůže.',
+  plan_over: 'Dohromady to nejde přes 100 %. Nejdřív uber jinde.',
+  plan_rows: 'Víc řádků se do tabulky nevejde. Obchodník na vyšší úrovni zvládne víc druhů zboží.',
   no_helper: 'Pomocník teď nepracuje – najmi ho ve Statku.',
   land_owned: 'Tenhle pozemek už je tvůj.',
   land_far: 'Nejdřív kup sousední pozemek.',
@@ -1343,11 +1633,12 @@ export const ERRORS = {
 
 // ---------- akce ----------
 // Aplikuje akci na farmu (mění objekt). Vrací { ok, error?, gained? }.
-export function applyAction(farm, a, now) {
+// lim = { left } – společný rozpočet úkonů vesničanů (server ho dává jeden na celý požadavek)
+export function applyAction(farm, a, now, lim) {
   normalize(farm);
   ensureQuests(farm, now);
   if (farm.helper) runHelper(farm, now);
-  if (farm.vill.length) runVillagers(farm, now);
+  if (farm.vill.length && !(now <= farm.vt)) runVillagers(farm, now, lim);   // ve stejném čase už dopočítáno
   return doAction(farm, a, now);
 }
 // samotná akce (bez dopočítání pomocníka a vesničanů – ty ji volají taky)
@@ -1490,9 +1781,7 @@ function doAction(farm, a, now) {
       if (o.queue.length >= queueSize(o)) return fail('queue_full');
       if (!hasInputs(farm, r)) return fail('no_inputs');
       for (const [id, n] of Object.entries(r.in)) takeItem(farm, id, n);
-      const last = o.queue.length ? o.queue[o.queue.length - 1].end : 0;
-      const d = Math.round(r.time * 1000 * speedMult(o));
-      o.queue.push({ r: r.id, end: Math.max(now, last) + d, d });
+      queueRecipe(o, r, now);
       return { ok: true };
     }
     case 'collect': {
@@ -1583,8 +1872,7 @@ function doAction(farm, a, now) {
       const sap = have(farm, 'z_' + t.id) > 0;
       if (!sap && farm.coins < t.cost) return fail('no_coins');
       if (sap) takeItem(farm, 'z_' + t.id, 1); else farm.coins -= t.cost;
-      o.tree = t.id; o.left = t.harvests; o.dead = false; o.readyAt = now + t.first * 1000;
-      o.paid = sap ? 'sap' : t.cost;   // čím se platilo – při vykopání před první úrodou se to vrátí
+      setTree(o, t, now, sap ? 'sap' : t.cost);
       return { ok: true, sapling: sap };
     }
     case 'harvestTree': {
@@ -1770,40 +2058,30 @@ function doAction(farm, a, now) {
       if (farm.vill.length >= VILL_MAX) return fail('vill_max');
       if (farm.coins < VILL_BUY) return fail('no_coins');
       farm.coins -= VILL_BUY;
-      const v = { id: farm.nextId++, lvl: 1, role: 'farm', area: null, c: null, tr: null, t: now, n: 0 };
+      const v = { id: farm.nextId++, lvl: 1, role: 'farm', area: null, plan: {}, t: now, n: 0 };
       farm.vill.push(v);
       return { ok: true, id: v.id };
     }
     case 'assignArea': {   // kind 'pole' | 'sad', a = id pole/sadu v oblasti (0 = odvolat); v oblasti je jeden farmář
       const v = findVill(farm, a.id);
       if (!v || !isFarmer(v) || !isInt(a.a)) return fail('bad_action');
-      if (!a.a) { v.area = null; return { ok: true }; }
+      if (!a.a) { dropJob(farm, v); v.area = null; return { ok: true }; }
       if (a.kind !== 'pole' && a.kind !== 'sad') return fail('bad_action');
       const areas = workAreas(farm);
       const g = areas.find(x => x.kind === a.kind && x.ids.includes(a.a));
       if (!g) return fail('area_small');
-      for (const o of farm.vill) if (o !== v && isFarmer(o) && areaOf(areas, o) === g) o.area = null;
+      for (const o of farm.vill) if (o !== v && isFarmer(o) && areaOf(areas, o) === g) { dropJob(farm, o); o.area = null; }
+      if (v.pk !== a.kind) v.plan = {};          // plán polí se nehodí na sad a naopak
+      v.pk = a.kind;
+      dropJob(farm, v);
       v.area = { kind: a.kind, id: a.a }; v.t = now;
       return { ok: true, n: g.n };
-    }
-    case 'farmerJob': {    // co farmář sází: crop (pole) nebo tree (sad); null = jen sklízí
-      const v = findVill(farm, a.id);
-      if (!v || !isFarmer(v)) return fail('bad_action');
-      if ('crop' in a) {
-        if (a.crop === null) v.c = null;
-        else { const c = getCrop(a.crop); if (!c) return fail('bad_action'); if (farm.level < c.level) return fail('locked'); v.c = c.id; }
-      }
-      if ('tree' in a) {
-        if (a.tree === null) v.tr = null;
-        else { const t = own(TREES, a.tree); if (!t) return fail('bad_action'); if (farm.level < t.level) return fail('locked'); v.tr = t.id; }
-      }
-      return { ok: true };
     }
     case 'buyVill': {
       if (farm.vill.length >= VILL_MAX) return fail('vill_max');
       if (farm.coins < VILL_BUY) return fail('no_coins');
       farm.coins -= VILL_BUY;
-      const v = { id: farm.nextId++, lvl: 1, at: 0, r: null, sell: {}, t: now, n: 0 };
+      const v = { id: farm.nextId++, lvl: 1, at: 0, plan: {}, t: now, n: 0 };
       farm.vill.push(v);
       return { ok: true, id: v.id };
     }
@@ -1825,33 +2103,50 @@ function doAction(farm, a, now) {
         const o = findObject(farm, a.at);
         if (!o || !villJobType(o.kind)) return fail('bad_job');
         const other = villAt(farm, a.at);
-        if (other && other !== v) other.at = 0;
+        if (other && other !== v) { dropJob(farm, other); other.at = 0; }
       }
+      if (v.at !== a.at) { v.plan = {}; delete v.lim; delete v.cw; delete v.last; }   // jiná budova = nová tabulka práce
+      dropJob(farm, v);
       v.at = a.at; v.t = now;
       return { ok: true };
     }
-    case 'villJob': {      // výrobna: co má vyrábět (null = nic)
+    case 'villPlan': {     // řádek tabulky práce: key = plodina / strom / výrobek / zboží, pct = podíl v % (0 = vyřadit z tabulky)
       const v = findVill(farm, a.id);
-      const o = v && v.at && findObject(farm, v.at);
-      if (!o || villJobType(o.kind) !== 'factory') return fail('bad_job');
-      if (a.r === null) { v.r = null; return { ok: true }; }
-      const r = getRecipe(a.r);
-      if (!r || r.building !== o.kind) return fail('bad_action');
-      if (farm.level < r.level) return fail('locked');
-      v.r = r.id;
+      if (!v || typeof a.key !== 'string' || !isInt(a.pct) || a.pct < 0 || a.pct > 100 || a.pct % 5) return fail('bad_action');
+      const kind = planKind(farm, v);
+      if (!kind) return fail('bad_job');
+      const plan = v.plan || (v.plan = {});
+      if (!a.pct) {
+        if (Object.prototype.hasOwnProperty.call(plan, a.key)) delete plan[a.key];
+        if (v.lim) delete v.lim[a.key];
+      } else {
+        if (kind === 'crop') { const c = getCrop(a.key); if (!c) return fail('bad_action'); if (farm.level < c.level) return fail('locked'); }
+        else if (kind === 'tree') { const t = own(TREES, a.key); if (!t) return fail('bad_action'); if (farm.level < t.level) return fail('locked'); }
+        else if (kind === 'recipe') {
+          const r = getRecipe(a.key);
+          if (!r || r.building !== findObject(farm, v.at).kind) return fail('bad_action');
+          if (farm.level < r.level) return fail('locked');
+        } else if (!getItem(a.key) || isSeedItem(a.key)) return fail('bad_action');
+        const isNew = !Object.prototype.hasOwnProperty.call(plan, a.key);
+        if (isNew && Object.keys(plan).length >= (kind === 'item' ? TRADE_ROWS[v.lvl] : PLAN_ROWS)) return fail('plan_rows');
+        if (kind !== 'item' && planSum(v) - (plan[a.key] || 0) + a.pct > 100) return fail('plan_over');   // obchodník: každé zboží zvlášť
+        plan[a.key] = a.pct;
+      }
+      delete v.cw;
       return { ok: true };
     }
-    case 'villSell': {     // obchodník: prodávat předmět, ale nechat si aspoň keep kusů (keep < 0 = neprodávat)
+    case 'villLim': {      // obchodník: kolik kusů si nechat; dělník: vyrábět jen do zásoby n (0 = bez omezení)
       const v = findVill(farm, a.id);
-      const o = v && v.at && findObject(farm, v.at);
-      if (!o || villJobType(o.kind) !== 'trader') return fail('bad_job');
-      const it = getItem(a.item);
-      if (!it || !Number.isInteger(a.keep) || a.keep > 9999) return fail('bad_action');
-      if (!v.sell) v.sell = {};
-      if (a.keep < 0) delete v.sell[it.id];
-      else { if (!(it.id in v.sell) && Object.keys(v.sell).length >= 40) return fail('bad_action'); v.sell[it.id] = a.keep; }
+      if (!v || typeof a.key !== 'string' || !isInt(a.n) || a.n < 0 || a.n > 9999) return fail('bad_action');
+      if (!v.plan || !Object.prototype.hasOwnProperty.call(v.plan, a.key)) return fail('bad_action');
+      const kind = planKind(farm, v);
+      if (kind !== 'item' && kind !== 'recipe') return fail('bad_job');
+      if (!v.lim) v.lim = {};
+      if (a.n) v.lim[a.key] = a.n; else delete v.lim[a.key];
       return { ok: true };
     }
+    case 'tick':           // jen dopočítá práci vesničanů (klient ji posílá, když dohání dlouhou nepřítomnost)
+      return { ok: true };
     case 'hire': {
       const plan = isInt(a.plan) ? HELPER_PLANS[a.plan] : null;
       if (!plan) return fail('bad_action');

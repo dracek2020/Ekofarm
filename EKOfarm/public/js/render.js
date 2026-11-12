@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=26';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=26';
-import { drawIconText, drawIcon } from './icons.js?v=26';
-import { asset } from './sprites.js?v=26';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=27';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=27';
+import { drawIconText, drawIcon } from './icons.js?v=27';
+import { asset } from './sprites.js?v=27';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -238,7 +238,27 @@ function drawGround(ctx, farm, cam, W, H, dpr) {
   groundDirect(ctx, farm, left, top, vw, vh);
 }
 
-// pracovní oblasti s farmářem: číslo oblasti nad horním políčkem, farmář stojí u předního
+// vesničan má problém (nemá plán, došla semena, plný sklad…) – žlutý vykřičník nad hlavou
+const VILL_WARN = new Set(['plan', 'seeds', 'inputs', 'feed', 'full', 'empty']);
+function drawVillMark(ctx, x, y, v, now) {
+  const j = v.job;
+  if (j && j.e > j.s) {          // kolečko s průběhem úkonu
+    const pr = Math.max(0, Math.min(1, (now - j.s) / (j.e - j.s)));
+    ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.arc(x, y - 44, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#4f9d2b'; ctx.beginPath(); ctx.arc(x, y - 44, 7, -Math.PI / 2, -Math.PI / 2 + pr * Math.PI * 2); ctx.stroke();
+    ctx.lineCap = 'butt';
+  } else if (VILL_WARN.has(v.w)) {
+    ctx.fillStyle = '#ffd75a'; ctx.strokeStyle = '#8a5a12'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y - 44, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#5a3816'; ctx.font = '900 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('!', x, y - 43.5);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+// kde farmář právě stojí (plynule přechází k políčku, na kterém pracuje)
+const villPos = new Map();
+// pracovní oblasti s farmářem: číslo oblasti nad horním políčkem, farmář chodí po oblasti za prací
 function drawAreas(ctx, farm, view, t, seen) {
   const areas = workAreas(farm);
   for (const v of farm.vill) {
@@ -247,9 +267,18 @@ function drawAreas(ctx, farm, view, t, seen) {
     let top = g.cells[0], front = g.cells[0];
     for (const c of g.cells) { if (c.x + c.y < top.x + top.y) top = c; if (c.x + c.y > front.x + front.y) front = c; }
     if (!seen(top.x, top.y) && !seen(front.x, front.y)) continue;
-    const busy = view.villWork && performance.now() - (view.villWork[g.key] || -1e9) < 1500;
-    const gx = front.x + 0.9, gy = front.y + 1.05;
-    drawPerson(ctx, (gx - gy) * TW / 2, (gx + gy) * TH / 2, 'farmar', -1, t, false, busy);
+    // cíl: políčko, na kterém pracuje; jinak odpočívá u předního rohu oblasti
+    let tx = front.x + 0.9, ty = front.y + 1.05, atWork = false;
+    if (v.job) for (const c of g.cells) if (c.id === v.job.id) { tx = c.x + 0.62; ty = c.y + 0.86; atWork = true; break; }
+    let p = villPos.get(v.id);
+    if (!p || p.farm !== farm.created || Math.hypot(p.x - tx, p.y - ty) > 14) { p = { x: tx, y: ty, t, farm: farm.created, dir: -1 }; villPos.set(v.id, p); }
+    const dt = Math.min(0.1, Math.max(0, (t - p.t) / 1000)); p.t = t;
+    const dx = tx - p.x, dy = ty - p.y, dist = Math.hypot(dx, dy), stepLen = 3.2 * dt;
+    const walking = dist > 0.04;
+    if (walking) { const k = Math.min(1, stepLen / dist); p.x += dx * k; p.y += dy * k; if (Math.abs(dx - dy) > 0.02) p.dir = dx - dy > 0 ? 1 : -1; }
+    const px = (p.x - p.y) * TW / 2, py = (p.x + p.y) * TH / 2;
+    drawPerson(ctx, px, py, 'farmar', p.dir, t, walking, atWork && !walking);
+    if (!walking) drawVillMark(ctx, px, py, v, view.now);
     const [x, y] = cellCenter(top.x, top.y);
     ctx.fillStyle = g.kind === 'pole' ? '#5fae34' : '#c8862e'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x, y - 30, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -303,10 +332,11 @@ export function drawScene(ctx, view) {
     else {
       drawObject(ctx, it.o, view.now, t, farm);
       const vg = !it.o.town && farm.vill && villAt(farm, it.o.id);
-      if (vg) {   // vesničan stojí u předního rohu budovy; když zrovna pracoval, pohne se
+      if (vg) {   // vesničan stojí u předního rohu budovy; při práci se hýbe a má nad hlavou průběh úkonu
         const sz = objSize(it.o), gx = it.o.x + 0.35, gy = it.o.y + sz.h + 0.1;
-        const busy = view.villWork && performance.now() - (view.villWork[it.o.id] || -1e9) < 1500;
-        drawPerson(ctx, (gx - gy) * TW / 2, (gx + gy) * TH / 2, 'pomocnik', 1, t, false, busy);
+        const px = (gx - gy) * TW / 2, py = (gx + gy) * TH / 2;
+        drawPerson(ctx, px, py, 'pomocnik', 1, t, false, !!vg.job);
+        drawVillMark(ctx, px, py, vg, view.now);
       }
     }
   }

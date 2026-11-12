@@ -171,3 +171,14 @@ test('v15: chat pro celý server', async () => {
   assert.deepEqual(r.data.msgs.map(m => m.text), ['Čau!']);
   assert.equal((await call('/api/chat')).status, 401, 'jen přihlášení');
 });
+
+test('v27: akce tick dopočítá práci vesničanů a farma se uloží', async () => {
+  let r = await call('/api/register', { method: 'POST', body: { name: 'Tikac', password: 'tajne123' } });
+  const token = r.data.token;
+  r = await call('/api/actions', { method: 'POST', token, body: { actions: [{ type: 'tick' }, { type: 'villPlan', id: 1, key: 'wheat', pct: 50 }, { type: 'villJob', id: 1, r: 'mouka' }] } });
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.data.results.map(x => x.ok), [true, false, false], 'tick projde, plán bez vesničana ne, stará akce už neexistuje');
+  assert.equal(r.data.results[2].error, 'bad_action');
+  const v1 = (await call('/api/state', { token })).data.farm;
+  assert.deepEqual(v1.vill, []);
+});

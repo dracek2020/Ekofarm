@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=26">
+<link rel="stylesheet" href="/css/style.css?v=27">
 </head>
 <body>
 <!--APP-->
@@ -91,6 +91,7 @@
   </div>
 </div>
 
+<div id="catchUp" hidden></div>
 <div id="toast"></div>
 <div id="lvlUp" hidden><div class="lu-box"><div class="lu-rays"></div><div class="lu-confetti" id="luConf"></div>
   <div class="lu-star"><span>ÚROVEŇ</span><b id="luNum">2</b></div>
@@ -143,6 +144,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=26"></script>
+<script type="module" src="/js/main.js?v=27"></script>
 </body>
 </html>

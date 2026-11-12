@@ -4,19 +4,19 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, planKind, planSum, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=26';
-import { preloadAssets, spriteName } from './sprites.js?v=26';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=26';
-import { createBackend, ApiError } from './api.js?v=26';
-import { iconize, ic } from './icons.js?v=26';
-import { NEWS } from './news.js?v=26';
-import { sfx, soundOn, setSound } from './sfx.js?v=26';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=26';
+} from './rules.js?v=27';
+import { preloadAssets, spriteName } from './sprites.js?v=27';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=27';
+import { createBackend, ApiError } from './api.js?v=27';
+import { iconize, ic } from './icons.js?v=27';
+import { NEWS } from './news.js?v=27';
+import { sfx, soundOn, setSound } from './sfx.js?v=27';
+import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=27';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 
 
 const game = {
@@ -103,7 +103,7 @@ function frame(t) {
     try {
       drawScene(ctx, {
         farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
-        ghost: game.visit ? null : ghostView(), villWork: game.villWork, hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
+        ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
       });
     } catch (e) {                               // chyba v kreslení nesmí hru zastavit; ukáže se dole, ať jde poslat
       for (let i = 0; i < 24; i++) ctx.restore();
@@ -152,13 +152,50 @@ setInterval(() => {
     const touched = runHelper(game.farm, now());
     if (touched.length) { for (const [x, y] of touched.slice(-4)) sendWalker(game.helperW, x, y); changed = true; }
   }
-  if (game.farm.vill && game.farm.vill.length) {
-    const worked = runVillagers(game.farm, now());
-    if (worked.length) { for (const id of worked) game.villWork[id] = performance.now(); changed = true; }
-  }
-  if (changed) updateHud();
+  if (villStep()) changed = true;
+  if (changed) updateHud(performance.now() - panelTouch < 700);
 }, 1000);
-game.villWork = {};   // kdy naposledy vesničan v budově pracoval (animace na mapě)
+// jeden krok práce vesničanů v prohlížeči; vrací true, když se na farmě něco změnilo
+function villStep() {
+  const f = game.farm;
+  if (!f || game.visit || !f.vill || !f.vill.length) { $('catchUp').hidden = true; return false; }
+  const r = runVillagers(f, now(), game.lim);
+  villShow();
+  if (r.behind) villTick();            // dlouhá nepřítomnost: dohání se po dávkách spolu se serverem
+  updateCatchUp();
+  return r.n > 0;
+}
+// Kolik úkonů vesničanů smí prohlížeč dopočítat sám, než se srovná se serverem (ten má na jeden požadavek stejný rozpočet).
+// did = co vesničané právě dokončili (čísla nad políčky, zpráva o trhu)
+game.lim = { left: VILL_BUDGET, did: [] };
+function villShow() { for (const d of game.lim.did.splice(0, 40)) villDid(d); }
+// požádá server o další dávku práce vesničanů (jen když se nic jiného neposílá)
+function villTick() {
+  if (game.queue.length || game.inflight) return;
+  game.queue.push({ type: 'tick' });
+  scheduleFlush(30);
+}
+// co vesničan právě dokončil: číslo nad políčkem / budovou, u obchodníka zpráva o trhu
+function villDid(d) {
+  const f = game.farm;
+  if (d.k === 'trade') {
+    const v = findVill(f, d.v);
+    toast(`:market: ${v ? villName(v) : 'Obchodník'} prodal na trhu ${v && v.last ? v.last.n : ''} ks: +${d.coins} :coin:`, 'lvlup', 3000);
+    sfx('coin');
+    return;
+  }
+  if (!d.g || !d.g.items) return;
+  const c = typeof d.key === 'string' ? f.plots.find(p => p.id === d.id) || findObject(f, d.id) : findObject(f, d.key);
+  if (!c) return;
+  const sz = c.kind ? objSize(c) : { w: 1, h: 1 };
+  floatAt(c.x + (sz.w - 1) / 2, c.y + (sz.h - 1) / 2, d.g.items.map(i => `+${i.qty}:${ITEMS[i.item].icon}:`).join(' '));
+}
+// proužek „vesničané dohánějí práci“ – po návratu do hry, dokud není dopočítaná nepřítomnost
+function updateCatchUp() {
+  const lag = game.farm && !game.visit ? villLag(game.farm, now()) : 0, el = $('catchUp');
+  el.hidden = lag < 90_000 || !$('banner').hidden || !$('tut').hidden;
+  if (!el.hidden) el.innerHTML = iconize(`:helper: Vesničané dohánějí práci – zbývá ${fmtTime(Math.ceil(lag / 1000))}`);
+}
 
 // ---------- akce ----------
 const SFX_OF = {
@@ -171,7 +208,8 @@ const SFX_OF = {
   fishCast: 'plant', fishLand: 'harvest', claimQuest: 'coin', tutorial: 'tap',
 };
 function act(a, silent) {
-  const r = applyAction(game.farm, a, now());
+  const r = applyAction(game.farm, a, now(), game.lim);
+  villShow();
   if (!r.ok) { if (!silent) { toast(ERRORS[r.error] || 'To teď nejde.'); sfx('error'); } return r; }
   sfx(r.gained && r.gained.levelUp ? 'level' : SFX_OF[a.type] || 'tap');
   game.queue.push(a);
@@ -234,7 +272,9 @@ async function flush() {
 function applyServer(res) {
   game.offset = res.now - Date.now();
   game.farm = normalize(res.farm);
-  for (const a of game.queue) applyAction(game.farm, a, now());
+  game.lim = { left: VILL_BUDGET, did: [] };
+  for (const a of game.queue) applyAction(game.farm, a, now(), game.lim);
+  if (villLag(game.farm, now()) > 3000) villStep();   // ještě se dohání nepřítomnost → hned další dávka, nečekat na vteřinový krok
   updateHud();
   if (res.sales && res.sales.length) {
     const sum = res.sales.reduce((n, s) => n + s.coins, 0);
@@ -569,17 +609,21 @@ function showLevelUp(L, from) {
 }
 $('luOk').addEventListener('click', () => { $('lvlUp').hidden = true; });
 $('lvlUp').addEventListener('click', e => { if (e.target.id === 'lvlUp') $('lvlUp').hidden = true; });
-function updateHud() {
+function updateHud(keepPanel) {
   const f = game.farm;
-  if (game.lastLvl === undefined || game.lastLvlFarm !== f) { game.lastLvl = f.level; game.lastLvlFarm = f; }
-  else if (f.level > game.lastLvl) { const from = game.lastLvl; game.lastLvl = f.level; showLevelUp(f.level, from); }
+  // okno nové úrovně: i za úrovně, které mezitím vydělali vesničané; během dohánění nepřítomnosti počká a ukáže se jednou na konci
+  if (game.lastLvl === undefined || game.lastLvlFarm !== f.created) { game.lastLvl = f.level; game.lastLvlFarm = f.created; }
+  else if (f.level < game.lastLvl) game.lastLvl = f.level;
+  else if (f.level > game.lastLvl && villLag(f, now()) < 60_000) { const from = game.lastLvl; game.lastLvl = f.level; showLevelUp(f.level, from); }
   $('coins').textContent = fmtNum(f.coins);
+  $('coins').classList.toggle('long', $('coins').textContent.length > 6);
   $('lvlNum').textContent = f.level;
   const lp = levelProgress(f);
   $('xpFill').style.width = Math.min(100, 100 * lp.cur / lp.need) + '%';
   $('silo').textContent = `${siloUsed(f)}/${f.siloCap}`;
+  $('silo').classList.toggle('long', $('silo').textContent.length > 6);
   $('tasksDot').hidden = !(canClaimDaily(f, now()) || claimableAch(f) || claimableQuests(f, now()));
-  if (game.panel) renderPanel();
+  if (game.panel && !keepPanel) renderPanel();   // keepPanel: hráč zrovna klepe do okna – nepřekreslovat mu ho pod prstem
   if (!$('picker').hidden && game.pickPlot) renderPicker();
   updateBanner();
   updateTutorial();
@@ -936,12 +980,37 @@ $('panelBody').addEventListener('click', e => {
     case 'upVill': { const r = act({ type: 'upVill', id: Number(v) }); if (r.ok) toast(`:helper: Vesničan má úroveň ${r.lvl}`); break; }
     case 'villAssign': { const [id, at] = v.split('|').map(Number); if (act({ type: 'assignVill', id, at }).ok) toast(`:helper: ${villName(findVill(f, id))} tu teď pracuje`); break; }
     case 'villFree': act({ type: 'assignVill', id: Number(v), at: 0 }); break;
-    case 'villJob': { const [id, r] = v.split('|'); act({ type: 'villJob', id: Number(id), r: r || null }); break; }
-    case 'villSellAdd': { const [id, item] = v.split('|'); act({ type: 'villSell', id: Number(id), item, keep: 5 }); break; }
-    case 'villSellDel': { const [id, item] = v.split('|'); act({ type: 'villSell', id: Number(id), item, keep: -1 }); break; }
-    case 'villKeep': {
-      const [id, item, d] = v.split('|'), vv = findVill(f, Number(id));
-      if (vv && vv.sell && item in vv.sell) act({ type: 'villSell', id: vv.id, item, keep: Math.max(0, Math.min(9999, vv.sell[item] + Number(d))) });
+    // tabulka práce: přidat řádek, změnit procenta, vyřadit, rezerva / strop zásoby
+    case 'planAdd': {
+      const [id, key] = v.split('|'), vv = findVill(f, Number(id));
+      if (!vv) break;
+      const kind = planKind(f, vv), plan = vv.plan || {}, rest = 100 - planSum(vv);
+      if (kind === 'item') { act({ type: 'villPlan', id: vv.id, key, pct: 50 }); break; }
+      if (rest >= 5) { act({ type: 'villPlan', id: vv.id, key, pct: rest }); break; }
+      // všechno je rozdělené: nový řádek dostane polovinu z největšího
+      const big = Object.keys(plan).sort((a, b) => plan[b] - plan[a])[0];
+      const take = big ? Math.floor(plan[big] / 10) * 5 : 0;
+      if (take < 5) { toast(ERRORS.plan_over); break; }
+      if (act({ type: 'villPlan', id: vv.id, key: big, pct: plan[big] - take }).ok) act({ type: 'villPlan', id: vv.id, key, pct: take });
+      break;
+    }
+    case 'planPct': {
+      const [id, key, d] = v.split('|'), vv = findVill(f, Number(id));
+      const cur = vv && vv.plan && vv.plan[key];
+      if (!cur) break;
+      let next = Number(d) > 0 ? (cur < 10 ? 10 : cur + 10) : (cur <= 10 ? 5 : cur - 10);
+      const max = planKind(f, vv) === 'item' ? 100 : 100 - (planSum(vv) - cur);
+      next = Math.max(5, Math.min(max, next));
+      if (next !== cur) act({ type: 'villPlan', id: vv.id, key, pct: next }); else if (Number(d) > 0) toast(ERRORS.plan_over);
+      break;
+    }
+    case 'planDel': { const [id, key] = v.split('|'); act({ type: 'villPlan', id: Number(id), key, pct: 0 }); break; }
+    case 'planLim': {
+      const [id, key, d] = v.split('|'), vv = findVill(f, Number(id));
+      if (!vv) break;
+      const cur = (vv.lim && vv.lim[key]) || 0, sc = n => (n < 20 ? 5 : n < 100 ? 10 : n < 500 ? 50 : 100);
+      const next = Number(d) > 0 ? cur + sc(cur) : cur - sc(cur - 1);
+      act({ type: 'villLim', id: vv.id, key, n: Math.max(0, Math.min(9999, next)) });
       break;
     }
     case 'openVill': openPanel({ kind: 'shop', tab: 'lide' }); break;
@@ -954,8 +1023,6 @@ $('panelBody').addEventListener('click', e => {
     case 'buyFarmer': { const r = act({ type: 'buyFarmer' }); if (r.ok) toast(`:farmer: Nový farmář ${villName(findVill(f, r.id))}! Přiřaď ho k pracovní oblasti.`, '', 3000); break; }
     case 'areaAssign': { const [id, kind, a] = v.split('|'); const r = act({ type: 'assignArea', id: Number(id), kind, a: Number(a) }); if (r.ok) toast(`:farmer: ${villName(findVill(f, Number(id)))} pracuje v oblasti ${r.n}`); break; }
     case 'areaFree': act({ type: 'assignArea', id: Number(v), a: 0 }); break;
-    case 'farmerCrop': { const [id, c] = v.split('|'); act({ type: 'farmerJob', id: Number(id), crop: c || null }); break; }
-    case 'farmerTree': { const [id, t] = v.split('|'); act({ type: 'farmerJob', id: Number(id), tree: t || null }); break; }
     case 'buySupply': { const [item, q] = v.split('|'); const r = act({ type: 'buySupply', item, qty: Number(q) }); if (r.ok) toast(`+${q}× :${ITEMS[item].icon}: · −${r.cost} :coin:`); break; }
     case 'openStall': openPanel({ kind: 'town', t: 'stanek', tab: 'zasoby' }); break;
     case 'openObj': { const o = findObject(f, Number(v)); if (o) openPanel({ kind: 'obj', id: o.id }); break; }

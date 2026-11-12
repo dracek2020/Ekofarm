@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 27, title: 'Vesničané pracují pořád a podle tabulky', items: [
+    'Konec obchůzek. Každý vesničan teď pracuje bez přestání: úkon za úkonem, a jakmile je co dělat, jde na to.',
+    'Práci zadáváš tabulkou s procenty. Farmáři řekneš, jakou část oblasti čím osázet (třeba 50 % pšenice, 30 % kukuřice, zbytek ladem). Co dozraje, hned sklidí a znovu zaseje.',
+    'Dělník ve výrobně má u každého výrobku podíl výroby a strop zásoby – víc kusů, než určíš, dělat nebude.',
+    'Obchodník chodí každou půlhodinu na trh. U každého zboží nastavíš, kolik procent zásoby prodá a kolik kusů si nechá. Vyšší úroveň unese víc zboží, vyjedná lepší cenu (až +25 %) a zvládne víc druhů.',
+    'V okně budovy vidíš, co vesničan právě dělá, nebo proč stojí (chybí suroviny, semena, plný sklad). Na mapě má nad hlavou kolečko s průběhem práce, nebo vykřičník. Farmář chodí po poli za prací.',
+    'Vyšší úroveň vesničana = rychlejší práce (až 2,5×), ve výrobně a v ohradě navíc rychlejší výroba (až o 30 %).',
+    'Po návratu do hry vesničané během chvilky doženou, co mezitím stihli (nejvýš den práce).',
+  ] },
   { v: 26, title: 'Nová úroveň, deník farmáře a hezčí rybaření', items: [
     'Při nové úrovni vyskočí okno s hvězdou, konfetami a vším, co se ti odemklo.',
     'U vylepšení budov a v zakázkách klepni na surovinu – ukáže se, co to je, kde ji získáš a k čemu je.',
