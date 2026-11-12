@@ -29,13 +29,20 @@ import { ASSETS } from '../public/js/assets.js';
 const SPRITE_FILES = Object.entries(ASSETS).flatMap(([k, list]) => list.map(n => `img/${k}/${n}.webp`));
 const sprites = 'const SPRITE_DATA = {\n' + SPRITE_FILES.filter(p => existsSync(join(ROOT, 'public', p)))
   .map(p => `  '${p}': 'data:image/webp;base64,${readFileSync(join(ROOT, 'public', p)).toString('base64')}',`).join('\n') + '\n};';
+// v33: obrázky a písmo z CSS (url("/img/u/…"), url("/fonts/…")) vložit přímo do stylu
+const MIME = { webp: 'image/webp', png: 'image/png', woff2: 'font/woff2', svg: 'image/svg+xml' };
+const css = read('public/css/style.css').replace(/url\(("|')?\/((?:img|fonts)\/[^)"']+)\1\)/g, (m, q, p) => {
+  const f = join(ROOT, 'public', p);
+  if (!existsSync(f)) throw new Error('CSS odkazuje na chybějící soubor: ' + p);
+  return `url("data:${MIME[p.split('.').pop()] || 'application/octet-stream'};base64,${readFileSync(f).toString('base64')}")`;
+});
 const html = read('public/index.html');
 const body = html.slice(html.indexOf('<!--APP-->') + 10, html.indexOf('<script type="module"'));
 const out = `<meta charset="utf-8">
 <title>EKOfarm – test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-${read('public/css/style.css')}
+${css}
 </style>
 ${body}
 <script>

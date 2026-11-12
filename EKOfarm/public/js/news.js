@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 33, title: 'Nové rozhraní: lesní pohádková kniha', items: [
+    'Okna mají dřevěný rám s mechem, břečťanem a kvítím, nadpis na zelené stužce a zavírá se muchomůrkou.',
+    'Tlačítka, záložky, horní ukazatele i spodní lišta jsou z malovaného dřeva a mechu, úroveň ukazuje věneček.',
+    'Všechny ikony rozhraní jsou nově malované – mince, čtyřlístek zkušeností, novinky, deník, tým, počasí a další.',
+    'Nové písmo nadpisů a tlačítek, nová úvodní obrazovka s lesní mýtinou a znak farmy, nová ikona aplikace.',
+    'Hra se hraje úplně stejně – mění se jen vzhled.',
+  ] },
   { v: 32, title: 'Nová pohádková grafika', items: [
     'Celá farma má nový útulný pohádkový vzhled: Statek, Sklad, výrobny, ohrady, zvířata, stroje, lidé, stromy, plodiny, cesty i Městečko.',
     'Nové jsou i všechny ikony výrobků, semínek a sazenic a ikona aplikace.',

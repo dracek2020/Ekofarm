@@ -601,3 +601,107 @@ body.sheet-open #catchUp { display: none; }
 .penbox small.miss { color: #8a3b0c; font-weight: 800; }
 .penbox .ic { width: 16px; height: 16px; vertical-align: -3px; }
 .penbox .btn.sm { align-self: flex-start; margin: 4px 0 0; }
+
+/* ---------- v33: lesní pohádková kniha – rámy, tlačítka a ozdoby z public/img/u (tools/ui.py), písmo Grandstander (OFL, public/fonts) ---------- */
+@font-face { font-family: 'Grandstander'; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/grandstander-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Grandstander'; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/grandstander-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root {
+  --paper: #f9e9c1; --card: #fdf4dc; --line: #e2cd98; --line-d: #c8a86a; --ink: #463018; --muted: #7a603c;
+  --wood: #9b6b38; --wood-d: #5e4122; --green: #6a9e2e; --green-l: #94c64e; --green-d: #3f6b1d; --forest: rgba(44, 70, 30, .95);
+  --leaf: var(--u-o-leaf);
+  --u-badge: url("/img/u/badge.webp");
+  --u-bar: url("/img/u/bar.webp");
+  --u-btn-green: url("/img/u/btn_green.webp");
+  --u-btn-red: url("/img/u/btn_red.webp");
+  --u-btn-wood: url("/img/u/btn_wood.webp");
+  --u-cap: url("/img/u/cap.webp");
+  --u-cross: url("/img/u/cross.webp");
+  --u-butterfly: url("/img/u/butterfly.webp");
+  --u-medal: url("/img/u/medal.webp");
+  --u-o-leaf: url("/img/u/o_leaf.webp");
+  --u-panel: url("/img/u/panel.webp");
+  --u-pill: url("/img/u/pill.webp");
+  --u-plus: url("/img/u/plus.webp");
+  --u-ribbon: url("/img/u/ribbon.webp");
+  --u-splash: url("/img/u/splash.webp");
+  --u-tile: url("/img/u/tile.webp");
+  --u-tile-gold: url("/img/u/tile_gold.webp");
+  --u-tile-on: url("/img/u/tile_on.webp");
+  --u-znak: url("/img/u/znak.webp");
+  --display: 'Grandstander', ui-rounded, system-ui, sans-serif;
+}
+.pill b, .lvl-num, .sq b, .big, .sheet-head > b, .sect, .tab, .btn, .cta, #toast, #banner, #visitBar, .lu-box h2, .lu-star, #login h1, #loading,
+.crop .nm, .recipe .rinfo b, .rank, .slot.empty b { font-family: var(--display); }
+/* horní lišta: ukazatele z březového dřeva, odznak úrovně ve věnečku */
+.pill { background: none; border: 0 solid transparent; border-radius: 0; box-shadow: none; filter: drop-shadow(0 3px 3px #0005);
+  border-image: var(--u-pill) 49% 16% 49% 26% fill / 50% 16px 50% 30px stretch; }
+.lvl-num { width: 50px; height: 50px; margin-left: -10px; border: 0; box-shadow: none; background: var(--u-badge) center / contain no-repeat;
+  text-shadow: 0 1px 0 #1d4a7a, 0 0 4px #1d4a7a; filter: drop-shadow(0 2px 2px #0005); }
+.xpbar { background: #e6d4a6; box-shadow: inset 0 1px 2px #0003; }
+#xpFill { background: linear-gradient(#b4dc66, #5f9a2c); }
+.pill .plus { background: var(--u-plus) center / contain no-repeat; border: 0; box-shadow: none; color: transparent; font-size: 0; width: 26px; height: 26px; }
+/* boční a spodní tlačítka: dřevěné dlaždice, vybraná je mechově zelená */
+.sq, .big { background: none; border: 0 solid transparent; box-shadow: none; filter: drop-shadow(0 3px 2px #0004);
+  border-image: var(--u-tile) 22% fill / 18px stretch; }
+.big.on { background: none; border-image-source: var(--u-tile-on); color: #fffbe8; text-shadow: 0 1px 1px #2b4a12; box-shadow: none; }
+#bottom { background: none; border: 0 solid transparent; border-radius: 0; box-shadow: none; padding-top: 14px;
+  border-image: var(--u-bar) 30% 16% 22% fill / 30px 64px 20px stretch; filter: drop-shadow(0 -3px 6px #0003); }
+#bottom::before, #bottom::after { content: none; }
+/* okna: dřevěný rám s mechem a břečťanem, pergamen; nadpis na zelené stužce, medailon z kolečka kmene, zavírání muchomůrkou */
+.sheet { background: none; border: 24px solid transparent; border-radius: 0; box-shadow: none; padding: 0 6px 10px; filter: drop-shadow(0 8px 14px #0006);
+  border-image: var(--u-panel) 21% fill / 46px stretch; }
+.sheet-head { margin: 0 -6px 8px; padding: 6px 48px 6px 8px; min-height: 58px; background: linear-gradient(var(--paper) 82%, #f9e9c100); }
+.sheet-head::before, .sheet-head::after { content: none; }
+.sheet-head > b { font-size: clamp(16px, 4.9vw, 23px); min-width: 0; }
+.sheet-head .ttl { white-space: nowrap; min-width: 0; padding: 4px 30px 8px; color: #fff9e6; text-shadow: 0 1px 0 #2f4d16, 0 0 4px #2f4d16; border: 0 solid transparent;
+  border-image: var(--u-ribbon) 49% 24% fill / 50% 30px stretch; }
+.medal, .medal.pic { border: 0; box-shadow: none; background: var(--u-medal) center / contain no-repeat; filter: drop-shadow(0 2px 2px #0004); }
+.x, .tut-x { border: 0; box-shadow: none; background: var(--u-cap) center / contain no-repeat; text-shadow: 0 1px 2px #6e1a0e; filter: drop-shadow(0 2px 2px #0005); }
+.x { width: 42px; height: 42px; right: 4px; top: 8px; font-size: 15px; }
+.tut-x { width: 28px; height: 28px; }
+.sect::before, .sect::after { width: 24px; height: 22px; }
+/* tlačítka: zelený mech, světlé dřevo, muchomůrka */
+.btn, .cta { background: none; border: 0 solid transparent; box-shadow: none; text-shadow: 0 1px 1px #2b4f12, 0 0 3px #2b4f1288;
+  border-image: var(--u-btn-green) 49% 24% fill / 50% 22px stretch; }
+.btn:active { box-shadow: none; }
+.btn.alt { background: none; border-image-source: var(--u-btn-wood); color: #4a3218; text-shadow: 0 1px 0 #ffffff80; }
+.btn.warn { background: none; border-image-source: var(--u-btn-red); text-shadow: 0 1px 1px #6e1a0e; }
+.btn.sm { border-image-width: 50% 14px; }
+.crop.done .cta { background: none; border-image-source: var(--u-btn-wood); color: var(--green-d); }
+.crop.dim .cta, .recipe.dim .cta, .crop.locked .cta { background: none; border-image-source: var(--u-btn-wood); box-shadow: none; color: #6e5a3a; filter: grayscale(.45); }
+#banner .ok { background: none; border: 0 solid transparent; border-image: var(--u-btn-green) 49% 24% fill / 50% 16px stretch; }
+/* záložky: dřevěné dlaždice, vybraná medová */
+.tab { background: none; border: 0 solid transparent; box-shadow: none; min-height: 44px; padding: 8px 10px; border-image: var(--u-tile) 22% fill / 14px stretch; }
+.tabs:has(.tab:nth-child(3)) .tab { padding: 7px 6px; }
+.tabs:has(.tab:nth-child(5)) .tab { padding: 6px 2px; font-size: 11.5px; border-image-width: 10px; letter-spacing: -.02em; }
+.tab.on { background: none; border-image-source: var(--u-tile-gold); box-shadow: none; }
+/* zprávy a lišty: tmavě zelená lesní */
+#toast, #banner, #visitBar { background: var(--forest); border: 2px solid #c9b37a; }
+#toast.lvlup { background: var(--forest); }
+#tut { background: none; border: 0 solid transparent; box-shadow: none; filter: drop-shadow(0 4px 8px #0005); border-image: var(--u-tile) 22% fill / 20px stretch; }
+/* nová úroveň: věneček místo hvězdy, světlo zelenozlaté */
+.lu-box { background: none; border: 26px solid transparent; border-radius: 0; box-shadow: none; padding: 66px 6px 6px; filter: drop-shadow(0 18px 30px #0007);
+  border-image: var(--u-panel) 21% fill / 46px stretch; }
+.lu-rays { background: repeating-conic-gradient(rgba(214, 236, 140, .5) 0 10deg, rgba(214, 236, 140, 0) 10deg 20deg); }
+.lu-star { top: -96px; width: 140px; height: 140px; margin-left: -70px; clip-path: none; background: var(--u-badge) center / contain no-repeat; filter: drop-shadow(0 4px 4px #0006); }
+.lu-star span, .lu-star b { text-shadow: 0 1px 0 #1d4a7a, 0 0 6px #1d4a7a; }
+.lu-star span { margin-top: 10px; }
+/* přihlášení a načítání: lesní mýtina, znak farmy */
+#login { background: #3f6b1d var(--u-splash) center / cover no-repeat; }
+#login .card { background: none; border: 26px solid transparent; border-radius: 0; box-shadow: none; padding: 92px 8px 8px; margin-top: 70px; filter: drop-shadow(0 14px 26px #0007);
+  border-image: var(--u-panel) 21% fill / 46px stretch; }
+#login .card::before { content: ""; position: absolute; left: 50%; top: -120px; width: 180px; height: 180px; margin-left: -90px; background: var(--u-znak) center / contain no-repeat; filter: drop-shadow(0 6px 8px #0006); }
+#login h1 .ic { display: none; }
+#loading { background: #3f6b1d var(--u-splash) center / cover no-repeat; text-shadow: 0 2px 4px #0009; align-content: center; gap: 10px; }
+#loading::before { content: ""; width: 170px; height: 170px; margin: 0 auto; background: var(--u-znak) center / contain no-repeat; filter: drop-shadow(0 6px 10px #0007); }
+/* drobné ozdoby: zavírací × na liště, motýlek u prázdných seznamů a u nové úrovně */
+#bannerClose { background: var(--u-cross) center / contain no-repeat; color: transparent; font-size: 0; width: 32px; height: 32px; }
+div.empty:not(.slot)::before { content: ""; display: block; width: 44px; height: 44px; margin: 0 auto 6px; background: var(--u-butterfly) center / contain no-repeat; opacity: .9; }
+.lu-box::after { content: ""; position: absolute; right: -14px; top: 18px; width: 44px; height: 44px; background: var(--u-butterfly) center / contain no-repeat; animation: luFly 2.4s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes luFly { to { transform: translate(-8px, -10px) rotate(-12deg); } }
+@media (max-width: 380px) {
+  .sheet { border-width: 20px; border-image-width: 40px; padding: 0 4px 8px; }
+  .lvl-num { width: 46px; height: 46px; }
+}

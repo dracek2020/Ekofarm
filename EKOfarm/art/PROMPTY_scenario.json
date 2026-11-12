@@ -1,0 +1,716 @@
+{
+ "tool": "Scenario (app.scenario.com)",
+ "model": "GPT Image 2.5 Flare",
+ "date": "2026-11-12",
+ "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (vygenerovaný statek, b/statek_1)",
+ "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé.",
+ "v32_game": [
+  {
+   "key": "t/cedule",
+   "id": "asset_TwryHUvsq62p6XDSGpNBEhW3",
+   "prompt": "A wooden sign on a single post with an EMPTY light board (absolutely no text), a tiny lantern on top. Cozy fairy-tale farm game asset, same isometric camera, painting style and light as the reference (ignore the house itself), no black outlines. Transparent background, no text, no letters."
+  },
+  {
+   "key": "t/plot_ne",
+   "id": "asset_mzLjkNuGD416pYNQHoh7Awpt",
+   "prompt": "A short piece of rustic fence made of twisted branches (two horizontal rails and posts), running diagonally UP to the right (from bottom-left to top-right) along an isometric tile edge. Cozy fairy-tale farm game asset, same isometric camera, painting style and light as the reference (ignore the house itself), no black outlines. Transparent background, no text, no letters."
+  },
+  {
+   "key": "t/plot_se",
+   "id": "asset_Zwd1KFmEgcaH3xcff84WAKTy",
+   "prompt": "A short piece of rustic fence made of twisted branches (two horizontal rails and posts), running diagonally DOWN to the right (from top-left to bottom-right) along an isometric tile edge. Cozy fairy-tale farm game asset, same isometric camera, painting style and light as the reference (ignore the house itself), no black outlines. Transparent background, no text, no letters."
+  },
+  {
+   "key": "portrety/2",
+   "id": "asset_QsMgPP3Ee1YQ6LbdvNfuLgfJ",
+   "prompt": "A sheet of 6 separate character portraits for a cozy fairy-tale farm game, in a neat grid of 3 columns and 2 rows with wide empty space between them, each portrait centered in its own cell and never touching another: 1) a baker with a white hat and a floury apron; 2) a woman with a brown ponytail and a leather apron; 3) an older bald man with glasses on his nose and a leather vest; 4) a young woman with short black h"
+  },
+  {
+   "key": "portrety/1",
+   "id": "asset_2BqVQMDZyy3uE9PQscqueASw",
+   "prompt": "A sheet of 6 separate character portraits for a cozy fairy-tale farm game, in a neat grid of 3 columns and 2 rows with wide empty space between them, each portrait centered in its own cell and never touching another: 1) a young woman with red braids and a green headscarf, overalls; 2) an older man with a gray mustache and a straw hat; 3) a young man with short dark hair, a checked shirt and a cap; 4) a middle-aged wo"
+  },
+  {
+   "key": "ikony/10",
+   "id": "asset_QqoNQMCn9ZXmZxEgpB9A5EcN",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a long snake-like dark olive eel bent in a wave; a slim silver asp fish with a big mouth; a gray-blue sturgeon with a pointed snout and bony plates; three golden fish cakes with"
+  },
+  {
+   "key": "ikony/9",
+   "id": "asset_QSWrLCX5vAAyb3AHwAxHvZP8",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a bowl of catfish goulash; a small silver roach fish with red fins; a bronze-golden carp; an olive-green tench. Row 2 from left to right: a striped perch; a spotted trout; a gray"
+  },
+  {
+   "key": "ikony/8",
+   "id": "asset_ej2UrDprPtoirqF8GWStGBM3",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a wooden frame of golden honeycomb; a jar of honey with a wooden dipper; a beeswax candle with a small flame; a slice of layered honey cake. Row 2 from left to right: a decorated"
+  },
+  {
+   "key": "ikony/7",
+   "id": "asset_UEvSPrHZP3YhYfdmEkqsHdFx",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a jar of red currant jam; a jar of apricot jam; a coiled sausage; a smoked ham. Row 2 from left to right: a ball of wool yarn; a cozy knitted sweater; a folded wool blanket; a ba"
+  },
+  {
+   "key": "ikony/6",
+   "id": "asset_6M8vRHVcecRCfdSKGHzw7xzK",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a bowl of green pea soup; a bowl of orange pumpkin soup; a jar of peach halves in syrup; a bottle of orange carrot juice. Row 2 from left to right: a bottle of golden apple juice"
+  },
+  {
+   "key": "ikony/5",
+   "id": "asset_1HpDk8kBNmhx9Zk4UEr7dA7v",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a small jug of cream; a wheel of yellow cheese with a cut wedge; a block of butter on a little plate; a bottle of pale yellow rapeseed oil. Row 2 from left to right: a bottle of"
+  },
+  {
+   "key": "ikony/4",
+   "id": "asset_vfCEonyEx6VUCZfgbBa3droR",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a small burlap sack of sheep feed with a blue patch; three white-brown eggs in a little straw basket; a glass bottle of milk with a cork; a raw steak with a bone. Row 2 from left"
+  },
+  {
+   "key": "ikony/3",
+   "id": "asset_PRVyz6E5ygVh4Sxdcn2M8bv6",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: orange apricots; dark red sour cherries; a fuzzy peach; walnuts, one cracked open. Row 2 from left to right: red raspberries; a sprig of red currants; green striped gooseberries;"
+  },
+  {
+   "key": "ikony/2",
+   "id": "asset_VUTjZSByvTifMjRnxr69KUKM",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: golden onions; a white garlic bulb; a red bell pepper; a white-pink sugar beet with leaves. Row 2 from left to right: a round green cabbage; an orange pumpkin; red strawberries;"
+  },
+  {
+   "key": "ikony/1",
+   "id": "asset_NB83BBvE8mwYpScd8uPQAxy6",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a bundle of golden wheat ears; a yellow corn cob in green husk; a cluster of fuzzy soybean pods; a sprig of rapeseed with bright yellow flowers and seed pods. Row 2 from left to"
+  },
+  {
+   "key": "tex/pole_osete",
+   "id": "asset_BweYYUNnmB8Q9hUL1Zo6pF2D",
+   "prompt": "Freshly sown farm field: darker moist brown soil with straight parallel furrows running diagonally. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows,"
+  },
+  {
+   "key": "tex/pole",
+   "id": "asset_EBgvYtZTbKt1UkcjkEpHvMJY",
+   "prompt": "Freshly plowed farm field: brown soil with straight parallel furrows running diagonally. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspect"
+  },
+  {
+   "key": "tex/dlazba",
+   "id": "asset_qJaZDUd97CeSvymfzF4pxR3R",
+   "prompt": "Village plaza paving of rounded light stones with moss in the gaps. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspective, no border, no te"
+  },
+  {
+   "key": "tex/cesta_b",
+   "id": "asset_dCVKTHZnSd5CGptJNvvyXJkb",
+   "prompt": "Dusty light-brown dirt path with small rounded pebbles and faint wheel tracks, variant B. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspec"
+  },
+  {
+   "key": "tex/cesta_a",
+   "id": "asset_WygCLrAPEYVRy9JQhHB4MVW5",
+   "prompt": "Dusty light-brown dirt path with small rounded pebbles, variant A. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspective, no border, no tex"
+  },
+  {
+   "key": "tex/louka_b",
+   "id": "asset_oqAX7qgsDYANaL2kZbf5ZknH",
+   "prompt": "Wild magical meadow: darker taller grass with tiny flowers and a few tiny mushrooms, variant B. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no p"
+  },
+  {
+   "key": "tex/louka_a",
+   "id": "asset_NypGewJJuMYZoHQyRAs9WdSw",
+   "prompt": "Wild magical meadow: darker taller grass with tiny colorful flowers, variant A. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspective, no b"
+  },
+  {
+   "key": "tex/trava_b",
+   "id": "asset_KKVjy2EaQhL8vay7GW5jrKiv",
+   "prompt": "Lush juicy farm grass with tiny leaves and a few tiny white flowers, light fresh green, variant B. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, n"
+  },
+  {
+   "key": "tex/trava_a",
+   "id": "asset_xrW5qURjssLb6ewM3BBP2Aee",
+   "prompt": "Lush juicy farm grass with tiny leaves, light fresh green, variant A. Ground texture for a cozy fairy-tale farm game. IGNORE the house in the reference – use it only for the painting style and colors. Perfectly flat, seen straight from above (top-down), seamless and tileable on all four edges, filling the WHOLE square image edge to edge, evenly lit, no objects, no buildings, no shadows, no perspective, no border, no"
+  },
+  {
+   "key": "c3/dyne",
+   "id": "asset_nfa9ycDtFdxzCDx3XqMkLVLH",
+   "prompt": "Three growth stages of pumpkins for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/meloun",
+   "id": "asset_Jrf4yiGfEmfWYeDLjuPEU3D9",
+   "prompt": "Three growth stages of watermelons for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = hal"
+  },
+  {
+   "key": "c3/hrach",
+   "id": "asset_7Xc3x5ta6KHGUb7fCfida4na",
+   "prompt": "Three growth stages of peas for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-grown"
+  },
+  {
+   "key": "c3/beet",
+   "id": "asset_FhjtwpLQCNKvxTDbKj8sMy2q",
+   "prompt": "Three growth stages of sugar beets for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = hal"
+  },
+  {
+   "key": "c3/zeli",
+   "id": "asset_o4qxWbr7e2agCoxkXFUUY4dk",
+   "prompt": "Three growth stages of cabbage for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-gr"
+  },
+  {
+   "key": "c3/sun",
+   "id": "asset_VJP4S2Ax5nYrjrrxnfhWusWv",
+   "prompt": "Three growth stages of sunflowers for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half"
+  },
+  {
+   "key": "c3/paprika",
+   "id": "asset_4vTaR6jX2zDcKcAXhDWRvDDN",
+   "prompt": "Three growth stages of bell peppers for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = ha"
+  },
+  {
+   "key": "c3/repka",
+   "id": "asset_zynShUthb3HGvyNQheLCXqxN",
+   "prompt": "Three growth stages of rapeseed for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/cesnek",
+   "id": "asset_KNLW4pdxU7byPsLDiKA519ft",
+   "prompt": "Three growth stages of garlic for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-gro"
+  },
+  {
+   "key": "c3/soy",
+   "id": "asset_31jqHatZRk4hNFPsHhkMWYte",
+   "prompt": "Three growth stages of soybeans for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/cibule",
+   "id": "asset_UFQoWY9soGv1nbEwehXVonP1",
+   "prompt": "Three growth stages of onions for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-gro"
+  },
+  {
+   "key": "c3/jahody",
+   "id": "asset_mQfCnD8rCQKjPD6bhxgqWYiE",
+   "prompt": "Three growth stages of strawberries for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = ha"
+  },
+  {
+   "key": "c3/potato",
+   "id": "asset_P6Yo2Yt1wdCyorG9BwmTPnLJ",
+   "prompt": "Three growth stages of potatoes for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/okurka",
+   "id": "asset_H8tmRsTHCFEfzrwjThNuz88f",
+   "prompt": "Three growth stages of cucumbers for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-"
+  },
+  {
+   "key": "c3/carrot",
+   "id": "asset_jfKeHAJLYnmRax5fRpVKDsmV",
+   "prompt": "Three growth stages of carrots for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-gr"
+  },
+  {
+   "key": "c3/rajce",
+   "id": "asset_dMeWbvozCCPqcnmCywonLjai",
+   "prompt": "Three growth stages of tomatoes for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/corn",
+   "id": "asset_QhccFFxQRX9dNQC892t8GgoU",
+   "prompt": "Three growth stages of corn for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-grown"
+  },
+  {
+   "key": "c3/salat",
+   "id": "asset_MEDzXVDsaRzEKSPZ2D9utQAJ",
+   "prompt": "Three growth stages of lettuce for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-gr"
+  },
+  {
+   "key": "c3/redkvicka",
+   "id": "asset_ZaJ7uPvrBMaqnAu3Lh37ZfoQ",
+   "prompt": "Three growth stages of radishes for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-g"
+  },
+  {
+   "key": "c3/wheat",
+   "id": "asset_YnkZMU9PseGtZ9x3Tn63ZjWw",
+   "prompt": "Three growth stages of wheat for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them. Each stage is a group of 9 small plants planted in 3 neat diagonal rows filling an isometric diamond-shaped field tile (same isometric camera as the reference). Draw ONLY the plants – NO soil, no ground, no plot, no border, no grass. LEFT = tiny sprouts with a few small leaves, MIDDLE = half-grow"
+  },
+  {
+   "key": "les3/les",
+   "id": "asset_EsKENsgEyaBZacQgYCzEQgcF",
+   "prompt": "Three different whole wild forest trees for the landscape of a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, each with its full trunk down to the ground standing on its own tiny grass patch of one tile, nothing cropped: LEFT = a wide leafy oak with a twisted trunk, MIDDLE = a spruce with a short brown trunk visible below the lowest branches, RIGHT = a birch with a white black"
+  },
+  {
+   "key": "s3/reva",
+   "id": "asset_9Quhf3pJBMxQV1NMLaF2SqTC",
+   "prompt": "Three versions of the same grapevine on a small wooden trellis for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green bush without fruit, MIDDLE = the same bush full of clearly visible ripe bunches of purple grapes, RIGHT = the same bush dried out, leafless, gray-bro"
+  },
+  {
+   "key": "s3/boruvky",
+   "id": "asset_qGyssT5yr2M1ZKXL4gnfEgFe",
+   "prompt": "Three versions of the same blueberry bush for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green bush without fruit, MIDDLE = the same bush full of clearly visible ripe blueberries, RIGHT = the same bush dried out, leafless, gray-brown. A low bush, smaller than a tre"
+  },
+  {
+   "key": "s3/angrest",
+   "id": "asset_H1P3ccgxwwy9oiAL57KoUvqa",
+   "prompt": "Three versions of the same gooseberry bush for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green bush without fruit, MIDDLE = the same bush full of clearly visible ripe green gooseberries, RIGHT = the same bush dried out, leafless, gray-brown. A low bush, smaller th"
+  },
+  {
+   "key": "s3/rybiz",
+   "id": "asset_YYXXLK9Gt7NwFaNchm89w7EJ",
+   "prompt": "Three versions of the same red currant bush for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green bush without fruit, MIDDLE = the same bush full of clearly visible ripe clusters of red currants, RIGHT = the same bush dried out, leafless, gray-brown. A low bush, sma"
+  },
+  {
+   "key": "s3/maliny",
+   "id": "asset_ChmjoqtkpoetkEW57F8BRxzw",
+   "prompt": "Three versions of the same raspberry bush for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green bush without fruit, MIDDLE = the same bush full of clearly visible ripe red raspberries, RIGHT = the same bush dried out, leafless, gray-brown. A low bush, smaller than a"
+  },
+  {
+   "key": "s3/orech",
+   "id": "asset_SKwq2UHqZjLuvmyqUG93fwB1",
+   "prompt": "Three versions of the same walnut tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe green walnuts, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a pl"
+  },
+  {
+   "key": "s3/broskev",
+   "id": "asset_dJy6y3RD4sGzHvoqTbTCtmBg",
+   "prompt": "Three versions of the same peach tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe fuzzy orange-pink peaches, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted tru"
+  },
+  {
+   "key": "s3/merunka",
+   "id": "asset_dbALSZDLoYs9dWw5tJYCVhh2",
+   "prompt": "Three versions of the same apricot tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe orange apricots, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a"
+  },
+  {
+   "key": "s3/visen",
+   "id": "asset_QMRmcDUnRuCTWaQ7RbktCpp8",
+   "prompt": "Three versions of the same sour cherry tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe dark red sour cherries, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted"
+  },
+  {
+   "key": "s3/tresen",
+   "id": "asset_SZgPngCkbS5f5Wjx2brvMh7S",
+   "prompt": "Three versions of the same cherry tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe red cherries, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a plu"
+  },
+  {
+   "key": "s3/svestka",
+   "id": "asset_r29f6rEDpxvtMyYwdrVcasHN",
+   "prompt": "Three versions of the same plum tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe dark blue plums, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a pl"
+  },
+  {
+   "key": "s3/hrusen",
+   "id": "asset_PWxHqK9bvkyThFD9FX1An4r7",
+   "prompt": "Three versions of the same pear tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe yellow-green pears, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a"
+  },
+  {
+   "key": "s3/jablon",
+   "id": "asset_MDGb18DouBzS5moY4ekJHw5S",
+   "prompt": "Three versions of the same apple tree for a cozy fairy-tale farm game, side by side in ONE row with clear empty space between them, all the same size, each standing on its own tiny grass patch of one tile, trunk in the middle: LEFT = young green tree without fruit, MIDDLE = the same tree full of clearly visible ripe red apples, RIGHT = the same tree dried out, leafless, gray-brown. Slightly twisted trunk and a plump"
+  },
+  {
+   "key": "p/pomocnik",
+   "id": "asset_XZKa9Y9NxXaYJ44ow7d5YzZU",
+   "prompt": "A small full-body character for a cozy fairy-tale farm game: a farm helper in a blue shirt and a green cap, walking toward the bottom-left (three-quarter view, same isometric camera as the reference), cute proportions with a slightly big head. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and p"
+  },
+  {
+   "key": "p/farmar",
+   "id": "asset_xBbb5PUbvzY89E2D4NnnfiCy",
+   "prompt": "A small full-body character for a cozy fairy-tale farm game: a farmer in a red shirt, blue trousers and a yellow straw hat with a feather, walking toward the bottom-left (three-quarter view, same isometric camera as the reference), cute proportions with a slightly big head. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same came"
+  },
+  {
+   "key": "m/lis",
+   "id": "asset_PQVhs3pt4Wd1xBbCwm5EaBPy",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a hay baler trailer (no tractor attached), made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scal"
+  },
+  {
+   "key": "m/secka",
+   "id": "asset_FrQWGUrw3UhrWYyEKzv64w1X",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a seed drill trailer (no tractor attached), made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, sca"
+  },
+  {
+   "key": "m/pluh",
+   "id": "asset_21qDeqqFNm4TfMLuWsHXuXHy",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a plough trailer (no tractor attached), made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale,"
+  },
+  {
+   "key": "m/klas8",
+   "id": "asset_CVsvjXFm9cjY4pxFgXZohBnw",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a bigger yellow combine harvester, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, light"
+  },
+  {
+   "key": "m/klas4",
+   "id": "asset_P99pxqb72zpjoX4r172e7Zzq",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a small green combine harvester, made of painted wood, brass and colorful metal with rounded shapes, moving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lightin"
+  },
+  {
+   "key": "m/brazda120",
+   "id": "asset_acDD472skkkZud8zHMC2Pxpi",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a bigger, stronger blue tractor, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighti"
+  },
+  {
+   "key": "m/brazda60",
+   "id": "asset_wULSKn7rCVpMVDpgRRmrk294",
+   "prompt": "A whimsical farm machine for a cozy fairy-tale farm game: a small red tractor, made of painted wood, brass and colorful metal with rounded shapes, driving toward the bottom-left (three-quarter isometric view like the reference). No ground, no shadow, no driver. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and paint"
+  },
+  {
+   "key": "z/ovce",
+   "id": "asset_rcYW8GUb6t3zFmeTzJkMdRiK",
+   "prompt": "A cute farm animal for a cozy fairy-tale farm game: a fluffy white sheep, whole body, standing, facing toward the bottom-left (toward the viewer, three-quarter view, same isometric camera as the reference). Big friendly eyes but still clearly recognizable. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, l"
+  },
+  {
+   "key": "z/prase",
+   "id": "asset_qcEUAwEVhKEitFpCFHX7p1pC",
+   "prompt": "A cute farm animal for a cozy fairy-tale farm game: a pink pig, whole body, standing, facing toward the bottom-left (toward the viewer, three-quarter view, same isometric camera as the reference). Big friendly eyes but still clearly recognizable. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting an"
+  },
+  {
+   "key": "z/krava",
+   "id": "asset_jUbVhLanuiFeQygssKQ3sZ88",
+   "prompt": "A cute farm animal for a cozy fairy-tale farm game: a dairy cow with spots, whole body, standing, facing toward the bottom-left (toward the viewer, three-quarter view, same isometric camera as the reference). Big friendly eyes but still clearly recognizable. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale,"
+  },
+  {
+   "key": "z/slepice",
+   "id": "asset_tiBe54rS9rq6iyGS51eZ9Rx3",
+   "prompt": "A cute farm animal for a cozy fairy-tale farm game: a plump hen, whole body, standing, facing toward the bottom-left (toward the viewer, three-quarter view, same isometric camera as the reference). Big friendly eyes but still clearly recognizable. No ground, no shadow. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting a"
+  },
+  {
+   "key": "b/fontana",
+   "id": "asset_K42Pth6PZkue4CD7FeQ6m1hG",
+   "prompt": "A small decorative stone fountain with water for a cozy fairy-tale farm game. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference image. Storybook p"
+  },
+  {
+   "key": "b/jablon",
+   "id": "asset_vWNMfsrtSiRuuyswt952db8R",
+   "prompt": "A decorative blossoming tree with pink flowers for a cozy fairy-tale farm game, round crown, curved trunk. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the"
+  },
+  {
+   "key": "b/lavicka",
+   "id": "asset_CeQZTBwSKHb14ThiVXj1GJ2i",
+   "prompt": "A decorative bench made of twisted branches for a cozy fairy-tale farm game. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference image. Storybook pa"
+  },
+  {
+   "key": "b/kvetiny",
+   "id": "asset_9kTvRu5fEcgnfLuAhNYkYQM8",
+   "prompt": "A decorative flower bed for a cozy fairy-tale farm game, colorful flowers in a small bordered bed. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the referen"
+  },
+  {
+   "key": "b/ker",
+   "id": "asset_kx4w9eY7FLdmST845oLc7e2F",
+   "prompt": "A round decorative bush for a cozy fairy-tale farm game, lush and green with a few tiny flowers. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference"
+  },
+  {
+   "key": "b/nastenka",
+   "id": "asset_YnFjJ8L1VJzjVgEdBRiYu3xW",
+   "prompt": "A village notice board for a cozy fairy-tale farm game: a wooden board on two posts with a small roof, 3–4 pinned paper notes with only squiggly lines (no readable text), a tiny lantern. Small object for ONE tile (1x1), standing on a tiny grass patch matching its single square tile, much smaller than the reference building. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front"
+  },
+  {
+   "key": "b/dum",
+   "id": "asset_Qdw8As3rubEezNz7SRDjDEk8",
+   "prompt": "A worker house (2x2 tiles, sleeps 5) for a cozy fairy-tale farm: the biggest and tallest, a two-storey half-timbered house with a dormer window, a chimney and a bench by the door. Stands on a grass patch matching its 2x2 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting"
+  },
+  {
+   "key": "b/chata",
+   "id": "asset_ZZAw6EGWgFj1feeqjUe49gmZ",
+   "prompt": "A worker cottage (2x2 tiles, sleeps 3) for a cozy fairy-tale farm: a log cottage on a stone foundation, two windows with shutters, a chimney, a small porch roof and a flower box. Medium size. Stands on a grass patch matching its 2x2 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting"
+  },
+  {
+   "key": "b/chatrc",
+   "id": "asset_jmazDsrKrMfmVGedfHUCPoHv",
+   "prompt": "A tiny worker hut (2x2 tiles, sleeps 2) for a cozy fairy-tale farm: the smallest and simplest, a plank shack with one round window, a crooked thatched roof and a log stump seat by the door. Clearly smaller than a cottage. Stands on a grass patch matching its 2x2 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same"
+  },
+  {
+   "key": "b/domek_c",
+   "id": "asset_cPj8Paumr3WkLdGCqkdhSVwi",
+   "prompt": "A small fairy-tale village house (2x2 tiles) with a green mossy roof, a round tower window and climbing ivy. Stands on a patch of rounded cobblestones matching its 2x2 square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference i"
+  },
+  {
+   "key": "b/domek_b",
+   "id": "asset_XMsjorGDXo2zEgZxqoqGGnMR",
+   "prompt": "A small fairy-tale village house (2x2 tiles) with a blue-gray slate roof, a chimney, half-timbered walls and flower boxes. Stands on a patch of rounded cobblestones matching its 2x2 square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as t"
+  },
+  {
+   "key": "b/domek_a",
+   "id": "asset_ucuUgCmub5bHMxvrUe3JDZJq",
+   "prompt": "A small fairy-tale village house (2x2 tiles) with a red tiled roof, round windows, a door with a little canopy and flower boxes. Stands on a patch of rounded cobblestones matching its 2x2 square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting styl"
+  },
+  {
+   "key": "b/trziste",
+   "id": "asset_LiPCZ6AUaWT9V7wvJ7GZaLaZ",
+   "prompt": "A small village marketplace (3x3 tiles) in a cozy fairy-tale village: four little stalls with differently colored canopies and goods. Stands on a patch of rounded cobblestones matching its 3x3 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference imag"
+  },
+  {
+   "key": "b/stanek",
+   "id": "asset_SYjEFo2S6ckdDTnfvDv8fiZe",
+   "prompt": "A village market stall (3x3 tiles) in a cozy fairy-tale village: a wooden stall with a striped canopy, crates of vegetables and fruit, paper lanterns. Stands on a patch of rounded cobblestones matching its 3x3 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as t"
+  },
+  {
+   "key": "b/prodejna",
+   "id": "asset_oAUfxpH2SeeEK1qfVuSVsjQi",
+   "prompt": "A farm machine shop (3x3 tiles) in a cozy fairy-tale village: a workshop with big wooden doors and a shop window, a striped awning, wheels and tools inside, a small whimsical tractor parked in front. Stands on a patch of rounded cobblestones matching its 3x3 square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same came"
+  },
+  {
+   "key": "b/medarna",
+   "id": "asset_ddidrfwvga5WBU9KXVN5Yr6q",
+   "prompt": "A honey house (2x2 tiles) for a cozy fairy-tale farm game: a cozy cottage with shelves of honey jars, honeycombs and a honey extractor barrel by the door. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting"
+  },
+  {
+   "key": "b/rybarna",
+   "id": "asset_HziAoyxB5BHQyHrY46MAz7dN",
+   "prompt": "A fish workshop (2x2 tiles) for a cozy fairy-tale farm game: a little cottage by the water with a smoking hut, crates of fish and fishing nets, a lantern. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting"
+  },
+  {
+   "key": "b/vcelin",
+   "id": "asset_4XLJq2ji9UwzsbH6QRvuRtF2",
+   "prompt": "A beehive yard (2x2 tiles) for a cozy fairy-tale farm game: two or three plump wooden beehives shaped like tiny cottages with round entrances, on little stands, flowers around and a few bees. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera"
+  },
+  {
+   "key": "b/rybnik",
+   "id": "asset_uS54iDCdGkev9rzYtwZeSMan",
+   "prompt": "A natural fishing pond (3x3 tiles) for a cozy fairy-tale farm game: water fills most of the diamond footprint, sandy shore, reeds, water lilies with tiny flowers, a small wooden jetty at the front right. Flat, seen in the same isometric angle as the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painti"
+  },
+  {
+   "key": "b/stodola",
+   "id": "asset_czpaF1f4hnkuM1GDETBskS7B",
+   "prompt": "A big wooden machine barn (3x2 tiles, wider than deep) for a cozy fairy-tale farm game: rounded barn with a thatched roof and wide open double doors, dark inside, a little straw in front. Stands on a grass patch matching its rectangular footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and"
+  },
+  {
+   "key": "b/ovcin",
+   "id": "asset_LmiG6c1zrWrhcTdxTziqHXZU",
+   "prompt": "An EMPTY animal enclosure (3x3 tiles) for a cozy fairy-tale farm game – sheep pen: at the back a cute wooden sheep shelter with hay racks with a thick thatched roof, in front an open yard (grass, straw or mud) surrounded by a low fence of twisted branches. NO ANIMALS anywhere. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 proj"
+  },
+  {
+   "key": "b/prasecak",
+   "id": "asset_MqhXrvChP6qu9CqkEBqepG18",
+   "prompt": "An EMPTY animal enclosure (3x3 tiles) for a cozy fairy-tale farm game – pig sty: at the back a cute small wooden pig shelter with a muddy puddle in the yard with a thick thatched roof, in front an open yard (grass, straw or mud) surrounded by a low fence of twisted branches. NO ANIMALS anywhere. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic"
+  },
+  {
+   "key": "b/kravin",
+   "id": "asset_1anNbLNrR6DUcnFVCBzbCmVq",
+   "prompt": "An EMPTY animal enclosure (3x3 tiles) for a cozy fairy-tale farm game – cow barn: at the back a cute wooden cow shed with a hay loft and a water trough with a thick thatched roof, in front an open yard (grass, straw or mud) surrounded by a low fence of twisted branches. NO ANIMALS anywhere. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isom"
+  },
+  {
+   "key": "b/kurnik",
+   "id": "asset_14nqwBNYgZKa3grE4vPS3RT3",
+   "prompt": "An EMPTY animal enclosure (2x2 tiles) for a cozy fairy-tale farm game – chicken coop: at the back a cute little wooden henhouse on short legs with a ramp and nest boxes with a thick thatched roof, in front an open yard (grass, straw or mud) surrounded by a low fence of twisted branches. NO ANIMALS anywhere. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game as"
+  },
+  {
+   "key": "b/textilka",
+   "id": "asset_6x7GSU9h5QXEjibMgjYSXqLe",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Textile workshop: a cottage workshop with a spinning wheel, a loom visible through a big window and baskets of wool yarn balls. It must be instantly recognizable as a textile workshop. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2"
+  },
+  {
+   "key": "b/uzenarstvi",
+   "id": "asset_FPEC5pzQNdANotWZZLZrYffs",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Smokehouse: a wooden smokehouse with smoke rising, sausages and hams hanging under the eaves. It must be instantly recognizable as a smokehouse. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner"
+  },
+  {
+   "key": "b/cukrovar",
+   "id": "asset_jy8P66jMYzfYCAgyHMt2yxBW",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Sugar works: a small brick workshop with a chimney, sugar loaves and sacks of sugar beets. It must be instantly recognizable as a sugar works. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner,"
+  },
+  {
+   "key": "b/marmeladarna",
+   "id": "asset_PzPkoxkRoqJCaDCG36Bf3wfB",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Jam kitchen: a cottage with a big copper cauldron of bubbling jam and jars with checkered lids. It must be instantly recognizable as a jam kitchen. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front cor"
+  },
+  {
+   "key": "b/olejna",
+   "id": "asset_ZPyWKjHj8wuTRKdPJMoW93Ac",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Oil press: a stone press with a millstone, sunflowers and bottles of golden oil. It must be instantly recognizable as a oil press. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the"
+  },
+  {
+   "key": "b/konzervarna",
+   "id": "asset_gsmyUH5FVaVoVWQq8xNWfFTr",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Cannery: a cottage with shelves of preserve jars and crates of vegetables. It must be instantly recognizable as a cannery. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same cam"
+  },
+  {
+   "key": "b/mlekarna",
+   "id": "asset_qSfruh46zUVbL2MiUbKuzw33",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Dairy: a white-washed cottage with milk churns and wheels of cheese by the door. It must be instantly recognizable as a dairy. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same"
+  },
+  {
+   "key": "b/dzusarna",
+   "id": "asset_EVPjLcFg1WVB5QGbTA5j7WzR",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Juice press: a cottage with a wooden fruit press, a vat and bottles of colorful juice. It must be instantly recognizable as a juice press. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exac"
+  },
+  {
+   "key": "b/skolka",
+   "id": "asset_GH3Kht7TEKqJBMgt9oo9V14T",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Tree nursery: a glass greenhouse full of young fruit saplings in pots. It must be instantly recognizable as a tree nursery. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same ca"
+  },
+  {
+   "key": "b/mlyn",
+   "id": "asset_oDvRBzXiXm92KvLbDxutCXzK",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Windmill: a stone windmill tower with four cloth sails, flour sacks at the door. It must be instantly recognizable as a windmill. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the s"
+  },
+  {
+   "key": "b/statek_1",
+   "id": "asset_Xp2WokXQTmir7dL1J5oGLfnT",
+   "prompt": "Game asset for a cozy fairy-tale fantasy farm game: the main farmhouse (level 1), a single building seen in classic isometric 2:1 projection from the front corner (the front corner of its square footprint points straight down toward the viewer, left and right walls both visible, 30-degree isometric angle like a mobile farming game). Cozy storybook cottage farmhouse: honey-brown log walls, a thick rounded mossy thatch"
+  },
+  {
+   "key": "b/statek_2",
+   "id": "asset_fhqmyEcqTj9FfXyBkPmEopeT",
+   "prompt": "The main farmhouse, level 2 (3x3 tiles): the same cozy log cottage as the reference, now a bit bigger, with a small side lean-to extension, a wooden bench by the door and a second lantern. Stands on a small grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting a"
+  },
+  {
+   "key": "b/statek_3",
+   "id": "asset_e8wUGUsLjwkxerCooiGP3Pb5",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 3 – a second little attic window, a dovecote on the roof ridge, more flower boxes. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale,"
+  },
+  {
+   "key": "b/statek_6",
+   "id": "asset_TrvAixn7A2FgYCLG5GwkjmnS",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 6 – a side wing added, a tiny bell tower above the door. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting sty"
+  },
+  {
+   "key": "b/statek_4",
+   "id": "asset_8uhEGBSKs9RqxD9i3yqBdsbP",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 4 – a stone foundation, a small wooden balcony, the house slightly taller. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lightin"
+  },
+  {
+   "key": "b/statek_5",
+   "id": "asset_yU3FvAFxWGMYUdtvpx3K3A8A",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 5 – a small corner turret with a little flag, bigger windows. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and paintin"
+  },
+  {
+   "key": "b/statek_8",
+   "id": "asset_Mi8YyexRoxqo6DFVkRN5QZzw",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 8 – a large farmstead with an arched wooden gate to a small courtyard. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting an"
+  },
+  {
+   "key": "b/statek_7",
+   "id": "asset_fRaADjWX69CjRT73NVFu2sP6",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 7 – a turret with a pointed cone roof, many glowing lanterns, flower garlands. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lig"
+  },
+  {
+   "key": "b/statek_9",
+   "id": "asset_ra3KeDGAmFn9X9UPcBhdNfzA",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 9 – a manor farmhouse with two small turrets and colorful round stained-glass windows. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, sc"
+  },
+  {
+   "key": "b/sklad_2",
+   "id": "asset_tQJeX9NQiFPu2GiCrgmL6kGV",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 2: a small wooden shed with a thatched roof, crates and barrels outside. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the"
+  },
+  {
+   "key": "b/sklad_1",
+   "id": "asset_bcDvzMYKJBKEHnyJw1556pAK",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 1: a small wooden shed with a thatched roof and a wide door. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference i"
+  },
+  {
+   "key": "b/statek_10",
+   "id": "asset_ftziH5a9p4jE9shNdxnW1u2o",
+   "prompt": "The main farmhouse (3x3 tiles), the same cozy fairy-tale log farmhouse as the reference but grown bigger and richer: level 10 – a fairy-tale castle-like farmhouse with three small turrets, little flags, a golden weather vane and climbing roses, still clearly a farmhouse. Stands on a grass patch matching its square footprint, like the reference. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection"
+  },
+  {
+   "key": "b/sklad_3",
+   "id": "asset_y5pGGVExihKx7CnDS8Cqi849",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 3: a little log barn with a wide door, crates and sacks. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference image"
+  },
+  {
+   "key": "b/sklad_4",
+   "id": "asset_fKectrt95nSnuwQVpusJQj4y",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 4: a granary on a stone foundation with a wooden staircase. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference im"
+  },
+  {
+   "key": "b/sklad_5",
+   "id": "asset_SawmsYXtiUoMBy5s7FhSGqDU",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 5: a granary on a stone foundation with a wooden pulley hoist and grain sacks. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style"
+  },
+  {
+   "key": "b/sklad_6",
+   "id": "asset_JFiCDJTsMwTocEd1GjXPzeDV",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 6: a bigger granary with a round window in the gable and a hoist. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the refere"
+  },
+  {
+   "key": "b/sklad_9",
+   "id": "asset_FCayxXXcTrvLXDoP7zWtb1Rt",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 9: a large granary with two wide doors and a turret. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference image. St"
+  },
+  {
+   "key": "b/sklad_8",
+   "id": "asset_1qKGnFwM1wR9pSGWKcVdFNgD",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 8: a large granary with a side extension and glowing lanterns. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference"
+  },
+  {
+   "key": "b/sklad_10",
+   "id": "asset_NvYGNgSY7dpYZ6HXFnSi3LRW",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 10: a grand fairy-tale granary with a turret, a golden weather vane and strings of tiny lights. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting an"
+  },
+  {
+   "key": "b/sklad_7",
+   "id": "asset_vsa4sY1DtfcUx2k73BQT5DK4",
+   "prompt": "The storage barn (2x2 tiles) of a cozy fairy-tale farm, level 7: a bigger granary with a small turret on the roof. Stands on a grass patch matching its square footprint, like the reference. Clearly smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactly the same camera angle, scale, lighting and painting style as the reference image. St"
+  },
+  {
+   "key": "b/krmivarna",
+   "id": "asset_qcNa1QjZZw3PmqfVyGrsKWxR",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Feed mill: a wooden cottage with a small grain grinder wheel and sacks of animal feed. It must be instantly recognizable as a feed mill. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection seen from the front corner, exactl"
+  },
+  {
+   "key": "b/semenarna",
+   "id": "asset_3gmahYEZayBW1XjLDm9fRVbG",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Seed shop: a cottage with a tiny attached greenhouse, seed sacks, little paper seed packets and flower pots by the door. It must be instantly recognizable as a seed shop. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asset. Classic isometric 2:1 projection"
+  },
+  {
+   "key": "b/pekarna",
+   "id": "asset_acnxmjDc2UTMr1EJPgnnMr4A",
+   "prompt": "A small fairy-tale workshop building (2x2 tiles) for a cozy farm game – Bakery: a cottage bakery with a domed brick oven and chimney smoke, bread loaves on the windowsill, a pretzel-shaped wooden sign without letters, a flour sack. It must be instantly recognizable as a bakery. Stands on a grass patch matching its square footprint, like the reference. Smaller than the farmhouse. Cozy fairy-tale fantasy farm game asse"
+  }
+ ],
+ "v33_ui": [
+  {
+   "key": "ui/ikony_a",
+   "id": "asset_8871EMVf8KCL63haBAmYTSqr",
+   "prompt": "A sheet of separate game interface icons for a cozy fairy-tale forest farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a shiny gold coin with an embossed oak leaf; a plump golden five-pointed star; a glowing green four-leaf clover; a small iron padlock with a brass keyhole. Row 2 from left to right: a wooden mallet with a small leaf tied to the handle; a wicker shopping basket with a checked cloth; a wooden cogwheel with a tiny green sprout; a golden trophy cup decorated with leaves. Row 3 from left to right: a rolled parchment scroll with a red wax seal; a round cream speech bubble with three small dots; a small brown leather diary with a leaf bookmark; a small brass bell with a green ribbon.  Each icon is a single plump object, large in its cell, bold readable shapes even at 24 pixels, warm painted colors with soft highlights. Use the painting style, light and colors of the reference image but IGNORE the house itself. Transparent background, no frames, no grid lines, no text, no labels, no numbers."
+  },
+  {
+   "key": "ui/ikony_b",
+   "id": "asset_ZHkSkX9P7VJmoaXBBt1GFMzp",
+   "prompt": "A sheet of separate game interface icons for a cozy fairy-tale forest farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a wooden hourglass with golden sand; a small wooden delivery wagon loaded with crates; a closed wooden crate; a woodcutter axe. Row 2 from left to right: a gift box wrapped with a green ribbon bow; a brass horn; the same brass horn with a red crossed-out circle over it; a wooden signpost with one arrow-shaped board. Row 3 from left to right: the head of a friendly smiling farmer with a straw hat; a small patch of plowed brown soil with green sprouts; a fat green arrow pointing up; a fat red arrow pointing down.  Each icon is a single plump object, large in its cell, bold readable shapes even at 24 pixels, warm painted colors with soft highlights. Use the painting style, light and colors of the reference image but IGNORE the house itself. Transparent background, no frames, no grid lines, no text, no labels, no numbers."
+  },
+  {
+   "key": "ui/ikony_c",
+   "id": "asset_zw57hSFJjMKhLXLaTmXmRwXv",
+   "prompt": "A sheet of separate game interface icons for a cozy fairy-tale forest farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a bright yellow sun without a face; a fluffy white cloud; a grey-blue cloud with falling raindrops; a bright orange sun with wavy heat lines and a small thermometer. Row 2 from left to right: golden-brown pieces of smoked eel on a wooden board; a small glass bowl of black caviar with a little spoon; a round leaf-green button with a white plus symbol; a round leaf-green button with a white check mark symbol. Row 3 from left to right: a round toadstool-red button with a white X symbol; a small blue butterfly. The third row has only two icons on the left, the rest of that row stays empty. The plus, check mark and X symbols are simple white shapes, not letters. Each icon is a single plump object, large in its cell, bold readable shapes even at 24 pixels, warm painted colors with soft highlights. Use the painting style, light and colors of the reference image but IGNORE the house itself. Transparent background, no frames, no grid lines, no text, no labels, no numbers."
+  },
+  {
+   "key": "ui/panel",
+   "id": "asset_11sQRARtgvZzDiw9YKTNcYYc",
+   "prompt": "A large empty square window frame for a mobile game menu. The border is carved light-brown wood of even thickness on all four sides with straight edges and rounded corners; soft green moss, tiny ivy leaves and a few small white and yellow flowers grow along the top edge and on the four corners, and a small red toadstool sits on the bottom-left corner. The inside is a completely plain, flat, warm cream parchment paper area with no pattern, no shading and no objects, filling most of the image. Perfectly front-facing and symmetric. Square image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/tiles",
+   "id": "asset_YqFqwuxk6oTQ21p6wedQuV66",
+   "prompt": "Three separate empty rounded-square button tiles in one row with wide gaps between them, all the same size: 1) plain flat cream parchment inside a thin smooth light-wood rim with a tiny tuft of moss and two small leaves on the top-left corner; 2) the same tile in fresh moss green with a lighter green center and a small leaf on the top-left corner; 3) the same tile in warm golden honey yellow with a tiny flower on the top-left corner. Each rim has even thickness and straight edges, the centers are plain without icons. Wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/buttons",
+   "id": "asset_EHrqmAa6gdNYjmWYa8QJ7tP5",
+   "prompt": "Four separate wide empty pill-shaped buttons stacked vertically with wide gaps between them, each about three times wider than tall, all the same size: 1) fresh leaf-green button with a soft glossy highlight on top, a darker green bottom edge and tiny leaves sprouting at both rounded ends; 2) light honey-colored wooden button with subtle wood grain; 3) toadstool-red button with a few small white dots only near the two ends; 4) warm golden honey button with a soft highlight. Each button has a plain flat center area without text or icons and even rims. Tall portrait image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/pill",
+   "id": "asset_gbCaJopwq4bavTizZxjhrgSe",
+   "prompt": "One wide empty horizontal capsule-shaped counter bar, about four times wider than tall: a smooth light birch-wood rim of even thickness with rounded ends, a little green moss and two tiny leaves on the left end, and the inside is a plain flat cream inset area for numbers. Wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/round",
+   "id": "asset_BGXk9SjuA5krhDLTRhT8NdoM",
+   "prompt": "Four separate round game buttons in one row with wide gaps, all the same size: 1) a level badge: a wreath of small green leaves and tiny red berries around a smooth round sky-blue stone disc with a plain center; 2) a round slice of a tree trunk with visible growth rings, a bark edge and a tiny sprig of moss, with a plain light center; 3) a round red toadstool cap seen from above with white spots only along its edge and a plain red center; 4) a small round leaf-green button with a soft highlight and a plain center. No symbols on any of them. Wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/bar",
+   "id": "asset_yWLEeYg4QxFvXCmZrCPb8rUH",
+   "prompt": "A very wide horizontal wooden shelf board for the bottom menu of a mobile game, about five times wider than tall: a smooth light wooden plank with rounded top corners and even thickness, soft moss along the top edge, a small cluster of red toadstools and a fern growing at the left end and a matching cluster at the right end; the long middle part is a plain flat light-wood area. Very wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/ribbon",
+   "id": "asset_CFZnkggKKd9uRmKK1yMETHzX",
+   "prompt": "A horizontal fabric ribbon banner for a title, about five times wider than tall: a soft moss-green ribbon with folded swallow-tail ends and a small leaf sprig on each end, the long middle part plain and flat. Very wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/ozdoby",
+   "id": "asset_giDYANtggagDhHCQLeZwLc5F",
+   "prompt": "A sheet of six separate small decorations in two rows of three with wide gaps, none touching: a sprig of three green leaves; a cluster of two red toadstools with a little grass; a curled green fern frond; a small bunch of wildflowers; an acorn with an oak leaf; a tuft of soft green moss with tiny white flowers. Wide landscape image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/znak",
+   "id": "asset_p1J5Y4JgEgWsWPv8GLajNPLq",
+   "prompt": "A round emblem medallion: a wreath of green leaves, golden wheat ears and small red toadstools around a small cozy thatched farmhouse with a round tree, front view, square image. Cozy fairy-tale storybook game interface asset with a forest theme. Use the painting style, soft light and warm colors of the reference image but IGNORE the house itself. Front view, flat, not isometric, soft painted shading, no black outlines. Transparent background, no text, no letters, no numbers."
+  },
+  {
+   "key": "ui/splash",
+   "id": "asset_n2ZZzTF8NcjZCX9pNxc2syxG",
+   "prompt": "A tall portrait illustration for the title screen of a cozy fairy-tale forest farm game: a sunny clearing in an enchanted forest, tall friendly trees framing the left and right sides, soft moss, ferns, wildflowers and a few red toadstools in the foreground, a small thatched farmhouse with a vegetable garden and a winding path in the middle distance, soft morning light with gentle light rays, a calm open sky in the upper part. Use the painting style, light and colors of the reference image. No people, no animals, no text, no letters. Tall portrait image, fully painted background."
+  }
+ ]
+}

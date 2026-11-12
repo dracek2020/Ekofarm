@@ -29,5 +29,6 @@ Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autor
 - **v12 – grafika budov** (`public/img/b/`: statek 1–10, sklad 1–10, 4 ohrady, 13 výroben): dodal autor hry (vojtech). **Doplnit, čím byla vytvořená a za jakých podmínek** (u AI generátoru ověřit, že podmínky dovolují komerční použití).
 - **v16 – grafika celé hry** (`public/img/t, c, s, b, z, m, p, i`): vygenerovaná autorem hry v ChatGPT (OpenAI) podle zadání `ZADANI_PRO_CHATGPT.md`, upravená (ořez, zmenšení) nástrojem `tools/assets.py`. Podle podmínek OpenAI patří výstupy uživateli; před vydáním ověřit aktuální podmínky.
 - **v32 – nová grafika celé hry** (`public/img/t, c, s, b, z, m, p, i` + ikona aplikace): vygenerovaná 12. 11. 2026 ve **Scenario** (model GPT Image 2.5 Flare) z textových zadání napsaných pro EKOfarm, upravená nástrojem `tools/fantasy.py`. Grafika z v16 už ve hře není. Podrobnosti a stav ověření licence v `EKOFARM_LEGAL_CHECKLIST.md`.
+- **v33 – rozhraní** (`public/img/u`, ikony UI v `public/img/i`, ikona aplikace): 13 obrázků ze Scenario (GPT Image 2.5 Flare) 12. 11. 2026, prompty v `art/PROMPTY_scenario.json`. **Písmo Grandstander** (`public/fonts`): Copyright 2020 The Grandstander Project Authors, licence SIL Open Font License 1.1 (text v `public/fonts/OFL-grandstander.txt`, staženo z Google Fonts).
 
 Tohle je technický přehled, ne právní rada.
