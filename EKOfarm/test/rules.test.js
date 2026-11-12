@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas, ANIMALS, runVillagers, villLag, nextTrade, TRADE_IV, tradeRound, workMs, VILL_BUDGET, beds, teamCap, teamFree, repTier, repNext, adOffers, statekMerits, villLevel, needLvl, RULES_VERSION, wpOfVill, wpGet, wpWorkers, areaCap, stockOf, planTotal, bldCap, bldCapNext, crewPower, penOut, penStats, factoryRate, upgradeEffect, recipeQty, villOut } from '../public/js/rules.js';
+import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas, ANIMALS, ANIMAL_CYCLE, runVillagers, villLag, nextTrade, TRADE_IV, tradeRound, workMs, VILL_BUDGET, beds, teamCap, teamFree, repTier, repNext, adOffers, statekMerits, villLevel, needLvl, RULES_VERSION, wpOfVill, wpGet, wpWorkers, areaCap, stockOf, planTotal, bldCap, bldCapNext, crewPower, penOut, penStats, factoryRate, upgradeEffect, recipeQty, villOut } from '../public/js/rules.js';
 import { TEAM } from '../public/js/team-config.js';
 
 const T0 = 1_700_000_000_000;
@@ -162,9 +162,15 @@ test('zvířata: koupě, krmení, sběr', () => {
   assert.equal(f.silo.krmivo_slepice, undefined);
   assert.equal(objectStatus(findObject(f, id), T0).hungry, 1);
   assert.equal(applyAction(f, { type: 'collect', id }, T0 + 1000).error, 'not_ready');
-  const c = applyAction(f, { type: 'collect', id }, T0 + 600000);
+  // v34: jedno krmení na 3 hodiny, slepice dá průběžně 3 vejce (po hodině jedno)
+  const c = applyAction(f, { type: 'collect', id }, T0 + 3600000);
   assert.deepEqual(c.gained.items, [{ item: 'vejce', qty: 2 }]);
   assert.equal(c.gained.xp, 4);
+  assert.equal(objectStatus(findObject(f, id), T0 + 3600000).hungry, 1, 'nakrmené mají dál co dělat');
+  const c2 = applyAction(f, { type: 'collect', id }, T0 + 3 * 3600000);
+  assert.deepEqual(c2.gained.items, [{ item: 'vejce', qty: 4 }], 'zbylá 2 vejce od každé');
+  assert.equal(objectStatus(findObject(f, id), T0 + 3 * 3600000).hungry, 3, 'po celém cyklu mají zase hlad');
+  assert.equal(f.silo.vejce, 6, '1 krmivo = 3 vejce');
 });
 
 test('plný sklad u výroby a rozšíření skladu', () => {
@@ -176,12 +182,12 @@ test('plný sklad u výroby a rozšíření skladu', () => {
   f.silo.krmivo_slepice = 1;
   applyAction(f, { type: 'feed', id }, T0);
   f.silo.wheat = 50;
-  assert.equal(applyAction(f, { type: 'collect', id }, T0 + 600000).error, 'silo_full');
+  assert.equal(applyAction(f, { type: 'collect', id }, T0 + 3600000).error, 'silo_full');
   const coins = f.coins;
   assert.ok(applyAction(f, { type: 'upgradeSilo' }, T0).ok);
   assert.equal(f.coins, coins - 80);
   assert.equal(f.siloCap, 75);
-  assert.ok(applyAction(f, { type: 'collect', id }, T0 + 600000).ok);
+  assert.ok(applyAction(f, { type: 'collect', id }, T0 + 3600000).ok);
 });
 
 test('stará farma bez budov se doplní', () => {
@@ -553,14 +559,15 @@ test('v29: náročnost – na těžší věci pracovník potřebuje praxi; chov 
   f.silo.krmivo_kravy = 5;
   tick(f, T0 + 61000);
   assert.equal(findVill(f, ch).w, 'skill');
-  // kurník: chovatel úrovně 12 dá ze slepice 3 vejce na jedno krmení (pekař už vejce nebere)
+  // kurník: chovatel úrovně 12 sebere z každého vejce 3 (v34: jedno krmení = 3 vejce za 3 h → 9) – pekař už vejce nebere
   assert.ok(plan(f, id, 'tresnovy_kolac', 0, T0 + 61000).ok);
   const ku = placeAny(f, 'kurnik');
   assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).ok);
   const ch2 = hire(f, ku, 12);
   f.silo.krmivo_slepice = 1; f.silo.vejce = 0;
-  catchUp(f, T0 + 3 * 3600000);
-  assert.equal(f.silo.vejce, 3);
+  catchUp(f, T0 + 4 * 3600000);
+  assert.equal(f.silo.vejce, 9);
+  assert.equal(f.silo.krmivo_slepice || 0, 0);
   assert.ok(findVill(f, ch2).xp.chov > TEAM.xpLvl[12]);
 });
 
@@ -1709,7 +1716,7 @@ test('v31: dva chovatelé v ohradě – nekrmí stejné zvíře, krmivo přesně
   f.silo.krmivo_slepice = 200;
   const feed0 = f.stats.feed || 0;
   let both = 0;
-  for (let t = T0 + 1000; t < T0 + 4 * 3600_000; t += 997) {
+  for (let t = T0 + 1000; t < T0 + 10 * 3600_000; t += 997) {
     tick(f, t);
     const A = findVill(f, a).job, B = findVill(f, b).job;
     if (A && B && (A.k === 'feed' || A.k === 'gather') && (B.k === 'feed' || B.k === 'gather')) {
@@ -1720,13 +1727,14 @@ test('v31: dva chovatelé v ohradě – nekrmí stejné zvíře, krmivo přesně
   }
   const fedNow = k.animals.filter(x => x.fed).length, inHand = f.vill.reduce((n, v) => n + (v.job && v.job.k === 'feed' ? (v.job.xs || [0]).length : 0), 0);
   assert.equal(200 - f.silo.krmivo_slepice, (f.stats.feed - feed0) + inHand, 'krmivo = nakrmená zvířata + co mají v rukou');
-  // vejce: 3 + čtvrtina od druhého = 3,75 z krmení (zlomky se sčítají)
-  const gathered = (f.stats.feed - feed0) - fedNow;
-  assert.ok(gathered > 50 && Math.abs(f.silo.vejce - 3.75 * gathered) <= 1, `vajec ${f.silo.vejce}, sběrů ${gathered}`);
+  // vejce: 3 + čtvrtina od druhého = 3,75 z každého vejce slepice (zlomky se sčítají); v34: 3 vejce slepice na krmení
+  const units = 3 * ((f.stats.feed - feed0) - fedNow) + k.animals.reduce((n, x) => n + (x.fed ? x.got || 0 : 0), 0);
+  assert.ok(units > 30 && Math.abs(f.silo.vejce - 3.75 * units) <= 1, `vajec ${f.silo.vejce}, vajec od slepic ${units}`);
   assert.ok(both > 0, 'oba pracovali zároveň');
-  const s = penStats(f, k);
+  const s = penStats(f, k, T0 + 10 * 3600_000);
   assert.equal(s.ws.length, 2); assert.equal(s.cap, 2); assert.ok(Math.abs(s.Y - 3.75) < 1e-9);
-  assert.ok(Math.abs(s.feedH - 4 * 3600 / (ANIMALS.slepice.time * (1 - 0.05 * 4))) < 1e-9);
+  assert.ok(Math.abs(s.feedH - 4 * 3600 / (ANIMAL_CYCLE * (1 - 0.05 * 4))) < 1e-9);
+  assert.ok(Math.abs(s.prodH - s.feedH * 3 * 3.75) < 1e-9);
 });
 
 test('v31: přehled chovu – upozornění na krmivo, rezervu, praxi a chybějícího chovatele', () => {
@@ -1739,12 +1747,13 @@ test('v31: přehled chovu – upozornění na krmivo, rezervu, praxi a chybějí
   f.silo.krmivo_slepice = 5; f.keep = { krmivo_slepice: 10 };
   assert.deepEqual(penStats(f, k).warn, ['keep', 'no_worker']);
   f.keep = {};
-  assert.deepEqual(penStats(f, k).warn, ['low_feed', 'no_worker'], '5 kusů při 18 za hodinu');
+  f.silo.krmivo_slepice = 1;
+  assert.deepEqual(penStats(f, k).warn, ['low_feed', 'no_worker'], '1 kus při 1 za hodinu (v34: 3 slepice × 1 krmivo / 3 h)');
   f.silo.krmivo_slepice = 500;
   hire(f, kur, 1);
   assert.deepEqual(penStats(f, k).warn, []);
   const s = penStats(f, k);
-  assert.ok(Math.abs(s.hours - 500 / s.feedH) < 1e-9 && s.prodH === s.feedH);
+  assert.ok(Math.abs(s.hours - 500 / s.feedH) < 1e-9 && Math.abs(s.prodH - 3 * s.feedH) < 1e-9);
   // Krmivárna: kolik krmiva vyrobí za hodinu
   const krm = placeAny(f, 'krmivarna');
   hire(f, krm, 1);

@@ -108,6 +108,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 
 | Datum | Kdo | Co | Výsledek |
 |---|---|---|---|
+| 12. 11. 2026 | Claude | v34: žádné nové obrázky, písma ani knihovny; plodiny jen přeskládané ze stávajících obrázků ze Scenario; nové texty (Řídicí centrum, průvodce, novinky) napsané pro EKOfarm; hledání zmínek o jiných hrách v rozdílu kódu | bez nálezu, tabulka beze změny |
 | 12. 11. 2026 | Claude | v33: nové rozhraní ze Scenario (13 obrázků, prompty v `art/PROMPTY_scenario.json`), písmo Grandstander (OFL 1.1, licence přiložená); vzhled UI má vlastní identitu (dřevo s mechem a břečťanem, stužky, muchomůrky, věneček místo hvězdy, tmavě zelené lišty) – snižuje riziko z oddílu 4; žádná nová knihovna za běhu | tabulka v oddílu 2 doplněná, úkol 8b hotový |
 | 12. 11. 2026 | Claude | v32: celá grafika nahrazená obrázky ze Scenario (GPT Image 2.5 Flare); kontrola promptů na názvy jiných her, studií a autorů (žádné); žádná nová knihovna ani závislost (`package.json` beze změny), nástroj `tools/fantasy.py` používá jen Pillow, NumPy a SciPy (jen při vývoji); nové texty novinek napsané pro EKOfarm | tabulka v oddílu 2 doplněná, úkol 8 v oddílu 3 |
 | 12. 11. 2026 | Claude | v31: kontrola změn od v30 – žádná nová knihovna ani závislost (`package.json` beze změny), žádný nový obrázek, zvuk ani písmo; texty a rozhraní (síla obsluhy, přehled chovu) napsané pro EKOfarm; hledání zmínek o jiných hrách v rozdílu kódu | bez nálezu, tabulka v oddílu 2 beze změny |

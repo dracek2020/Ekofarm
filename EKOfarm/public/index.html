@@ -10,7 +10,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
 <link rel="preload" href="/fonts/grandstander-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/style.css?v=33">
+<link rel="stylesheet" href="/css/style.css?v=34">
 </head>
 <body>
 <!--APP-->
@@ -32,6 +32,7 @@
   <div class="side" id="sideL">
     <button class="sq" id="newsBtn" aria-label="Novinky"><span data-ic="news"></span><b>Novinky</b><i class="dot" id="newsDot" hidden></i></button>
     <button class="sq" id="weatherBtn" aria-label="Počasí"></button>
+    <button class="sq" id="centerBtn" aria-label="Řídicí centrum"><span data-ic="house"></span><b>Centrum</b><i class="dot" id="centerDot" hidden></i></button>
   </div>
   <div class="side" id="sideR">
     <button class="sq" id="townBtn" aria-label="Městečko"><span data-ic="shop"></span><b>Městečko</b></button>
@@ -146,6 +147,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=33"></script>
+<script type="module" src="/js/main.js?v=34"></script>
 </body>
 </html>

@@ -85,18 +85,20 @@ save(fit_w(trim(clean(load('t/plot_se'))), 120), 't', 'plot_se')
 save(fit_w(trim(clean(load('t/plot_ne'))), 120), 't', 'plot_ne')
 save(fit_w(trim(soft_bases([trim(glow(dehaze(load('t/cedule'))))])[0][0]), 128), 't', 'cedule')   # podstavec → trs květin u kůlu
 
-# ---------- plodiny: 3 fáze z jednoho obrázku, plátno 173×173, rostliny stojí na y 158 ----------
+# ---------- plodiny: 3 fáze z jednoho obrázku, plátno 173×173 ----------
 CROPS = ['wheat', 'redkvicka', 'salat', 'corn', 'rajce', 'carrot', 'okurka', 'potato', 'jahody', 'cibule',
          'soy', 'cesnek', 'repka', 'paprika', 'sun', 'zeli', 'beet', 'hrach', 'meloun', 'dyne']
-# střed záhonu je u všech fází na stejném místě (menší klíčky nestojí na předním okraji políčka)
+# v34: střed políčka je na plátně y 133,6 (drawCropImg: šířka TW·0,92, spodek na cy + TH·0,42). Záhon rostlin má půdorys
+# kosočtverce asi 0,8 šířky shluku → přední rostlina stojí 0,23·šířky pod středem políčka. Dřív (v32/v33) stály rostliny
+# o 10–20 px výš a zadní řada i klíčky vyčnívaly z pole na trávu.
+CELL_Y, FOOT_K = 133.6, 0.23
 for crop in CROPS:
     ims = parts(glow(dehaze(load('c3/' + crop), pockets=400)), 3)
     s = min(150 / ims[2].width, 150 / max(x.height for x in ims))
-    gc = 160 - ims[2].width * s * 0.3
     for st, im in enumerate(ims):
         im = im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
         c = Image.new('RGBA', (173, 173), (0, 0, 0, 0))
-        c.alpha_composite(im, (86 - im.width // 2, round(min(166, gc + im.width * 0.3)) - im.height))
+        c.alpha_composite(im, (86 - im.width // 2, min(172, round(CELL_Y + FOOT_K * im.width)) - im.height))
         save(c, 'c', f'{crop}_{st}')
 
 # ---------- stromy a keře do sadu i do lesa ----------
@@ -192,7 +194,7 @@ if ART:
             if im is not None: icon(im, 0.96).resize((256, 256), Image.LANCZOS).save(os.path.join(ART, f'portret_{k:02d}.webp'), 'WEBP', quality=88)
 
 # ---------- seznam pro hru ----------
-js = '// Vygenerováno nástrojem tools/assets.py / tools/fantasy.py – seznam grafiky ve hře (public/img/<druh>/<jméno>.webp).\n'
+js = '// Vygenerováno nástrojem tools/assets.py / tools/fantasy.py / tools/ui.py – seznam grafiky ve hře (public/img/<druh>/<jméno>.webp).\n'
 allf = {k: sorted(f[:-5] for f in os.listdir(os.path.join(OUT, k)) if f.endswith('.webp')) for k in sorted(os.listdir(OUT)) if os.path.isdir(os.path.join(OUT, k)) and k != 'u'}   # u = rámy a tlačítka UI (jen v CSS)
 js += 'export const ASSETS = ' + json.dumps(allf, ensure_ascii=False) + ';\n'
 open(os.path.join(ROOT, 'public', 'js', 'assets.js'), 'w', encoding='utf8').write(js)

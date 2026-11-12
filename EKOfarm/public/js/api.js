@@ -1,5 +1,5 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize, VILL_BUDGET } from './rules.js?v=33';
+import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason } from './rules.js?v=34';
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -83,7 +83,7 @@ function onlineBackend() {
 function localBackend() {
   function load() {
     const raw = lsGet(LOCAL_KEY);
-    if (raw) { try { return normalize(JSON.parse(raw)); } catch { /* poškozené */ } }
+    if (raw) { try { const f = JSON.parse(raw); if (!isOldSeason(f)) return normalize(f); } catch { /* poškozené */ } }   // v34: stará sezóna → nová farma
     const f = newFarm(Date.now());
     lsSet(LOCAL_KEY, JSON.stringify(f));
     return f;

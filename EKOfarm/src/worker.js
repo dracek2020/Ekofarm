@@ -1,5 +1,5 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
-import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET } from '../public/js/rules.js';
+import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V } from '../public/js/rules.js';
 import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
 
@@ -145,10 +145,21 @@ async function auth(req, env) {
 
 // ---------- farma ----------
 
-async function loadFarm(env, userId) {
-  const r = await env.DB.prepare('SELECT state, version FROM farms WHERE user_id = ?').bind(userId).first();
+// v34: farma a nevyplacené prodeje z tržiště jedním voláním databáze (dávka), dřív dvě za sebou.
+// Farma ze starší sezóny (v < RESET_V) se nahradí novou – reset = true: saveFarm pak zruší staré nabídky hráče na tržišti
+// a staré nevyplacené prodeje označí jako vyřízené (peníze ze staré sezóny se do nové farmy nepřipíšou).
+const SALES_SQL = 'SELECT id, coins, item, qty, machine, buyer_name FROM market_sales WHERE seller = ? AND paid = 0 ORDER BY id LIMIT 50';
+async function loadFarm(env, userId, withSales = false) {
+  const farmQ = env.DB.prepare('SELECT state, version FROM farms WHERE user_id = ?').bind(userId);
+  let r, sales = [];
+  if (withSales) {
+    const [fr, sr] = await env.DB.batch([farmQ, env.DB.prepare(SALES_SQL).bind(userId)]);
+    r = fr.results && fr.results[0]; sales = sr.results || [];
+  } else r = await farmQ.first();
   if (!r) return null;
-  return { farm: normalize(JSON.parse(r.state)), version: r.version };
+  const raw = JSON.parse(r.state);
+  if (isOldSeason(raw)) return { farm: newFarm(Date.now()), version: r.version, sales: [], reset: true };
+  return { farm: normalize(raw), version: r.version, sales, reset: false };
 }
 
 // Uloží farmu (optimistické zamykání podle verze). V téže transakci můžou proběhnout další příkazy,
@@ -160,19 +171,18 @@ async function saveFarm(env, userId, row, now, extra = null, cond = null) {
   row.farm.tx = tx;
   const stmts = [env.DB.prepare(`UPDATE farms SET state = ?, version = version + 1, updated = ? WHERE user_id = ? AND version = ?${cond ? ' AND ' + cond.sql : ''}`)
     .bind(JSON.stringify(row.farm), now, userId, row.version, ...(cond ? cond.args : []))];
+  if (row.reset) stmts.push(   // v34: nová sezóna – staré nabídky a nevyplacené prodeje hráče pryč
+    env.DB.prepare(`DELETE FROM market WHERE seller = ? AND ${IF_SAVED}`).bind(userId, userId, tx),
+    env.DB.prepare(`UPDATE market_sales SET paid = 1 WHERE seller = ? AND paid = 0 AND ${IF_SAVED}`).bind(userId, userId, tx));
   if (extra) stmts.push(...extra(IF_SAVED, [userId, tx]));
   const res = await env.DB.batch(stmts);
   return res[0].meta.changes === 1;
 }
 const BUSY = () => json({ error: 'busy', message: 'Farma se právě ukládá z jiného zařízení, zkus to znovu.' }, 409);
 
-// peníze za zboží prodané na tržišti, které si prodávající ještě nevyzvedl
-async function pendingSales(env, userId) {
-  const r = await env.DB.prepare('SELECT id, coins, item, qty, machine, buyer_name FROM market_sales WHERE seller = ? AND paid = 0 ORDER BY id LIMIT 50').bind(userId).all();
-  return r.results || [];
-}
-function paySales(env, userId, farm, sales) {
-  for (const s of sales) marketPayout(farm, s.coins);
+// peníze za zboží prodané na tržišti, které si prodávající ještě nevyzvedl (načítá je loadFarm(…, true))
+function paySales(env, userId, farm, sales, now = Date.now()) {
+  for (const s of sales) marketPayout(farm, s.coins, now);
   if (!sales.length) return null;
   const last = sales[sales.length - 1].id;
   return (ifSaved, args) => [env.DB.prepare(`UPDATE market_sales SET paid = 1 WHERE seller = ? AND paid = 0 AND id <= ? AND ${ifSaved}`).bind(userId, last, ...args)];
@@ -180,26 +190,28 @@ function paySales(env, userId, farm, sales) {
 
 async function getState(env, user) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const row = await loadFarm(env, user.id);
-    const sales = await pendingSales(env, user.id);
+    const row = await loadFarm(env, user.id, true);
+    const sales = row.sales;
     const out = { name: user.name, farm: row.farm, now: Date.now(), google: user.google };
-    if (!sales.length) return json(out);
-    const extra = paySales(env, user.id, row.farm, sales);
-    if (await saveFarm(env, user.id, row, out.now, extra)) return json({ ...out, sales });
+    if (!sales.length && !row.reset) return json(out);
+    const extra = paySales(env, user.id, row.farm, sales, out.now);
+    if (await saveFarm(env, user.id, row, out.now, extra)) return json({ ...out, sales, ...(row.reset ? { reset: true } : {}) });
   }
   return BUSY();
 }
 
 // žebříček: 30 nejlepších farem podle úrovně (a XP) + moje místo
+// v34: farmy ze staré sezóny (dokud se hráč nepřihlásí a farma se neresetuje) se počítají jako úroveň 1 bez XP
+const LV = `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= ${RESET_V} THEN json_extract(f.state, '$.level') ELSE 1 END)`;
+const XP = `(CASE WHEN COALESCE(json_extract(f.state, '$.v'), 0) >= ${RESET_V} THEN json_extract(f.state, '$.xp') ELSE 0 END)`;
 async function leaderboard(env, user) {
-  const top = await env.DB.prepare(
-    "SELECT u.id, u.name, json_extract(f.state, '$.level') AS level, json_extract(f.state, '$.xp') AS xp FROM farms f JOIN users u ON u.id = f.user_id ORDER BY level DESC, xp DESC, u.id ASC LIMIT 30"
-  ).bind().all();
-  const mine = await env.DB.prepare("SELECT json_extract(state, '$.level') AS level, json_extract(state, '$.xp') AS xp FROM farms WHERE user_id = ?").bind(user.id).first();
-  const lv = mine ? mine.level || 1 : 1, xp = mine ? mine.xp || 0 : 0;
-  const better = await env.DB.prepare(
-    "SELECT COUNT(*) AS n FROM farms WHERE json_extract(state, '$.level') > ? OR (json_extract(state, '$.level') = ? AND json_extract(state, '$.xp') > ?)"
-  ).bind(lv, lv, xp).first();
+  const [top, mine] = await env.DB.batch([
+    env.DB.prepare(`SELECT u.id, u.name, ${LV} AS level, ${XP} AS xp FROM farms f JOIN users u ON u.id = f.user_id ORDER BY level DESC, xp DESC, u.id ASC LIMIT 30`),
+    env.DB.prepare(`SELECT ${LV} AS level, ${XP} AS xp FROM farms f WHERE f.user_id = ?`).bind(user.id),
+  ]);
+  const m = (mine.results || [])[0];
+  const lv = m ? m.level || 1 : 1, xp = m ? m.xp || 0 : 0;
+  const better = await env.DB.prepare(`SELECT COUNT(*) AS n FROM farms f WHERE ${LV} > ? OR (${LV} = ? AND ${XP} > ?)`).bind(lv, lv, xp).first();
   return json({
     top: (top.results || []).map(r => ({ name: r.name, level: r.level || 1, xp: r.xp || 0, me: r.id === user.id })),
     me: { rank: (better ? better.n : 0) + 1, level: lv, xp },
@@ -211,7 +223,8 @@ async function visit(env, url) {
   const name = String(url.searchParams.get('name') || '').slice(0, 40);
   const r = await env.DB.prepare('SELECT u.name, f.state FROM users u JOIN farms f ON f.user_id = u.id WHERE u.name = ?').bind(name).first();
   if (!r) return json({ error: 'not_found', message: 'Tahle farma neexistuje.' }, 404);
-  const farm = normalize(JSON.parse(r.state));
+  const raw = JSON.parse(r.state);
+  const farm = isOldSeason(raw) ? newFarm(Date.now()) : normalize(raw);   // v34: farma ze staré sezóny se ukazuje jako nová
   delete farm.tx;
   return json({ name: r.name, farm, now: Date.now() });
 }
@@ -220,27 +233,37 @@ async function actions(req, env, user) {
   const body = await readJson(req);
   const list = Array.isArray(body.actions) ? body.actions.slice(0, MAX_BATCH) : [];
   // optimistické zamykání – když farmu mezitím změnilo jiné zařízení, zkusíme znovu
+  const onlyTick = list.length > 0 && list.every(a => a && a.type === 'tick');
   for (let attempt = 0; attempt < 3; attempt++) {
-    const row = await loadFarm(env, user.id);
-    const sales = await pendingSales(env, user.id);
-    const extra = paySales(env, user.id, row.farm, sales);
+    const row = await loadFarm(env, user.id, true);
+    const sales = row.sales;
     const now = Date.now();
+    const extra = paySales(env, user.id, row.farm, sales, now);
+    const before = onlyTick && !sales.length && !row.reset ? sig(row.farm) : null;
     const lim = { left: VILL_BUDGET };   // práce vesničanů: jeden rozpočet na celý požadavek (zbytek dožene další požadavek)
     const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim));
-    if (!results.some(r => r.ok) && !sales.length) return json({ farm: row.farm, now, results });
+    // nic se nezměnilo (žádná akce neprošla; nebo jen tick, při kterém tým nic nedokončil ani nezačal) → neukládat
+    if ((!results.some(r => r.ok) || (before !== null && sig(row.farm) === before)) && !sales.length && !row.reset) return json({ farm: row.farm, now, results });
     if (await saveFarm(env, user.id, row, now, extra)) return json({ farm: row.farm, now, results, sales });
   }
   return BUSY();
 }
 
+// otisk farmy bez času dopočítání (vt) a časů nečinnosti pracovníků (t) – pro rozhodnutí, jestli tick něco změnil
+const sig = farm => JSON.stringify(farm, (k, v) => (k === 'vt' || k === 't' || k === 'tx' ? undefined : v));
+
 // ---------- tržiště hráčů ----------
 const MARKET_COLS = 'id, seller, seller_name, item, qty, machine, price, created';
+// v34: nabídky prodávajících, jejichž farma je ještě ze staré sezóny, se nezobrazují ani neprodávají (zruší se při jejich resetu)
+const LIVE_SELLER = `(SELECT COALESCE(json_extract(state, '$.v'), 0) FROM farms WHERE user_id = market.seller) >= ${RESET_V}`;
 const offerOut = (r, me) => ({ id: r.id, name: r.seller_name, item: r.item, qty: r.qty, machine: r.machine, price: r.price, created: r.created, mine: r.seller === me });
 
 async function marketGet(env, user) {
-  const others = await env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE seller != ? ORDER BY id DESC LIMIT 150`).bind(user.id).all();
-  const mine = await env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE seller = ? ORDER BY id DESC`).bind(user.id).all();
-  const sold = await env.DB.prepare('SELECT item, qty, machine, coins, buyer_name, created FROM market_sales WHERE seller = ? ORDER BY id DESC LIMIT 10').bind(user.id).all();
+  const [others, mine, sold] = await env.DB.batch([   // v34: tři dotazy jedním voláním
+    env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE seller != ? AND ${LIVE_SELLER} ORDER BY id DESC LIMIT 150`).bind(user.id),
+    env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE seller = ? ORDER BY id DESC`).bind(user.id),
+    env.DB.prepare('SELECT item, qty, machine, coins, buyer_name, created FROM market_sales WHERE seller = ? ORDER BY id DESC LIMIT 10').bind(user.id),
+  ]);
   return json({
     offers: (others.results || []).map(r => offerOut(r, user.id)),
     mine: (mine.results || []).map(r => offerOut(r, user.id)),
@@ -278,7 +301,7 @@ async function marketDeal(req, env, user, kind, ctx) {
   const body = await readJson(req);
   const id = Number(body.id);
   for (let attempt = 0; attempt < 3; attempt++) {
-    const l = await env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE id = ?`).bind(id).first();
+    const l = await env.DB.prepare(`SELECT ${MARKET_COLS} FROM market WHERE id = ? AND (seller = ? OR ${LIVE_SELLER})`).bind(id, user.id).first();
     if (!l || (kind === 'cancel' && l.seller !== user.id)) return json({ error: 'gone', message: 'Tahle nabídka už na tržišti není.' }, 404);
     if (kind === 'buy' && l.seller === user.id) return json({ error: 'own', message: 'Svoji nabídku koupit nemůžeš – můžeš ji stáhnout.' }, 400);
     const row = await loadFarm(env, user.id);

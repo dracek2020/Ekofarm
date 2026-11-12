@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=33';
-import { TW, TH } from './render.js?v=33';
-import { drawIcon } from './icons.js?v=33';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=33';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=34';
+import { TW, TH } from './render.js?v=34';
+import { drawIcon } from './icons.js?v=34';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=34';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -108,7 +108,8 @@ function drawPenAnimals(ctx, o, d, now, t) {
   const w = ANIMAL_W[d.animal], h = w * img.naturalHeight / img.naturalWidth;
   const list = (o.animals || []).map((a, i) => {
     const st = animalState(a, an, now);
-    const sp = st.state === 'eating' ? 1 : 0.35;
+    st.active = st.state !== 'hungry' && st.made < an.per;   // v34: v cyklu krmení pracuje, i když už má něco hotové
+    const sp = st.active ? 1 : 0.35;
     const ph = t / (2600 / sp) + i * 2.3;
     const u = 0.46 + 0.22 * Math.sin(ph);                                               // dost daleko od předního plotu
     const v = 0.52 + 0.05 * (i % 4) + 0.03 * Math.cos(t / (3100 / sp) + i * 1.7);
@@ -116,7 +117,7 @@ function drawPenAnimals(ctx, o, d, now, t) {
     return { x, y, st, i, right: Math.cos(ph) > 0 };
   }).sort((a, b) => a.y - b.y);   // vzadu první
   for (const { x, y, st, i, right } of list) {
-    const bob = st.state === 'eating' ? Math.abs(Math.sin(t / 160 + i)) * 1.5 : 0;
+    const bob = st.active ? Math.abs(Math.sin(t / 160 + i)) * 1.5 : 0;
     ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x, y, w * 0.38, w * 0.14, 0, 0, Math.PI * 2); ctx.fill();
     ctx.save(); ctx.translate(x, y - bob); if (right) ctx.scale(-1, 1);
     ctx.drawImage(img, -w / 2, -h, w, h);

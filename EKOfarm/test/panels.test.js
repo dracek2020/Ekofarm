@@ -43,7 +43,13 @@ test('všechny panely se vykreslí', () => {
   assert.ok(P.pondHtml(f, o(pond.id), T).includes('data-act="fish"'));
   assert.ok(P.hiveHtml(f, o(hive.id), T + 3600000).includes('data-act="collect"'));
   for (const [tab] of P.HELP_TABS) assert.ok(P.helpHtml(f, tab).length > 200, tab);
-  assert.equal(P.TUTORIAL.length, 9);
+  // v34: postupný průvodce a Řídicí centrum
+  assert.ok(P.GUIDE.length >= 20 && new Set(P.GUIDE.map(s => s.id)).size === P.GUIDE.length, 'id kroků jsou jedinečná');
+  const g0 = R.newFarm(T);
+  assert.equal(P.guideStep(g0).id, 'pole', 'nová farma začíná polem');
+  assert.equal(P.guideStep({ ...g0, tut: R.TUTORIAL_DONE }), null, 'přeskočený průvodce');
+  for (const tab of ['prehled', 'hosp', 'chov']) assert.ok(P.centerHtml(f, T, tab).length > 200, 'centrum ' + tab);
+  assert.ok(P.centerHtml(R.newFarm(T), T).includes('Upozornění'), 'centrum i na nové farmě');
   assert.ok(P.landHtml(f, 'n').includes('buyLand'));
   assert.ok(P.landHtml(f, 'nw').includes('nejdřív sousední'));
   // velké pole ve všech stavech

@@ -7,19 +7,19 @@ import {
   machinePrice, isVehicle, stallOffers, stallLeft, HELPER_PLANS, HELPER_LEVEL, helperActive, helperCapacity, helperInterval, CROP_CATS, getCrop,
   have, hasInputs, countKind, maxPlots, plotPrice, siloUsed, siloUpgradePrice, queueState, animalState,
   CROP_LIST, LEVEL_XP, MAX_LEVEL, plotState,
-  TREES, TREE_LIST, FREE_PLOTS, maxOrchards, orchardPrice, treeState, treeRefund, orderReady, canDeliver,
+  TREES, TREE_LIST, FREE_PLOTS, TUTORIAL_DONE, maxOrchards, orchardPrice, treeState, treeRefund, orderReady, canDeliver,
   LAND_PARCELS, landPrice, landLevel, landReachable,
   DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
   VILL_MAX, AREA_MIN, workAreas, areaOf, isFarmer, isSeedItem, seedCap, seedUsed, SEEDS_PER, supplyPrice, villName, villJobType, villAt, findObject,
-  workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planTotal, villLevel, villOut, speedMult, stockOf, keepOf, wpGet, wpWorkers, wpCap, areaCap, crewPower, bldCap, bldCapNext, factoryRate, penStats, penOut, hiveIv, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
-  beds, teamCap, teamFree, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
-} from './rules.js?v=33';
-import { fmtTime } from './render.js?v=33';
-import { TEAM } from './team-config.js?v=33';
-import { NEWS } from './news.js?v=33';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=33';
+  workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planTotal, villLevel, villOut, speedMult, stockOf, keepOf, wpGet, wpWorkers, wpCap, areaCap, crewPower, bldCap, bldCapNext, factoryRate, penStats, penOut, animalCycleMs, ANIMAL_CYCLE, hiveIv, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
+  beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
+} from './rules.js?v=34';
+import { fmtTime } from './render.js?v=34';
+import { TEAM } from './team-config.js?v=34';
+import { NEWS } from './news.js?v=34';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=34';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -867,17 +867,23 @@ const PEN_WARN = {
   no_feed: 'Krmivo došlo – zvířata nic nedají. Vyrob ho v Krmivárně nebo kup ve Stánku.',
   keep: 'Krmivo je celé v rezervě skladu – chovatel na něj nesáhne. Sniž rezervu ve Skladu.',
   low_feed: 'Krmivo vydrží méně než 2 hodiny a Krmivárna nestíhá.',
+  full: 'Sklad je plný – hotové výrobky se nevejdou a zvířata stojí.',
   skill: 'Žádný chovatel tu ještě nemá praxi na tohle zvíře.',
   no_worker: 'Bez chovatele krmíš a sbíráš ručně.',
 };
-// řádek přehledu ohrady: krmivo, spotřeba, produkce, chovatelé, upozornění
-function penBox(farm, o, link = false) {
-  const s = penStats(farm, o), an = s.an, fi = ITEMS[an.feed].icon, pi = ITEMS[an.product].icon;
+// v34: provozní stav ohrady (penStats.status)
+const PEN_STATUS = { run: 'v provozu', hungry: 'zvířata mají hlad', feed: 'čeká na krmivo', full: 'stojí – plný sklad', empty: 'prázdná' };
+// řádek přehledu ohrady: krmivo (i dostupné nad rezervou), spotřeba, výdrž, produkce, chovatelé, stav, upozornění
+function penBox(farm, o, now, link = false) {
+  const s = penStats(farm, o, now), an = s.an, fi = ITEMS[an.feed].icon, pi = ITEMS[an.product].icon;
   const bad = s.warn.filter(w => w !== 'no_worker' && w !== 'empty');
+  const last = !isFinite(s.hours) ? '' : ` · vydrží asi <b>${hoursText(s.hours)}</b>${s.shared > 1 ? ` (všem ${s.shared} ohradám)` : ''}`;
+  const withKr = s.makeH > 0 && s.n ? (isFinite(s.hoursNet) ? ` · s Krmivárnou asi ${hoursText(s.hoursNet)}` : ' · Krmivárna stíhá doplňovat') : '';
   return `<div class="penbox${bad.length ? ' warn' : ''}">
-    <b>${link ? `:${BUILDINGS[o.kind].icon}: ${esc(BUILDINGS[o.kind].name)} · ` : ''}${an.name}: ${s.n}/${s.max} · chovatelé ${s.ws.length}/${s.cap}</b>
-    <small>Krmivo :${fi}: ve skladu <b>${s.feedHave}</b>${s.keep ? ` (rezerva ${s.keep})` : ''}${s.n ? ` · spotřeba asi <b>${rateH(s.feedH)}</b> za hodinu${isFinite(s.hours) && s.avail ? ` · vydrží asi <b>${hoursText(s.hours)}</b>` : ''}` : ''}</small>
-    ${s.n ? `<small>Produkce :${pi}: asi <b>${rateH(s.prodH)}</b> za hodinu · z jednoho krmení ${num(s.Y)}${s.ws.length ? '' : ' (ručně)'}${s.hungry ? ` · hladových ${s.hungry}` : ''}</small>` : ''}
+    <b>${link ? `:${BUILDINGS[o.kind].icon}: ${esc(BUILDINGS[o.kind].name)} (úr. ${objLevel(o)}) · ` : ''}${an.name}: ${s.n}/${s.max} · chovatelé ${s.ws.length}/${s.cap}${s.free && s.n ? ` · volné místo ${s.free}` : ''}</b>
+    ${s.n ? `<small>Stav: <b class="${s.status === 'run' ? '' : 'miss'}">${PEN_STATUS[s.status]}</b>${s.ready ? ` · hotové :${pi}: ${s.ready}` : ''}${s.hungry ? ` · hladových ${s.hungry}` : ''}</small>` : ''}
+    <small>Krmivo :${fi}: ve skladu <b>${s.feedHave}</b>${s.keep ? `, rezerva ${s.keep} → pro chov <b>${s.avail}</b>` : ''}${s.n ? ` · spotřeba asi <b>${rateH(s.feedH)}</b>/h${s.shared > 1 ? ` (všechny ohrady ${rateH(s.feedAll)}/h)` : ''}${last}${withKr}` : ''}</small>
+    ${s.n ? `<small>Produkce :${pi}: odhadem <b>${rateH(s.prodH)}</b>/h · jedno krmení na ${hoursText(s.cycleS / 3600)} = ${an.per}× :${pi}:${s.Y !== 1 ? ` × ${num(Math.round(s.Y * 100) / 100)} od chovatelů` : ''}${s.ws.length ? '' : ' (ručně)'}</small>` : ''}
     ${s.kr ? `<small>${esc(BUILDINGS[s.kr.kind].name)}: ${s.makeH ? `asi <b>${rateH(s.makeH)}</b> :${fi}: za hodinu podle plánu` : s.target ? `vyrábí do zásoby ${s.target} :${fi}:` : `:${fi}: nemá v plánu`}</small>` : ''}
     ${s.warn.map(w => `<small class="${w === 'no_worker' || w === 'empty' ? 'muted' : 'miss'}">${w === 'no_worker' || w === 'empty' ? '' : '⚠ '}${PEN_WARN[w]}</small>`).join('')}
     ${link ? `<button class="btn sm alt" data-act="openObj" data-v="${o.id}">Otevřít</button>` : ''}</div>`;
@@ -893,21 +899,22 @@ function chovHtml(farm, now) {
       <button class="btn sm alt" data-act="openObj" data-v="${o.id}">Otevřít</button></div>`;
   }).join('');
   return `<p class="muted"><b>Přehled chovu</b> – spotřeba a produkce za hodinu platí, když se o zvířata stará chovatel bez přestávky.</p>
-    ${pens.map(o => penBox(farm, o, true)).join('')}${hv}`;
+    ${pens.map(o => penBox(farm, o, now, true)).join('')}${hv}`;
 }
 export function penHtml(farm, o, now) {
   const d = BUILDINGS[o.kind];
   const an = ANIMALS[d.animal];
   const rows = o.animals.map((a, i) => {
     const st = animalState(a, an, now);
-    const txt = st.state === 'hungry' ? `má hlad – chce :${ITEMS[an.feed].icon}:` : st.state === 'ready' ? `:${ITEMS[an.product].icon}: připraveno` : `:${ITEMS[an.product].icon}: za ${fmtTime(st.left)}`;
-    const bar = st.state === 'eating' ? `<div class="bar"><div style="width:${(st.progress * 100).toFixed(1)}%"></div></div>` : '';
+    const pi = ITEMS[an.product].icon, next = st.left ? ` · další :${pi}: za ${fmtTime(st.left)}` : ' · cyklus hotový';
+    const txt = st.state === 'hungry' ? `má hlad – chce :${ITEMS[an.feed].icon}:` : st.state === 'ready' ? `:${pi}: ${st.avail}× připraveno${next}` : `${st.made}/${an.per} :${pi}:${next}`;
+    const bar = st.state !== 'hungry' && st.progress < 1 ? `<div class="bar"><div style="width:${(st.progress * 100).toFixed(1)}%"></div></div>` : '';
     return `<div class="row"><span class="ico">:${an.icon}:</span><div class="info"><b>${an.name} ${i + 1}</b><small>${txt}</small>${bar}</div></div>`;
   }).join('') || `<div class="empty">Ohrada je prázdná. Kup ${an.acc} v obchodě nebo tady.</div>`;
-  const ready = o.animals.filter(a => animalState(a, an, now).state === 'ready').length;
+  const ready = o.animals.reduce((n, a) => n + animalState(a, an, now).avail, 0);
   const hungry = o.animals.filter(a => !a.fed).length;
-  return `${penBox(farm, o)}${rows}
-    <p class="muted">${an.name}: krmivo :${ITEMS[an.feed].icon}: → :${ITEMS[an.product].icon}: ${ITEMS[an.product].name} za ${fmtTime(Math.round(an.time * speedMult(o)))}.</p>
+  return `${penBox(farm, o, now)}${rows}
+    <p class="muted">${an.name}: 1 krmivo :${ITEMS[an.feed].icon}: vydrží ${fmtTime(Math.round(animalCycleMs(o) / 1000))} a zvíře za tu dobu průběžně dá ${an.per}× :${ITEMS[an.product].icon}: ${ITEMS[an.product].name}.</p>
     ${ready ? `<button class="btn" data-act="collect" data-v="${o.id}">Sebrat :${ITEMS[an.product].icon}: (${ready})</button>` : ''}
     ${hungry ? `<button class="btn" data-act="feed" data-v="${o.id}">Nakrmit (${hungry})</button>` : ''}
     ${o.animals.length < penMax(o) ? `<button class="btn alt" data-act="buyAnimal" data-v="${an.id}">Koupit ${an.acc} za ${an.cost} :coin: (${o.animals.length}/${penMax(o)})</button>` : ''}
@@ -1151,17 +1158,42 @@ export function hiveHtml(farm, o, now) {
 
 // ---------- v11: průvodce pro nové hráče ----------
 // done = splněno (podle farmy), info = jen vysvětlení s tlačítkem Dál
-export const TUTORIAL = [
-  { text: 'Klepni na prázdné pole a vyber <b>Pšenici</b>. Pak můžeš prstem přejet přes další pole a zasít je najednou.', done: f => (f.stats.plant || 0) > 0 },
-  { text: 'Pšenice roste 1 minutu. Až zezlátne, <b>přejeď prstem</b> přes zralá pole a sklidíš je do skladu.', done: f => (f.stats.harvest || 0) >= 2 },
-  { text: 'Peníze vyděláš <b>zakázkami</b> (klepni na Statek) nebo prodejem ve <b>Skladu</b>. Zkus jedno z toho.', done: f => (f.stats.orders || 0) > 0 || (f.stats.sold || 0) > 0 },
-  { text: 'Otevři <b>Stavět</b> a postav <b>Semenárnu</b> nebo <b>Pekárnu</b> – z úrody budeš vyrábět.', done: f => f.objects.some(o => BUILDINGS[o.kind].type === 'factory') },
-  { text: 'V <b>Úkolech</b> čeká každý den 8 denních úkolů a denní odměna. Plň je, dostaneš mince.', info: true },
-  { text: 'Tlačítko <b>Městečko</b> vpravo nahoře: prodejna strojů, stánek a tržiště, kde obchoduješ s kamarády.', info: true },
-  { text: 'Pracovníci potřebují bydlet. Až budeš mít 200 mincí, postav <b>Chatrč</b> (Stavět → Farma).', done: f => f.objects.some(o => BUILDINGS[o.kind].type === 'house') },
-  { text: 'V Městečku najdeš <b>Nástěnku</b>. Vyvěs inzerát, zaplať pohoštěním (stačí 4 pšenice) a vyber si prvního pracovníka.', done: f => f.vill.length > 0 || f.board.ads.length > 0 },
-  { text: 'Vylepšuj <b>Statek</b> – za zásluhy odemyká nové budovy, pole a sady. Všechno najdeš v <b>Menu → Jak hrát</b>. Hodně štěstí!', info: true },
+// v34: postupný průvodce – krok se ukáže, až se jeho část hry odemkne (when) a předchozí kroky jsou hotové nebo ještě
+// zamčené; úkol (done) se odškrtne sám, informaci (info) hráč potvrdí tlačítkem Další. Hotové kroky jsou ve farm.tg.
+const gHas = (f, pred) => f.objects.some(pred);
+const gType = t => o => BUILDINGS[o.kind] && BUILDINGS[o.kind].type === t;
+const gWorked = f => f.vill.some(v => v.at || v.area);
+export const GUIDE = [
+  { id: 'pole', text: 'Klepni na prázdné <b>pole</b> a vyber <b>Pšenici</b>. Prstem pak přejeď přes další pole a zaseješ je najednou.', when: () => true, done: f => (f.stats.plant || 0) > 0 },
+  { id: 'sklizen', text: 'Pšenice roste 1 minutu. Zralá pole <b>sklidíš přejetím prstu</b> – úroda jde do <b>Skladu</b>.', when: f => (f.stats.plant || 0) > 0, done: f => (f.stats.harvest || 0) >= 2 },
+  { id: 'penize', text: 'Peníze vyděláš <b>zakázkami</b> ve Statku (klepni na něj) nebo prodejem ve <b>Skladu</b>. Zkus jedno z toho.', when: f => (f.stats.harvest || 0) >= 2, done: f => (f.stats.orders || 0) > 0 || (f.stats.sold || 0) > 0 },
+  { id: 'ukoly', info: true, text: 'Dole v <b>Úkolech</b> jsou denní úkoly a denní odměna – za splnění dostaneš mince a zkušenosti.', when: f => (f.stats.harvest || 0) >= 2 },
+  { id: 'vyroba', text: 'Otevři <b>Stavět → Výrobny</b> a postav <b>Semenárnu</b> nebo <b>Pekárnu</b>. Z úrody budeš vyrábět dražší zboží.', when: f => (f.stats.orders || 0) > 0 || (f.stats.sold || 0) > 0, done: f => gHas(f, gType('factory')) },
+  { id: 'vyroba2', info: true, text: 'Ve výrobně vyber výrobek – peče se ve frontě a hotový ho vybereš klepnutím na budovu. <b>Semenárna</b> dělá semena, se kterými sázení nestojí mince.', when: f => gHas(f, gType('factory')) },
+  { id: 'statek', text: 'Vylepšuj <b>Statek</b> (klepni na něj → záložka Statek). Každá úroveň odemkne nové budovy, víc polí a sadů.', when: f => gHas(f, gType('factory')), done: f => statekLevel(f) >= 2 },
+  { id: 'sad', text: 'Postav <b>Sad</b> (Stavět → Farma) a zasaď ovocný strom. Strom plodí několikrát, pak uschne a vykopeš ho.', when: f => f.level >= TREE_LIST[0].level && maxOrchards(f) > 0, done: f => gHas(f, o => o.kind === 'sad' && o.tree) },
+  { id: 'kurnik', text: 'Postav <b>Kurník</b> (Stavět → Zvířata) a kup do něj slepice.', when: f => statekLevel(f) >= BUILDINGS.kurnik.st && f.level >= ANIMALS.slepice.level, done: f => gHas(f, o => gType('pen')(o) && (o.animals || []).length) },
+  { id: 'krmeni', info: true, text: 'Zvířata nakrmíš klepnutím na ohradu. <b>Jedno krmivo vydrží 3 hodiny</b> – slepice za tu dobu snese 3 vejce, kráva, prase a ovce dají 2 výrobky. Sbírej průběžně.', when: f => gHas(f, o => gType('pen')(o) && (o.animals || []).length) },
+  { id: 'krmivarna', text: 'Postav <b>Krmivárnu</b> a vyrob krmivo pro slepice z pšenice a kukuřice.', when: f => statekLevel(f) >= BUILDINGS.krmivarna.st && gHas(f, gType('pen')), done: f => gHas(f, o => o.kind === 'krmivarna') },
+  { id: 'mestecko', info: true, text: 'Vpravo nahoře je <b>Městečko</b>: Stánek se zásobami, Prodejna strojů a <b>Tržiště</b>, kde obchoduješ s kamarády.', when: f => f.level >= 3 },
+  { id: 'chatrc', text: 'Pracovníci potřebují bydlet. Postav <b>Chatrč</b> (Stavět → Farma, 200 :coin:) – vejdou se do ní 2 lidé.', when: f => f.coins >= 150 || f.level >= 5, done: f => gHas(f, gType('house')) },
+  { id: 'nastenka', text: 'V Městečku na <b>Nástěnce</b> vyvěs inzerát, zaplať pohoštěním a vyber si pracovníka.', when: f => gHas(f, gType('house')), done: f => f.vill.length > 0 },
+  { id: 'prace', text: 'Otevři <b>Tým</b> a pracovníka přiřaď – pěstitele k polím, řemeslníka do výrobny, chovatele k ohradě. Pracuje, i když hru zavřeš.', when: f => f.vill.length > 0, done: gWorked },
+  { id: 'plan', info: true, text: 'V okně budovy nebo pole nastav <b>plán práce</b>: co dělat, cílové zásoby a procenta. Ve <b>Skladu</b> nastavíš rezervy, na které tým nesáhne.', when: gWorked },
+  { id: 'centrum', info: true, text: 'Tlačítko <b>Centrum</b> vlevo otevře <b>Řídicí centrum</b>: hospodaření za 24 h, sklad, tým, výroba, pole, chov a upozornění, co potřebuje pozornost.', when: f => f.vill.length > 0 || f.level >= 5 },
+  { id: 'pryc', info: true, text: 'Když budeš pryč déle než půl hodiny, po návratu uvidíš, co tým mezitím udělal – sklizeň, výrobu i prodeje.', when: gWorked },
+  { id: 'skladnik', info: true, text: '<b>Skladník</b> ve Skladu prodává zboží na trhu každou půlhodinu podle plánu. Rezervy přitom nechá být.', when: f => f.vill.length >= 2 },
+  { id: 'pozemky', info: true, text: 'Za plotem stojí cedule <b>Na prodej</b>. Koupí pozemku farmu zvětšíš.', when: f => f.level >= 6 },
+  { id: 'velkepole', text: 'Postav <b>Velké pole</b> (Stavět → Farma). Traktor ho zorá a oseje, kombajn sklidí – stroje koupíš v Prodejně strojů.', when: f => maxBigFields(f) > 0, done: f => gHas(f, o => o.kind === 'velkepole') },
+  { id: 'rybnik', info: true, text: 'Od Statku 3 můžeš postavit <b>Rybník</b> a lovit ryby, od Statku 5 <b>Včelín</b> na med.', when: f => statekLevel(f) >= 3 },
+  { id: 'konec', info: true, text: 'Všechno ostatní najdeš v <b>Menu → Jak hrát</b> a v <b>Deníku farmáře</b>. Hodně štěstí!', when: f => statekLevel(f) >= 3 && f.vill.length > 0 },
 ];
+// který krok průvodce teď ukázat: první nehotový v pořadí, jehož část hry je odemčená (null = nic)
+export function guideStep(f) {
+  if ((f.tut || 0) >= TUTORIAL_DONE) return null;
+  const done = new Set(f.tg || []);
+  return GUIDE.find(s => !done.has(s.id) && s.when(f)) || null;
+}
 
 // ---------- v11: pravidla a nápověda (Menu → Jak hrát) ----------
 export const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Městečko'], ['ryby', 'Rybník a včely'], ['tipy', 'Počasí a další']];
@@ -1180,7 +1212,8 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:plot: Kolik lidí kam:</b> výrobna má místo pro 1 pracovníka, od 4. úrovně pro 2, od 7. pro 3 a na 10. úrovni pro 4. Ohrada pro 1, od 5. úrovně pro 2. Včelín a sklad pro jednoho. Oblast polí nebo sadů vezme jednoho na každá 4 pole (6 polí = 1, 8 = 2, 12 = 3). Na plné místo jde jen výměnou.')
       + p('<b>:star: Síla obsluhy:</b> víc lidí ve výrobně dělá větší dávky – první přidá 100 % svého výkonu, druhý 60 %, třetí 40 %, čtvrtý 30 %. V ohradě druhý chovatel přidá čtvrtinu svého výnosu z krmení. Kdo na výrobek nebo zvíře ještě nemá praxi, nepočítá se. Zkušenosti se dělí podle podílu. Statek → <b>Chov</b> ukáže krmivo, spotřebu a produkci všech ohrad.')
       + p('<b>:chleb: Výroba:</b> výrobny dělají z úrody výrobky (fronta až 3 kusy). Klepnutím na budovu vybereš hotové.')
-      + p('<b>:hen: Zvířata:</b> potřebují ohradu a krmivo z Krmivárny. Nakrmíš klepnutím na ohradu.')
+      + p('<b>:hen: Zvířata:</b> potřebují ohradu a krmivo z Krmivárny. Nakrmíš klepnutím na ohradu – <b>1 krmivo vydrží 3 hodiny</b> a zvíře za tu dobu průběžně dá výrobky: slepice 3 vejce, kráva 2 mléka, prase 2 masa, ovce 2 vlny. Vylepšená ohrada má cyklus o 5 % kratší za úroveň.')
+      + p('<b>:house: Řídicí centrum</b> (tlačítko Centrum vlevo): hospodaření za 24 hodin, sklad, tým, výroba, pole a chov na jednom místě a upozornění seřazená od nejdůležitějších. Klepnutím na upozornění se dostaneš k budově.')
       + p('<b>:coin: Peníze:</b> nejvíc platí <b>zakázky</b> ve Statku, pak <b>stánek</b> a <b>tržiště</b>. Výkup ve Skladu platí polovinu ceny a mění se každé 4 hodiny.')
       + p('<b>:xp: Úroveň hráče</b> roste za každou práci a pořád dál. Odemyká nové plodiny, zvířata, stromy, ryby, stroje a recepty.')
       + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.')
@@ -1230,4 +1263,99 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:gift: Denní odměna</b> roste 7 dní po sobě. <b>Denních úkolů</b> je každý den 8 a za všechny je bonus.');
   }
   return tabs + body + '<button class="btn alt" data-act="tutRestart" data-v="">:farmer: Spustit průvodce znovu</button>';
+}
+
+// =====================================================================================================================
+// v34: Řídicí centrum – přehled hospodaření ze skutečného stavu farmy (centerData v rules.js, stejné výpočty jako hra)
+// =====================================================================================================================
+const CENTER_TABS = [['prehled', 'Přehled'], ['hosp', 'Hospodaření'], ['chov', 'Chov']];
+const coins = n => `${Math.round(n).toLocaleString('cs-CZ')} :coin:`;
+const icList = (ids, max = 8) => ids.slice(0, max).map(id => (ITEMS[id] ? `<span class="needi" title="${esc(ITEMS[id].name)}">:${ITEMS[id].icon}:</span>` : '')).join('') + (ids.length > max ? ` <small class="muted">+${ids.length - max}</small>` : '');
+const ALERT_CLS = ['crit', 'warn', 'info'];
+// upozornění: nejdřív kritická, stejný druh sloučený, tlačítko na budovu
+function alertsHtml(alerts, max = 8) {
+  if (!alerts.length) return '<div class="al ok"><b>✓</b><span>Na farmě je všechno v pořádku.</span></div>';
+  const rows = alerts.slice(0, max).map(a => {
+    const go = a.ids.length ? `<button class="chip" data-act="openObj" data-v="${a.ids[0]}">Otevřít</button>`
+      : a.k === 'free' ? '<button class="chip" data-act="openTeam">Tým</button>'
+      : a.k === 'silo_full' || a.k === 'silo_high' ? '<button class="chip" data-act="openSilo">Sklad</button>'
+      : a.k === 'seeds' ? '<button class="chip" data-act="openStall">Stánek</button>' : '';
+    return `<div class="al ${ALERT_CLS[a.lvl]}"><b>${a.lvl === 0 ? '!' : a.lvl === 1 ? '⚠' : 'i'}</b><span>${esc(a.text)}${a.n > 1 ? ` <small>(${a.n}×)</small>` : ''}</span>${go}</div>`;
+  }).join('');
+  return rows + (alerts.length > max ? `<p class="muted">a další upozornění: ${alerts.length - max}</p>` : '');
+}
+// co tým udělal, když hráč nebyl ve hře
+const AWAY_GROUPS = [['harvest', 'Sklizeno', id => CROPS[id] || id === 'slama'], ['fruit', 'Natrháno', id => FRUITS_OF({ id })],
+  ['animal', 'Od zvířat a včel', id => ['vejce', 'mleko', 'maso', 'vlna', 'plast'].includes(id)], ['seed', 'Semena a sazenice', id => isSeedItem(id)], ['produce', 'Vyrobeno', () => true]];
+function awayHtml(a, now, full = false) {
+  if (!a) return full ? '<p class="tip">Zatím žádná delší nepřítomnost – zpráva se objeví, když budeš pryč déle než půl hodiny a tým bude pracovat.</p>' : '';
+  const mins = Math.round((a.to - a.from) / 60000), dur = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} h ${String(mins % 60).padStart(2, '0')} min`;
+  const left = Object.entries(a.got || {}), groups = [];
+  for (const [, name, test] of AWAY_GROUPS) {
+    const it = left.filter(([id, n]) => n > 0 && test(id));
+    for (const x of it) left.splice(left.indexOf(x), 1);
+    if (it.length) groups.push(`<small>${name}: ${it.sort((p, q) => q[1] - p[1]).slice(0, 8).map(([id, n]) => `<b>${n}×</b> :${ITEMS[id] ? ITEMS[id].icon : id}:`).join(' ')}</small>`);
+  }
+  const sold = Object.entries(a.sold || {});
+  return `<div class="penbox away"><b>:clock: ${a.done ? 'Zatímco jsi byl pryč' : 'Dohání se práce týmu'} (${dur})</b>
+    ${groups.join('') || '<small>Tým za tu dobu nic nedokončil.</small>'}
+    ${a.coins ? `<small>Skladník prodal ${sold.slice(0, 6).map(([id, n]) => `${n}× :${ITEMS[id] ? ITEMS[id].icon : id}:`).join(' ')} za <b>${coins(a.coins)}</b></small>` : ''}
+    ${a.fed ? `<small>Nakrmeno zvířat: <b>${a.fed}</b></small>` : ''}
+    <small class="muted">Počítá se ze skutečně dokončené práce týmu (${a.jobs} úkonů), každý úsek času jen jednou.</small>
+    ${a.done && !a.seen ? '<button class="btn sm" data-act="awayOk">Rozumím</button>' : ''}</div>`;
+}
+function ccard(title, body, foot = '') {
+  return `<div class="ccard"><b class="ct">${title}</b>${body}${foot ? `<div class="cf">${foot}</div>` : ''}</div>`;
+}
+const crow = (label, value, cls = '') => `<div class="cr${cls ? ' ' + cls : ''}"><span>${label}</span><b>${value}</b></div>`;
+export function centerHtml(farm, now, tab = 'prehled') {
+  const c = centerData(farm, now);
+  const tabs = `<div class="tabs">${CENTER_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="stab" data-v="${id}">${n}</button>`).join('')}</div>`;
+  if (tab === 'chov') return tabs + chovHtml(farm, now);
+  if (tab === 'hosp') return tabs + ecoHtml(farm, c, now);
+  const e = c.eco, s = c.silo, t = c.team, p = c.prod, fl = c.fields;
+  const since = e.since && e.since > now - 23 * 3600000 ? `<small class="muted">Zaznamenává se od ${new Date(e.since).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}.</small>` : '';
+  const topIn = Object.entries(e.byIn).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${LEDGER_SRC[k] || k} ${coins(v)}`).join(' · ');
+  const making = Object.entries(p.making), rates = Object.entries(p.rate).sort((a, b) => b[1] - a[1]);
+  const away = c.away && (!c.away.seen || now - c.away.to < 6 * 3600000) ? awayHtml(c.away, now) : '';
+  return `${tabs}${away}<div class="sect">Upozornění</div>${alertsHtml(c.alerts)}
+  <div class="cgrid">
+  ${ccard(':coin: Ekonomika', `${crow('Mince', coins(c.coins))}${crow('Příjmy za 24 h', '+' + coins(e.inc), 'up')}${crow('Výdaje za 24 h', '−' + coins(e.exp), 'down')}${crow('Výsledek', (e.net >= 0 ? '+' : '−') + coins(Math.abs(e.net)), e.net >= 0 ? 'up' : 'down')}
+    ${topIn ? `<small>${topIn}</small>` : ''}${since}`, '<button class="chip" data-act="stab" data-v="hosp">Podrobně</button>')}
+  ${ccard(':barn: Sklad', `<div class="bar big"><div style="width:${Math.min(100, 100 * s.used / Math.max(1, s.cap)).toFixed(0)}%"></div></div>
+    ${crow('Obsazeno', `${s.used} / ${s.cap}`, s.used >= s.cap * 0.85 ? 'down' : '')}${crow('Volno', s.free)}
+    ${s.low.length ? `<small>Dochází: ${icList(s.low)}</small>` : ''}
+    ${s.keep.length ? `<small>Rezervy: ${s.keep.slice(0, 6).map(k => `:${ITEMS[k.item] ? ITEMS[k.item].icon : k.item}: ${k.have}/${k.keep}`).join(' · ')}</small>` : ''}
+    ${s.targets.length ? `<small>Cílové zásoby: ${s.targets.slice(0, 6).map(x => `:${ITEMS[x.item] ? ITEMS[x.item].icon : x.item}: ${x.has}/${x.target}${x.done ? ' ✓' : ''}`).join(' · ')}</small>` : ''}`,
+    '<button class="chip" data-act="openSilo">Otevřít Sklad</button>')}
+  ${ccard(':helper: Farmářský tým', t.total ? `${crow('Lidí v týmu', t.total)}${crow('Pracuje', t.working, 'up')}${crow('Čeká na práci', t.waiting)}${crow('Nemůže pracovat', t.blocked, t.blocked ? 'down' : '')}${crow('Bez přiřazení', t.free, t.free ? 'down' : '')}
+    ${crow('Obsazená místa', `${t.filled} / ${t.seats}`)}${crow('Volná lůžka', t.bedsFree)}${(() => { const n = c.alerts.filter(a => a.k === 'no_worker').reduce((s, a) => s + a.n, 0); return n ? crow('Budovy bez pracovníka', n, 'down') : ''; })()}`
+    : `<small>Zatím nemáš žádné pracovníky. Hledají se na Nástěnce v Městečku (lůžek: ${t.beds}).</small>`, '<button class="chip" data-act="openTeam">Tým</button>')}
+  ${ccard(':hammer: Výroba', `${crow('Výrobny v provozu', p.active, 'up')}${crow('Výrobny stojí', p.stopped, p.stopped ? 'down' : '')}
+    ${making.length ? `<small>Teď se vyrábí: ${making.slice(0, 8).map(([id, n]) => `${n}× :${ITEMS[id] ? ITEMS[id].icon : id}:`).join(' ')}</small>` : ''}
+    ${rates.length ? `<small>Odhad za hodinu: ${rates.slice(0, 6).map(([id, r]) => `:${ITEMS[id].icon}: ${rateH(r)}`).join(' · ')}</small>` : '<small class="muted">Odhad za hodinu: výrobny bez plánu nebo bez pracovníků.</small>'}
+    ${p.reached.length ? `<small>Splněné cílové zásoby: ${p.reached.length} ${p.reached.length === 1 ? 'výrobna čeká' : 'výrobny čekají'}</small>` : ''}`)}
+  ${ccard(':plot: Pole a sady', `${crow('Pole', fl.plots)}${crow('Roste', fl.growing)}${crow('Připraveno ke sklizni', fl.ripe, fl.ripe ? 'up' : '')}${crow('Čeká na zasetí', fl.empty)}${crow('Pěstitelé', fl.growers)}
+    ${fl.seedsMissing.length ? `<small class="miss">Chybí semena: ${icList(fl.seedsMissing)}</small>` : ''}
+    ${fl.trees.total ? `<small>Sady: stromů ${fl.trees.total} · zralých ${fl.trees.ready}${fl.trees.dead ? ` · uschlých ${fl.trees.dead}` : ''}${fl.trees.empty ? ` · prázdných ${fl.trees.empty}` : ''}</small>` : ''}
+    ${fl.big.length ? `<small>Velká pole: ${fl.big.map(b => `${b.crop && CROPS[b.crop] ? `:${CROPS[b.crop].icon}:` : ':field:'} ${BIG_STATE[b.state] || b.state}`).join(' · ')} · strojů ${fl.machines}</small>` : ''}`)}
+  ${ccard(':cow: Chov', c.pens.length ? c.pens.map(({ id, s: x }) => `<button class="crow" data-act="openObj" data-v="${id}">:${x.an.icon}: <b>${x.n}/${x.max}</b> <span class="${x.status === 'run' ? '' : 'miss'}">${PEN_STATUS[x.status]}</span>
+      ${x.n ? `<small>:${ITEMS[x.an.product].icon}: ${rateH(x.prodH)}/h · krmivo ${isFinite(x.hours) ? hoursText(x.hours) : '–'}</small>` : ''}</button>`).join('')
+    : '<small>Zatím nemáš ohradu. Kurník se odemkne na Statku 2.</small>', c.pens.length ? '<button class="chip" data-act="stab" data-v="chov">Podrobně</button>' : '')}
+  </div>
+  <p class="muted">Hodnoty za hodinu jsou <b>odhady</b> podle plánů a síly pracovníků – stejný výpočet, jakým hra vyrábí. Upozornění se počítají vždy znovu ze stavu farmy.</p>`;
+}
+const BIG_STATE = { empty: 'prázdné', plowed: 'zorané', sowing: 'seje se', growing: 'roste', ready: 'zralé', harvesting: 'sklízí se', unload: 'vyložit', baled: 'balíky' };
+// hospodaření za 24 h: sloupce po hodinách a souhrn podle zdroje
+function ecoHtml(farm, c, now) {
+  const e = c.eco, max = Math.max(1, ...e.series.map(s => Math.max(s.i, s.o)));
+  const bars = e.series.map(s => `<div class="col" title="${new Date(s.h * 3600000).getHours()}:00 · +${s.i} / −${s.o}"><i class="in" style="height:${(100 * s.i / max).toFixed(0)}%"></i><i class="out" style="height:${(100 * s.o / max).toFixed(0)}%"></i></div>`).join('');
+  const list = (by, sign) => Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, v]) => crow(LEDGER_SRC[k] || k, `${sign}${coins(v)}`, sign === '+' ? 'up' : 'down')).join('') || '<small class="muted">nic</small>';
+  const h0 = new Date(e.series[0].h * 3600000).getHours();
+  return `${crow('Mince teď', coins(c.coins))}${crow('Výsledek za 24 h', (e.net >= 0 ? '+' : '−') + coins(Math.abs(e.net)), e.net >= 0 ? 'up' : 'down')}
+    <div class="sect">Po hodinách</div>
+    <div class="chart">${bars}</div><div class="chart-x"><span>${h0}:00</span><span>teď</span></div>
+    <p class="muted"><span class="lg in"></span> příjmy <span class="lg out"></span> výdaje</p>
+    <div class="cgrid">${ccard('Příjmy za 24 h', list(e.byIn, '+'))}${ccard('Výdaje za 24 h', list(e.byOut, '−'))}</div>
+    <p class="muted">Zaznamenávají se jen skutečné změny mincí (od verze 34), po hodinách, nejvýš 48 hodin zpátky.${e.since ? ` První záznam: ${new Date(e.since).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}.` : ''}</p>`;
 }

@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 34, title: 'Nová sezóna: Řídicí centrum, krmení na 3 hodiny, průvodce', items: [
+    'Začíná nová sezóna – všechny farmy začínají znovu od úrovně 1. Účet, jméno a chat zůstávají.',
+    'Zvířata: jedno krmivo vydrží 3 hodiny a zvíře za tu dobu průběžně dá výrobky – slepice 3 vejce, kráva 2 mléka, prase 2 masa, ovce 2 vlny. Sbírat můžeš kdykoli během cyklu.',
+    'Řídicí centrum (tlačítko Centrum vlevo): hospodaření za 24 hodin, sklad, tým, výroba, pole a chov na jednom místě. Upozornění jsou seřazená od kritických a klepnutím se dostaneš k budově.',
+    'Přehled chovu ukazuje krmivo dostupné nad rezervou, spotřebu, na jak dlouho vydrží (i s Krmivárnou), produkci za hodinu a stav ohrady.',
+    'Zatímco jsi byl pryč: po návratu uvidíš, co tým sklidil, vyrobil a prodal.',
+    'Nový průvodce tě provede celou hrou postupně – každá část se vysvětlí, až se odemkne.',
+    'Rostliny na polích už nevyčnívají ze záhonů.',
+  ] },
   { v: 33, title: 'Nové rozhraní: lesní pohádková kniha', items: [
     'Okna mají dřevěný rám s mechem, břečťanem a kvítím, nadpis na zelené stužce a zavírá se muchomůrkou.',
     'Tlačítka, záložky, horní ukazatele i spodní lišta jsou z malovaného dřeva a mechu, úroveň ukazuje věneček.',

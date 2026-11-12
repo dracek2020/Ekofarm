@@ -9,6 +9,8 @@ export function fakeD1() {
     prepare(sql) {
       let args = [];
       const st = {
+        sql,
+        get args() { return args; },
         bind(...a) { args = a; return st; },
         async first() { return db.prepare(sql).get(...args) ?? null; },
         async all() { return { results: db.prepare(sql).all(...args) }; },
@@ -24,7 +26,8 @@ export function fakeD1() {
       db.exec('BEGIN');
       try {
         const out = [];
-        for (const s of stmts) out.push(await s.run());
+        // jako D1: SELECT v dávce vrátí řádky (results), ostatní příkazy meta.changes
+        for (const s of stmts) out.push(/^\s*select/i.test(s.sql) ? { results: db.prepare(s.sql).all(...s.args), meta: {} } : await s.run());
         db.exec('COMMIT');
         return out;
       } catch (e) { db.exec('ROLLBACK'); throw e; }

@@ -680,7 +680,8 @@ body.sheet-open #catchUp { display: none; }
 /* zprávy a lišty: tmavě zelená lesní */
 #toast, #banner, #visitBar { background: var(--forest); border: 2px solid #c9b37a; }
 #toast.lvlup { background: var(--forest); }
-#tut { background: none; border: 0 solid transparent; box-shadow: none; filter: drop-shadow(0 4px 8px #0005); border-image: var(--u-tile) 22% fill / 20px stretch; }
+#tut { background: none; border: 0 solid transparent; box-shadow: none; filter: drop-shadow(0 4px 8px #0005); border-image: var(--u-tile) 22% fill / 20px stretch; padding: 16px 40px 12px 14px; }
+#tut .tut-x { top: 10px; right: 10px; }
 /* nová úroveň: věneček místo hvězdy, světlo zelenozlaté */
 .lu-box { background: none; border: 26px solid transparent; border-radius: 0; box-shadow: none; padding: 66px 6px 6px; filter: drop-shadow(0 18px 30px #0007);
   border-image: var(--u-panel) 21% fill / 46px stretch; }
@@ -697,7 +698,7 @@ body.sheet-open #catchUp { display: none; }
 #loading { background: #3f6b1d var(--u-splash) center / cover no-repeat; text-shadow: 0 2px 4px #0009; align-content: center; gap: 10px; }
 #loading::before { content: ""; width: 170px; height: 170px; margin: 0 auto; background: var(--u-znak) center / contain no-repeat; filter: drop-shadow(0 6px 10px #0007); }
 /* drobné ozdoby: zavírací × na liště, motýlek u prázdných seznamů a u nové úrovně */
-#bannerClose { background: var(--u-cross) center / contain no-repeat; color: transparent; font-size: 0; width: 32px; height: 32px; }
+#banner #bannerClose { background: var(--u-cross) center / contain no-repeat; color: transparent; font-size: 0; width: 32px; height: 32px; }
 div.empty:not(.slot)::before { content: ""; display: block; width: 44px; height: 44px; margin: 0 auto 6px; background: var(--u-butterfly) center / contain no-repeat; opacity: .9; }
 .lu-box::after { content: ""; position: absolute; right: -14px; top: 18px; width: 44px; height: 44px; background: var(--u-butterfly) center / contain no-repeat; animation: luFly 2.4s ease-in-out infinite alternate; pointer-events: none; }
 @keyframes luFly { to { transform: translate(-8px, -10px) rotate(-12deg); } }
@@ -705,3 +706,39 @@ div.empty:not(.slot)::before { content: ""; display: block; width: 44px; height:
   .sheet { border-width: 20px; border-image-width: 40px; padding: 0 4px 8px; }
   .lvl-num { width: 46px; height: 46px; }
 }
+
+/* ---------- v34: Řídicí centrum (karty, upozornění, graf hospodaření), zpráva o nepřítomnosti ---------- */
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin: 10px 0; }
+.ccard { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; background: var(--card); border: 2px solid var(--line); border-radius: 16px; box-shadow: 0 2px 0 #e2c995; min-width: 0; }
+.ccard .ct { font-family: var(--display); font-size: 16px; color: var(--wood-d); margin-bottom: 2px; }
+.ccard .ct .ic { width: 22px; height: 22px; }
+.ccard small { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.ccard small .ic { width: 18px; height: 18px; vertical-align: -4px; }
+.ccard .cf { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+.cr { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; border-bottom: 1px dashed #ead8b0; padding: 2px 0; }
+.cr b { font-weight: 800; white-space: nowrap; }
+.cr.up b { color: var(--green-d); }
+.cr.down b { color: var(--red); }
+.cr b .ic { width: 16px; height: 16px; vertical-align: -3px; }
+.bar.big { height: 12px; margin: 2px 0 4px; }
+.crow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: 100%; padding: 5px 6px; margin: 1px 0; border: 0; border-radius: 10px; background: #fff7e2; text-align: left; font-size: 14px; }
+.crow .ic { width: 24px; height: 24px; }
+.crow small { flex-basis: 100%; }
+.crow .miss { color: var(--red); font-weight: 700; }
+.al { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 4px 0; border-radius: 12px; font-size: 14px; line-height: 1.3; border: 2px solid; }
+.al > b { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 13px; }
+.al > span { flex: 1; min-width: 0; }
+.al .chip { flex: none; }
+.al.crit { background: #fdeae4; border-color: #f0b4a6; } .al.crit > b { background: var(--red); }
+.al.warn { background: #fff4d6; border-color: #ecd08a; } .al.warn > b { background: #d99a1e; }
+.al.info { background: #eef6e0; border-color: #c4dea0; } .al.info > b { background: var(--green); }
+.al.ok { background: #eef6e0; border-color: #c4dea0; } .al.ok > b { background: var(--green); }
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 110px; padding: 6px 4px 0; background: #fff7e2; border: 2px solid var(--line); border-radius: 12px 12px 0 0; }
+.chart .col { flex: 1; height: 100%; display: flex; align-items: flex-end; gap: 1px; }
+.chart .col i { flex: 1; min-height: 1px; border-radius: 3px 3px 0 0; }
+.chart i.in, .lg.in { background: #6a9e2e; }
+.chart i.out, .lg.out { background: #d9472f; }
+.chart-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 2px 4px; border: 2px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; margin-bottom: 4px; }
+.lg { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-left: 6px; }
+.penbox.away { background: linear-gradient(#f3f9e6, #e7f2d2); border-color: #b9d68e; }
+.penbox.away b .ic { width: 20px; height: 20px; }
