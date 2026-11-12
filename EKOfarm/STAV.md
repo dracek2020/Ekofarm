@@ -1,6 +1,6 @@
 # EKOfarm – stav projektu a mapa kódu
 
-Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se přidat na plochu), později se zabalí do aplikace pro Android a iOS přes Capacitor. Server: Cloudflare Worker + D1, stejně jako u Areny.
+Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přidat na plochu), později se zabalí do aplikace pro Android a iOS přes Capacitor. Server: Cloudflare Worker + D1, stejně jako u Areny.
 
 ## Verze
 - **v1 (10. 11. 2026)**: registrace a přihlášení, farma 14×14, 6 polí, 4 plodiny, setí a sklizeň tažením prstu, sklad (50 míst), prodej, úrovně 1–15, nákup dalších polí, posouvání a přibližování prsty.
@@ -61,6 +61,7 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v28 (12. 11. 2026) – jen dokumenty, kód beze změny**: `TYM_NAVRH.md` (analýza současného stavu, návrh systému **Farmářský tým**: profese, zkušenosti, kapacity pracovišť, výpočty výkonu, procenta jako podíl času, cílové zásoby, rezervy, UI, převod uložených her, plán balíčků v29–v32 a rozhodnutí R1–R8 ke schválení) a `EKOFARM_LEGAL_CHECKLIST.md` (evidence zdrojů a licencí, neprověřené položky, podobnosti s jinými hrami, stav kontroly názvu, otázky pro právníka – interní dokument). Z úvodu `STAV.md` odstraněna zmínka o jiné hře.
 
 ## Postup vydání nové verze
 1. `node tools/version.mjs N` (N = číslo balíčku), 2. `npm test`, 3. `npm run build:artifact` + test v prohlížeči **online přes `tools/dev-server.mjs`** (nejen testovací verzi), 4. zip jen změněných souborů + `NASAZENI_vN.md`.
@@ -94,6 +95,8 @@ Mobilní farma ve stylu Hay Day pro kamarády. Hraje se v prohlížeči (dá se 
 | `tools/build-artifact.mjs` | Sestaví testovací verzi do jednoho souboru `build/ekofarm-artifact.html` |
 | `tools/dev-server.mjs` | Lokální server s SQLite v paměti (pro vývoj); náhrada D1 je v `tools/fake-d1.mjs` (i pro testy) |
 | `test/` | `npm test`: pravidla, API nad SQLite, Google přihlášení s testovacími klíči |
+| `TYM_NAVRH.md` | Návrh a plán systému Farmářský tým (co existuje, co přijde v kterém balíčku, rozhodnutí ke schválení) |
+| `EKOFARM_LEGAL_CHECKLIST.md` | Evidence licencí a právní rizika (interní, nepatří do `public/`); `AUTORSKA_PRAVA.md` je starší přehled |
 
 ## Jak to funguje
 - Klient provede akci hned u sebe (okamžitá odezva). Akce posílá po dávkách každých ~350 ms, server je přepočítá a vrátí skutečný stav. Neodeslané akce se pak znovu použijí nad stavem ze serveru.

@@ -1,5 +1,7 @@
 # EKOfarm – autorská práva a licence
 
+> **Od v28 se evidence vede v `EKOFARM_LEGAL_CHECKLIST.md`.** Tabulka níže popisuje stav z v7 (grafika tehdy byla kreslená kódem) a je zastaralá; od v16 je grafika z ChatGPT, viz checklist.
+
 Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autorských práv.
 
 ## Co je ve hře teď (v7)
