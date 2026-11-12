@@ -1,5 +1,13 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 40, title: 'Příběh Kronika údolí, denní série a férovější vylepšení', items: [
+    'Nový příběh: na půdě jsi našel dědovu kroniku. Jednou denně přijde místo jedné události nový díl – 5 kapitol po 4 dílech s dědou Matoušem, sousedkou Hedvikou, malým Kryštofem a celým městečkem.',
+    'Příběh začíná pro všechny od 1. kapitoly. Každou další kapitolu odemkne vylepšení Statku (kapitola 2 se Statkem 2, kapitola 3 se Statkem 3…). Díl na tebe počká, nic nepropásneš.',
+    'Hra si pamatuje tvoje volby: podle nich se v dalších dílech objeví jiné odpovědi a jiné věty. Dobré vztahy zvýší odměnu za kapitolu.',
+    'Za každou kapitolu dostaneš vzácnou ozdobu, kterou jinak nezískáš: Dědovu studnu, Dědovu jabloň, Vodní mlýnek, Lípu svornosti a Dožínkový věnec. Přehled najdeš v okně Událost → Kronika údolí.',
+    'Denní odměna roste s každým dalším dnem po sobě, každý 7. den je dvojnásobná. Když den vynecháš, začínáš znovu od 1. Za 7., 14., 30., 50. a 100. den po sobě dostaneš vzácnou ozdobu.',
+    'Vylepšení budov a Statku teď chce jen suroviny, které už můžeš mít – nikdy nic, na co ještě nemáš budovu, zvíře nebo úroveň Statku.',
+  ] },
   { v: 38, title: 'Dovednosti: Farmaření, Rybaření a Vaření', items: [
     'Úrovně hráče rostou ještě pomaleji (8× pomaleji než na začátku). O svou úroveň nikdo nepřišel – zkušenosti se přepočítaly.',
     'Nové dovednosti: Farmaření roste sklizní a chovem, Rybaření úlovky a Vaření výrobou. Počítá se i práce tvého týmu. Klepni na svou úroveň vlevo nahoře.',

@@ -9,19 +9,20 @@ import {
   CROP_LIST, LEVEL_XP, MAX_LEVEL, plotState,
   TREES, TREE_LIST, FREE_PLOTS, TUTORIAL_DONE, maxOrchards, orchardPrice, treeState, treeRefund, orderReady, canDeliver,
   LAND_PARCELS, landPrice, landLevel, landReachable,
-  DAILY, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
+  dailyReward, DAILY_DECO, ACHIEVEMENTS, dayKey, sellPrice, marketMult, nextMarketChange, fieldYield, hasTool,
   MACHINES, MACHINE_LIST, MACHINE_TYPE_NAME, FIELD_CELL_PRICE, FIELD_MIN, FIELD_MAX, CROPS,
   maxBigFields, machineJob, freeMachine, fieldState, jobSeconds, hasMachine,
   VILL_MAX, AREA_MIN, workAreas, areaOf, isFarmer, isSeedItem, seedCap, seedUsed, SEEDS_PER, supplyPrice, villName, villJobType, villAt, findObject,
   workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planTotal, villLevel, villOut, speedMult, stockOf, keepOf, wpGet, wpWorkers, wpCap, areaCap, crewPower, bldCap, bldCapNext, factoryRate, penStats, penOut, animalCycleMs, ANIMAL_CYCLE, hiveIv, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
-  bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
+  bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
-} from './rules.js?v=38';
-import { fmtTime } from './render.js?v=38';
-import { TEAM } from './team-config.js?v=38';
-import { NEWS } from './news.js?v=38';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=38';
+} from './rules.js?v=40';
+import { fmtTime } from './render.js?v=40';
+import { TEAM } from './team-config.js?v=40';
+import { NEWS } from './news.js?v=40';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=40';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=40';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -88,17 +89,18 @@ function fieldCards(farm) {
 export function buildHtml(farm, tab = 'farma') {
   if (!BUILD_TABS.some(t => t[0] === tab)) tab = 'farma';
   const list = BUILDING_LIST.filter(b => BUILD_TAB_OF[b.type] === tab)
-    .sort((a, b) => a.st - b.st || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.cost - b.cost);
+    .sort((a, b) => (a.gift && farm.pending.includes(a.id) ? -1 : 0) - (b.gift && farm.pending.includes(b.id) ? -1 : 0) || a.st - b.st || TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || a.cost - b.cost);   // dárky zdarma nahoru
   const cards = list.map(b => {
     const free = farm.pending.includes(b.id);
     const locked = !free && b.st > statekLevel(farm);
     const n = countKind(farm, b.id);
     const done = !free && b.max && n >= b.max;
-    const cta = free ? 'Zdarma' : locked ? `Statek úr. ${b.st}` : done ? '✓ Postaveno' : 'Postavit';
+    const gift = b.gift && !free && !done;   // v39: vzácná ozdoba – jen jako odměna (příběh, denní série)
+    const cta = free ? 'Zdarma' : gift ? 'Odměna' : locked ? `Statek úr. ${b.st}` : done ? '✓ Postaveno' : 'Postavit';
     const own = done && farm.objects.find(o => o.kind === b.id);   // postavená budova: klepnutím se otevře (vylepšení)
     return card({ icon: b.icon, img: bImg(b.id), name: b.name, locked, act: own ? 'openObj' : 'buy', v: own ? own.id : b.id, done, disabled: !done && !free && farm.coins < b.cost,
-      size: `${b.w}×${b.h}`, price: free || done ? undefined : b.cost, badge: locked ? `:lock: Statek ${b.st}` : n && b.max > 1 ? `${n}/${b.max}` : n && b.type === 'house' ? `${n}×` : '',
-      lines: free ? [':gift: dostal jsi zdarma'] : locked && meritShort(b.st) ? [`<small>${meritShort(b.st)}</small>`] : b.beds ? [`:helper: ${bedsText(b.beds)}`] : [], cta });
+      size: `${b.w}×${b.h}`, price: free || done || gift ? undefined : b.cost, badge: gift ? ':gift: odměna' : locked ? `:lock: Statek ${b.st}` : n && b.max > 1 ? `${n}/${b.max}` : n && b.type === 'house' ? `${n}×` : '',
+      lines: free ? [':gift: dostal jsi zdarma'] : gift ? [`<small>${b.gift}</small>`] : locked && meritShort(b.st) ? [`<small>${meritShort(b.st)}</small>`] : b.beds ? [`:helper: ${bedsText(b.beds)}`] : [], cta });
   });
   const head = `<p class="muted">Statek úrovně <b>${statekLevel(farm)}</b>. Každé vylepšení Statku odemkne nové budovy a víc polí a sadů. Stroje a stánek najdeš dole v <b>městečku</b>.</p>
     <p class="tip">↔ <b>Přesun:</b> podrž prst na budově nebo poli a táhni. Potvrď ✓ dole.</p>`;
@@ -539,7 +541,7 @@ export function houseHtml(farm, o) {
 // blok „Vylepšit budovu“ – suroviny, mince, co to přinese
 export function upgradeBlock(farm, o) {
   const L = objLevel(o);
-  const c = upgradeCost(o);
+  const c = upgradeCost(o, farm);
   if (!c) return `<div class="upg"><b>:star: Úroveň ${L}/${MAX_BLD_LEVEL}</b> – nejvyšší úroveň.</div>`;
   // suroviny jsou tlačítka: klepnutím se ukáže, co to je a kde to sehnat
   const items = c.items.map(x => `<button class="needi ${have(farm, x.item) >= x.qty ? 'okq' : 'miss'}" data-act="itemInfo" data-v="${x.item}" title="${esc(ITEMS[x.item].name)}">:${ITEMS[x.item].icon}:${have(farm, x.item)}/${x.qty}</button>`).join(' ');
@@ -1138,14 +1140,19 @@ export function tasksHtml(farm, now, tab, board, weekly) {
   if (tab === 'denni') return tabs + questsHtml(farm, now);
   if (tab === 'soutez') return tabs + weeklyHtml(farm, now, weekly);   // v36
   const can = canClaimDaily(farm, now);
-  const next = can ? (farm.daily.day === dayKey(now - 86400000) ? farm.daily.streak % 7 + 1 : 1) : farm.daily.streak;
-  const days = DAILY.map((d, i) => {
-    const n = i + 1;
-    const cls = n < next || (!can && n === next) ? 'got' : n === next && can ? 'today' : '';
-    return `<div class="day ${cls}"><small>den ${n}</small><span>${d.coins}</span>:coin:${d.xp ? `<small>+${d.xp} :xp:</small>` : ''}</div>`;
+  // v39: dnešní den a 6 dalších, pod tím milníky se vzácnými ozdobami; v40: vynechaný den = série od 1
+  const cont = farm.daily.day === dayKey(now) || farm.daily.day === dayKey(now - 86400000);
+  const got = cont ? farm.daily.streak || 0 : 0, next = got + 1, from = can ? next : got;
+  const days = Array.from({ length: 7 }, (_, k) => from + k).map(n => {
+    const d = dailyReward(n);
+    const cls = n <= got ? 'got' : n === next && can ? 'today' : '';
+    return `<div class="day ${cls}${d.deco ? ' deco' : ''}"><small>den ${n}</small><span>${d.coins}</span>:coin:${d.xp ? `<small>+${d.xp} :xp:</small>` : ''}${d.deco ? `<small>+ :${BUILDINGS[d.deco].icon}:</small>` : ''}</div>`;
   }).join('');
-  const daily = `<p class="muted"><b>:gift: Denní odměna</b> – přijď každý den, 7. den je velká odměna. Když den vynecháš, začínáš znovu.</p>
+  const own = id => farm.objects.some(o => o.kind === id) || farm.pending.includes(id);
+  const miles = Object.entries(DAILY_DECO).map(([n, id]) => `<div class="mile${own(id) ? ' got' : ''}">${decoImg(id)}<small>${n}. den</small><b>${esc(BUILDINGS[id].name)}</b></div>`).join('');
+  const daily = `<p class="muted"><b>:gift: Denní odměna</b> – přijď si každý den pro odměnu. Každý další den po sobě je větší, 7., 14., 21.… den dvojnásobná. Když den vynecháš, série začne znovu od 1. Teď máš <b>${got}</b> ${got === 1 ? 'den' : got >= 2 && got <= 4 ? 'dny' : 'dní'} po sobě.</p>
     <div class="days">${days}</div>
+    <p class="muted"><b>Vzácné ozdoby</b> za dny po sobě (jinak je nezískáš, každou jen jednou):</p><div class="miles">${miles}</div>
     ${can ? '<button class="btn" data-act="claimDaily" data-v="">Vyzvednout dnešní odměnu</button>' : '<p class="muted">Dnešní odměnu máš. Další zítra.</p>'}`;
   const ach = ACHIEVEMENTS.map(a => {
     const tier = farm.ach[a.id] || 0;
@@ -1258,7 +1265,7 @@ export function guideStep(f) {
 }
 
 // ---------- v11: pravidla a nápověda (Menu → Jak hrát) ----------
-export const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Město'], ['ryby', 'Ryby'], ['udalosti', 'Události'], ['tipy', 'Tipy']];   // v38: krátké názvy, ať se vejdou
+export const HELP_TABS = [['zaklady', 'Základy'], ['statek', 'Statek'], ['urovne', 'Úrovně'], ['mesto', 'Město'], ['ryby', 'Ryby'], ['udalosti', 'Příběh'], ['tipy', 'Tipy']];   // v38: krátké názvy, ať se vejdou
 export function helpHtml(farm, tab = 'zaklady') {
   const tabs = `<div class="tabs">${HELP_TABS.map(([id, n]) => `<button class="tab${id === tab ? ' on' : ''}" data-act="htab" data-v="${id}">${n}</button>`).join('')}</div>`;
   const p = t => `<p class="muted">${t}</p>`;
@@ -1325,6 +1332,8 @@ export function helpHtml(farm, tab = 'zaklady') {
   } else if (tab === 'udalosti') {
     body = p('<b>:bell: Události</b> (od úrovně 3): dvakrát denně – dopoledne a odpoledne – se na farmě něco přihodí (liška, bouřka, jarmark, potulný obchodník…). Vybereš jednu ze 4 odpovědí. Některé něco stojí, u některých (🎲) rozhoduje štěstí.')
       + p('Odpověď tě hned odmění nebo potrestá (mince, zboží, zkušenosti) a často na <b>3 hodiny</b> změní farmu: rychlejší nebo pomalejší růst, výrobu, zvířata, stroje, vyšší nebo nižší výkupní ceny, lepší rybaření. Platí pro to, co během té doby začneš. Co platí, uvidíš pod tlačítkem Událost vlevo.')
+      + p('<b>:book: Příběh – Kronika údolí</b> (od začátku hry): jednou denně přijde místo jedné události díl příběhu o farmě, dědovi Matoušovi, sousedce Hedvice, Kryštofovi a městečku. Díl na tebe počká, dokud ho nezahraješ. Hra si pamatuje tvoje volby: podle nich se objeví jiné odpovědi a věty v dalších dílech a lepší vztahy zvýší odměnu za kapitolu. Každá kapitola má 4 díly a na konci dá mince, zkušenosti a vzácnou ozdobu, kterou jinak nezískáš. Další kapitolu odemkne vylepšení Statku (kapitola 2 se Statkem 2, kapitola 3 se Statkem 3…). Přehled najdeš v okně Událost → Kronika údolí.')
+      + p('<b>:gift: Denní série</b> (Úkoly → Odměny): za každý další den po sobě, kdy si přijdeš pro odměnu, je odměna větší, každý 7. den dvojnásobná. Když den vynecháš, série začne znovu od 1. Na 7., 14., 30., 50. a 100. den po sobě dostaneš vzácnou ozdobu.')
       + p('<b>:pes: Farmářský pes</b> (Obchod → Zvířata, od úrovně 6) chodí s farmářem. U lišky, zloděje, myší, větru a utečených zvířat zvýší šanci na dobrý konec a ztráty i zhoršení zmírní na polovinu.')
       + p('<b>:trophy: Týdenní soutěž</b> (Úkoly → Soutěž): každý týden se soutěží v něčem jiném (sklizeň, výroba, rybaření, zakázky…). Počítá se jen to, co získáš sám. První tři dostanou v pondělí odměnu.')
       + p('<b>:gift: Pomoc kamarádovi</b> (jen online): na návštěvě cizí farmy klepni na <b>Pomoct</b>. Jednou denně urychlíš kamarádovi výrobu nebo pole a oba dostanete pár mincí a zkušeností. Jedné farmě můžou pomoct nejvýš 3 lidé denně.');
@@ -1442,12 +1451,13 @@ export function fxChips(farm, now) {
   return fxActive(farm, now).map(f => `<span class="chip ${(FX_INFO[f.k].time ? f.m < 1 : f.m > 1) ? 'ok' : 'warn'}">${fxText(f)} · ${fmtTime(Math.ceil((f.u - now) / 1000))}</span>`).join('');
 }
 // res = výsledek právě zvolené odpovědi (z akce), jinak se ukáže čekající událost nebo poslední výsledek
-export function eventHtml(farm, now, res) {
+export function eventHtml(farm, now, res, tab) {
   const ev = eventNow(farm, now);
   const fx = fxChips(farm, now);
   const fxBlock = fx ? `<p class="muted"><b>Teď platí</b> (co začneš během této doby, to se počítá):</p><div class="chips">${fx}</div>` : '';
+  if (tab === 'kronika') return kronikaHtml(farm);
   if (res && res.ok) {
-    const e = EVENTS_BY[res.id];
+    const e = evDef(res.id);
     const parts = [];
     if (res.coins) parts.push(`${res.coins > 0 ? '+' : ''}${res.coins} :coin:`);
     if (res.xp) parts.push(`+${res.xp} :xp:`);
@@ -1455,31 +1465,73 @@ export function eventHtml(farm, now, res) {
     for (const x of res.used) parts.push(`−${x.qty} :${ITEMS[x.item].icon}:`);
     for (const x of res.lost) parts.push(`<span class="miss">−${x.qty} :${ITEMS[x.item].icon}:</span>`);
     const img = evImg(e.id);
-    return `${img ? `<img class="evimg" src="${img}" alt="">` : ''}<h3 class="sub">${esc(e.title)}</h3>
-      <p class="evtext"><i>„${esc(e.a[res.i].t)}“</i></p><p class="evtext"><b>${esc(res.text)}</b></p>
+    return `${img ? `<img class="evimg" src="${img}" alt="">` : ''}${storyHead(e)}<h3 class="sub">${esc(e.title)}</h3>
+      <p class="evtext"><i>„${esc(e.a[res.i].t)}“</i></p><p class="evtext"><b>${esc(res.text)}</b></p>${relChips(res.rel)}${chapterDone(farm, res.chapter)}
       ${res.dog ? `<p class="muted">:pes: ${esc(farm.dog ? farm.dog.name : DOG.name)} pomohl – dopadlo to líp, než mohlo.</p>` : ''}
       ${parts.length ? `<div class="chips">${parts.map(t => `<span class="chip">${t}</span>`).join('')}</div>` : ''}
       ${res.fx.length ? `<p class="muted">Na 3 hodiny: ${res.fx.map(f => fxText(f)).join(' · ')}</p>` : ''}
       <button class="btn" data-act="closePanel" data-v="">Pokračovat</button>`;
   }
   if (ev) {
-    const e = EVENTS_BY[ev.id];
+    const e = evDef(ev.id), story = !!STORY_BY[e.id];
     const img = evImg(e.id);
     const btns = e.a.map((a, i) => {
+      if (!answerShown(farm, e, a)) return '';   // v39: odpověď jen s dřívější volbou nebo dobrým vztahem
       const why = answerNeed(farm, a);
       const cost = [a.pay ? `${evCoins(farm, a.pay)} :coin:` : '', a.use ? useText(a.use) : ''].filter(Boolean).join(' + ');
       return `<button class="btn evans${why ? ' off' : ''}" data-act="evAnswer" data-v="${ev.slot}|${ev.id}|${i}">${esc(a.t)}${cost ? ` <small>(${cost})</small>` : ''}${a.p !== undefined ? ' <small>🎲</small>' : ''}</button>`;
     }).join('');
-    return `${img ? `<img class="evimg" src="${img}" alt="">` : ''}<h3 class="sub">${esc(e.title)}</h3>
-      <p class="evtext">${esc(e.text)}</p>
+    return `${img ? `<img class="evimg" src="${img}" alt="">` : ''}${storyHead(e)}<h3 class="sub">${esc(e.title)}</h3>
+      <p class="evtext">${esc(story ? storyText(farm, e) : e.text)}</p>
       ${e.danger && farm.dog ? `<p class="muted">:pes: ${esc(farm.dog.name)} je ve střehu – špatné konce zmírní.</p>` : ''}
       <div class="evans-list">${btns}</div>
-      <p class="muted">🎲 = může to dopadnout dobře i špatně. Událost počká do ${hhmm(ev.until)}, pak ji nahradí další. Dopad trvá 3 hodiny.</p>${fxBlock}`;
+      <p class="muted">${story ? 'Díl příběhu na tebe počká, dokud ho nezahraješ. Hra si tvoje volby pamatuje a ovlivní další díly. 🎲 = může to dopadnout dobře i špatně.'
+        : `🎲 = může to dopadnout dobře i špatně. Událost počká do ${hhmm(ev.until)}, pak ji nahradí další. Dopad trvá 3 hodiny.`}</p>${fxBlock}`;
   }
-  const last = farm.ev && farm.ev.last && EVENTS_BY[farm.ev.last.id];
+  const last = farm.ev && farm.ev.last && evDef(farm.ev.last.id);
   return `<p class="muted">Dvakrát denně (dopoledne a odpoledne) se na farmě něco přihodí. Vybereš jednu ze 4 odpovědí – podle ní tě farma odmění, nebo potrestá, často na 3 hodiny.</p>
     ${farm.level < 3 ? '<div class="empty">Události začnou chodit od úrovně 3.</div>' : '<div class="empty">Teď se nic neděje. Další událost brzy.</div>'}
-    ${last ? `<p class="muted">Naposledy: <b>${esc(last.title)}</b> – ${esc(farm.ev.last.text)}</p>` : ''}${fxBlock}`;
+    ${last ? `<p class="muted">Naposledy: <b>${esc(last.title)}</b> – ${esc(farm.ev.last.text)}</p>` : ''}${storyStatus(farm)}${fxBlock}`;
+}
+
+// ---------- v39: hlavní příběh a Kronika ----------
+const storyHead = e => (STORY_BY[e.id] ? `<p class="evch">:book: Kapitola ${e.ch} · ${esc(chapterOf(e).title)} · díl ${STORY.filter(x => x.ch === e.ch).indexOf(e) + 1}/4</p>` : '');
+function relChips(rel) {
+  const r = Object.entries(rel || {}).filter(([, n]) => n);
+  return r.length ? `<div class="chips">${r.map(([k, n]) => `<span class="chip ${n > 0 ? 'ok' : 'warn'}">:${STORY_PEOPLE[k].icon}: ${STORY_PEOPLE[k].name} ${n > 0 ? '+' + n : '−' + -n}</span>`).join('')}</div>` : '';
+}
+const decoImg = id => (hasAsset('b', id) ? `<img class="decoimg" src="${assetUrl('b', id)}" alt="">` : `:${BUILDINGS[id].icon}:`);
+function chapterDone(farm, c) {
+  if (!c) return '';
+  const next = CHAPTERS[c.n];
+  return `<div class="chdone">${decoImg(c.deco)}<div><b>Kapitola ${c.n} „${esc(c.title)}“ dokončena!</b>
+    <small>Odměna: ${c.coins} :coin:${c.bonus ? ` (přátelé +${c.bonus} %)` : ''}, ${c.xp} :xp:${c.got ? ` · ozdoba <b>${esc(BUILDINGS[c.deco].name)}</b> zdarma ve Stavět` : ''}</small>
+    <small>${next ? (statekLevel(farm) >= next.st ? `Další kapitola „${esc(next.title)}“ začne zítra.` : `Další kapitola „${esc(next.title)}“ začne, až vylepšíš :house: Statek na úroveň ${next.st}.`) : 'To je zatím konec příběhu. Pokračování přijde v další verzi hry.'}</small></div></div>`;
+}
+// stav příběhu (v okně událostí, když se zrovna nic neděje)
+function storyStatus(farm) {
+  const s = farm.story || { n: 0 }, e = STORY[s.n];
+  const line = !e ? 'Příběh je zatím celý dohraný.' : statekLevel(farm) < chapterOf(e).st ? `Kapitola ${e.ch} „${esc(chapterOf(e).title)}“ začne, až vylepšíš :house: Statek na úroveň ${chapterOf(e).st}.`
+    : s.d === dayKey(Date.now()) ? `Další díl „${esc(e.title)}“ přijde zítra.` : `Další díl „${esc(e.title)}“ přijde s příští událostí.`;
+  return `<p class="muted">:book: <b>Příběh:</b> ${line}</p><button class="btn alt" data-act="kronika" data-v="">:book: Kronika údolí</button>`;
+}
+export function kronikaHtml(farm) {
+  const s = farm.story || { n: 0, log: [], r: {} };
+  const log = Object.fromEntries((s.log || []).map(x => [x[0], x]));
+  const rel = Object.entries(STORY_PEOPLE).map(([k, p]) => `<span class="chip">:${p.icon}: ${p.name}: ${(s.r && s.r[k]) || 0}</span>`).join('');
+  const chs = CHAPTERS.map(ch => {
+    const eps = STORY.filter(e => e.ch === ch.n), done = eps.every(e => log[e.id]), open = statekLevel(farm) >= ch.st;
+    const rows = eps.map(e => {
+      const l = log[e.id];
+      return l ? `<li><b>${esc(e.title)}</b> – „${esc(e.a[l[1]].t)}“</li>` : `<li class="dim">${STORY.indexOf(e) === s.n && open ? `<b>${esc(e.title)}</b> – na řadě` : '???'}</li>`;
+    }).join('');
+    const own = farm.objects.some(o => o.kind === ch.deco) || farm.pending.includes(ch.deco);
+    return `<div class="chap${done ? ' done' : open ? '' : ' locked'}">${decoImg(ch.deco)}<div class="info"><b>${ch.n}. ${esc(ch.title)}</b>
+      <small>${done ? '✓ dohráno' : open ? 'probíhá' : `:lock: od Statku ${ch.st}`} · odměna: ${esc(BUILDINGS[ch.deco].name)}${own ? ' ✓' : ''}, ${ch.coins} :coin:</small>
+      ${open || done ? `<ol>${rows}</ol>` : ''}</div></div>`;
+  }).join('');
+  return `<p class="muted">Kronika údolí: každý den jeden díl příběhu (místo jedné z událostí). Každou další kapitolu odemkne vylepšení Statku. Tvoje volby si hra pamatuje – mění, co se stane v dalších dílech, a dobré vztahy zvýší odměnu za kapitolu (+5 % za každý bod, nejvýš +50 %).</p>
+    <h3 class="sub">Vztahy</h3><div class="chips">${rel}</div>${chs}`;
 }
 
 // ---------- v36: týdenní soutěž ----------

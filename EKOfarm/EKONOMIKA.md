@@ -185,10 +185,10 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | Sklad | – | zdarma |
 | Semenárna | 1 | 30 |
 | Pekárna | 1 | 60 |
-| Sad | 1 | zdarma |
 | Chatrč | 1 | 200 |
 | Keř | 1 | 10 |
 | Záhon květin | 1 | 15 |
+| Sad | 2 | zdarma |
 | Krmivárna | 2 | 40 |
 | Kurník | 2 | 50 |
 | Lavička | 2 | 30 |
@@ -218,6 +218,16 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | Ovčín | 9 | 450 |
 | Textilka | 10 | 600 |
 | Jezero | 10 | 4000 |
+| Dědova studna | odměna | Kapitola 1 příběhu |
+| Dědova jabloň | odměna | Kapitola 2 příběhu |
+| Vodní mlýnek | odměna | Kapitola 3 příběhu |
+| Lípa svornosti | odměna | Kapitola 4 příběhu |
+| Dožínkový věnec | odměna | Kapitola 5 příběhu |
+| Strašák | odměna | 7. den denní série |
+| Vozík s květinami | odměna | 14. den denní série |
+| Holubník | odměna | 30. den denní série |
+| Větrník | odměna | 50. den denní série |
+| Altán s růžemi | odměna | 100. den denní série |
 
 | Statek | Polí | Sadů | Velkých polí |
 |---|---|---|---|

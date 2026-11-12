@@ -21,7 +21,7 @@ for (const r of Object.values(R.RECIPES).filter(r => R.PRODUCTS[r.id])) md += `|
 md += '\n## Semena a sazenice\nSemenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.\nŠkolka: 3 plody → 1 sazenice (cena jako sazenice za mince).\n\n| Semena | Z čeho | Čas | Cena balíčku |\n|---|---|---|---|\n';
 for (const r of Object.values(R.RECIPES).filter(r => R.SEEDS[r.id] || R.SAPLINGS[r.id])) md += `| ${R.recipeQty(r)}× ${n(r.id)} | ${Object.entries(r.in).map(([id, q]) => `${q}× ${n(id)}`).join(', ')} | ${t(r.time)} | ${R.ITEMS[r.id].price} |\n`;
 md += '\n## Budovy (odemyká je jen úroveň Statku)\n| Budova | Statek | Cena |\n|---|---|---|\n';
-for (const b of R.BUILDING_LIST.filter(b => !b.town).sort((a, b) => a.st - b.st)) md += `| ${b.name} | ${b.st || '–'} | ${b.cost || 'zdarma'} |\n`;
+for (const b of R.BUILDING_LIST.filter(b => !b.town).sort((a, b) => a.st - b.st)) md += `| ${b.name} | ${b.gift ? 'odměna' : b.st || '–'} | ${b.gift ? b.gift : b.cost || 'zdarma'} |\n`;
 md += '\n| Statek | Polí | Sadů | Velkých polí |\n|---|---|---|---|\n';
 for (let L = 1; L <= 10; L++) { const f = { objects: [{ kind: 'statek', lvl: L }] }; md += `| ${L} | ${R.maxPlots(f)} | ${R.maxOrchards(f)} | ${R.maxBigFields(f)} |\n`; }
 md += `\nOstatní budovy nesmí mít vyšší úroveň než Statek. Úroveň hráče roste až do ${R.MAX_LEVEL} a odemyká plodiny, zvířata, stromy, stroje a recepty.\n`;

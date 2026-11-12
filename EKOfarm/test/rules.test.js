@@ -1068,11 +1068,11 @@ test('v7: denní odměna se sérií', () => {
   assert.equal(r.streak, 1); assert.equal(r.coins, 20);
   assert.equal(applyAction(f, { type: 'claimDaily' }, t0 + 3600000).error, 'claimed');
   for (let d = 1; d < 7; d++) r = applyAction(f, { type: 'claimDaily' }, t0 + d * day);
-  assert.equal(r.streak, 7); assert.equal(r.coins, 200);
+  assert.equal(r.streak, 7); assert.equal(r.coins, 100, 'v39: 7. den dvojnásobek (50 × 2)');
   r = applyAction(f, { type: 'claimDaily' }, t0 + 7 * day);
-  assert.equal(r.streak, 1, 'po 7. dni znovu od 1');
+  assert.equal(r.streak, 8, 'v39: série po 7. dni pokračuje');
   r = applyAction(f, { type: 'claimDaily' }, t0 + 9 * day);
-  assert.equal(r.streak, 1, 'vynechaný den = znovu');
+  assert.equal(r.streak, 1, 'v40: vynechaný den = znovu od 1');
 });
 
 test('v7: úkoly a statistiky', () => {
@@ -1339,7 +1339,7 @@ test('v10: statek odemyká stavbu, úroveň hráče roste pořád', () => {
   f.objects.find(o => o.kind === 'statek').lvl = 10;
   assert.equal(maxPlots(f), 66);
   assert.equal(maxBigFields(f), 4);
-  for (const b of Object.values(BUILDINGS)) assert.ok(b.st <= 10, b.id);
+  for (const b of Object.values(BUILDINGS)) assert.ok(b.st <= 10 || (b.gift && b.type === 'deco'), b.id);   // v39: vzácné ozdoby jen jako odměna
   // v29: statek se vylepší jen se zásluhami (úroveň hráče + úkol)
   const g = farm6();
   const st = g.objects.find(o => o.kind === 'statek');

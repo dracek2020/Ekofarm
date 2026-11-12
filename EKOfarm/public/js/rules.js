@@ -1,7 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=38';
-import { EVENTS } from './events.js?v=38';
+import { TEAM } from './team-config.js?v=40';
+import { EVENTS } from './events.js?v=40';
+import { STORY, CHAPTERS } from './story.js?v=40';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -374,6 +375,17 @@ export const BUILDINGS = {
   dzusarna:     B('dzusarna', 'Džusárna', 'factory', 4, 200, 2, 2, 8, 1, 'dzus_jablko'),
   kravin:       B('kravin', 'Kravín', 'pen', 4, 150, 3, 3, 8, 1, 'cow', { animal: 'krava' }),
   fontana:      B('fontana', 'Fontána', 'deco', 4, 150, 1, 1, 5, 0, 'fountain'),
+  // v39: vzácné ozdoby – jen jako odměna za kapitolu příběhu nebo milník denní série (gift = odkud, st 99 = nejde koupit)
+  studna:        B('studna', 'Dědova studna', 'deco', 99, 0, 1, 1, 10, 1, 'studna', { gift: 'Kapitola 1 příběhu' }),
+  dedova_jablon: B('dedova_jablon', 'Dědova jabloň', 'deco', 99, 0, 1, 1, 10, 1, 'dedova_jablon', { gift: 'Kapitola 2 příběhu' }),
+  mlynek:        B('mlynek', 'Vodní mlýnek', 'deco', 99, 0, 1, 1, 10, 1, 'mlynek', { gift: 'Kapitola 3 příběhu' }),
+  lipa:          B('lipa', 'Lípa svornosti', 'deco', 99, 0, 2, 2, 10, 1, 'lipa', { gift: 'Kapitola 4 příběhu' }),
+  venec:         B('venec', 'Dožínkový věnec', 'deco', 99, 0, 1, 1, 10, 1, 'venec', { gift: 'Kapitola 5 příběhu' }),
+  strasak:       B('strasak', 'Strašák', 'deco', 99, 0, 1, 1, 5, 1, 'strasak', { gift: '7. den denní série' }),
+  vozik:         B('vozik', 'Vozík s květinami', 'deco', 99, 0, 1, 1, 5, 1, 'vozik', { gift: '14. den denní série' }),
+  holubnik:      B('holubnik', 'Holubník', 'deco', 99, 0, 1, 1, 10, 1, 'holubnik', { gift: '30. den denní série' }),
+  vetrnik:       B('vetrnik', 'Větrník', 'deco', 99, 0, 1, 1, 10, 1, 'vetrnik', { gift: '50. den denní série' }),
+  altan:         B('altan', 'Altán s růžemi', 'deco', 99, 0, 2, 2, 20, 1, 'altan', { gift: '100. den denní série' }),
   // statek 5
   mlekarna:     B('mlekarna', 'Mlékárna', 'factory', 5, 200, 2, 2, 10, 1, 'syr'),
   vcelin:       B('vcelin', 'Včelín', 'hive', 5, 250, 2, 2, 8, 2, 'hive', { info: 'Včely dělají plástve medu a sadům v okolí přidají úrodu.' }),
@@ -658,9 +670,14 @@ export function marketPayout(farm, coins, t = Date.now()) {
 }
 
 // ---------- odměny a úkoly ----------
-export const DAILY = [
-  { coins: 20 }, { coins: 30 }, { coins: 40 }, { coins: 60 }, { coins: 80 }, { coins: 100 }, { coins: 200, xp: 10 },
-];
+// v39: denní série – dny po sobě, kdy si hráč odměnu vyzvedl (v40: vynechaný den = znovu od 1). Odměna roste den ode dne,
+// každý 7. den dvojnásobek a zkušenosti, na milnících vzácná ozdoba, kterou jinak nejde získat (dostane ji jen jednou).
+export const DAILY_DECO = { 7: 'strasak', 14: 'vozik', 30: 'holubnik', 50: 'vetrnik', 100: 'altan' };
+export function dailyReward(n) {
+  const base = Math.min(200, 20 + 5 * (n - 1));
+  const week = n % 7 === 0;
+  return { coins: week ? base * 2 : base, xp: week ? Math.min(50, 10 + 2 * (n / 7 - 1)) : 0, deco: DAILY_DECO[n] || null };
+}
 export const ACHIEVEMENTS = [
   { id: 'harvest', name: 'Sklízeč',        stat: 'harvest', tiers: [50, 500, 5000],   coins: [50, 250, 1000], icon: 'wheat',  text: 'Sklidit plodin' },
   { id: 'produce', name: 'Výrobce',        stat: 'produce', tiers: [20, 200, 2000],   coins: [60, 300, 1200], icon: 'chleb',  text: 'Vyrobit výrobků' },
@@ -717,7 +734,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 38;
+export const CLIENT_MIN = 40;   // v40: starší aplikace se samy načtou znovu (příběh, denní série, suroviny na vylepšení)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -837,6 +854,8 @@ export function normalize(farm) {
   // v36: dočasné změny z událostí, události, rybářský deník (dosavadní rekordy = už ulovené druhy), pes
   if (!Array.isArray(farm.fx)) farm.fx = [];
   if (!farm.ev || typeof farm.ev !== 'object') farm.ev = { k: 0, h: [] };
+  // v39: hlavní příběh – n = další díl, d = den posledního dílu, f = příznaky voleb, r = vztahy, log = [[díl, odpověď, dobře]]
+  if (!farm.story || typeof farm.story !== 'object') farm.story = { n: 0, d: '', f: [], r: {}, log: [] };
   if (!farm.fj || typeof farm.fj !== 'object') {
     farm.fj = { c: {}, r: [] };
     for (const id of Object.keys(farm.fishRec || {})) if (FISH[id]) { farm.fj.c[id] = 1; farm.fj.r.push('1:' + id); }
@@ -1110,21 +1129,37 @@ export function readyEvents(farm, from, to) {
   }
   if (farm.helper && inR(farm.helper.until)) ev.push({ k: 'helper', text: 'Pomocník skončil práci' });
   const evn = farm.ev ? eventNow(farm, to) : null;   // v36: nová událost na farmě
-  if (evn && inR(evn.t)) ev.push({ k: 'event', text: `Na farmě se něco děje: ${EVENTS_BY[evn.id].title}` });
+  if (evn && inR(evn.t)) ev.push({ k: 'event', text: STORY_BY[evn.id] ? `Nový díl příběhu: ${STORY_BY[evn.id].title}` : `Na farmě se něco děje: ${EVENTS_BY[evn.id].title}` });
   const seen = new Set();
   return ev.filter(e => (e.k === 'factory' || e.k === 'pen' ? true : !seen.has(e.k) && seen.add(e.k)));
 }
 export const TUTORIAL_DONE = 99;
 
 // cena vylepšení budovy na další úroveň (stejná na serveru i v prohlížeči)
-export function upgradeCost(o) {
+// v40: suroviny jen z toho, co už Statek odemkl (úroveň budovy, nejvýš úroveň Statku), výrobky jen ze základních
+// receptů (vaření 1) – nikdy nic, na co hráč ještě nemá budovu nebo zvíře. Pro stejnou budovu a úroveň je cena pořád stejná.
+function upgradePool(st) {
+  const ok = new Set(CROP_LIST.filter(c => c.st <= st).map(c => c.id));
+  for (const a of ANIMAL_LIST) if (a.st <= st) ok.add(a.product);
+  for (const t of TREE_LIST) if (t.st <= st && t.fruit) ok.add(t.fruit);
+  const fish = new Set(FISH_LIST.filter(f => f.st <= st && f.fishLv <= 1).map(f => f.id));   // jen ryby, které berou hned
+  // výrobek, jen když se dá udělat ze surovin, které jsou taky k dispozici (opakovaně, výrobky z výrobků)
+  for (let more = true; more;) {
+    more = false;
+    for (const r of Object.values(RECIPES)) {
+      if (ok.has(r.id) || !PRODUCTS[r.id] || r.st > st || r.cook > 1) continue;
+      if (Object.keys(r.in).every(x => ok.has(x) || fish.has(x))) { ok.add(r.id); more = true; }
+    }
+  }
+  return [...ok].filter(id => ITEMS[id]);
+}
+export function upgradeCost(o, farm = null) {
   const d = BUILDINGS[o.kind];
   if (!UP_BASE[d.type]) return null;
   const L = objLevel(o);
   if (L >= MAX_BLD_LEVEL) return null;
   const coins = Math.round(UP_BASE[d.type] * Math.pow(L, 1.5));
-  const tier = Math.min(MAX_LEVEL, 1 + Math.round(L * 1.6));
-  const pool = orderableByLevel(tier, L).filter(id => ITEMS[id].price <= coins);
+  const pool = upgradePool(farm ? Math.min(L, statekLevel(farm)) : L).filter(id => ITEMS[id].price <= coins);
   const r = seeded(o.kind + ':' + L);
   const k = Math.min(pool.length, L < 4 ? 2 : 3);
   const items = [];
@@ -2130,15 +2165,6 @@ export function orderableItems(st = 99, cook = 99) {
   for (const t of TREE_LIST) if (t.st <= st) out.push(t.fruit);
   return [...new Set(out)];
 }
-// dřívější výběr podle úrovně hráče – jen pro suroviny na vylepšení budov (ceny vylepšení se nemění)
-function orderableByLevel(level, st = 99) {
-  const out = CROP_LIST.filter(c => c.level <= level).map(c => c.id);
-  for (const r of Object.values(RECIPES)) if (PRODUCTS[r.id] && r.level <= level && BUILDINGS[r.building].st <= st) out.push(r.id);
-  for (const a of ANIMAL_LIST) if (a.level <= level && BUILDINGS[a.home].st <= st) out.push(a.product);
-  for (const t of TREE_LIST) if (t.level <= level) out.push(t.fruit);
-  return [...new Set(out)];
-}
-
 function genOrder(farm, readyAt) {
   const pool = orderableItems(statekLevel(farm), skillLevel(farm, 'v'));
   const kinds = Math.min(pool.length, 1 + Math.floor(rnd(farm) * Math.min(3, 1 + farm.level / 3)));
@@ -2742,7 +2768,7 @@ function doAction(farm, a, now) {
     case 'upgrade': {
       const o = a.town !== undefined ? (TOWN_KINDS.includes(a.town) && BUILDINGS[a.town].type !== 'market' ? townObject(farm, a.town) : null) : findObject(farm, a.id);
       if (!o) return fail('no_object');
-      const c = upgradeCost(o);
+      const c = upgradeCost(o, farm);
       if (!c) return fail(UP_BASE[BUILDINGS[o.kind].type] ? 'max_level' : 'bad_action');
       if (BUILDINGS[o.kind].type !== 'main' && c.level > statekLevel(farm)) return fail('statek_low');
       if (BUILDINGS[o.kind].type === 'main' && statekMerits(farm, c.level).some(m => !m.ok)) return fail('merits');
@@ -2984,13 +3010,13 @@ function doAction(farm, a, now) {
     case 'claimDaily': {
       const today = dayKey(now);
       if (farm.daily.day === today) return fail('claimed');
-      const yesterday = dayKey(now - 86400000);
-      const streak = farm.daily.day === yesterday ? farm.daily.streak % 7 + 1 : 1;
-      const r = DAILY[streak - 1];
+      const streak = farm.daily.day === dayKey(now - 86400000) ? (farm.daily.streak || 0) + 1 : 1;   // v40: vynechaný den = znovu od 1
+      const r = dailyReward(streak);
       farm.daily = { day: today, streak };
       farm.coins += r.coins;
+      const deco = r.deco && giveDeco(farm, r.deco) ? r.deco : null;
       const levelUp = r.xp ? addXp(farm, r.xp) : 0;
-      return { ok: true, streak, coins: r.coins, gained: { items: [], xp: r.xp || 0, levelUp } };
+      return { ok: true, streak, coins: r.coins, deco, gained: { items: [], xp: r.xp || 0, levelUp } };
     }
     case 'fishCast': {
       const o = findObject(farm, a.id);
@@ -3036,7 +3062,7 @@ function doAction(farm, a, now) {
     case 'eventAnswer': {   // v36: odpověď na událost
       const ev = eventNow(farm, now);
       if (!ev || ev.slot !== a.slot || ev.id !== a.id) return fail('no_event');
-      if (!isInt(a.i) || a.i < 0 || a.i >= EVENTS_BY[ev.id].a.length) return fail('bad_action');
+      if (!isInt(a.i) || a.i < 0 || a.i >= evDef(ev.id).a.length) return fail('bad_action');
       return answerEvent(farm, ev, a.i, now);
     }
     case 'buyDog': {
@@ -3335,6 +3361,41 @@ export const EV_LEVEL = 3;            // od které úrovně hráče chodí udál
 const EV_OFF = 3600000;               // místní čas jako dayKey (SEČ)
 const HALF_DAY = 12 * 3600000;
 export const EVENTS_BY = Object.fromEntries(EVENTS.map(e => [e.id, e]));
+// ---------- v39: hlavní příběh (story.js) ----------
+export const STORY_BY = Object.fromEntries(STORY.map(e => [e.id, e]));
+export const evDef = id => EVENTS_BY[id] || STORY_BY[id] || null;
+const stF = farm => (farm.story && farm.story.f) || [];
+const stR = (farm, k) => (farm.story && farm.story.r && farm.story.r[k]) || 0;
+const relOk = (farm, need) => Object.entries(need || {}).every(([k, n]) => stR(farm, k) >= n);
+// splňuje farma podmínku (if = příznak, not = bez příznaku, need = nejmenší vztahy)? (rel u odpovědi je změna, ne podmínka)
+export function storyCond(farm, c) {
+  if (c.if && !stF(farm).includes(c.if)) return false;
+  if (c.not && stF(farm).includes(c.not)) return false;
+  return relOk(farm, c.need);
+}
+export const answerShown = (farm, e, ans) => !STORY_BY[e.id] || storyCond(farm, ans);
+// text dílu včetně vět podle dřívějších voleb
+export const storyText = (farm, e) => [e.text, ...(e.more || []).filter(m => storyCond(farm, m)).map(m => m.t)].join(' ');
+export const chapterOf = e => CHAPTERS[e.ch - 1];
+// další díl, pokud je na řadě: kapitola odemčená Statkem a dnes ještě žádný díl (den podle začátku půldne t)
+export function storyNext(farm, t) {
+  const s = farm.story; if (!s) return null;
+  const e = STORY[s.n]; if (!e) return null;
+  if (statekLevel(farm) < chapterOf(e).st) return null;   // v40: kapitolu odemyká Statek
+  return s.d === dayKey(t) ? null : e.id;
+}
+// odměna za kapitolu: mince a XP, za každý bod přátelství +5 % mincí (nejvýš +50 %), ozdoba zdarma k postavení
+export function chapterReward(farm, ch) {
+  const fr = Object.values((farm.story && farm.story.r) || {}).reduce((n, v) => n + Math.max(0, v), 0);
+  const bonus = Math.min(50, fr * 5);
+  return { coins: Math.round(ch.coins * (1 + bonus / 100)), xp: ch.xp, deco: ch.deco, bonus };
+}
+// dárková ozdoba (z příběhu nebo denní série): přidá se mezi budovy zdarma, pokud ji farma ještě nemá
+export function giveDeco(farm, id) {
+  if (!BUILDINGS[id] || farm.pending.includes(id) || farm.objects.some(o => o.kind === id)) return false;
+  farm.pending.push(id);
+  return true;
+}
 // kdy se v daném půldni (slot) událost objeví: dopoledne 7–11 h, odpoledne/večer 15–21 h místního času
 function evTime(slot, seed) {
   const h = (hashStr('udalost:' + seed + ':' + slot) % 1000) / 1000;
@@ -3356,11 +3417,12 @@ function pickEvent(farm, slot) {
 }
 // čekající událost: { slot, id, t (od kdy), until (kdy ji nahradí další) } nebo null
 export function eventNow(farm, now) {
-  if (farm.level < EV_LEVEL || !farm.ev) return null;
+  if (!farm.ev) return null;
   let slot = Math.floor((now + EV_OFF) / HALF_DAY), t = evTime(slot, farm.seed);
   if (t > now) { slot--; t = evTime(slot, farm.seed); }
   if (slot <= (farm.ev.k || 0)) return null;
-  const id = pickEvent(farm, slot);
+  // v39: díl příběhu místo náhodné události; v40: příběh hned od začátku hry, náhodné události od úrovně EV_LEVEL
+  const id = storyNext(farm, t) || (farm.level >= EV_LEVEL ? pickEvent(farm, slot) : null);
   return id ? { slot, id, t, until: evTime(slot + 1, farm.seed) + (evTime(slot + 1, farm.seed) <= now ? HALF_DAY : 0) } : null;
 }
 // mince v událostech rostou s úrovní (na úrovni 20 asi 3×)
@@ -3410,8 +3472,27 @@ function giveSome(farm, spec, n) {
   }
   return out;
 }
+// v39: díl příběhu – zapamatuje volbu (příznak, vztahy), posune příběh; poslední díl kapitoly dá odměnu
+function storyAnswer(farm, e, ans, out, good, i, now, res) {
+  const s = farm.story;
+  for (const x of out === ans ? [ans] : [ans, out]) {
+    if (x.set && !s.f.includes(x.set)) s.f.push(x.set);
+    for (const [k, n] of Object.entries(x.rel || {})) s.r[k] = Math.max(-5, Math.min(10, (s.r[k] || 0) + n));
+  }
+  res.rel = { ...(ans.rel || {}), ...(out !== ans ? out.rel || {} : {}) };
+  s.n = STORY.indexOf(e) + 1;
+  s.d = dayKey(now);
+  s.log = [...(s.log || []).filter(x => x[0] !== e.id), [e.id, i, good ? 1 : 0]].slice(-STORY.length);
+  if (e.end) {
+    const ch = chapterOf(e), rw = chapterReward(farm, ch);
+    farm.coins += rw.coins; res.coins += rw.coins; res.xp += rw.xp;
+    rw.got = giveDeco(farm, rw.deco);
+    res.chapter = { n: ch.n, title: ch.title, ...rw };
+  }
+}
 function answerEvent(farm, ev, i, now) {
-  const e = EVENTS_BY[ev.id], ans = e.a[i];
+  const e = evDef(ev.id), ans = e.a[i];
+  if (!answerShown(farm, e, ans)) return fail('locked');
   const why = answerNeed(farm, ans);
   if (why) return fail(why);
   const dog = !!(e.danger && farm.dog);
@@ -3446,7 +3527,8 @@ function answerEvent(farm, ev, i, now) {
   }
   farm.fx = farm.fx.filter(f => f.u > now).slice(-12);
   farm.ev.k = ev.slot;
-  farm.ev.h = [e.id, ...(farm.ev.h || []).filter(x => x !== e.id)].slice(0, 8);
+  if (STORY_BY[e.id]) storyAnswer(farm, e, ans, out, good, i, now, res);   // v39
+  else farm.ev.h = [e.id, ...(farm.ev.h || []).filter(x => x !== e.id)].slice(0, 8);
   farm.ev.last = { id: e.id, i, t: now, good, text: res.text, dog: res.dog };
   addStat(farm, 'events', 1);
   res.levelUp = res.xp ? addXp(farm, res.xp) : 0;

@@ -1533,5 +1533,217 @@
    "background": "transparent",
    "prompt": "A cute farm dog for a cozy fairy-tale farm game: a friendly brown-and-white farm dog with floppy ears and a red collar, whole body, trotting toward the bottom-left (three-quarter view, same isometric camera as the reference). Big friendly eyes. No ground, no shadow. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
   }
+ ],
+ "v39": [
+  {
+   "key": "b/altan",
+   "id": "asset_JLkBYu8tytxN2qQXdwUgaSsR",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a white wooden garden gazebo covered with climbing pink roses, with a small bench inside. It stands centered on a small flat diamond-shaped grass tile matching a 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/dedova_jablon",
+   "id": "asset_WQq5QFWxd6BKg3ACa9Ufw9bm",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a lovely young apple tree full of small golden apples, with a little wooden swing hanging from a branch. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/holubnik",
+   "id": "asset_iPhFRmhWfTAbti697sHRvAtS",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a white wooden dovecote house on a tall pole with a few white doves. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/lipa",
+   "id": "asset_VrGLPGpbJ8sfSoMACbBFkHPb",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a big old linden tree with a lush round green crown and a wooden bench under it. It stands centered on a small flat diamond-shaped grass tile matching a 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/mlynek",
+   "id": "asset_LfAYyM2UwASKyuM4HSd97eCS",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a small decorative wooden water wheel turning in a tiny stream channel that flows into a little round pool edged with stones. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/strasak",
+   "id": "asset_4rSH3inS9qxWxpZyqpcRF9Mp",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a cheerful scarecrow with a straw hat and a patched shirt, a black crow sitting on its arm. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/studna",
+   "id": "asset_TdRKxFvjeWbFjgx3j4fXFykf",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a restored old stone well with a wooden shingle roof, a crank and a wooden bucket. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/venec",
+   "id": "asset_R2dEPXxeAHxcnS1UfF5sA7Ms",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a big harvest wreath woven from golden wheat ears with long colourful ribbons, hanging on a tall wooden pole. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/vetrnik",
+   "id": "asset_KfkxJ9b5zHDB3z7H44BQFQsn",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a small decorative wooden windmill with four sails and flowers around its base. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/vozik",
+   "id": "asset_1Rp4bfc2j1wUn5sYReCrZTqf",
+   "reference": "asset_zWBsWGhiEqD1S3yCsEaQn8f9 (rybník z v35, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game decoration asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes and the same classic 2:1 isometric camera from the front corner. Do NOT copy the reference pond: no water, no jetty, no boat unless described. Draw: a wooden hand cart full of colourful flowers in clay pots. It stands centered on a small flat diamond-shaped grass tile matching a 1x1 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is recognizable even when small on a phone screen. No outlines, no people, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "e/k1a",
+   "id": "asset_kz1LUBTAPBFJxNsyqLvrAc1G",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: an old leather-bound chronicle book lying open in a dusty farmhouse attic, lit by a warm sunbeam from a small round window, an old wooden chest and dried herbs hanging from the beams. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k1b",
+   "id": "asset_9bqe56tNm8UKwp2E6rqexCwk",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a small wooden farm cart tipped into a muddy ditch between two vegetable fields, a rope and a shovel lying nearby, a neighbour cottage with a red roof behind a low wooden fence. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k1c",
+   "id": "asset_9Po6CT5v3dfpSMZbYBjhxUfp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: an old overgrown stone well behind a wooden barn, covered with brambles and ivy, its little wooden roof collapsed, fallen leaves and loose stones around it. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k1d",
+   "id": "asset_3TSD38nt1nvVgu5tTySD7GfE",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a restored stone well with a new wooden shingle roof and a wooden bucket full of sparkling clear water, a small rusty tin box with an old folded letter on the stone rim, sunny farmyard. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k2a",
+   "id": "asset_UVCYUpGjfmkkCD13JMpYHF6M",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: an old embroidered napkin with a simple hand-drawn map of a valley with a winding stream and a single apple tree, lying on a wooden kitchen table next to a parcel wrapped in brown paper and string. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k2b",
+   "id": "asset_A6xbKqx4xg8uV9dP5pr6zNxp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a small straw hat and a tiny green watering can left by a wooden fence next to a freshly planted row of carrots, a carrot doodled in chalk on a fence board. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k2c",
+   "id": "asset_PwZxeaekWms4eCJu77SMMdAH",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a very old gnarled half-dry apple tree in an overgrown orchard full of nettles and tall grass, a few small golden apples glowing on one branch, a little stream nearby. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k2d",
+   "id": "asset_N9ZGyUbR8TjEMPwAfrdQtqNZ",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a young grafted apple sapling tied to a wooden stake with a red ribbon, an old grafting knife and a ball of twine on a tree stump, warm morning light on a farm. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k3a",
+   "id": "asset_sVtfAhE8NPsXRuhpmNRvo28v",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: dark rain clouds over a green valley, a swollen muddy stream rising under a small stone village bridge, heavy rain falling. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k3b",
+   "id": "asset_h4n4DnQoc87wx92L5o4tM5X3",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a long wall of sandbags along a muddy riverbank in the rain, shovels stuck in a pile of sand, a wheelbarrow, rising brown water. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k3c",
+   "id": "asset_bAdNhq4R1aC3HHrWQLMNLoER",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: an old wooden dam by a stone bridge at night in heavy rain, glowing lanterns hanging on posts, a small leak of water spraying through the boards. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k3d",
+   "id": "asset_mnYuZRmQjgJb6ubWeRHb3hPf",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a sunny morning after a flood, a big rainbow over muddy fields, puddles reflecting the blue sky, a little village with colourful bunting in the distance. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k4a",
+   "id": "asset_ibgNLHp6rFfkAJ9FBtQ6ehGf",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a shiny old-fashioned cream-coloured city car parked on a dusty farm road in front of a farmhouse, a leather briefcase and rolled blueprints lying on its hood. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k4b",
+   "id": "asset_3n9czYPFQ9jrAPqgzEC4ikvR",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a paper contract with a fountain pen on a cozy farmhouse kitchen table with a checkered tablecloth, a cup of tea and a basket of potatoes. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k4c",
+   "id": "asset_a5eE4pYcWaSYjzQB3HUZqLR8",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: the interior of a small village town hall with rows of wooden benches, a wooden speaker podium, an easel with a drawing of a roller coaster, warm hanging lamps. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k4d",
+   "id": "asset_Dh1eGk3beyk9ZgCZwv1GMumd",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a big old linden tree on a green hill with a wooden bench beneath it, overlooking a peaceful green valley with fields and an orchard at sunset. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k5a",
+   "id": "asset_JP8n41bAHMj3XdhLfj9ZrvrN",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a rolled parchment invitation tied with a red ribbon and a red wax seal, lying on a wooden table with wheat ears and a few apples. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k5b",
+   "id": "asset_unK6pDQTDWCmCnWiEKVDPTjD",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: long wooden tables and benches set up on a meadow by a stream, baskets full of vegetables, colourful bunting strung between the trees. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k5c",
+   "id": "asset_gq7kfwX6ejwpeMyAph4EWQWz",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a half-woven wheat harvest wreath with ribbons lying on a barn floor, a cheeky white goat nibbling the wheat ears, scattered straw. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  },
+  {
+   "key": "e/k5d",
+   "id": "asset_uXevbwQJWShbxnWQN43xz13E",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "opaque",
+   "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a joyful harvest festival on a meadow at dusk, a big wheat wreath with colourful ribbons hanging on a tall wooden pole, glowing lanterns, long tables full of food, a small music stage with instruments. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
+  }
  ]
 }

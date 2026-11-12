@@ -6,16 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
-  bestOwned, eventNow, EVENTS_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
-} from './rules.js?v=38';
-import { preloadAssets, spriteName } from './sprites.js?v=38';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=38';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=38';
-import { iconize, ic } from './icons.js?v=38';
-import { NEWS } from './news.js?v=38';
-import { sfx, soundOn, setSound } from './sfx.js?v=38';
-import { TEAM } from './team-config.js?v=38';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=38';
+  bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
+} from './rules.js?v=40';
+import { preloadAssets, spriteName } from './sprites.js?v=40';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=40';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=40';
+import { iconize, ic } from './icons.js?v=40';
+import { NEWS } from './news.js?v=40';
+import { sfx, soundOn, setSound } from './sfx.js?v=40';
+import { TEAM } from './team-config.js?v=40';
+import { CHAPTERS } from './story.js?v=40';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=40';
 
 const $ = id => document.getElementById(id);
 
@@ -640,6 +641,7 @@ function showStatekUp(L) {
   for (const t of TREE_LIST) if (t.st === L) items.push([ITEMS[t.fruit].icon, t.name, 'strom']);
   for (const a of Object.values(ANIMALS)) if (a.st === L) items.push([a.icon, a.name, 'zvíře']);
   for (const fi of Object.values(FISH)) if (fi.st === L) items.push([fi.icon, fi.name, fi.fishLv > skillLevel(game.farm, 'r') ? `ryba · rybaření ${fi.fishLv}` : 'ryba']);
+  for (const ch of CHAPTERS) if (ch.st === L) items.push(['book', `Příběh: ${ch.n}. kapitola`, ch.title]);   // v40: kapitolu odemyká Statek
   for (const r of Object.values(RECIPES)) if (r.st === L && !r.id.startsWith('s_') && !r.id.startsWith('z_')) items.push([ITEMS[r.id].icon, ITEMS[r.id].name, r.cook > skillLevel(game.farm, 'v') ? `výrobek · vaření ${r.cook}` : 'výrobek']);
   luShow(L, 'Statek vylepšen!', 'STATEK', items, items.length ? 'Nově můžeš:' : '');
 }
@@ -914,7 +916,11 @@ function renderPanel() {
   else if (p.kind === 'tasks') { title = ':trophy: Úkoly a odměny'; body = tasksHtml(f, now(), p.tab, game.board, game.weekly); }
   else if (p.kind === 'skills') { title = ':star: Dovednosti'; body = skillsHtml(f); }
   else if (p.kind === 'plot') { const pl = findPlot(f, p.x, p.y); if (!pl) { closeSheets(); return; } title = ':plot: Pole'; body = plotHtml(f, pl, now(), !!p.ask); }
-  else if (p.kind === 'event') { const e = (p.res && EVENTS_BY[p.res.id]) || null; title = ':bell: ' + (e ? 'Jak to dopadlo' : 'Událost'); body = eventHtml(f, now(), p.res); }
+  else if (p.kind === 'event') {
+    const e = (p.res && evDef(p.res.id)) || null, ev = !e && eventNow(f, now());
+    title = p.tab === 'kronika' ? ':book: Kronika údolí' : e ? ':bell: Jak to dopadlo' : ev && STORY_BY[ev.id] ? ':book: Příběh' : ':bell: Událost';
+    body = eventHtml(f, now(), p.res, p.tab);
+  }
   else if (p.kind === 'town') {
     const o = townObject(f, p.t);
     title = `:${BUILDINGS[p.t].icon}: ${BUILDINGS[p.t].name}`;
@@ -1053,10 +1059,11 @@ $('panelBody').addEventListener('click', e => {
     case 'evAnswer': {   // v36: odpověď na událost
       const [slot, id, i] = v.split('|');
       const r = act({ type: 'eventAnswer', slot: Number(slot), id, i: Number(i) });
-      if (r.ok) { game.panel.res = r; renderPanel(); $('panel').scrollTop = 0; if (r.coins > 0 || r.gift.length) sfx('coin'); }
+      if (r.ok) { game.panel.res = r; renderPanel(); $('panel').scrollTop = 0; if (r.chapter) sfx('level'); else if (r.coins > 0 || r.gift.length) sfx('coin'); }
       else if (r.error === 'no_event') closeSheets();
       break;
     }
+    case 'kronika': game.panel = { kind: 'event', tab: 'kronika' }; renderPanel(); $('panel').scrollTop = 0; break;   // v39
     case 'buyDog': {
       const r = act({ type: 'buyDog' });
       if (r.ok) toast(`:pes: ${DOG.name} je doma! Bude chodit s tebou a hlídat farmu.`, 'lvlup', 2600);
@@ -1206,7 +1213,7 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'claimDaily': {
       const r = act({ type: 'claimDaily' });
-      if (r.ok) toast(`:gift: Den ${r.streak}: +${r.coins} :coin:`, 'lvlup', 2200);
+      if (r.ok) toast(`:gift: Den ${r.streak}: +${r.coins} :coin:${r.deco ? `<br>Vzácná ozdoba: <b>${BUILDINGS[r.deco].name}</b> – postav ji zdarma (Stavět)` : ''}`, 'lvlup', r.deco ? 4000 : 2200);
       break;
     }
     case 'claimQuest': {
@@ -1603,7 +1610,8 @@ setInterval(() => {
 // v36: událost (tlačítko vlevo, sama se otevře jednou za půlden), dočasné změny, pomoc od kamarádů, odměna ze soutěže
 function v36Check(f) {
   const t = now(), ev = eventNow(f, t), fx = fxActive(f, t);
-  $('eventBtn').hidden = !ev && !fx.length;
+  $('eventBtn').hidden = f.level < EV_LEVEL && !ev && !fx.length && !(f.story && f.story.n);   // v39/v40: Kronika příběhu je dostupná pořád
+  $('eventBtn').querySelector('b').textContent = ev && STORY_BY[ev.id] ? 'Příběh' : 'Událost';
   $('eventDot').hidden = !ev;
   if (ev && !game.panel && !game.place && !game.fishing && !game.sowCrop && lsGetN('ekofarm_ev') !== ev.slot) {
     lsSetN('ekofarm_ev', ev.slot);

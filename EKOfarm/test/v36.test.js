@@ -17,6 +17,7 @@ function farm(level = 40) {
   f.level = level; f.xp = LEVEL_XP[level]; f.coins = 1e6; f.siloCap = 5000;
   f.objects.find(o => o.kind === 'statek').lvl = 10;
   f.sk = { f: 1e7, r: 1e7, v: 1e7 };   // v38: dovednosti naplno
+  f.story.n = 99;   // v39: příběh dohraný – testují se náhodné události
   return f;
 }
 function placeAny(f, kind, t = T0) {

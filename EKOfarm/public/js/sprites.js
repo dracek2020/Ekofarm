@@ -1,7 +1,7 @@
 // EKOfarm – grafika hry (public/img/<druh>/<jméno>.webp, seznam v assets.js).
 // Druhy: b = budovy a ozdoby (plátno podle šablony), t = dlaždice země a plot, c = plodiny, s = stromy,
 // z = zvířata, m = stroje, p = lidé, i = ikony předmětů.
-import { ASSETS } from './assets.js?v=38';
+import { ASSETS } from './assets.js?v=40';
 
 const assetSets = {};
 for (const k in ASSETS) assetSets[k] = new Set(ASSETS[k]);
