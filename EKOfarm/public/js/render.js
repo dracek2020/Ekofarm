@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=27';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage } from './objects.js?v=27';
-import { drawIconText, drawIcon } from './icons.js?v=27';
-import { asset } from './sprites.js?v=27';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=29';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=29';
+import { drawIconText, drawIcon } from './icons.js?v=29';
+import { asset } from './sprites.js?v=29';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -104,11 +104,12 @@ function drawFence(ctx, farm, vis) {
   });
 }
 
-const TOWN_NAMES = { prodejna: 'Prodejna strojů', stanek: 'Stánek', trziste: 'Tržiště' };
+const TOWN_NAMES = { prodejna: 'Prodejna strojů', stanek: 'Stánek', trziste: 'Tržiště' , nastenka: 'Nástěnka' };
 function townLabel(ctx, o) {
-  const [x, y] = cellCenter(o.x + 1, o.y + 1);
+  const tb = TOWN_BUILDINGS.find(b => b.kind === o.kind) || {};
+  const [x, y] = cellCenter(o.x + ((tb.w || 3) - 1) / 2, o.y + ((tb.h || 3) - 1) / 2);
   ctx.font = '800 15px system-ui, sans-serif';
-  const text = TOWN_NAMES[o.kind];
+  const text = TOWN_NAMES[o.kind] || '';
   const w = ctx.measureText(text).width + 22;
   ctx.fillStyle = 'rgba(74,50,24,0.85)';
   roundRect(ctx, x - w / 2, y + 30, w, 24, 12); ctx.fill();
@@ -315,7 +316,7 @@ export function drawScene(ctx, view) {
   }
   for (const tr of BG_TREES) if (seen(tr.gx, tr.gy) && !landOwned(farm, tr.gx, tr.gy)) items.push({ d: tr.gx + tr.gy + 1, tree: tr });
   for (const pp of view.people || []) items.push({ d: pp.gx + pp.gy + 0.05, person: pp });
-  for (const b of TOWN_BUILDINGS) if (seen(b.x, b.y, 3, 3)) { const o = townObject(farm, b.kind); items.push({ d: objectDepth(o), o }); }
+  for (const b of TOWN_BUILDINGS) if (seen(b.x, b.y, b.w || 3, b.h || 3)) { const o = townObject(farm, b.kind); items.push({ d: objectDepth(o), o }); }
   TOWN_HOUSES.forEach((h, i) => { if (seen(h[0], h[1], 2, 2)) items.push({ d: h[0] + h[1] + 2, house: h, v: i }); });
   for (const p of LAND_PARCELS) {
     if (!farm.land.includes(p.id) && landReachable(farm, p)) items.push({ d: p.x + p.y + (p.w + p.h) / 2 + 0.5, sign: p });
@@ -328,7 +329,14 @@ export function drawScene(ctx, view) {
       const pp = it.person;
       drawPerson(ctx, (pp.gx - pp.gy) * TW / 2, (pp.gx + pp.gy) * TH / 2, pp.who, pp.dir, t, pp.walking, pp.work);
     } else if (it.sign) drawSaleSign(ctx, farm, it.sign);
-    else if (it.house) drawTownHouse(ctx, it.house[0], it.house[1], it.v);
+    else if (it.house) {
+      drawTownHouse(ctx, it.house[0], it.house[1], it.v);
+      // v29: z tohohle domku se někdo ozval, že chce pracovat na farmě
+      if (farm.board && farm.board.ads.some(ad => ad.self && ad.house === it.v && ad.ready <= view.now)) {
+        const [x, y] = cellCenter(it.house[0] + 0.5, it.house[1] + 0.5);
+        bubble(ctx, x, y - 120 + Math.sin(t / 300) * 2, 'helper', 1);
+      }
+    }
     else {
       drawObject(ctx, it.o, view.now, t, farm);
       const vg = !it.o.town && farm.vill && villAt(farm, it.o.id);

@@ -5,18 +5,18 @@ import {
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, planKind, planSum, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
-  TOWN, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=27';
-import { preloadAssets, spriteName } from './sprites.js?v=27';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=27';
-import { createBackend, ApiError } from './api.js?v=27';
-import { iconize, ic } from './icons.js?v=27';
-import { NEWS } from './news.js?v=27';
-import { sfx, soundOn, setSound } from './sfx.js?v=27';
-import { pondHtml, hiveHtml, helpHtml, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=27';
+  TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
+} from './rules.js?v=29';
+import { preloadAssets, spriteName } from './sprites.js?v=29';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=29';
+import { createBackend, ApiError } from './api.js?v=29';
+import { iconize, ic } from './icons.js?v=29';
+import { NEWS } from './news.js?v=29';
+import { sfx, soundOn, setSound } from './sfx.js?v=29';
+import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=29';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 27;
+const APP_VERSION = 29;
 
 
 const game = {
@@ -451,6 +451,9 @@ function onTap([gx, gy]) {
   if (game.visit) return;
   const tb = townAt(gx, gy);
   if (tb && !game.place) { setSow(null); openPanel({ kind: 'town', t: tb.kind, tab: 'koupit' }); if (tb.kind === 'trziste') loadMarket(); return; }
+  // v29: klepnutí na domek v Městečku, odkud se někdo ozval → nástěnka
+  const hi = TOWN_HOUSES.findIndex(h => gx >= h[0] && gx < h[0] + 2 && gy >= h[1] && gy < h[1] + 2);
+  if (hi >= 0 && !game.place && game.farm.board.ads.some(ad => ad.self && ad.house === hi)) { openPanel({ kind: 'town', t: 'nastenka' }); return; }
   if (game.place) {
     const s = placeSize();
     setGhost(gx - Math.floor((s.w - 1) / 2), gy - Math.floor((s.h - 1) / 2));
@@ -840,6 +843,7 @@ function renderPanel() {
   else if (p.kind === 'build') { title = ':hammer: Stavět'; body = buildHtml(f, p.tab); }
   else if (p.kind === 'news') { title = ':news: Novinky'; body = newsHtml(); }
   else if (p.kind === 'wiki') { title = ':book: Deník farmáře'; body = wikiHtml(f, p.tab); }
+  else if (p.kind === 'team') { title = ':helper: Farmářský tým'; body = teamHtml(f, now(), p.f || 'all', p.sel || 0, !!p.ask); }
   else if (p.kind === 'item') { title = `:${ITEMS[p.id].icon}: ${ITEMS[p.id].name}`; body = itemHtml(f, p.id, !!p.back); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now()); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
@@ -849,7 +853,7 @@ function renderPanel() {
     const o = townObject(f, p.t);
     title = `:${BUILDINGS[p.t].icon}: ${BUILDINGS[p.t].name}`;
     img = bImg(p.t);
-    body = p.t === 'prodejna' ? dealerHtml(f, now(), o) : p.t === 'stanek' ? stallHtml(f, o, now(), p.tab)
+    body = p.t === 'prodejna' ? dealerHtml(f, now(), o) : p.t === 'stanek' ? stallHtml(f, o, now(), p.tab) : p.t === 'nastenka' ? boardHtml(f, now(), game.adProf)
       : marketHtml(f, game.market, p.tab, game.mform, now());
   }
   else {
@@ -868,6 +872,7 @@ function renderPanel() {
       : d.type === 'bigfield' ? bigfieldHtml(f, o, now())
       : d.type === 'pond' ? pondHtml(f, o, now())
       : d.type === 'hive' ? hiveHtml(f, o, now())
+      : d.type === 'house' ? houseHtml(f, o)
       : decoHtml(f, o);
   }
   setTitle(title, img);
@@ -886,7 +891,7 @@ function setTitle(title, img) {
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
-  if (game.panel && ['obj', 'silo', 'town'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
+  if (game.panel && ['obj', 'silo', 'town', 'team'].includes(game.panel.kind) && performance.now() - panelTouch > 700) renderPanel();
 }, 1000);
 
 $('panelBody').addEventListener('click', e => {
@@ -976,8 +981,38 @@ $('panelBody').addEventListener('click', e => {
       break;
     case 'helperTractor': act({ type: 'helperSet', tractor: v === '1' }); break;
     // ---- vesničané ----
-    case 'buyVill': { const r = act({ type: 'buyVill' }); if (r.ok) toast(`:helper: Nový vesničan ${villName(findVill(f, r.id))}! Přiřaď ho v okně budovy.`, '', 3000); break; }
-    case 'upVill': { const r = act({ type: 'upVill', id: Number(v) }); if (r.ok) toast(`:helper: Vesničan má úroveň ${r.lvl}`); break; }
+    // ---- Farmářský tým, nástěnka, domky ----
+    case 'openTeam': openPanel({ kind: 'team', f: 'all' }); break;
+    case 'teamFilter': game.panel.f = v; game.panel.sel = 0; renderPanel(); break;
+    case 'teamSel': if (game.panel.kind !== 'team') openPanel({ kind: 'team', f: 'all', sel: Number(v) }); else { game.panel.sel = Number(v); game.panel.ask = false; renderPanel(); $('panel').scrollTop = 0; } break;
+    case 'teamBack': game.panel.sel = 0; game.panel.ask = false; renderPanel(); break;
+    case 'fireAsk': game.panel.ask = true; renderPanel(); break;
+    case 'fireVill': { const vv = findVill(f, Number(v)); if (act({ type: 'fireVill', id: Number(v) }).ok) { toast(`:helper: ${vv ? villName(vv) : 'Pracovník'} odešel. Lůžko je volné.`); game.panel.sel = 0; game.panel.ask = false; renderPanel(); } break; }
+    case 'teamMove': {
+      const [id, k, a1, a2] = v.split('|');
+      const r = k === 'a' ? act({ type: 'assignArea', id: Number(id), kind: a1, a: Number(a2) })
+        : k === 'b' ? act({ type: 'assignVill', id: Number(id), at: Number(a1) })
+        : (findVill(f, Number(id)) || {}).area ? act({ type: 'assignArea', id: Number(id), a: 0 }) : act({ type: 'assignVill', id: Number(id), at: 0 });
+      if (r.ok && k) toast(`:helper: ${villName(findVill(f, Number(id)))} jde na nové místo`);
+      break;
+    }
+    case 'openBoard': openPanel({ kind: 'town', t: 'nastenka' }); break;
+    case 'openBuildFarm': openPanel({ kind: 'build', tab: 'farma' }); break;
+    case 'adProf': game.adProf = v; renderPanel(); break;
+    case 'postAd': {
+      const [prof, opt] = v.split('|');
+      const r = act({ type: 'postAd', prof, opt: Number(opt) });
+      if (r.ok) toast(`:sign: Inzerát visí. Uchazeči přijdou za ${fmtTime(Math.ceil((r.ready - now()) / 1000))}.`, '', 2600);
+      break;
+    }
+    case 'hireCand': {
+      const [ad, i] = v.split('|').map(Number);
+      const r = act({ type: 'hireCand', ad, i });
+      if (r.ok) toast(`:helper: ${villName(findVill(f, r.id))} je v týmu! Práci zadáš v okně Tým.`, 'lvlup', 2600);
+      break;
+    }
+    case 'dropAd': act({ type: 'dropAd', ad: Number(v) }); break;
+    case 'rebuildHouse': { const r = act({ type: 'rebuildHouse', id: Number(v) }); if (r.ok) toast(`:house: Přestavěno na ${BUILDINGS[r.kind].name} · ${bedsText(BUILDINGS[r.kind].beds)}`); break; }
     case 'villAssign': { const [id, at] = v.split('|').map(Number); if (act({ type: 'assignVill', id, at }).ok) toast(`:helper: ${villName(findVill(f, id))} tu teď pracuje`); break; }
     case 'villFree': act({ type: 'assignVill', id: Number(v), at: 0 }); break;
     // tabulka práce: přidat řádek, změnit procenta, vyřadit, rezerva / strop zásoby
@@ -1013,14 +1048,13 @@ $('panelBody').addEventListener('click', e => {
       act({ type: 'villLim', id: vv.id, key, n: Math.max(0, Math.min(9999, next)) });
       break;
     }
-    case 'openVill': openPanel({ kind: 'shop', tab: 'lide' }); break;
+    case 'openVill': openPanel({ kind: 'team', f: 'all' }); break;
     // ---- deník farmáře ----
     case 'itemInfo': if (ITEMS[v]) { const back = game.panel && { ...game.panel }; openPanel({ kind: 'item', id: v, back }); } break;
     case 'itemBack': if (game.panel && game.panel.back) openPanel(game.panel.back); break;
     case 'openWiki': openPanel({ kind: 'wiki', tab: game.wikiTab }); break;
     case 'wtab': game.panel.tab = game.wikiTab = v; renderPanel(); $('panel').scrollTop = 0; break;
     // ---- farmáři ve Statku, zásoby ----
-    case 'buyFarmer': { const r = act({ type: 'buyFarmer' }); if (r.ok) toast(`:farmer: Nový farmář ${villName(findVill(f, r.id))}! Přiřaď ho k pracovní oblasti.`, '', 3000); break; }
     case 'areaAssign': { const [id, kind, a] = v.split('|'); const r = act({ type: 'assignArea', id: Number(id), kind, a: Number(a) }); if (r.ok) toast(`:farmer: ${villName(findVill(f, Number(id)))} pracuje v oblasti ${r.n}`); break; }
     case 'areaFree': act({ type: 'assignArea', id: Number(v), a: 0 }); break;
     case 'buySupply': { const [item, q] = v.split('|'); const r = act({ type: 'buySupply', item, qty: Number(q) }); if (r.ok) toast(`+${q}× :${ITEMS[item].icon}: · −${r.cost} :coin:`); break; }
@@ -1394,7 +1428,8 @@ $('shopBtn').addEventListener('click', () => {
 const openSilo = () => { cancelPlace(); openPanel({ kind: 'silo' }); };
 $('siloBtn').addEventListener('click', openSilo);
 $('coinBtn').addEventListener('click', openSilo);
-$('wikiBtn').addEventListener('click', () => { cancelPlace(); openPanel({ kind: 'wiki', tab: game.wikiTab }); });   // mince se vydělávají prodejem ve skladu
+$('wikiBtn').addEventListener('click', () => { cancelPlace(); openPanel({ kind: 'wiki', tab: game.wikiTab }); });
+$('teamBtn').addEventListener('click', () => { cancelPlace(); openPanel({ kind: 'team', f: 'all' }); });   // mince se vydělávají prodejem ve skladu
 $('siloBtn2').addEventListener('click', openSilo);
 
 $('menuBtn').addEventListener('click', () => {

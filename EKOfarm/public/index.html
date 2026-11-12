@@ -9,7 +9,7 @@
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
-<link rel="stylesheet" href="/css/style.css?v=27">
+<link rel="stylesheet" href="/css/style.css?v=29">
 </head>
 <body>
 <!--APP-->
@@ -36,6 +36,7 @@
     <button class="sq" id="townBtn" aria-label="Městečko"><span data-ic="shop"></span><b>Městečko</b></button>
     <button class="sq" id="chatBtn" aria-label="Chat"><span data-ic="chat"></span><b>Chat</b><i class="dot" id="chatDot" hidden></i></button>
     <button class="sq" id="wikiBtn" aria-label="Deník farmáře"><span data-ic="book"></span><b>Deník</b></button>
+    <button class="sq" id="teamBtn" aria-label="Farmářský tým"><span data-ic="helper"></span><b>Tým</b></button>
   </div>
   <div id="tut" hidden><button class="tut-x" id="tutClose" aria-label="Zavřít">✕</button><span class="tut-ico" data-ic="farmer"></span><div id="tutText"></div>
     <div class="tut-btns"><button class="btn sm" id="tutNext">Dál</button><button class="btn sm alt" id="tutSkip">Přeskočit</button></div></div>
@@ -120,7 +121,7 @@ function showError(msg) {
 // nenačetl se některý soubor hry: zjistit který (nejčastěji neúplné nasazení)
 function checkFiles() {
   if (!window.fetch || location.protocol.indexOf('http') !== 0) return;
-  var names = ['main', 'rules', 'assets', 'sprites', 'render', 'objects', 'icons', 'panels', 'api', 'news', 'sfx'], bad = [], left = names.length;
+  var names = ['main', 'rules', 'team-config', 'assets', 'sprites', 'render', 'objects', 'icons', 'panels', 'api', 'news', 'sfx'], bad = [], left = names.length;
   names.forEach(function (n) {
     fetch('/js/' + n + '.js?kontrola=' + Date.now(), { cache: 'no-store' }).then(function (r) {
       if (!r.ok || String(r.headers.get('content-type')).indexOf('javascript') < 0) bad.push(n + '.js');
@@ -144,6 +145,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=27"></script>
+<script type="module" src="/js/main.js?v=29"></script>
 </body>
 </html>

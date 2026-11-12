@@ -1,5 +1,15 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 29, title: 'Farmářský tým: hledání pracovníků, domky, pověst a zásluhy', items: [
+    'Tým začíná od nuly: dosavadní vesničané odešli. Nové pracovníky si najdeš na Nástěnce v Městečku – vyvěsíš inzerát a zaplatíš pohoštěním z farmy (na začátku stačí 4 pšenice). Za chvíli přijdou uchazeči a jednoho přijmeš.',
+    'Pracovníci bydlí v domcích: Chatrč (200 mincí, 2 lůžka), Chata (500, 3) a Dům (1 000, 5). Chatrč jde přestavět na chatu a chatu na dům za rozdíl v ceně.',
+    'Každý pracovník má profesi (Pěstitel, Chovatel, Řemeslník, Skladník), jednu vlastnost a 12 úrovní. Zkušenosti dostává za hotovou práci – čím hodnotnější věc, tím víc.',
+    'S úrovní roste výkon: pěstitel zvládne políčko za 12 s, na úrovni 12 za 1 s. Řemeslník naloží do jedné dávky víc kusů, chovatel dostane ze zvířete víc, skladník unese na trh víc zboží za lepší cenu.',
+    'Náročnější výrobky, plodiny a zvířata zvládne pracovník až s praxí – v tabulce je uvidíš šedě.',
+    'Pověst farmy roste za doručené zakázky a denní úkoly. S lepší pověstí přijde víc a zkušenějších uchazečů a od stupně 3 se lidé z Městečka ozvou sami.',
+    'Statek jde vylepšit jen se zásluhami (úroveň hráče a jeden úkol). Průmysl se odemyká postupně až do Statku 10 – každá výrobna přijde po surovině, kterou zpracovává. Co už máš postavené, zůstává.',
+    'Nové tlačítko Tým vpravo: všichni pracovníci, jejich dovednosti, přeřazení a propuštění. Pomocník na hodiny se už nenajímá.',
+  ] },
   { v: 27, title: 'Vesničané pracují pořád a podle tabulky', items: [
     'Konec obchůzek. Každý vesničan teď pracuje bez přestání: úkon za úkonem, a jakmile je co dělat, jde na to.',
     'Práci zadáváš tabulkou s procenty. Farmáři řekneš, jakou část oblasti čím osázet (třeba 50 % pšenice, 30 % kukuřice, zbytek ladem). Co dozraje, hned sklidí a znovu zaseje.',

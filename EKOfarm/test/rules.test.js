@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas, ANIMALS, runVillagers, villLag, nextTrade, TRADE_IV, TRADE_CAP, TRADE_ROWS, tradeRound, workMs, VILL_CRAFT, VILL_BUDGET } from '../public/js/rules.js';
+import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas, ANIMALS, runVillagers, villLag, nextTrade, TRADE_IV, tradeRound, workMs, VILL_BUDGET, beds, teamCap, teamFree, repTier, repNext, adOffers, statekMerits, villLevel, needLvl, RULES_VERSION } from '../public/js/rules.js';
+import { TEAM } from '../public/js/team-config.js';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -147,6 +148,7 @@ test('výroba ve frontě', () => {
 test('zvířata: koupě, krmení, sběr', () => {
   const f = farm6();
   f.coins = 1000; f.level = 3; f.xp = 25;
+  f.objects.find(o => o.kind === 'statek').lvl = 2;   // v29: Kurník od Statku 2
   assert.equal(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).error, 'no_home');
   const id = applyAction(f, { type: 'place', kind: 'kurnik', x: 0, y: 0 }, T0).id;
   for (let i = 0; i < 3; i++) assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).ok);
@@ -167,6 +169,7 @@ test('zvířata: koupě, krmení, sběr', () => {
 test('plný sklad u výroby a rozšíření skladu', () => {
   const f = farm6();
   f.coins = 1000; f.level = 3; f.xp = 25;
+  f.objects.find(o => o.kind === 'statek').lvl = 2;
   const id = applyAction(f, { type: 'place', kind: 'kurnik', x: 0, y: 0 }, T0).id;
   applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0);
   f.silo.krmivo_slepice = 1;
@@ -277,57 +280,283 @@ test('sad a stromy', () => {
   assert.equal(treeState(o, t).state, 'empty');
 });
 
-// ---------- v27: vesničané pracují průběžně podle tabulky s procenty ----------
+// ---------- v29: Farmářský tým – hledání, domky, pověst, zásluhy, úrovně 1–12, výkon ----------
 const tick = (f, t) => applyAction(f, { type: 'tick' }, t);
 // dopočítá práci až do času t (po dávkách, jako to dělá hra)
 function catchUp(f, t) {
-  for (let i = 0; i < 2000; i++) { tick(f, t); if (!villLag(f, t)) return i + 1; }
-  assert.fail('vesničané nedohnali práci');
+  for (let i = 0; i < 4000; i++) { tick(f, t); if (!villLag(f, t)) return i + 1; }
+  assert.fail('pracovníci nedohnali práci');
 }
 function placeAny(f, kind, t = T0) {
   const b = BUILDINGS[kind];
-  for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (fits(f, x, y, b.w, b.h)) { const r = applyAction(f, { type: 'place', kind, x, y }, t); assert.ok(r.ok, kind); return r.id; }
+  for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (fits(f, x, y, b.w, b.h)) { const r = applyAction(f, { type: 'place', kind, x, y }, t); assert.ok(r.ok, kind + ' ' + r.error); return r.id; }
   assert.fail('není místo pro ' + kind);
 }
-function hire(f, at, lvl = 1, t = T0) {
-  const id = applyAction(f, { type: 'buyVill' }, t).id;
-  for (let i = 1; i < lvl; i++) assert.ok(applyAction(f, { type: 'upVill', id }, t).ok);
+// pracovník rovnou do týmu (jako přijatý z nástěnky): profese, úroveň v profesi, vlastnost
+function worker(f, prof = 'vyroba', lvl = 1, trait = null, t = T0) {
+  const v = { id: f.nextId++, prof, trait, xp: { [prof]: TEAM.xpLvl[lvl] }, hist: [], at: 0, area: null, plan: {}, t, n: 0 };
+  f.vill.push(v);
+  return v.id;
+}
+function hire(f, at, lvl = 1, prof, t = T0) {
+  const o = at && findObject(f, at);
+  const p = prof || (o ? { factory: 'vyroba', pen: 'chov', hive: 'chov', storage: 'sklad' }[BUILDINGS[o.kind].type] : 'vyroba');
+  const id = worker(f, p, lvl, null, t);
   if (at) assert.ok(applyAction(f, { type: 'assignVill', id, at }, t).ok);
   return id;
 }
 const sklad = f => f.objects.find(o => o.kind === 'sklad') || findObject(f, placeAny(f, 'sklad'));
 const plan = (f, id, key, pct, t = T0) => applyAction(f, { type: 'villPlan', id, key, pct }, t);
 
-test('vesničané: nákup, vylepšení, přiřazení do budovy', () => {
+test('v29: uložená hra z v27 – tým odejde, materiál se vrátí, pověst ze zakázek, nákup a pomocník končí', () => {
+  const f = rich(farm6(), 12, 1000);
+  f.v = 16; f.stats.orders = 7;
+  f.seeds = { s_wheat: 2 };
+  f.vill = [{ id: 901, lvl: 3, role: 'farm', area: { kind: 'pole', id: f.plots[0].id }, plan: { wheat: 100 }, t: T0, n: 5, job: { k: 'plant', id: f.plots[0].id, x: 'wheat', s: T0, e: T0 + 9000 } },
+    { id: 902, lvl: 5, at: 0, plan: {}, t: T0, n: 0 }];
+  f.helper = { until: T0 + 3600000, last: T0, crop: 'wheat', n: 0 };
+  delete f.rep; delete f.board;
+  normalize(f);
+  assert.deepEqual(f.vill, [], 'všichni odešli');
+  assert.equal(f.seeds.s_wheat, 3, 'semínko z ruky se vrátilo do Statku');
+  assert.equal(f.rep, 21, 'pověst = 3 × doručené zakázky');
+  assert.deepEqual(f.board.ads, []);
+  assert.equal(f.v, RULES_VERSION);
+  for (const type of ['buyVill', 'buyFarmer', 'upVill']) assert.equal(applyAction(f, { type, id: 1 }, T0).error, 'team_search');
+  assert.equal(applyAction(f, { type: 'hire', plan: 0, crop: 'wheat' }, T0).error, 'helper_gone');
+  // najatý pomocník doběhne
+  for (const p of f.plots) { p.crop = null; }
+  applyAction(f, { type: 'nop' }, T0 + 120000);
+  assert.ok(f.helper.n > 0, 'pomocník ještě pracuje');
+  // druhé otevření už nic neresetuje
+  f.vill.push({ id: 5, prof: 'pole', xp: {}, hist: [], at: 0, area: null, plan: {}, t: T0, n: 0 });
+  normalize(f);
+  assert.equal(f.vill.length, 1);
+});
+
+test('v29: domky – lůžka, přestavba za rozdíl, tým nejvýš 30', () => {
   const f = rich(farm6(), 20, 10000);
-  // nákup a vylepšení: 100, pak 100 / 200 / 300 / 400, nejvýš úroveň 5
-  const id = applyAction(f, { type: 'buyVill' }, T0).id;
-  assert.equal(f.coins, 9900);
-  for (const cost of [100, 200, 300, 400]) { const c = f.coins; assert.ok(applyAction(f, { type: 'upVill', id }, T0).ok); assert.equal(c - f.coins, cost); }
-  assert.equal(findVill(f, id).lvl, 5);
-  assert.equal(applyAction(f, { type: 'upVill', id }, T0).error, 'vill_lvl_max');
+  f.objects.find(o => o.kind === 'statek').lvl = 1;
+  assert.equal(beds(f), 0); assert.equal(teamCap(f), 0);
+  const c0 = f.coins;
+  const h = placeAny(f, 'chatrc');
+  assert.equal(c0 - f.coins, 200);
+  assert.equal(beds(f), 2);
+  assert.equal(applyAction(f, { type: 'place', kind: 'chata', x: 0, y: 0 }, T0).error, 'statek_low', 'chata od Statku 3');
+  assert.equal(applyAction(f, { type: 'rebuildHouse', id: h }, T0).error, 'statek_low');
+  f.objects.find(o => o.kind === 'statek').lvl = 5;
+  const c1 = f.coins;
+  assert.ok(applyAction(f, { type: 'rebuildHouse', id: h }, T0).ok);
+  assert.equal(c1 - f.coins, 300); assert.equal(findObject(f, h).kind, 'chata'); assert.equal(beds(f), 3);
+  assert.ok(applyAction(f, { type: 'rebuildHouse', id: h }, T0).ok);
+  assert.equal(findObject(f, h).kind, 'dum'); assert.equal(beds(f), 5);
+  assert.equal(applyAction(f, { type: 'rebuildHouse', id: h }, T0).error, 'bad_action', 'dům je největší');
+  f.coins = 1e6;
+  for (let i = 0; i < 6; i++) { f.objects.push({ id: f.nextId++, kind: 'dum', x: -40 - i * 3, y: -40 }); }
+  assert.equal(beds(f), 35); assert.equal(teamCap(f), 30, 'strop týmu');
+});
+
+test('v29: nástěnka – inzerát za pohoštění, uchazeči stejní na serveru i v prohlížeči, přijetí jen s volným lůžkem', () => {
+  const f = rich(farm6(), 12, 10000);
+  f.rep = 0; f.silo = { wheat: 3 };
+  assert.equal(applyAction(f, { type: 'postAd', prof: 'pole', opt: 0 }, T0).error, 'no_bed');
+  placeAny(f, 'chatrc');
+  assert.equal(applyAction(f, { type: 'postAd', prof: 'pole', opt: 0 }, T0).error, 'no_inputs', 'chybí 4. pšenice');
+  assert.equal(applyAction(f, { type: 'postAd', prof: 'kouzelnik', opt: 0 }, T0).error, 'bad_action');
+  f.silo.wheat = 10;
+  const twin = structuredClone(f);
+  const r = applyAction(f, { type: 'postAd', prof: 'pole', opt: 0 }, T0);
+  assert.ok(r.ok);
+  assert.equal(f.silo.wheat, 6, 'pohoštění se odečetlo');
+  assert.equal(r.ready, T0 + 20 * 60000, 'prázdný tým: 20 minut');
+  applyAction(twin, { type: 'postAd', prof: 'pole', opt: 0 }, T0);
+  assert.deepEqual(twin.board, f.board, 'stejní uchazeči');
+  const ad = f.board.ads[0];
+  assert.equal(ad.cands.length, TEAM.rep.cands[0]);
+  assert.equal(ad.cands[0].prof, 'pole');
+  for (const c of ad.cands) { assert.ok(TEAM.traits[c.trait]); assert.equal(c.lvl, 1); }
+  assert.equal(applyAction(f, { type: 'postAd', prof: 'chov', opt: 0 }, T0).error, 'ads_max', 'na stupni 1 jen jeden inzerát');
+  assert.equal(applyAction(f, { type: 'hireCand', ad: ad.id, i: 0 }, T0 + 60000).error, 'not_ready');
+  const h = applyAction(f, { type: 'hireCand', ad: ad.id, i: 0 }, T0 + 20 * 60000);
+  assert.ok(h.ok);
+  const v = findVill(f, h.id);
+  assert.equal(v.prof, 'pole'); assert.equal(v.trait, ad.cands[0].trait); assert.equal(villLevel(v, 'pole'), 1);
+  assert.equal(f.board.ads.length, 0, 'ostatní odešli');
+  // druhý inzerát (tým 1 → pořád pšenice), čekání 25 min; plné lůžka → nikoho nepřijmeš
+  const r2 = applyAction(f, { type: 'postAd', prof: 'vyroba', opt: 0 }, T0 + 21 * 60000);
+  assert.equal(r2.ready - (T0 + 21 * 60000), 25 * 60000);
+  worker(f, 'chov');
+  assert.equal(applyAction(f, { type: 'hireCand', ad: r2.id, i: 0 }, r2.ready).error, 'no_bed');
+  assert.equal(applyAction(f, { type: 'postAd', prof: 'vyroba', opt: 0 }, r2.ready).error, 'no_bed');
+  // po 24 h uchazeči odejdou
+  applyAction(f, { type: 'nop' }, r2.ready + 24 * 3600000 + 1000);
+  assert.equal(f.board.ads.length, 0);
+  // pohoštění roste s týmem
+  assert.deepEqual(adOffers(f)[0], [['chleb', 3]]);
+  // propuštění uvolní lůžko
+  assert.ok(applyAction(f, { type: 'fireVill', id: v.id }, T0).ok);
+  assert.equal(teamFree(f), 1);
+});
+
+test('v29: pověst – zakázky a úkoly, stupně, zájemce se ozve sám jen s volným lůžkem', () => {
+  const f = rich(farm6(), 12, 10000);
+  f.rep = 0;
+  assert.equal(repTier(f), 1);
+  // doručení zakázky +3
+  const o = f.orders.findIndex(x => x.readyAt <= T0);
+  for (const x of f.orders[o].items) f.silo[x.item] = (f.silo[x.item] || 0) + x.qty;
+  f.siloCap = 9999;
+  assert.ok(applyAction(f, { type: 'deliver', slot: o }, T0).ok);
+  assert.equal(f.rep, 3);
+  f.rep = 60;
+  assert.equal(repTier(f), 3); assert.equal(repNext(f), 120);
+  // stupeň 3: zájemce se ozve sám (do 2 dnů), ale jen když je volné lůžko
+  applyAction(f, { type: 'nop' }, T0);
+  assert.ok(f.board.next > T0);
+  applyAction(f, { type: 'nop' }, f.board.next + 1000);
+  assert.equal(f.board.ads.length, 0, 'bez lůžka se nikdo neozve');
+  placeAny(f, 'chatrc');
+  applyAction(f, { type: 'nop' }, f.board.next + 1000);
+  const ad = f.board.ads.find(a => a.self);
+  assert.ok(ad, 'ozval se');
+  assert.equal(ad.cands.length, 1);
+  assert.ok(ad.house >= 0 && ad.house < 9);
+  const c0 = f.coins, w0 = f.silo.wheat || 0;
+  assert.ok(applyAction(f, { type: 'hireCand', ad: ad.id, i: 0 }, ad.ready + 1).ok);
+  assert.equal(f.coins, c0); assert.equal(f.silo.wheat || 0, w0, 'bez pohoštění');
+});
+
+test('v29: zásluhy pro Statek a nové rozložení průmyslu', () => {
+  const f = rich(farm6(), 2, 1e6);
+  f.objects.find(o => o.kind === 'statek').lvl = 1;
+  f.siloCap = 9999;
+  const st = f.objects.find(o => o.kind === 'statek');
+  // na Statku 1 jen Semenárna a Pekárna, Krmivárna a Kurník až na 2
+  assert.equal(applyAction(f, { type: 'place', kind: 'krmivarna', x: 0, y: 0 }, T0).error, 'statek_low');
+  assert.equal(BUILDINGS.mlekarna.st, 5); assert.equal(BUILDINGS.textilka.st, 10);
+  const c = upgradeCost(st);
+  for (const x of c.items) f.silo[x.item] = x.qty;
+  // chybí úroveň 3 a 40 sklizených plodin
+  assert.deepEqual(statekMerits(f, 2).map(m => m.ok), [false, false]);
+  assert.equal(applyAction(f, { type: 'upgrade', id: st.id }, T0).error, 'merits');
+  f.level = 3; f.xp = LEVEL_XP[3]; f.stats.harvest = 40;
+  assert.ok(statekMerits(f, 2).every(m => m.ok));
+  assert.ok(applyAction(f, { type: 'upgrade', id: st.id }, T0).ok);
+  assert.equal(statekLevel(f), 2);
+  assert.ok(applyAction(f, { type: 'place', kind: 'krmivarna', x: 0, y: 0 }, T0).ok);
+  // Statek 5 chce pověst 4
+  assert.equal(statekMerits(f, 5)[1].k, 'rep');
+  // velké pole až od Statku 4
+  f.objects.find(o => o.kind === 'statek').lvl = 3;
+  assert.equal(maxBigFields(f), 0);
+  f.objects.find(o => o.kind === 'statek').lvl = 4;
+  assert.equal(maxBigFields(f), 1);
+});
+
+test('v29: úrovně 1–12 ze zkušeností za hodnotu výrobků, profese, vlastnosti, historie', () => {
+  assert.deepEqual([1, 2, 5, 12].map(L => TEAM.mult[L]), [1, 1.25, 2.47, 12]);
+  const v = { id: 1, prof: 'vyroba', xp: {}, hist: [] };
+  assert.equal(villLevel(v, 'vyroba'), 1);
+  v.xp.vyroba = 40; assert.equal(villLevel(v, 'vyroba'), 2);
+  v.xp.vyroba = 1e9; assert.equal(villLevel(v, 'vyroba'), 12, 'nejvýš 12');
+  assert.equal(villLevel(v, 'pole'), 1, 'každý obor zvlášť');
+  // pole: políčko za 12 s na úrovni 1, za 1 s na úrovni 12
+  const p1 = { prof: 'pole', xp: {} }, p12 = { prof: 'pole', xp: { pole: TEAM.xpLvl[12] } };
+  assert.equal(workMs(p1, 'harvest', 'pole'), 12000);
+  assert.equal(workMs(p12, 'harvest', 'pole'), 1000);
+  assert.equal(workMs({ prof: 'vyroba', xp: {} }, 'harvest', 'pole'), Math.round(12000 / 0.9), 'mimo profesi 90 %');
+  assert.equal(workMs({ prof: 'pole', trait: 'sikovny', xp: {} }, 'harvest', 'pole'), Math.round(12000 / 1.06));
+  // zkušenosti: mlynář za mouku dostane hodnotu × 0,1; mimo profesi polovinu; učenlivý +25 %
+  const f = rich(farm6(), 20, 10000);
+  f.siloCap = 9999;
   const mlyn = placeAny(f, 'mlyn');
-  assert.equal(applyAction(f, { type: 'assignVill', id, at: f.objects.find(o => o.kind === 'statek').id }, T0).error, 'bad_job', 've Statku ne');
-  assert.equal(plan(f, id, 'mouka', 100).error, 'bad_job', 'bez budovy tabulku nemá');
-  assert.ok(applyAction(f, { type: 'assignVill', id, at: mlyn }, T0).ok);
-  // tabulka: jen výrobky té budovy, po 5 %, dohromady nejvýš 100 %
-  assert.equal(plan(f, id, 'chleb', 50).error, 'bad_action', 'chleb se v mlýně nedělá');
-  assert.equal(plan(f, id, 'mouka', 33).error, 'bad_action', 'jen násobky 5');
-  assert.ok(plan(f, id, 'mouka', 60).ok);
-  assert.equal(plan(f, id, 'prazena_seminka', 50).error, 'plan_over');
-  assert.ok(plan(f, id, 'prazena_seminka', 40).ok);
-  assert.deepEqual(findVill(f, id).plan, { mouka: 60, prazena_seminka: 40 });
-  assert.ok(plan(f, id, 'prazena_seminka', 0).ok, '0 % řádek vyřadí');
-  assert.deepEqual(findVill(f, id).plan, { mouka: 60 });
-  // jedna budova = jeden vesničan: nový tam vystřídá starého; jiná budova = nová tabulka
-  const v2 = hire(f, mlyn);
-  assert.equal(findVill(f, id).at, 0);
-  assert.equal(villAt(f, mlyn).id, v2);
+  const a = hire(f, mlyn, 1, 'vyroba'), b = worker(f, 'pole'), c = worker(f, 'vyroba', 1, 'ucenlivy');
+  assert.ok(plan(f, a, 'mouka', 100).ok);
+  f.silo.wheat = 3;
+  catchUp(f, T0 + 3600000);
+  assert.equal(f.silo.mouka, 1);
+  assert.equal(findVill(f, a).xp.vyroba, Math.round(ITEMS.mouka.price * 0.1 * 100) / 100);
+  assert.ok(plan(f, a, 'mouka', 0, T0 + 3600000).ok, 'mlýn už pšenici nebere');
   const pek = placeAny(f, 'pekarna');
-  assert.ok(applyAction(f, { type: 'assignVill', id, at: pek }, T0).ok);
-  assert.deepEqual(findVill(f, id).plan, {}, 'v nové budově začíná s prázdnou tabulkou');
-  assert.ok(applyAction(f, { type: 'assignVill', id, at: 0 }, T0).ok);
-  assert.equal(villAt(f, pek), null);
+  assert.ok(applyAction(f, { type: 'assignVill', id: b, at: pek }, T0 + 3600000).ok);
+  assert.ok(plan(f, b, 'chleb', 100, T0 + 3600000).ok);
+  f.silo.wheat = 3;
+  catchUp(f, T0 + 7200000);
+  assert.equal(findVill(f, b).xp.vyroba, Math.round(ITEMS.chleb.price * 0.1 * 0.5 * 100) / 100, 'mimo profesi polovina');
+  assert.ok(applyAction(f, { type: 'assignVill', id: c, at: pek }, T0 + 7200000).ok);
+  assert.ok(plan(f, c, 'chleb', 100, T0 + 7200000).ok);
+  f.silo.wheat = 3;
+  catchUp(f, T0 + 3 * 3600000);
+  assert.equal(findVill(f, c).xp.vyroba, Math.round(ITEMS.chleb.price * 0.1 * 1.25 * 100) / 100, 'učenlivý');
+  // historie povýšení
+  findVill(f, c).xp.vyroba = 39;
+  f.silo.wheat = 3;
+  catchUp(f, T0 + 4 * 3600000);
+  assert.deepEqual(findVill(f, c).hist.map(h => [h[1], h[2]]), [['vyroba', 2]]);
+});
+
+test('v29: výkon – řemeslník naloží víc kusů za stejný čas, odnáší po částech, hráč dostane čtvrtinu XP', () => {
+  const f = rich(farm6(), 20, 10000);
+  f.siloCap = 9999;
+  const mlyn = placeAny(f, 'mlyn'), o = findObject(f, mlyn);
+  const id = hire(f, mlyn, 12);
+  assert.ok(plan(f, id, 'mouka', 100).ok);
+  f.silo.wheat = 300;
+  tick(f, T0 + 500);
+  const v = findVill(f, id);
+  assert.equal(v.job.k, 'load'); assert.equal(v.job.n, 12, 'úroveň 12 = 12 kusů najednou');
+  assert.equal(v.job.e - v.job.s, Math.round(9000 / 12));
+  assert.equal(f.silo.wheat, 300 - 36, 'suroviny na celou dávku');
+  tick(f, T0 + 800);
+  assert.equal(o.queue[0].n, 12); assert.equal(o.queue[0].d, RECIPES.mouka.time * 1000, 'doba výroby stejná');
+  // málo surovin → menší dávka
+  f.silo.wheat = 7;
+  const xp0 = f.xp;
+  catchUp(f, T0 + 3600000);
+  assert.ok(f.silo.mouka >= 12);
+  assert.ok(f.xp - xp0 <= Math.ceil(RECIPES.mouka.xp * f.silo.mouka * TEAM.playerXp) + 1, 'hráč dostal jen část XP');
+  // plný sklad: dávka se odnese po částech, nic se neztratí
+  const g = rich(farm6(), 20, 10000);
+  const m2 = placeAny(g, 'mlyn'), o2 = findObject(g, m2);
+  o2.queue = [{ r: 'mouka', end: T0, d: 1000, n: 10, t: 1 }];
+  g.silo = {}; g.siloCap = 6;
+  assert.ok(applyAction(g, { type: 'collect', id: m2 }, T0 + 1).ok);
+  assert.equal(g.silo.mouka, 6); assert.equal(o2.queue[0].n, 4, 'zbytek čeká v budově');
+  g.siloCap = 100;
+  assert.ok(applyAction(g, { type: 'collect', id: m2 }, T0 + 2).ok);
+  assert.equal(g.silo.mouka, 10); assert.equal(o2.queue.length, 0);
+});
+
+test('v29: náročnost – na těžší věci pracovník potřebuje praxi; chov a výnos zvířat', () => {
+  assert.deepEqual([1, 4, 5, 7, 8, 10, 11, 14, 18].map(needLvl), [1, 1, 2, 2, 4, 4, 6, 8, 8]);
+  const f = rich(farm6(), 20, 10000);
+  f.siloCap = 9999;
+  const pek = placeAny(f, 'pekarna');
+  const id = hire(f, pek, 1);
+  assert.ok(plan(f, id, 'tresnovy_kolac', 100).ok, 'do tabulky jde přidat');
+  f.silo = { mouka: 10, tresne: 10, vejce: 10 };
+  tick(f, T0 + 1000);
+  assert.equal(findVill(f, id).w, 'skill', 'třešňový koláč umí až od úrovně 2');
+  findVill(f, id).xp.vyroba = TEAM.xpLvl[2];
+  tick(f, T0 + 60000);
+  assert.notEqual(findVill(f, id).w, 'skill');
+  assert.ok(findObject(f, pek).queue.some(q => q.r === 'tresnovy_kolac'), 'už peče');
+  // kravín: kráva chce chovatele úrovně 2
+  const kr = placeAny(f, 'kravin');
+  assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'krava' }, T0).ok);
+  const ch = hire(f, kr, 1);
+  f.silo.krmivo_kravy = 5;
+  tick(f, T0 + 61000);
+  assert.equal(findVill(f, ch).w, 'skill');
+  // kurník: chovatel úrovně 12 dá ze slepice 3 vejce na jedno krmení (pekař už vejce nebere)
+  assert.ok(plan(f, id, 'tresnovy_kolac', 0, T0 + 61000).ok);
+  const ku = placeAny(f, 'kurnik');
+  assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).ok);
+  const ch2 = hire(f, ku, 12);
+  f.silo.krmivo_slepice = 1; f.silo.vejce = 0;
+  catchUp(f, T0 + 3 * 3600000);
+  assert.equal(f.silo.vejce, 3);
+  assert.ok(findVill(f, ch2).xp.chov > TEAM.xpLvl[12]);
 });
 
 test('dělník ve výrobně: pracuje průběžně, hlídá podíly, strop zásoby a suroviny', () => {
@@ -337,25 +566,24 @@ test('dělník ve výrobně: pracuje průběžně, hlídá podíly, strop zásob
   assert.ok(plan(f, id, 'mouka', 100).ok);
   f.silo.wheat = 30;
   const need = RECIPES.mouka.in.wheat, v = findVill(f, id), o = findObject(f, mlyn);
-  // hned si vezme suroviny a jde nakládat: 15 s na úrovni 1
+  // hned si vezme suroviny a jde nakládat: 9 s na úrovni 1
   tick(f, T0 + 1000);
-  assert.equal(v.job.k, 'load'); assert.equal(v.job.e - v.job.s, 15000);
+  assert.equal(v.job.k, 'load'); assert.equal(v.job.e - v.job.s, 9000);
   assert.equal(f.silo.wheat, 30 - need, 'suroviny si vzal hned – nikdo jiný už je nevezme');
-  tick(f, T0 + 16_000);
-  assert.equal(o.queue.length, 1, 'po 15 s je první mouka ve výrobě');
+  tick(f, T0 + 10_000);
+  assert.equal(o.queue.length, 1, 'po 9 s je první mouka ve výrobě');
   tick(f, T0 + 3600 * 1000);
   assert.ok(f.silo.mouka > 0, 'mouka je ve skladu');
-  const inHand = v.job && v.job.k === 'load' ? 1 : 0;
-  assert.equal((f.silo.wheat || 0) + (f.silo.mouka + o.queue.length + inHand) * need, 30, 'pšenice se spotřebovala jen na mouku');
+  const inHand = v.job && v.job.k === 'load' ? v.job.n : 0;
+  assert.equal((f.silo.wheat || 0) + (f.silo.mouka + o.queue.reduce((n, q) => n + (q.n || 1), 0) + inHand) * need, 30, 'pšenice se spotřebovala jen na mouku');
   // došly suroviny → čeká a ví na co; jakmile přibudou, začne hned
   catchUp(f, T0 + 6 * 3600 * 1000);
   assert.equal(f.silo.mouka, 10); assert.equal(v.w, 'inputs');
   f.silo.wheat = 6;
   tick(f, T0 + 6 * 3600 * 1000 + 5000);
   assert.equal(v.job.k, 'load'); assert.equal(v.job.s, T0 + 6 * 3600 * 1000, 'začal v okamžiku, kdy si všiml surovin');
-  // vyšší úroveň: rychlejší úkony a rychlejší výroba
-  assert.equal(workMs({ lvl: 5 }, 'load'), 6000);
-  const pek = placeAny(f, 'pekarna'), pid = hire(f, pek, 5);
+  // dva výrobky 50 / 50 a strop zásoby
+  const pek = placeAny(f, 'pekarna'), pid = hire(f, pek, 3);
   assert.ok(plan(f, pid, 'chleb', 50).ok);
   assert.ok(plan(f, pid, 'pernik', 50).ok);
   const t1 = T0 + 7 * 3600 * 1000;
@@ -363,11 +591,7 @@ test('dělník ve výrobně: pracuje průběžně, hlídá podíly, strop zásob
   f.siloCap = 50000;
   f.silo.wheat = 9000; f.silo.mouka = 200; f.silo.med = 200; f.silo.chleb = 0; f.silo.pernik = 0;
   catchUp(f, t1 + 10 * 3600 * 1000);
-  const po = findObject(f, pek);
-  const d = po.queue.length ? po.queue[po.queue.length - 1].d : 0;
-  assert.ok(d > 0 && [RECIPES.chleb.time, RECIPES.pernik.time].some(s => d === Math.round(s * 1000 * (1 - VILL_CRAFT[5] / 100))), 'úroveň 5 vyrábí o 30 % rychleji');
-  assert.ok(f.silo.chleb > 10 && Math.abs(f.silo.chleb - f.silo.pernik) <= 2, `podíly 50/50: chleb ${f.silo.chleb}, perník ${f.silo.pernik}`);
-  // strop zásoby: vyrábí jen do 20 kusů chleba, pak dělá jen perník
+  assert.ok(f.silo.chleb > 10 && Math.abs(f.silo.chleb - f.silo.pernik) <= 6, `podíly 50/50: chleb ${f.silo.chleb}, perník ${f.silo.pernik}`);
   assert.equal(applyAction(f, { type: 'villLim', id: pid, key: 'kolac', n: 5 }, t1).error, 'bad_action', 'strop jen pro řádek v tabulce');
   f.silo.chleb = 0; f.silo.pernik = 0;
   const t2 = t1 + 10 * 3600 * 1000;
@@ -383,256 +607,177 @@ test('dělník ve výrobně: pracuje průběžně, hlídá podíly, strop zásob
   assert.equal(f.silo.chleb, 20, 'ubylo → dovyrobil');
 });
 
-test('obchodník: trh každou půlhodinu, procenta ze skladu, rezerva, kapacita a cena podle úrovně', () => {
+test('skladník: trh každou půlhodinu, procenta ze skladu, rezerva, kapacita a cena podle úrovně', () => {
   const f = rich(farm6(), 20, 10000);
   f.siloCap = 5000;
   const sk = sklad(f), id = hire(f, sk.id), v = findVill(f, id);
-  const M = nextTrade(T0);                            // první trh po T0
-  assert.ok(M > T0 && M - T0 <= TRADE_IV && M % TRADE_IV === 0);
+  const M = nextTrade(T0);
   f.silo = { wheat: 40, corn: 10 };
   assert.equal(plan(f, id, 's_wheat', 50).error, 'bad_action', 'semena neprodává');
   assert.ok(plan(f, id, 'wheat', 50).ok);
-  assert.ok(plan(f, id, 'corn', 100).ok, 'u obchodníka má každé zboží svoje procento');
-  // před trhem nic; na trhu polovina pšenice a všechna kukuřice
+  assert.ok(plan(f, id, 'corn', 100).ok);
   tick(f, M - 1000);
   assert.equal(f.silo.wheat, 40);
   const c0 = f.coins, exp = 20 * sellPrice('wheat', M) + 10 * sellPrice('corn', M);
   tick(f, M + 1000);
   assert.equal(f.silo.wheat, 20); assert.equal(f.silo.corn, undefined);
   assert.equal(f.coins - c0, exp, 'úroveň 1 prodává za výkupní cenu');
-  assert.equal(v.earned, exp); assert.equal(v.sold, 30); assert.equal(v.last.n, 30); assert.equal(v.last.t, M);
-  // další trh až za půl hodiny, zase polovina toho, co zbylo
-  tick(f, M + TRADE_IV - 1000);
-  assert.equal(f.silo.wheat, 20);
+  assert.equal(v.earned, exp); assert.equal(v.sold, 30); assert.equal(v.last.t, M);
+  assert.ok(v.xp.sklad > 0, 'zkušenosti za tržbu');
   tick(f, M + TRADE_IV);
   assert.equal(f.silo.wheat, 10);
-  // rezerva: nechá si aspoň 8 kusů → prodává jen z toho, co je navíc
   assert.ok(applyAction(f, { type: 'villLim', id, key: 'wheat', n: 8 }, M + TRADE_IV).ok);
   tick(f, M + 2 * TRADE_IV);
   assert.equal(f.silo.wheat, 9, 'polovina ze 2 kusů nad rezervou');
-  tick(f, M + 4 * TRADE_IV);
-  assert.equal(f.silo.wheat, 8, 'pod rezervu nejde');
   // kapacita: úroveň 1 prodá na jednom trhu nejvýš 30 kusů, rozdělí je poměrně
   f.silo = { wheat: 208, corn: 100 };
-  assert.ok(plan(f, id, 'wheat', 100, M + 4 * TRADE_IV).ok);
-  const pre = tradeRound(f, v, M + 5 * TRADE_IV);
-  assert.equal(pre.want, 300); assert.equal(pre.n, TRADE_CAP[1]);
-  assert.deepEqual(pre.rows.map(r => r.n), [20, 10]);
-  tick(f, M + 5 * TRADE_IV);
-  assert.equal(f.silo.wheat, 188); assert.equal(f.silo.corn, 90);
+  assert.ok(plan(f, id, 'wheat', 100, M + 2 * TRADE_IV).ok);
+  const pre = tradeRound(f, v, M + 3 * TRADE_IV);
+  assert.equal(pre.n, TEAM.trade.cap[1]);
   // vyšší úroveň: víc kusů a lepší cena
-  for (let i = 0; i < 4; i++) assert.ok(applyAction(f, { type: 'upVill', id }, M + 5 * TRADE_IV).ok);
+  tick(f, M + 5 * TRADE_IV + 1000);
+  v.xp.sklad = TEAM.xpLvl[12];
   const t6 = M + 6 * TRADE_IV, c1 = f.coins;
-  tick(f, t6);
-  assert.equal(188 - f.silo.wheat + 90 - f.silo.corn, TRADE_CAP[5]);
-  const sold = [188 - f.silo.wheat, 90 - f.silo.corn];
-  assert.equal(f.coins - c1, Math.round(sold[0] * sellPrice('wheat', t6) * 1.25) + Math.round(sold[1] * sellPrice('corn', t6) * 1.25), 'úroveň 5: +25 % k ceně');
-  // 2 hodiny pryč = 4 trhy, ne víc
-  const n0 = v.n;
   f.silo = { wheat: 2000 };
-  tick(f, t6 + 4 * TRADE_IV + 60_000);
-  assert.equal(v.n - n0, 4);
+  tick(f, t6);
+  assert.equal(2000 - f.silo.wheat, TEAM.trade.cap[12]);
+  assert.equal(f.coins - c1, Math.round(TEAM.trade.cap[12] * sellPrice('wheat', t6) * 1.25));
   // počet druhů zboží podle úrovně
-  const id2 = hire(f, 0, 1);
+  const id2 = worker(f, 'sklad');
   assert.ok(applyAction(f, { type: 'assignVill', id: id2, at: sk.id }, t6).ok);
   const items = ['wheat', 'corn', 'mouka', 'chleb', 'vejce'];
-  for (let i = 0; i < TRADE_ROWS[1]; i++) assert.ok(plan(f, id2, items[i], 50, t6).ok);
+  for (let i = 0; i < TEAM.trade.rows[1]; i++) assert.ok(plan(f, id2, items[i], 50, t6).ok);
   assert.equal(plan(f, id2, items[4], 50, t6).error, 'plan_rows');
 });
 
-test('farmář: sází a sklízí průběžně podle plánu v procentech', () => {
+test('pěstitel: sází a sklízí průběžně podle plánu v procentech', () => {
   const f = rich(farm6(), 20, 10000);
   f.objects = f.objects.filter(o => o.kind !== 'sad');
   f.siloCap = 5000;
-  const id = applyAction(f, { type: 'buyFarmer' }, T0).id, v = findVill(f, id);
-  assert.equal(applyAction(f, { type: 'assignVill', id, at: f.objects[0].id }, T0).error, 'bad_job', 'farmář do budovy nepatří');
-  assert.equal(plan(f, id, 'wheat', 100).error, 'bad_job', 'bez oblasti tabulku nemá');
+  const id = worker(f, 'pole'), v = findVill(f, id);
+  assert.equal(plan(f, id, 'wheat', 100).error, 'bad_job', 'bez pracoviště tabulku nemá');
   assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'pole', a: f.plots[0].id }, T0).ok);
   assert.equal(plan(f, id, 'jablon', 50).error, 'bad_action', 'na poli se stromy nesázejí');
   assert.ok(plan(f, id, 'wheat', 100).ok);
-  // se 3 semínky zasadí jen 3 pole, jedno po druhém (20 s na úrovni 1), a neplatí mincemi
   f.seeds = { s_wheat: 3 };
   const coins = f.coins;
   tick(f, T0 + 1000);
   assert.equal(v.job.k, 'plant'); assert.equal(f.seeds.s_wheat, 2, 'semínko si vzal s sebou');
-  assert.equal(f.plots.filter(p => p.crop).length, 0, 'ještě sází');
-  tick(f, T0 + 21_000);
-  assert.equal(f.plots.filter(p => p.crop === 'wheat').length, 1);
-  tick(f, T0 + 61_000);
+  tick(f, T0 + 13_000);
+  assert.equal(f.plots.filter(p => p.crop === 'wheat').length, 1, 'políčko za 12 s');
+  tick(f, T0 + 37_000);
   assert.equal(f.plots.filter(p => p.crop === 'wheat').length, 3);
   assert.equal(f.seeds.s_wheat, undefined);
-  assert.equal(v.w, 'seeds', 'čeká na semena');
+  assert.equal(v.w, 'seeds');
   assert.equal(f.coins, coins, 'za osivo neplatil');
-  // sklidí hned, jak dozraje (ne až při obchůzce): první pole zaseté ve 20. sekundě
-  const p0 = f.plots.find(p => p.crop === 'wheat' && p.planted === T0 + 20_000);
+  // sklidí hned, jak dozraje
+  const p0 = f.plots.find(p => p.crop === 'wheat' && p.planted === T0 + 12_000);
   const ripe = p0.planted + p0.d;
-  tick(f, ripe + 19_000);
-  assert.equal(v.job.k, 'harvest'); assert.equal(v.job.s, ripe, 'začal sklízet v okamžiku dozrání');
-  tick(f, ripe + 20_000);
+  tick(f, ripe + 11_000);
+  assert.equal(v.job.k, 'harvest'); assert.equal(v.job.s, ripe);
+  tick(f, ripe + 12_000);
   assert.equal(f.silo.wheat, 2);
-  assert.equal(p0.crop, null);
-  // dokoupená semena: pokračuje hned
-  catchUp(f, T0 + 600_000);
-  const t1 = T0 + 600_000;
-  assert.ok(applyAction(f, { type: 'buySupply', item: 's_wheat', qty: 12 }, t1).ok);
-  tick(f, t1 + 5000);
-  assert.equal(v.job.k, 'plant'); assert.equal(v.job.s, t1);
-  // plán 50 % pšenice: osází jen polovinu oblasti, zbytek nechá ležet
-  catchUp(f, t1 + 3600_000);
-  for (const p of f.plots) { p.crop = null; p.planted = 0; }
-  f.seeds = { s_wheat: 18 };
-  assert.ok(plan(f, id, 'wheat', 50, t1 + 3600_000).ok);
-  tick(f, t1 + 3600_000 + 61_000);                       // 3 pole stihne zasadit dřív, než první dozraje
-  assert.equal(f.plots.filter(p => p.crop === 'wheat').length, 3);
-  assert.equal(f.seeds.s_wheat, 15, 'čtvrté semínko si nevzal');
-  tick(f, t1 + 3600_000 + 100_000);
-  assert.ok(f.plots.filter(p => p.crop).length <= 3, 'nikdy víc než polovina');
-  // dvě plodiny 50/50 (kukuřice roste déle – po chvíli je vidět poměr)
-  assert.ok(plan(f, id, 'corn', 50, t1 + 3700_000).ok);
-  assert.equal(plan(f, id, 'salat', 10, t1 + 3700_000).error, 'plan_over');
-  catchUp(f, t1 + 3700_000);
+  assert.ok(v.xp.pole > 0, 'zkušenosti za sklizeň');
+  // plán 50 % pšenice + 50 % kukuřice
+  const t1 = T0 + 3600_000;
+  catchUp(f, t1);
   for (const p of f.plots) { p.crop = null; p.planted = 0; }
   f.seeds = { s_wheat: 9, s_corn: 9 };
-  tick(f, t1 + 3700_000 + 61_000);
-  assert.deepEqual(f.plots.filter(p => p.crop).map(p => p.crop).sort(), ['corn', 'wheat', 'wheat'], 'střídá podle schodku proti plánu');
-  catchUp(f, t1 + 3700_000 + 125_000);
-  assert.equal(f.plots.filter(p => p.crop === 'corn').length, 3, 'kukuřice na polovině oblasti');
-  // úroveň 5 pracuje 2,5× rychleji
-  assert.equal(workMs({ lvl: 5 }, 'harvest'), 8000);
-  // zamčená plodina do plánu nejde
+  assert.ok(plan(f, id, 'wheat', 50, t1).ok);
+  assert.ok(plan(f, id, 'corn', 50, t1).ok);
+  assert.equal(plan(f, id, 'salat', 10, t1).error, 'plan_over');
+  catchUp(f, t1 + 80_000);
+  assert.deepEqual(f.plots.filter(p => p.crop).map(p => p.crop).sort(), ['corn', 'corn', 'corn', 'wheat', 'wheat', 'wheat']);
+  // meloun (úroveň hráče 9) umí pěstitel až od úrovně 4
+  assert.ok(plan(f, id, 'corn', 0, t1 + 80_000).ok);
+  assert.ok(plan(f, id, 'meloun', 50, t1 + 80_000).ok);
+  f.seeds = { s_meloun: 5 };
+  for (const p of f.plots) { p.crop = null; }
+  tick(f, t1 + 200_000);
+  assert.ok(!f.plots.some(p => p.crop === 'meloun'));
   f.level = 1;
-  assert.equal(plan(f, id, 'corn', 50, t1 + 3800_000).error, 'locked');
+  assert.equal(plan(f, id, 'corn', 50, t1 + 200_000).error, 'locked');
 });
 
-test('farmář a hráč si nepřekážejí; přeřazení vrátí, co si farmář vzal', () => {
+test('pracovník a hráč si nepřekážejí; přeřazení vrátí, co si vzal', () => {
   const f = rich(farm6(), 20, 10000);
   f.objects = f.objects.filter(o => o.kind !== 'sad');
-  const id = applyAction(f, { type: 'buyFarmer' }, T0).id, v = findVill(f, id);
+  const id = worker(f, 'pole'), v = findVill(f, id);
   assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'pole', a: f.plots[0].id }, T0).ok);
   assert.ok(plan(f, id, 'wheat', 100).ok);
   f.seeds = { s_wheat: 6 };
   tick(f, T0 + 1000);
   const pl = f.plots.find(p => p.id === v.job.id);
-  // hráč to pole osází sám dřív → farmář semínko vrátí a jde dál
   assert.ok(applyAction(f, { type: 'plant', x: pl.x, y: pl.y, crop: 'wheat' }, T0 + 2000).ok);
-  assert.equal(f.seeds.s_wheat, 4, 'jedno má farmář, jedno použil hráč');
-  tick(f, T0 + 21_000);
+  assert.equal(f.seeds.s_wheat, 4);
+  tick(f, T0 + 13_000);
   assert.equal(f.seeds.s_wheat, 4, 'vrátil ho a vzal si jiné na další pole');
   assert.equal(v.job.k, 'plant'); assert.notEqual(v.job.id, pl.id);
-  // odvolání uprostřed práce vrátí semínko do zásoby
-  assert.ok(applyAction(f, { type: 'assignArea', id, a: 0 }, T0 + 22_000).ok);
+  assert.ok(applyAction(f, { type: 'assignArea', id, a: 0 }, T0 + 14_000).ok);
   assert.equal(f.seeds.s_wheat, 5);
   assert.equal(v.job, null);
   tick(f, T0 + 60_000);
   assert.equal(v.w, 'free');
-  // hráč sklidí pole, které farmář právě sklízí → nic se nerozbije
+  // z oblasti do budovy a zpátky: plán se maže
+  const mlyn = placeAny(f, 'mlyn');
+  assert.ok(applyAction(f, { type: 'assignVill', id, at: mlyn }, T0 + 60_000).ok);
+  assert.equal(v.area, null); assert.deepEqual(v.plan, {});
   assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'pole', a: f.plots[0].id }, T0 + 60_000).ok);
-  const ripe = pl.planted + pl.d;
-  catchUp(f, ripe + 5000);
-  const cur = f.plots.find(p => p.id === v.job.id);
-  if (v.job.k === 'harvest') assert.ok(applyAction(f, { type: 'harvest', x: cur.x, y: cur.y }, ripe + 6000).ok);
-  catchUp(f, ripe + 600_000);
-  assert.ok(f.silo.wheat >= 2);
+  assert.equal(v.at, 0);
 });
 
-test('farmář v sadu: sází sazenice ze Statku, trhá ovoce a vykopává suché stromy', () => {
+test('pěstitel v sadu: sází sazenice ze Statku, trhá ovoce a vykopává suché stromy', () => {
   const f = rich(farm6(), 20, 100000);
   f.siloCap = 5000;
   f.objects = f.objects.filter(o => o.kind !== 'sad');
   const ids = [];
   for (let i = 0; i < 4; i++) { const r = applyAction(f, { type: 'place', kind: 'sad', x: 12 + i, y: 14 }, T0); assert.ok(r.ok, 'sad ' + r.error); ids.push(r.id); }
-  const g = workAreas(f).find(x => x.kind === 'sad');
-  assert.equal(g.ids.length, 4);
-  const id = applyAction(f, { type: 'buyFarmer' }, T0).id, v = findVill(f, id);
+  const id = worker(f, 'pole', 2), v = findVill(f, id);
   assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'sad', a: ids[0] }, T0).ok);
-  assert.equal(plan(f, id, 'wheat', 100).error, 'bad_action', 'v sadu se obilí nesází');
+  assert.equal(plan(f, id, 'wheat', 100).error, 'bad_action');
   assert.ok(plan(f, id, 'jablon', 50).ok);
   assert.ok(plan(f, id, 'maliny', 50).ok);
   f.seeds = { z_jablon: 5, z_maliny: 5 };
   const coins = f.coins;
-  tick(f, T0 + 1000);
-  assert.equal(v.job.k, 'sapling');
-  catchUp(f, T0 + 200_000);                              // 4 × 40 s
-  const trees = ids.map(i => findObject(f, i).tree).sort();
-  assert.deepEqual(trees, ['jablon', 'jablon', 'maliny', 'maliny']);
-  assert.equal(f.coins, coins, 'neplatil mincemi');
-  assert.equal(findObject(f, ids[0]).paid, 'sap');
-  // za hodinu otrhá první ovoce
+  catchUp(f, T0 + 200_000);
+  assert.deepEqual(ids.map(i => findObject(f, i).tree).sort(), ['jablon', 'jablon', 'maliny', 'maliny']);
+  assert.equal(f.coins, coins);
   catchUp(f, T0 + 3600 * 1000);
   assert.ok(f.silo.jablko > 0 && f.silo.maliny > 0, 'ovoce je ve skladu');
-  // suchý strom vykope (40 s) a zasadí nový (40 s)
   const o = ids.map(i => findObject(f, i)).find(x => x.tree === 'jablon');
   o.dead = true;
-  const t1 = T0 + 3600 * 1000;
-  catchUp(f, t1 + 300_000);
+  catchUp(f, T0 + 3600 * 1000 + 300_000);
   assert.equal(o.dead, false); assert.ok(o.tree, 'znovu osázeno');
-  assert.equal(f.seeds.z_jablon + f.seeds.z_maliny, 5, 'jedna sazenice navíc padla na nový strom');
-  // stromy po několika sklizních uschnou – bez sazenic pak farmář čeká
-  catchUp(f, t1 + 30 * 3600 * 1000);
-  assert.equal(v.w, 'seeds');
-  // přeřazení z pole do sadu a zpět začíná s prázdnou tabulkou
-  assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'pole', a: f.plots[0].id }, t1 + 3600_000).ok);
-  assert.deepEqual(v.plan, {});
+  assert.ok(v.xp.pole > TEAM.xpLvl[2]);
 });
 
-test('vesničan v ohradě krmí a sbírá zvíře po zvířeti; ve včelíně vybírá plástve', () => {
-  const f = rich(farm6(), 20, 10000);
-  f.siloCap = 5000;
-  const kur = placeAny(f, 'kurnik');
-  for (let i = 0; i < 2; i++) assert.ok(applyAction(f, { type: 'buyAnimal', animal: 'slepice' }, T0).ok);
-  const id = hire(f, kur, 3), v = findVill(f, id), o = findObject(f, kur);
-  f.silo.krmivo_slepice = 3; f.silo.vejce = 0;
-  tick(f, T0 + 1000);
-  assert.equal(v.job.k, 'feed'); assert.equal(f.silo.krmivo_slepice, 2);
-  const step = workMs(v, 'feed');
-  assert.equal(step, 7500);
-  tick(f, T0 + step + 100);
-  assert.equal(o.animals[0].fed, T0 + step);
-  assert.equal(o.animals[0].dur, Math.round(ANIMALS.slepice.time * 1000 * 0.85), 'pod rukama vesničana úrovně 3 o 15 % rychleji');
-  assert.equal(o.animals[1].fed, 0, 'druhá slepice přijde na řadu potom');
-  catchUp(f, T0 + 2 * 3600 * 1000);
-  assert.ok(f.silo.vejce >= 3, `vejce: ${f.silo.vejce}`);
-  assert.equal(f.silo.krmivo_slepice, undefined);
-  assert.equal(v.w, 'feed', 'čeká na krmivo');
-  // včelín
-  const vc = placeAny(f, 'vcelin'), hid = hire(f, vc);
-  const t1 = T0 + 2 * 3600 * 1000;
-  catchUp(f, t1 + 6 * 3600 * 1000);
-  assert.ok(f.silo.plast > 0, 'plástve ve skladu');
-  assert.ok(findVill(f, hid).n > 0);
-});
-
-test('vesničané: plný sklad je zastaví a uvolněné místo je rozběhne', () => {
+test('plný sklad zastaví pracovníky a uvolněné místo je rozběhne', () => {
   const f = rich(farm6(), 20, 10000);
   f.objects = f.objects.filter(o => o.kind !== 'sad');
-  const id = applyAction(f, { type: 'buyFarmer' }, T0).id, v = findVill(f, id);
+  const id = worker(f, 'pole'), v = findVill(f, id);
   assert.ok(applyAction(f, { type: 'assignArea', id, kind: 'pole', a: f.plots[0].id }, T0).ok);
   for (const p of f.plots) { p.crop = 'wheat'; p.planted = T0 - 3600_000; p.d = 60_000; }
-  f.silo = { corn: f.siloCap - 3 };                     // místo jen na jednu sklizeň
+  f.silo = { corn: f.siloCap - 3 };
   catchUp(f, T0 + 600_000);
   assert.equal(f.silo.wheat, 2);
   assert.equal(v.w, 'full');
-  // obchodník na trhu uvolní místo → farmář pokračuje ve stejném okamžiku
-  const tid = hire(f, sklad(f).id, 1, T0 + 600_000);
+  const tid = hire(f, sklad(f).id, 1, 'sklad', T0 + 600_000);
   assert.ok(plan(f, tid, 'corn', 100, T0 + 600_000).ok);
   const M = nextTrade(T0 + 600_000);
-  catchUp(f, M + 30_000);
-  assert.ok(v.job && v.job.k === 'harvest' && v.job.s === M || f.silo.wheat > 2, 'rozběhl se hned po trhu');
   catchUp(f, M + 600_000);
   assert.equal(f.plots.filter(p => p.crop).length, 0, 'všechno sklizeno');
 });
 
-test('vesničané: dlouhá nepřítomnost se dopočítává po dávkách a výsledek nezávisí na dělení času', () => {
+test('dlouhá nepřítomnost se dopočítává po dávkách a výsledek nezávisí na dělení času', () => {
   const build = () => {
     const f = rich(farm6(), 20, 1e6);
     f.objects = f.objects.filter(o => o.kind !== 'sad');
     f.siloCap = 300;
-    const fid = applyAction(f, { type: 'buyFarmer' }, T0).id;
-    for (let i = 0; i < 4; i++) applyAction(f, { type: 'upVill', id: fid }, T0);
+    const fid = worker(f, 'pole', 6);
     assert.ok(applyAction(f, { type: 'assignArea', id: fid, kind: 'pole', a: f.plots[0].id }, T0).ok);
     assert.ok(plan(f, fid, 'wheat', 100).ok);
     const sem = placeAny(f, 'semenarna'), mlyn = placeAny(f, 'mlyn'), pek = placeAny(f, 'pekarna');
-    assert.ok(plan(f, hire(f, sem, 5), 's_wheat', 100).ok);
+    assert.ok(plan(f, hire(f, sem, 6), 's_wheat', 100).ok);
     assert.ok(plan(f, hire(f, mlyn, 3), 'mouka', 100).ok);
     assert.ok(plan(f, hire(f, pek, 2), 'chleb', 100).ok);
     const tr = hire(f, sklad(f).id, 4);
@@ -642,7 +787,6 @@ test('vesničané: dlouhá nepřítomnost se dopočítává po dávkách a výsl
     return f;
   };
   const end = T0 + 6 * 3600 * 1000;
-  // A) najednou po dávkách (rozpočet), B) po sedmi minutách, C) po vteřinách jako otevřená hra (jen kus)
   const a = build(), b = build();
   const t0 = performance.now();
   const calls = catchUp(a, end);
@@ -651,46 +795,21 @@ test('vesničané: dlouhá nepřítomnost se dopočítává po dávkách a výsl
   assert.ok(ms < 60, `jedna dávka trvala ${ms.toFixed(1)} ms`);
   for (let t = T0; t < end; t += 420_000) catchUp(b, t);
   catchUp(b, end);
-  const key = f => JSON.stringify({ silo: f.silo, seeds: f.seeds, coins: f.coins, xp: f.xp, plots: f.plots.map(p => [p.crop, p.planted]), q: f.objects.map(o => o.queue || 0), n: f.vill.map(v => [v.n, v.t, v.job, v.w]) });
+  const key = f => JSON.stringify({ silo: f.silo, seeds: f.seeds, coins: f.coins, xp: f.xp, plots: f.plots.map(p => [p.crop, p.planted]), q: f.objects.map(o => o.queue || 0), n: f.vill.map(v => [v.n, v.t, v.job, v.w, v.xp]) });
   assert.equal(key(a), key(b), 'stejný výsledek, ať se čas krájí jakkoli');
-  assert.ok(a.coins > 1e6 - 3000, 'obchodník vydělává');
+  assert.ok(a.coins > 1e6 - 3000);
   assert.ok(a.vill.every(v => v.n > 5), 'všichni pracovali');
-  // rozpočet: jedno dopočítání udělá nejvýš VILL_BUDGET úkonů a ohlásí, že není hotovo
   const c = build();
   const r = runVillagers(c, end, { left: 50 });
   assert.equal(r.n, 50); assert.equal(r.behind, true);
   assert.ok(villLag(c, end) > 3600_000);
-  // pryč déle než den: dopočítá se jen posledních 24 hodin
   const d = build();
   catchUp(d, T0 + 40 * 24 * 3600 * 1000);
   assert.equal(villLag(d, T0 + 40 * 24 * 3600 * 1000), 0);
   assert.ok(d.vill.find(v => v.at === sklad(d).id).n <= 48, 'nejvýš 48 trhů za den');
 });
 
-test('vesničané: převod uložené hry z v26 (jedna práce → tabulka s procenty)', () => {
-  const f = rich(farm6(), 20, 10000);
-  const mlyn = placeAny(f, 'mlyn');
-  f.vill = [
-    { id: 901, lvl: 2, at: mlyn, r: 'mouka', sell: {}, t: T0, n: 7 },
-    { id: 902, lvl: 3, at: sklad(f).id, r: null, sell: { wheat: 10, corn: 0, s_wheat: 0 }, t: T0, n: 72, earned: 2628 },
-    { id: 903, lvl: 1, role: 'farm', area: { kind: 'pole', id: f.plots[0].id }, c: 'wheat', tr: 'jablon', t: T0, n: 3 },
-  ];
-  normalize(f);
-  assert.deepEqual(findVill(f, 901).plan, { mouka: 100 });
-  assert.deepEqual(findVill(f, 902).plan, { wheat: 50, corn: 50 });
-  assert.deepEqual(findVill(f, 902).lim, { wheat: 10 });
-  assert.equal(findVill(f, 902).earned, 2628);
-  assert.deepEqual(findVill(f, 903).plan, { wheat: 100 });
-  assert.ok(!('sell' in findVill(f, 902)) && !('r' in findVill(f, 901)) && !('c' in findVill(f, 903)));
-  f.silo.wheat = 30; f.seeds = { s_wheat: 6 };
-  catchUp(f, T0 + 3600_000);
-  assert.ok(f.silo.mouka > 0, 'mlynář mele dál');
-  assert.ok(findVill(f, 903).n >= 12, 'farmář zasadil i sklidil');
-  assert.ok(findVill(f, 902).earned > 2628, 'obchodník prodává dál');
-  assert.equal(applyAction(f, { type: 'villJob', id: 901, r: 'mouka' }, T0 + 3600_000).error, 'bad_action', 'staré akce už neplatí');
-});
-
-test('zásoby ve Statku, nákup v městečku, farmáři v pracovních oblastech', () => {
+test('zásoby ve Statku, nákup v městečku, pracovní oblasti', () => {
   const f = rich(farm6(), 20, 10000);
   f.objects = f.objects.filter(o => o.kind !== 'sad');
   // kapacita zásob: 3 na pole a sad
@@ -710,11 +829,8 @@ test('zásoby ve Statku, nákup v městečku, farmáři v pracovních oblastech'
   assert.ok(applyAction(f, { type: 'buyPlot', x: 15, y: 14 }, T0).ok);
   areas = workAreas(f);
   assert.equal(areas.filter(g => g.kind === 'pole').length, 2, 'oblast 2');
-  // farmáři: nejvýš 5, jen do oblastí
-  const ids = [];
-  for (let i = 0; i < 5; i++) ids.push(applyAction(f, { type: 'buyFarmer' }, T0).id);
-  assert.equal(applyAction(f, { type: 'buyFarmer' }, T0).error, 'farm_max');
-  const [a, b] = ids;
+  // pracovníci do oblastí (do Statku ne)
+  const a = worker(f, 'pole'), b = worker(f, 'pole');
   assert.equal(applyAction(f, { type: 'assignVill', id: a, at: f.objects[0].id }, T0).error, 'bad_job');
   assert.ok(applyAction(f, { type: 'assignArea', id: a, kind: 'pole', a: f.plots[0].id }, T0).ok);
   // druhý farmář do stejné oblasti → první se uvolní; větší oblast se nerozbije
@@ -844,7 +960,7 @@ test('velké pole: stavba s vlastní velikostí a cenou za políčko', () => {
   f.coins = 5000;
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 4, h: 4 }, T0).error, 'statek_low');
   rich(f, 5, 5000);
-  f.objects.find(o => o.kind === 'statek').lvl = 3;   // statek 3 = jedno velké pole
+  f.objects.find(o => o.kind === 'statek').lvl = 4;   // v29: statek 4 = jedno velké pole
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 2, h: 4 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 0, y: 0, w: 7, h: 3 }, T0).error, 'bad_size');
   assert.equal(applyAction(f, { type: 'place', kind: 'velkepole', x: 5, y: 5, w: 3, h: 3 }, T0).error, 'occupied', 'statek');
@@ -1028,8 +1144,9 @@ test('v9: ekonomika – každá plodina a ovoce má využití a vše má cenu', 
 test('v9: vylepšování budov a statek odemyká budovy', () => {
   const f = farm6();
   f.level = 5; f.xp = LEVEL_XP[5]; f.coins = 1e6;
-  assert.equal(applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).error, 'statek_low');
+  assert.equal(applyAction(f, { type: 'place', kind: 'krmivarna', x: 0, y: 0 }, T0).error, 'statek_low');
   const st = f.objects.find(o => o.kind === 'statek');
+  f.stats.harvest = 40;   // v29: zásluha pro Statek 2
   const c = upgradeCost(st);
   assert.equal(c.level, 2);
   assert.ok(c.items.length >= 2 && c.coins > 0);
@@ -1038,7 +1155,7 @@ test('v9: vylepšování budov a statek odemyká budovy', () => {
   f.siloCap = 1000;
   assert.ok(applyAction(f, { type: 'upgrade', id: st.id }, T0).ok);
   assert.equal(statekLevel(f), 2);
-  const mid = applyAction(f, { type: 'place', kind: 'mlyn', x: 0, y: 0 }, T0).id;
+  const mid = applyAction(f, { type: 'place', kind: 'krmivarna', x: 0, y: 0 }, T0).id;
   assert.ok(mid);
   const mlyn = findObject(f, mid);
   const c2 = upgradeCost(mlyn);
@@ -1047,9 +1164,9 @@ test('v9: vylepšování budov a statek odemyká budovy', () => {
   const c3 = upgradeCost(mlyn);
   for (const x of c3.items) f.silo[x.item] = (f.silo[x.item] || 0) + x.qty;
   assert.equal(applyAction(f, { type: 'upgrade', id: mid }, T0).error, 'statek_low', 'budova nesmí předběhnout statek');
-  f.silo.wheat = 3;
-  applyAction(f, { type: 'produce', id: mid, recipe: 'mouka' }, T0);
-  assert.equal(mlyn.queue[0].end - T0, Math.round(240000 * 0.95), 'úroveň 2 = o 5 % rychlejší');
+  f.silo.wheat = 2; f.silo.corn = 1;
+  applyAction(f, { type: 'produce', id: mid, recipe: 'krmivo_slepice' }, T0);
+  assert.equal(mlyn.queue[0].end - T0, Math.round(120000 * 0.95), 'úroveň 2 = o 5 % rychlejší');
   assert.deepEqual(upgradeCost(mlyn), c3, 'cena je stabilní');
 });
 
@@ -1058,7 +1175,7 @@ test('v9: stodola, prodej strojů a sleva prodejny', () => {
   f.level = 9; f.xp = LEVEL_XP[9]; f.coins = 1e6;
   assert.equal(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).error, 'no_garage');
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'kolecko' }, T0).ok, 'náčiní nepotřebuje stodolu');
-  f.objects.find(o => o.kind === 'statek').lvl = 3;
+  f.objects.find(o => o.kind === 'statek').lvl = 4;   // v29: Stodola od Statku 4
   const gid = applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).id;
   assert.ok(gid);
   assert.ok(applyAction(f, { type: 'buyMachine', model: 'brazda60' }, T0).ok);
@@ -1095,7 +1212,8 @@ test('v9: pomocník sází a sklízí sám', () => {
   const f = farm6();
   f.level = 4; f.xp = LEVEL_XP[4]; f.coins = 1000; f.siloCap = 500;
   assert.equal(applyAction(f, { type: 'helperSet', crop: 'wheat' }, T0).error, 'no_helper');
-  assert.ok(applyAction(f, { type: 'hire', plan: 0, crop: 'wheat' }, T0).ok);
+  assert.equal(applyAction(f, { type: 'hire', plan: 0, crop: 'wheat' }, T0).error, 'helper_gone', 'v29: pomocník se nenajímá');
+  assert.ok(applyAction(f, { type: 'hire', plan: 0, crop: 'wheat', legacy: true }, T0).ok);   // starý najatý pomocník
   assert.equal(f.coins, 880);
   runHelper(f, T0 + 20000);
   assert.equal(f.plots.filter(p => p.crop).length, 2, 'první kolo: 2 políčka');
@@ -1166,19 +1284,21 @@ test('v10: statek odemyká stavbu, úroveň hráče roste pořád', () => {
   assert.equal(applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).error, 'statek_low', 'ani vysoká úroveň nepomůže');
   assert.equal(maxOrchards(f), 2);
   assert.equal(maxBigFields(f), 0);
-  f.objects.find(o => o.kind === 'statek').lvl = 3;
+  f.objects.find(o => o.kind === 'statek').lvl = 4;   // v29: Stodola a velké pole od Statku 4
   assert.ok(applyAction(f, { type: 'place', kind: 'stodola', x: 0, y: 0 }, T0).ok);
   assert.equal(maxBigFields(f), 1);
   f.objects.find(o => o.kind === 'statek').lvl = 10;
   assert.equal(maxPlots(f), 66);
   assert.equal(maxBigFields(f), 4);
-  for (const b of Object.values(BUILDINGS)) assert.ok(b.st <= 7, b.id);
-  // statek se dá vylepšit bez ohledu na úroveň hráče
+  for (const b of Object.values(BUILDINGS)) assert.ok(b.st <= 10, b.id);
+  // v29: statek se vylepší jen se zásluhami (úroveň hráče + úkol)
   const g = farm6();
   const st = g.objects.find(o => o.kind === 'statek');
   for (const x of upgradeCost(st).items) g.silo[x.item] = x.qty;
   g.coins = 1e4; g.siloCap = 999;
-  assert.ok(applyAction(g, { type: 'upgrade', id: st.id }, T0).ok, 'úroveň 1 stačí');
+  assert.equal(applyAction(g, { type: 'upgrade', id: st.id }, T0).error, 'merits', 'úroveň 1 nestačí');
+  g.level = 3; g.xp = LEVEL_XP[3]; g.stats.harvest = 40;
+  assert.ok(applyAction(g, { type: 'upgrade', id: st.id }, T0).ok);
   // XP po 20. úrovni
   g.xp = LEVEL_XP[20];
   applyAction(g, { type: 'claimDaily' }, T0);
@@ -1199,7 +1319,7 @@ test('v10: městečko – cesta, přesun prodejny a stánku, vylepšení', () =>
   delete old.town;
   normalize(old);
   assert.ok(!old.objects.some(o => o.kind === 'prodejna' || o.kind === 'stanek'));
-  assert.deepEqual(old.town, { stanek: 2, prodejna: 4, trziste: 1 });
+  assert.deepEqual(old.town, { stanek: 2, prodejna: 4, trziste: 1, nastenka: 1 });
   assert.equal(dealerDiscount(old), 0.09);
   // vylepšení prodejny v městečku
   old.objects.find(o => o.kind === 'statek').lvl = 10;

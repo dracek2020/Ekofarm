@@ -1,6 +1,27 @@
 # EKOfarm – Farmářský tým: analýza, návrh a plán
 
-Stav k 12. 11. 2026, hra ve verzi v27. Tento dokument je **návrh**. V kódu zatím nic z nových částí není, pokud u nich není výslovně napsáno „existuje (v27)“.
+Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu** (oddíl 0). Zbytek dokumentu je návrh dalších etap; co je hotové, je u něj napsáno.
+
+## 0. Co je hotové ve v29
+
+- **Reset týmu bez náhrady** (2.7). Dosavadní vesničané odešli. Co měli v rukou, se vrátilo do skladu.
+- **Domky** chatrč (200 mincí / 2 lůžka), chata (500 / 3), dům (1 000 / 5). Všechny mají plochu 2×2 a dají se přestavět za rozdíl v ceně. Tým má tolik lidí, kolik je lůžek, nejvýš 30.
+- **Nástěnka** v Městečku: inzerát za pohoštění, uchazeči s profesí, úrovní a vlastností. Za 24 h odejdou. Zájemci, kteří se ozvou sami (bublina nad domkem), přicházejí od pověsti 3.
+- **Pověst farmy** (zakázky +3, denní úkoly +1, 10 stupňů). Při převodu se spočítala z už doručených zakázek.
+- **Zásluhy** pro vylepšení Statku a nové rozložení průmyslu přes Statek 1–10 (2.9). Velké pole a Stodola jsou od Statku 4.
+- **Profese** Pěstitel, Chovatel, Řemeslník, Skladník. Strojník přijde později.
+- **Úrovně 1–12 po oborech**. Zkušenosti jsou hodnota hotové věci × 0,1, u skladníka tržba × 0,05. Mimo profesi se pracovník učí poloviční rychlostí, „Učenlivý“ o 25 % rychleji.
+- **Výkon ×1 → ×12** (oddíl 4.0):
+  - pěstitel zvládne políčko za 12 s, na úrovni 12 za 1 s;
+  - řemeslník naloží do jedné dávky až 12 kusů, výroba trvá stejně dlouho;
+  - chovatel dostane z jednoho krmení 1 → 3 produkty;
+  - skladník prodá na jednom trhu 30 → 360 kusů a cenu má až o 25 % lepší.
+  - Hráč z práce týmu dostane čtvrtinu XP.
+- **Náročnost** (2.10, potřebná úroveň 1 / 2 / 4 / 6 / 8 podle úrovně odemčení) a historie povýšení.
+- **Obrazovka Farmářský tým** (tlačítko Tým): seznam, filtr podle profese, detail s dovednostmi, přeřazení a propuštění.
+- Dva nové kroky průvodce. Placený pomocník končí, najatý doběhne.
+
+**Zatím platí:** na jednom pracovišti je jeden pracovník. Víc lidí na místo, procenta jako podíl času, cílové zásoby a rezervy skladu přijdou ve v30 (oddíl 10.1).
 
 Značení stavu, které se používá v celém dokumentu:
 
@@ -59,8 +80,8 @@ Hra běží v prohlížeči (canvas + HTML panely), server je Cloudflare Worker 
 | Diagnostika výroby (log) | Chybí. |
 
 ### 1.4 Nalezené problémy
-1. **Pomocník a farmáři pracují na stejných polích.** Nic se nerozbije (farmář vše před dokončením znovu ověřuje), ale pomocník při nedostatku semen platí mincemi a sází, co má nastavené on, ne podle plánu oblasti. Návrh: pomocník vynechá pole v oblastech, kde je pracovník (rozhodnutí R6).
-2. **Pracovníka jde koupit hned na úrovni 1** a bez omezení počtu (do 30). Raná automatizace může být příliš snadná (R3).
+1. **Pomocník a farmáři pracují na stejných polích.** Nic se nerozbije (farmář vše před dokončením znovu ověřuje), ale pomocník při nedostatku semen platí mincemi a sází, co má nastavené on, ne podle plánu oblasti. Řeší se tím, že placený pomocník končí (2.5).
+2. **Pracovníka jde koupit hned na úrovni 1** a bez omezení počtu (do 30). Raná automatizace může být příliš snadná. Řeší se hledáním přes nástěnku a pověstí farmy (2.5, 2.6).
 3. V `STAV.md` byla zmínka o jiné hře. Ve v28 je odstraněná.
 
 ---
@@ -104,6 +125,148 @@ Kdokoli může pracovat kdekoli. Ve své profesi se ale učí rychleji a pracuje
 3. Zkušenosti zůstávají u pracovníka. Nastavení (plán, cíle) zůstává u pracoviště. **V1 · etapa 3** (dnes je plán u pracovníka).
 4. Odstranění nebo přesun budovy: přesun pracovníka nechá, zbouraná budova pracovníky uvolní. Přesun existuje, bourání ve hře není.
 
+### 2.5 Hledání pracovníků (nástěnka v Městečku) – V1 · etapa 3
+**Rozhodnuto 12. 11. 2026:** pracovníci se nekupují ani nenajímají za peníze, **hledají se**. Placený pomocník na hodiny končí. Kdo ho má zrovna najatého, tomu nájem doběhne. Akce `hire`, `buyVill` a `buyFarmer` přestanou fungovat a hra místo nich ukáže cestu k nástěnce.
+
+**Nástěnka** je nové místo na náměstí v Městečku, vedle Stánku, Prodejny a Tržiště.
+
+1. **Inzerát:** hráč vybere profesi (Pěstitel, Chovatel, Řemeslník, Skladník; Strojník později) a vyvěsí inzerát.
+2. **Pohoštění místo peněz:** inzerát stojí pár výrobků z farmy. Čím větší tým, tím lepší pohoštění. Vždy jsou dvě možnosti, hráč vybere tu, kterou má:
+
+   | Členů týmu | Pohoštění (jedna z možností) |
+   |---|---|
+   | 0–1 | 4 × pšenice, nebo 4 × ředkvička |
+   | 2–4 | 3 × chléb, nebo 3 × vejce |
+   | 5–8 | 2 × koláč, nebo 2 × jablečný džus |
+   | 9–14 | 2 × sýr, nebo 2 × marmeláda |
+   | 15 a víc | 2 × sýr a 2 × koláč, nebo 2 × marmeláda a 2 × med |
+
+3. **Čekání:** uchazeči přijdou za 20 min + 5 min za každého člena týmu (prázdný tým 20 min, 10 lidí 70 min, 29 lidí 2 h 45 min). Zatím je vidět odpočet.
+4. **Výběr:** přijde 2–4 uchazečů podle pověsti (2.6). Většinou mají požadovanou profesi, s pověstí roste šance i na lepší začínající úroveň. Každý má **jednu vlastnost**:
+
+   | Vlastnost | Účinek |
+   |---|---|
+   | Učenlivý | +25 % zkušeností |
+   | Šikovný | +6 % rychlost práce |
+   | Pečlivý | +4 % ke zrychlení výroby a zvířat |
+   | Všestranný | mimo svou profesi pracuje bez srážky (jinak −10 %) |
+
+5. Hráč si jednoho vybere a ten nastoupí do týmu jako volný. Ostatní odejdou. Neodpoví-li hráč do **24 h**, odejdou všichni. Pohoštění se nevrací.
+6. Současně může viset 1 inzerát, od pověsti 5 dva.
+7. Do týmu nikdo nenastoupí, když nemá volné lůžko v domcích (2.8, chyba `no_bed`).
+
+**Pravidla výpočtu:**
+- Uchazeči se vygenerují ve chvíli vyvěšení ze stejného náhodného čísla farmy, ze kterého vznikají zakázky (`rnd(farm)`). Server i prohlížeč tak dostanou stejné lidi a výsledek se nedá „přetočit“ znovunačtením.
+- Pohoštění se odečte hned (`takeItem`), jen když ho hráč má.
+- Všichni dosavadní pracovníci odejdou a tým se získává znovu (2.7).
+
+**Grafika:** nástěnka zatím použije stávající obrázek cedule (`t/cedule`). Vlastní obrázek nástěnky a portréty uchazečů dodám jako zadání pro grafiku.
+
+### 2.6 Pověst farmy – V1 · etapa 3
+Pověst je číslo, které roste s tím, jak farma pracuje pro okolí. Neutrácí se, není to měna, a neklesá. Je vidět v hlavičce Farmářského týmu, ve Statku a na nástěnce.
+
+**Body pověsti:**
+- doručená zakázka: +3;
+- splněný denní úkol: +1;
+- později: prodej hráčům na tržišti a ekologické hospodaření.
+
+Při převodu dostane každá farma body za zakázky, které už doručila (`stats.orders × 3`), takže stávající hráči nezačínají od nuly.
+
+**Stupně pověsti** (návrh, doladím simulací):
+
+| Stupeň | Body | Uchazečů | Začínající úroveň | Sami se ozvou |
+|---|---|---|---|---|
+| 1 | 0 | 2 | 1 | – |
+| 2 | 20 | 2 | 1 | – |
+| 3 | 60 | 3 | 1–2 | 1× za 2 dny |
+| 4 | 120 | 3 | 1–2 | 1× za 2 dny |
+| 5 | 220 | 3 | 1–3 | 1× denně |
+| 6 | 360 | 3 | 1–3 | 1× denně |
+| 7 | 550 | 4 | 2–3 | 1× denně |
+| 8 | 800 | 4 | 2–4 | 2× denně |
+| 9 | 1 100 | 4 | 2–4 | 2× denně |
+| 10 | 1 500 | 4 | 3–5 | 2× denně |
+
+Pověst je zároveň jedna ze zásluh pro vylepšení Statku (2.9).
+
+**Sami se ozvou:** od stupně 3 se občas ozve člověk z některého domku v Městečku. Nad domkem se objeví bublina a uchazeč je i na nástěnce. Přijde **bez pohoštění** a nejčastěji s profesí, které má hráč v týmu nejméně. Čeká 24 h. Ozývá se jen tehdy, když je volné lůžko. Čas dalšího zájemce se počítá dopředu ze stejného náhodného čísla farmy, takže je pro server i prohlížeč stejný.
+
+
+### 2.7 Začátek od nuly (reset týmu) – rozhodnuto 12. 11. 2026
+Při přechodu na nový systém všichni dosavadní vesničané a farmáři odejdou. Každý hráč si tým získá znovu přes nástěnku a pohoštění.
+
+- Rozdělaná práce se ukončí. Co měli pracovníci v rukou (semínko, suroviny, krmivo), se vrátí do skladu.
+- Fronty ve výrobnách, zvířata, pole, sady a pracovní oblasti zůstanou, jak jsou. Plány a stropy pracovníků se smažou.
+- Pověst se spočítá z už doručených zakázek, takže hráč může hledat hned, jakmile postaví první domek.
+- Placený pomocník na hodiny končí. Kdo ho má zrovna najatého, tomu doběhne.
+- **Rozhodnuto (R9):** mince za odešlé pracovníky se nevracejí.
+
+### 2.8 Ubytování: chatrč, chata, dům – V1 · etapa 3
+Každý člen týmu potřebuje lůžko. **Velikost týmu = počet lůžek v domcích**, nejvýš 30. Bez domku nikoho přijmout nejde.
+
+| Domek | Cena | Lůžek | Cena za lůžko | Na ploše 2×2 | Od Statku |
+|---|---|---|---|---|---|
+| Chatrč | 200 | 2 | 100 | 2 lůžka | 1 |
+| Chata | 500 | 3 | 167 | 3 lůžka | 3 |
+| Dům | 1 000 | 5 | 200 | 5 lůžek | 5 |
+
+- **Návrh (R10):** všechny tři domky mají stejnou plochu 2×2 a liší se velikostí stavení na obrázku. Volba je pak skutečná: chatrč je nejlevnější na lůžko, dům šetří místo. Kdyby chatrč zabírala jen 1×1, byla by výhodnější ve všem.
+- Staví se ve Stavět → Farma, přesouvají se jako ostatní budovy. Počet není omezený, jen místem a stropem 30.
+- Pověst už velikost týmu neomezuje. Rozhoduje o počtu a kvalitě uchazečů a o tom, kdo se ozve sám (2.6).
+- **Grafika:** do doby, než budou vlastní obrázky, použiju tři domky z Městečka. Zadání pro grafiku chatrče, chaty a domu připravím.
+
+### 2.9 Odemykání za zásluhy (postup farmy) – V1 · etapa 3
+**Dnešní stav:**
+- Vylepšení Statku stojí jen mince a pár surovin. Úroveň hráče ani výsledky farmy se nekontrolují.
+- Statek 2 stojí 300 mincí a odemkne Mlýn, Kravín, Konzervárnu, Školku a Rybník.
+- Do Statku 4 (asi 2 700 mincí celkem) je otevřeno 12 z 15 výroben.
+
+**Návrh (R11):**
+- Statek jde vylepšit, jen když farma splní **zásluhy**: úroveň hráče a jeden úkol (sklizeň, zakázky, živočišné produkty, výroba nebo pověst). Mince a suroviny zůstávají jako dnes.
+- Průmysl se rozloží přes všech 10 úrovní Statku.
+- Každá výrobna přijde až po surovině, kterou zpracovává.
+
+| Statek | Zásluhy pro vylepšení (navíc k mincím a surovinám) | Odemkne |
+|---|---|---|
+| 1 | – (začátek) | Semenárna, Pekárna, Sad, Chatrč |
+| 2 | úroveň 3, sklizeno 40 plodin | Krmivárna, Kurník |
+| 3 | úroveň 5, doručeno 10 zakázek | Mlýn, Školka stromků, Rybník, Chata |
+| 4 | úroveň 7, nasbíráno 30 živočišných produktů | Stodola a velké pole, Džusárna, Kravín |
+| 5 | úroveň 9, pověst 4 | Mlékárna, Včelín, Dům |
+| 6 | úroveň 11, vyrobeno 150 výrobků | Konzervárna, Medárna, Rybárna |
+| 7 | úroveň 13, pověst 6 | Olejna, Marmeládárna, Prasečák |
+| 8 | úroveň 15, vyrobeno 400 výrobků | Cukrovar, Uzenářství |
+| 9 | úroveň 17, pověst 8 | Ovčín |
+| 10 | úroveň 19, vyrobeno 1 000 výrobků | Textilka |
+
+**Kontrola návaznosti:**
+- Mlékárna přijde po Kravínu, Medárna po Včelínu, Uzenářství po Prasečáku, Textilka po Ovčínu.
+- Rybárna přijde po Rybníku, Krmivárna se Kurníkem.
+- Úroveň hráče vždy stačí na první recept nebo zvíře dané budovy.
+
+**Pravidla:**
+- Zásluhy se počítají ze statistik, které hra už vede od založení farmy (`stats.harvest`, `orders`, `animal`, `produce`) a z pověsti. Stávající hráči se tedy posuzují podle celé své historie.
+- Nic postaveného nezmizí a úroveň Statku se nesnižuje. Když má hráč budovu, která by se mu teď odemkla až později, nechá si ji a funguje dál. Novou z vyšší úrovně ale nepostaví, dokud Statek nedožene.
+- Velké pole bude od Statku 4 (dnes od 3). Traktory a kombajny už dnes potřebují Stodolu, takže přijdou s ní. Ozdoby, pole, sady a ostatní stroje se nemění.
+- Ve Statku bude seznam zásluh s pruhy (✓ hotovo / kolik zbývá). U zamčené budovy ve Stavět bude „Statek 6 · vyrobit 150 výrobků“.
+
+### 2.10 Zkušenosti pracovníků odemykají náročnější práci – návrh (R12)
+Pracovník zvládne **sám** jen práci, na kterou má praxi. Každý recept, plodina a zvíře má náročnost 1–5 podle úrovně hráče, od které se odemyká:
+
+| Odemyká se od úrovně hráče | do 4 | 5–7 | 8–10 | 11–13 | 14 a víc |
+|---|---|---|---|---|---|
+| Potřebná úroveň pracovníka | 1 | 2 | 3 | 4 | 5 |
+
+**Příklady:**
+- Řemeslník úrovně 1 upeče chléb i obyčejný koláč. Třešňový koláč umí od úrovně 2, ořechový od úrovně 4.
+- Chovatel úrovně 1 zvládne slepice, krávy a prasata až s úrovní 2, ovce s úrovní 3.
+- Pěstitel úrovně 1 pěstuje pšenici a mrkev, meloun až s úrovní 3.
+
+**Pravidla:**
+- Hráč ručně dál vyrábí všechno, co mu dovolí jeho úroveň, jako dnes.
+- V tabulce plánu se náročnější řádek ukáže šedě: „umí od úrovně 2“.
+- Zkušenosti pracovníků tak mají smysl i mimo rychlost a zkušený člověk má cenu.
+
 ---
 
 ## 3. Datové modely a vztahy
@@ -113,12 +276,14 @@ Kdokoli může pracovat kdekoli. Ve své profesi se ale učí rychleji a pracuje
 ```
 farm
  ├─ vill[]            pracovníci (existuje, rozšíří se)
- │    id, prof, xp{}, hist[], at | area{kind,id}, job, w, t, n, earned, sold, last
- ├─ objects[]         budovy (existuje)
+ │    id, prof, trait, xp{}, hist[], at | area{kind,id}, job, w, t, n, earned, sold, last
+ ├─ objects[]         budovy (existuje) + nové druhy chatrc, chata, dum (typ `house`, lůžka v `BUILDINGS`)
  │    + plan{recept: %}, target[[recept, ks]], auto, used{recept: ms}, log{}   ← nastavení pracoviště (výrobna)
  │    + plan{zboží: %}                                                         ← sklad (obchod)
  ├─ areas{}           nastavení pracovních oblastí (nové): { klíč: { plan{plodina|strom: %}, replant } }
  ├─ keep{}            rezervy skladu pro automatiku (nové): { položka: ks }
+ ├─ rep               pověst farmy v bodech (nové)
+ ├─ board{}           nástěnka (nové): ads[{ id, prof, ready, until, cands[{ id, prof, lvl, trait }] }], next = čas dalšího zájemce, který se ozve sám
  ├─ silo{}, seeds{}   sklad a zásoba semen (existuje, jediné místo pro inventář)
  └─ vt                kam je práce týmu dopočítaná (existuje)
 ```
@@ -157,13 +322,36 @@ Oblast se počítá z polí, která sousedí (to existuje). Její klíč je druh
 | Oblast polí / sadů | ⌈počet políček / 8⌉, nejvýš 4 | 12 polí → 2 pěstitelé |
 | Velké pole (strojník) | 1 | POZDĚJI |
 
-Velikost týmu: dnes nejvýš 30. Návrh je omezit ji úrovní Statku (R3).
+Velikost týmu: dnes nejvýš 30. Nově ji určují lůžka v domcích (2.8), nejvýš 30.
 
 ---
 
 ## 4. Výpočet produktivity a výrobní kapacity
 
-Všechny konstanty jsou v `team-config.js`. Nikde v kódu nebudou roztroušené.
+Všechny konstanty jsou v `public/js/team-config.js` (ve v29 hotové). Nikde v kódu nejsou roztroušené.
+
+### 4.0 Platný model (v29, podle rozhodnutí z 12. 11.) – nahrazuje 4.1 a 4.2
+- **Úroveň 1–12 v každém oboru zvlášť** (pole, chov, výroba, sklad).
+- **Zkušenosti** jsou hodnota hotové věci × 0,1: sklizeň, ovoce, produkt od zvířete, výrobek. Skladník dostává tržbu × 0,05. Čím hodnotnější věc, tím víc zkušeností.
+- **Prahy úrovní** (zkušenosti celkem): L2 40 · L3 140 · L4 400 · L5 950 · L6 2 100 · L7 4 500 · L8 9 000 · L9 18 000 · L10 35 000 · L11 70 000 · L12 140 000. Při nepřetržité práci (asi 40 zkušeností za hodinu na úrovni 1, s úrovní roste) je to zhruba:
+
+  | Úroveň | 2 | 5 | 8 | 10 | 12 |
+  |---|---|---|---|---|---|
+  | Po kolika hodinách práce | 1 | 14 | 75 | 190 | 480 |
+
+  Za týden tedy nikdo dvanáctku mít nebude.
+- **Výkon** = kolik práce udělá za stejný čas: ×1,00 · 1,25 · 1,57 · 1,97 · 2,47 · 3,09 · 3,87 · 4,86 · 6,09 · 7,63 · 9,57 · 12,00. Na úrovni 12 je to 12× víc než na úrovni 1. Mimo profesi má pracovník 90 % výkonu.
+  - **Pole:** úkon trvá 12 s / výkon, takže 12 s → 1 s na políčko.
+  - **Výrobna:** dávka obsahuje tolik kusů, kolik je výkon. Zlomky se sčítají, dávka je omezená surovinami a stropem. Doba výroby je stejná.
+  - **Chov:** z jednoho krmení je 1 + 2 × (L − 1) / 11 produktů.
+  - **Sklad:** na jeden trh unese 30 × výkon kusů a cenu má o 0–25 % lepší.
+- **Vlastnosti:**
+  - Učenlivý: +25 % zkušeností.
+  - Šikovný: +6 % rychlost úkonů.
+  - Pečlivý: +5 % výrobků, produktů od zvířat i zboží na trh.
+  - Všestranný: mimo svou profesi bez srážky.
+- **Hráč** dostane za práci týmu čtvrtinu XP, jakou by dostal za ruční práci (`playerXp`). Úroveň hráče tak nelétá kvůli automatizaci.
+- Proti 4.3: síla obsluhy pro víc pracovníků bude ve v30 počítat s tímto výkonem místo tabulky `CRAFT`.
 
 ### 4.1 Zkušenosti
 - Jednotka je **pracovní minuta**, tedy 60 s práce při základní rychlosti. Úkon dá `WORK[k] / 60` minut do oboru, ve kterém se dělal. Prodej dá 0,1 minuty za kus.
@@ -327,10 +515,10 @@ EXISTUJE a zůstane:
 Vlastní vzhled ve stylu EKOfarm (dřevo, papír, zelené akční prvky, vlastní ikony). Rozvržení je navržené od nuly pro telefon na výšku.
 
 ### 6.1 Vstup
-Nové kulaté tlačítko **Tým** vpravo pod Deníkem a záložka **Tým** ve Statku. Obchod → Vesničané a Statek → Farmáři se nahradí odkazem sem.
+Nové kulaté tlačítko **Tým** vpravo pod Deníkem a záložka **Tým** ve Statku. Obchod → Vesničané a Statek → Farmáři se nahradí odkazem sem. Hledání nových lidí je na **Nástěnce** v Městečku (6.6).
 
 ### 6.2 Obrazovka Farmářský tým
-1. **Hlavička:** „Tým 7 / 12“ (limit podle Statku), „Volná místa: 5“, tlačítko **Najmout**.
+1. **Hlavička:** „Tým 7 / 12 lůžek“, pověst se stupněm a pruhem do dalšího, „Volná místa: 5“, tlačítko **Hledat pracovníka** (otevře nástěnku).
 2. **Filtr profesí:** 5 ikon v řadě (Pěstitel, Chovatel, Řemeslník, Skladník, Strojník – šedý „brzy“) a „Všichni“.
 3. **Karty pracovníků:**
    - Portrét (zatím dva stávající obrázky lidí, potřebujeme víc portrétů – zadání pro grafiku dodám).
@@ -362,6 +550,14 @@ Na telefonu je vše pod sebou, žádné další okno. Na tabletu a počítači s
 ### 6.5 Mapa
 Zůstane, co je ve v27: postava, kolečko průběhu, vykřičník, pěstitel chodí k poli. Víc postav na jednom pracovišti se rozestoupí. Animace podle druhu práce a pohyb mezi budovami jsou POZDĚJI. Výpočet na nich nezávisí.
 
+### 6.6 Nástěnka
+- Nahoře pověst farmy a „Tým 7 / 12 lůžek“ (bez volného lůžka upozornění „postav domek“).
+- **Vyvěsit inzerát:** výběr profese (5 ikon), dvě karty pohoštění (šedá, když ji hráč nemá), tlačítko Vyvěsit.
+- **Visící inzerát:** odpočet „uchazeči přijdou za 35 min“.
+- **Uchazeči:** karty vedle sebe. Na kartě portrét, jméno, profese, začínající úroveň, vlastnost s krátkým popisem a tlačítko **Přijmout**. Dole „odejdou za 23 h“.
+- **Zájemce, který se ozval sám:** zvýrazněná karta s domkem.
+- Na mapě: bublina nad nástěnkou, když čekají uchazeči, a nad domkem, když se někdo ozval.
+
 ---
 
 ## 7. Integrace se současnou ekonomikou
@@ -375,14 +571,15 @@ Zůstane, co je ve v27: postava, kolečko průběhu, vykřičník, pěstitel cho
   - ovoce → Školka → sazenice → sady.
 - **Fáze rozvoje farmy** (návrh, část je **SOUHLAS**):
 
-| Fáze | Úroveň Statku | Tým | Co hráč dělá |
+| Fáze | Úroveň Statku | Tým (podle lůžek) | Co hráč dělá |
 |---|---|---|---|
-| 1 Malá farma | 1–2 | do 4 pracovníků, pomocník na hodiny | hlavně ručně |
-| 2 První pracovníci | 3–4 | do 8 | první oblast, jedna výrobna s plánem |
-| 3 Rozvinuté hospodářství | 5–7 | do 16 | víc výroben, cíle zásob, rezervy, řetězce |
+| 1 Malá farma | 1–2 | 0–4 (chatrče) | hlavně ručně, první chatrč a inzerát za pšenici |
+| 2 První pracovníci | 3–4 | do 10 (chaty) | první oblast, jedna výrobna s plánem, první zájemci se ozvou sami |
+| 3 Rozvinuté hospodářství | 5–7 | do 20 (domy) | víc výroben, cíle zásob, rezervy, řetězce |
 | 4 Moderní farma | 8–10 | do 30 | víc míst v budovách, strojník (POZDĚJI), ekologie (POZDĚJI) |
 
-- **Žádné nové měny, mzdy, daně ani údržba** bez souhlasu (R1).
+- **Žádné mzdy ani nájmy** (rozhodnuto). Pracovníci se hledají za pohoštění z farmy, takže nábor spotřebovává výrobky, ne mince.
+- **Žádné nové měny, daně ani údržba** bez souhlasu. Pověst se neutrácí, takže měna to není.
 - **Vyvažování:** `tools/economy.mjs` se rozšíří o simulaci týdne pro 3 vzorové farmy (malá, střední, velká). Bude hlásit mince za hodinu s týmem a bez něj. Cíl: tým se vyplatí, ale ruční hra se zakázkami zůstane výhodnější na jednotku času hráče.
 
 ---
@@ -405,8 +602,8 @@ Každý balíček má nové číslo verze a jde nasadit samostatně. Hra mezi ni
 | Balíček | Etapy | Obsah |
 |---|---|---|
 | **v28** (tento) | 1–2 | Analýza, návrh, právní checklist. Kód beze změny. |
-| **v29** | 3 (+ základ 7) | `team-config.js`; profese, `xp` po oborech, převod uložených her (10.2); nastavení přesunuté k pracovišti; kapacity a chyba `workplace_full`; obrazovka **Farmářský tým**; najímání s volbou profese; zkušenosti se začnou sbírat. |
-| **v30** | 4 + 6 | Síla obsluhy `S`, procenta jako podíl času, nevyužitá kapacita a „přerozdělit“, cílové zásoby, rezervy `farm.keep`, odhad za hodinu, log výroby, nový blok pracovníků ve výrobně (posuvníky). |
+| **v29 – HOTOVO** | 3 (+ základ 7) | `team-config.js`; profese, `xp` po oborech, reset uložených her; obrazovka **Farmářský tým**; **nástěnka v Městečku** (inzerát, pohoštění, uchazeči s vlastností), **pověst farmy** a zájemci, kteří se ozvou sami; **reset týmu** (2.7); **domky** chatrč, chata, dům (2.8); **odemykání za zásluhy** a nové rozložení průmyslu (2.9); konec nákupu pracovníků a placeného pomocníka; zkušenosti se začnou sbírat. |
+| **v30** | 4 + 6 | Nastavení přesunuté k pracovišti, víc pracovníků na místě (kapacita podle úrovně budovy, chyba `workplace_full`), síla obsluhy `S`, procenta jako podíl času, nevyužitá kapacita a „přerozdělit“, cílové zásoby, rezervy `farm.keep`, odhad za hodinu, log výroby, nový blok pracovníků ve výrobně (posuvníky). |
 | **v31** | 5 + 7 | Víc pěstitelů a chovatelů na místě, nastavení oblastí (`farm.areas`, `replant`), pomocník vs. oblasti, přehled chovu; úrovně 1–10 ze zkušeností, bonus profese, praxe v budově, historie. |
 | **v32** | 8 | Výkonové testy (30 pracovníků, 15 výroben, 4 oblasti), test souběžných požadavků, převody z v23–v31, kontrola UI na telefonu, tabletu a počítači, vyvážení simulací. |
 | později | – | Strojník, expedice zakázek, ekologie, portréty a animace práce. |
@@ -416,10 +613,8 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 ### 10.2 Bezpečnost a převod uložených her
 - Každý balíček je v gitu (GitHub) samostatný commit, takže jde kdykoli vrátit (`git revert`). Zip obsahuje jen změněné soubory.
 - Nová pole se doplní v `normalize` jen tehdy, když chybí. Staré hodnoty se nepřepisují. Verze pravidel `RULES_VERSION` se zvýší.
-- **Převod pracovníků:**
-  - Profese podle pracoviště: oblast → pěstitel, ohrada a včelín → chovatel, výrobna → řemeslník, sklad → skladník, volný → řemeslník.
-  - Koupená úroveň se převede na zkušenosti v profesi: 1 → L1, 2 → L3, 3 → L5, 4 → L7, 5 → L10. Nikdo o koupenou úroveň nepřijde.
-  - Plán a strop se přesunou k pracovišti. Strop z v27 se změní na cíl zásoby. Rezerva obchodníka se změní na `farm.keep`.
+- **Převod pracovníků:** reset (2.7). Materiál z rozdělané práce se vrátí do skladu a pracovníci se odeberou. Pokud schválíš R9, vrátí se i mince. Rezerva obchodníka se převede na `farm.keep`, aby si hráč nemusel znovu nastavovat, co chce držet.
+- **Pověst** se spočítá ze `stats.orders`. **Zásluhy** se počítají ze statistik, které už existují. Úroveň Statku ani postavené budovy se nemění.
 - Testy převodu pokryjí uložené hry ve tvaru v23, v25, v26 a v27.
 
 ### 10.3 Testovací scénáře a kritéria dokončení
@@ -447,6 +642,15 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 | 19 | Staré uložené hry | existuje (v26 → v27) | každý balíček |
 | 20 | UI na zařízeních | telefon (Playwright) | v32 + tablet a počítač |
 | + | Výkon | test „měsíc pryč“, rozpočet dávky | v32: 30 pracovníků, dávka do 30 ms na vývojovém stroji |
+| + | Nástěnka: inzerát odečte pohoštění, bez něj nejde vyvěsit | – | v29 |
+| + | Uchazeči stejní na serveru i v prohlížeči, opakované načtení je nezmění | – | v29 |
+| + | Přijetí nad limit pověsti nejde, ostatní uchazeči odejdou, po 24 h odejdou všichni | – | v29 |
+| + | Pověst roste za zakázky a denní úkoly, převod ze statistik | – | v29 |
+| + | Zájemce se ozve sám podle stupně pověsti a jen když tým není plný | – | v29 |
+| + | Staré akce nákupu a pomocníka vrátí srozumitelnou chybu, najatý pomocník doběhne | – | v29 |
+| + | Reset: pracovníci odejdou, materiál a (R9) mince se vrátí, fronty a zvířata zůstanou | – | v29 |
+| + | Domky: bez volného lůžka nikoho nepřijmeš, lůžka se sčítají, strop 30 | – | v29 |
+| + | Statek nejde vylepšit bez zásluh, budovy se odemykají podle nové tabulky, postavené budovy zůstanou | – | v29 |
 
 **Hotovo** znamená: všechny testy procházejí, převod uložených her je otestovaný, dávka dohánění nepřekročí rozpočet a ve hře jsem prošel obrazovky na telefonu i tabletu. U každého balíčku napíšu, co se změnilo a proč, které soubory, co je otestované, jestli původní hra funguje a co zbývá.
 
@@ -456,14 +660,18 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 
 | # | Otázka | Můj návrh |
 |---|---|---|
-| R1 | Mzdy a údržba | **Ne.** Mzdy by běžely i offline a hráč by se vrátil do dluhu. Rovnováhu řeší limit týmu a cena najmutí. |
-| R2 | Úroveň pracovníka | **Jen ze zkušeností**, nákup úrovně za mince zmizí. Kdo úroveň koupil, nepřijde o ni (převod 10.2). |
-| R3 | Limit velikosti týmu podle Statku | Statek 1–10: 2 / 4 / 6 / 8 / 10 / 13 / 16 / 20 / 25 / 30. Kdo má víc, nechá si je, jen další nenajme. |
-| R4 | Cena najmutí | Nechat 100 mincí (bez změny). Druhá možnost: 100 + 25 za každého člena týmu, nejvýš 500. |
-| R5 | Nižší strop rychlosti (×2,0 místo ×2,5) | Ano. Pracovníci na nejvyšší úrovni budou o něco pomalejší než ve v27. |
-| R6 | Pomocník na hodiny a oblasti s pěstiteli | Pomocník vynechá pole v oblastech, kde je pěstitel. |
-| R7 | Názvy profesí | Pěstitel, Chovatel, Řemeslník, Skladník, Strojník. Systém se jmenuje Farmářský tým. |
+| R1 | Mzdy a nájmy | **Rozhodnuto: ne.** Pracovníci se hledají (2.5). |
+| R2 | Úroveň pracovníka | **Rozhodnuto:** zkušenosti za hotovou práci podle hodnoty, 12 úrovní, pomalý růst (4.0). Hotovo ve v29. |
+| R3 | Limit velikosti týmu | **Rozhodnuto:** lůžka v domcích, nejvýš 30 (2.8). |
+| R4 | Jak získat pracovníka | **Rozhodnuto:** nástěnka s inzerátem a pověst farmy (2.5, 2.6). Čísla (pohoštění, časy, stupně) jsou návrh a doladím je simulací. |
+| R5 | Výkon podle úrovně | **Rozhodnuto:** ne rychlost, ale kolik práce za stejný čas: ×1 → ×12 (políčko 12 s → 1 s, víc kusů v dávce). Hotovo ve v29. |
+| R6 | Placený pomocník na hodiny | **Končí** spolu s nájmy. Kdo ho má najatého, tomu doběhne. |
+| R7 | Názvy profesí | **Rozhodnuto:** Pěstitel, Chovatel, Řemeslník, Skladník, Strojník. |
 | R8 | Velikost balíčků | Tři balíčky v29–v31 a čtvrtý na testy (v32), jak je v 10.1. |
+| R9 | Mince za odešlé pracovníky | **Rozhodnuto: nic se nevrací.** |
+| R10 | Plocha domků | **Rozhodnuto:** všechny 2×2, liší se obrázkem a počtem lůžek. |
+| R11 | Rozložení průmyslu a zásluhy | **Rozhodnuto:** tabulka v 2.9. Hotovo ve v29. |
+| R12 | Náročná práce jen pro zkušené pracovníky | **Rozhodnuto:** ano. Hotovo ve v29 (potřebná úroveň 1 / 2 / 4 / 6 / 8). |
 
 ---
 
@@ -478,7 +686,11 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 
 Kód hry se nezměnil. Testy: 79 z 79. Hra funguje stejně jako ve v27.
 
+Doplněno po v28 (bude v zipu v29): oddíly 2.5 Hledání pracovníků a 2.6 Pověst farmy, nástěnka v UI (6.6), rozhodnutí R1, R3, R4 a R6, testy nástěnky a pověsti. Potom oddíly 2.7 Reset týmu, 2.8 Ubytování, 2.9 Odemykání za zásluhy a 2.10 Náročná práce, rozhodnutí R9–R12.
+
 ## 13. Co zůstává nehotové a doporučení
 - Všechno označené V1 je zatím **jen navržené**.
-- POZDĚJI: strojník, expedice zakázek, ekologie, víc portrétů (zadání pro grafiku připravím s v29), animace podle druhu práce, přejmenování pracovníků.
-- Doporučuju udělat v29 hned po schválení rozhodnutí R1–R8. Je to základ, na kterém stojí všechno ostatní, a sám o sobě nemění rychlost výroby.
+- POZDĚJI: strojník, expedice zakázek, ekologie (i jako zdroj pověsti), body pověsti za prodej hráčům, víc portrétů a obrázek nástěnky (zadání pro grafiku připravím s v29), animace podle druhu práce, přejmenování pracovníků.
+- **v29 je hotová** (oddíl 0). Další je v30: víc pracovníků na jednom místě (kapacita podle úrovně budovy, chyba `workplace_full`), procenta jako podíl výrobního času, nevyužitá kapacita, cílové zásoby a rezervy skladu.
+- Grafika pro domky, nástěnku a portréty je zadaná v `EKOfarm_grafika_tym_pro_ChatGPT.zip` (`ZADANI_TYM.md`).
+- **Výkon při vysokých úrovních:** den nepřítomnosti s týmem na úrovni 12 se dopočítá asi na 55 požadavků. Každý trvá do 5 ms, ale v prohlížeči to zabere pár sekund. Ve v31 zvážit slučování úkonů (víc políček v jednom úkonu).

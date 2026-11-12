@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=27';
-import { TW, TH } from './render.js?v=27';
-import { drawIcon } from './icons.js?v=27';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=27';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=29';
+import { TW, TH } from './render.js?v=29';
+import { drawIcon } from './icons.js?v=29';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=29';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -15,7 +15,7 @@ function poly(ctx, pts, fill) {
   ctx.fill();
 }
 
-function bubble(ctx, x, y, icon, count, faded) {
+export function bubble(ctx, x, y, icon, count, faded) {
   ctx.save();
   ctx.globalAlpha = faded ? 0.75 : 1;
   ctx.fillStyle = '#fff8e7';
@@ -245,10 +245,22 @@ export function drawTownHouse(ctx, gx, gy, variant) {
 }
 
 // ---------- budovy ----------
+// v29: nástěnka v Městečku (zatím obrázek cedule); bublina, když čekají uchazeči
+function drawBoard(ctx, o, now, t, farm) {
+  const [x, y] = iso(o.x + 0.5, o.y + 0.5);
+  const im = asset('t', 'cedule');
+  if (im) { const w = 80, h = w * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, x - w / 2, y + 14 - h, w, h); }
+  else placeholder(ctx, o);
+  const ads = (farm && farm.board && farm.board.ads) || [];
+  const ready = ads.filter(a => a.ready <= now).length;
+  if (ready) bubble(ctx, x, y - 78 + Math.sin(t / 300) * 2, 'helper', ready);
+  else if (ads.length) bubble(ctx, x, y - 78, 'clock', 0, true);
+}
 export function drawObject(ctx, o, now, t, farm) {
   const d = BUILDINGS[o.kind];
   if (d.type === 'bigfield') { drawBigField(ctx, o, d, now, t, farm); return; }
   if (d.type === 'orchard') { drawOrchard(ctx, o, now, t); return; }
+  if (d.type === 'board') { drawBoard(ctx, o, now, t, farm); return; }
   const name = spriteName(o);
   const im = name && asset('b', name);
   if (!im) { placeholder(ctx, o); return; }

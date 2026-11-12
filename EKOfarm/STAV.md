@@ -61,6 +61,24 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v29 (12. 11. 2026) – Farmářský tým: hledání, domky, pověst, zásluhy, úrovně 1–12** (podrobně `TYM_NAVRH.md`, oddíl 0):
+  - Všechna čísla týmu jsou v **`public/js/team-config.js`** (`TEAM`, jen data). `RULES_VERSION` 17.
+  - Převod v `normalize`: farmy s `v < 17` přijdou o vesničany (`dropJob` vrátí materiál), `farm.rep` = 3 × `stats.orders`, `farm.board = { ads, k, next }`.
+  - **Pracovník:** `{ id, prof, trait, xp: { obor: body }, hist, at | area, plan, lim, job, w, t, n, uc }`. Úroveň `villLevel(v, obor)` 1–12 z `TEAM.xpLvl`, výkon `villPower` = `TEAM.mult[L]` (×1 → ×12, mimo profesi 0,9). Obor podle pracoviště `OBOR`.
+  - Úkon trvá `workMs(v, k, obor)` = `TEAM.work[k]` / výkon. Zkušenosti dává `villGain` (hodnota × 0,1; mimo profesi polovina, učenlivý +25 %; `v.hist`). Hráč z práce týmu dostane čtvrtinu XP (`teamXp`, zlomky ve `farm.xpc`).
+  - **Výrobna:** úkon `load` nese `n` kusů (výkon + zlomky `v.uc`, omezeno surovinami a stropem). Ve frontě je `{ r, end, d, n, t: 1 }`. `collect` odnáší po částech, kolik se vejde (`q.n` se zmenšuje).
+  - **Chov:** výnos `TEAM.penYield[L]` se zlomky na ohradě (`o.yc`). **Skladník:** `TEAM.trade.cap/bonus/rows[L]`.
+  - **Náročnost** `needLvl(level)` (1 / 2 / 4 / 6 / 8). Výběr úkolu ji hlídá (`w = 'skill'`).
+  - **Domky** (`type: 'house'`, `beds`, `next`): `beds()`, `teamCap()`, `teamFree()`. Akce `rebuildHouse`. Obrázky zatím zastupují domky z Městečka (`STAND_IN` v `sprites.js`).
+  - **Nástěnka** = městská budova `nastenka` (1×1 na náměstí, `TOWN_BUILDINGS` má teď `w/h`). Akce `postAd { prof, opt }`, `hireCand { ad, i }`, `dropAd`, `fireVill`. Uchazeči se losují `seeded(created:ad:id)`.
+  - **Zájemci, kteří se ozvou sami:** `ensureBoard` v `applyAction` podle `TEAM.rep.selfH`, `seeded(created:self:k)`. Mají `ad.self` a `ad.house` (index domku v Městečku → bublina a klepnutí).
+  - **Pověst** `farm.rep` (+3 za `deliver`, +1 za `claimQuest`), `repTier`, `repNext`.
+  - **Zásluhy** `statekMerits(farm, L)` z `TEAM.statek`. `upgrade` Statku bez nich vrátí `merits`. Nové `st` u budov (průmysl přes Statek 1–10), `maxBigFields` od Statku 4.
+  - Akce `buyVill`, `buyFarmer` a `upVill` vrací `team_search`. `hire` vrací `helper_gone` (kromě `legacy`), najatý pomocník doběhne.
+  - **UI (`panels.js`):** `teamHtml` (seznam, filtr, detail, přeřazení `teamMove`, propuštění `fireAsk` / `fireVill`), `boardHtml`, `houseHtml`, `workerBlock` s `lvlLine` a `assignChips`, `farmersHtml` (záložka Statku „Oblasti“), zásluhy v `upgradeBlock`, `meritShort` u zamčených karet, záložka Pomocník jen když pomocník běží.
+  - Nové tlačítko `#teamBtn`, 2 nové kroky průvodce (9 kroků). Na mapě se kreslí nástěnka (`drawBoard`) a bublina nad domkem.
+  - Měření: den nepřítomnosti s týmem na úrovni 12 = asi 55 dávek po 5 ms (zátěžový test). Na zařízeních neměřeno.
+  - Grafika je zadaná (`EKOfarm_grafika_tym_pro_ChatGPT.zip`).
 - **v28 (12. 11. 2026) – jen dokumenty, kód beze změny**: `TYM_NAVRH.md` (analýza současného stavu, návrh systému **Farmářský tým**: profese, zkušenosti, kapacity pracovišť, výpočty výkonu, procenta jako podíl času, cílové zásoby, rezervy, UI, převod uložených her, plán balíčků v29–v32 a rozhodnutí R1–R8 ke schválení) a `EKOFARM_LEGAL_CHECKLIST.md` (evidence zdrojů a licencí, neprověřené položky, podobnosti s jinými hrami, stav kontroly názvu, otázky pro právníka – interní dokument). Z úvodu `STAV.md` odstraněna zmínka o jiné hře.
 
 ## Postup vydání nové verze
@@ -95,6 +113,7 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `tools/build-artifact.mjs` | Sestaví testovací verzi do jednoho souboru `build/ekofarm-artifact.html` |
 | `tools/dev-server.mjs` | Lokální server s SQLite v paměti (pro vývoj); náhrada D1 je v `tools/fake-d1.mjs` (i pro testy) |
 | `test/` | `npm test`: pravidla, API nad SQLite, Google přihlášení s testovacími klíči |
+| `public/js/team-config.js` | Čísla Farmářského týmu (úrovně, výkon, pohoštění, pověst, zásluhy Statku, vlastnosti) – jen data |
 | `TYM_NAVRH.md` | Návrh a plán systému Farmářský tým (co existuje, co přijde v kterém balíčku, rozhodnutí ke schválení) |
 | `EKOFARM_LEGAL_CHECKLIST.md` | Evidence licencí a právní rizika (interní, nepatří do `public/`); `AUTORSKA_PRAVA.md` je starší přehled |
 

@@ -1,7 +1,7 @@
 // EKOfarm – grafika hry (public/img/<druh>/<jméno>.webp, seznam v assets.js).
 // Druhy: b = budovy a ozdoby (plátno podle šablony), t = dlaždice země a plot, c = plodiny, s = stromy,
 // z = zvířata, m = stroje, p = lidé, i = ikony předmětů.
-import { ASSETS } from './assets.js?v=27';
+import { ASSETS } from './assets.js?v=29';
 
 const assetSets = {};
 for (const k in ASSETS) assetSets[k] = new Set(ASSETS[k]);
@@ -43,9 +43,12 @@ export function preloadAssets(items, onProgress) {
 
 // obrázek budovy: Statek a Sklad mají obrázek pro každou úroveň, ostatní jeden
 const LEVELED = { statek: 10, sklad: 10 };
+// v29: domky pro pracovníky – dokud nejsou vlastní obrázky, zastoupí je domky z Městečka
+const STAND_IN = { chatrc: 'domek_c', chata: 'domek_b', dum: 'domek_a' };
 export function spriteName(o) {
   if (LEVELED[o.kind]) return `${o.kind}_${Math.max(1, Math.min(LEVELED[o.kind], o.lvl || 1))}`;
-  return hasAsset('b', o.kind) ? o.kind : null;
+  if (hasAsset('b', o.kind)) return o.kind;
+  return STAND_IN[o.kind] && hasAsset('b', STAND_IN[o.kind]) ? STAND_IN[o.kind] : null;
 }
 // kde v obrázku začíná budova (0..1 od horního okraje) – pro bublinu nad střechou
 export function spriteTop(im) {

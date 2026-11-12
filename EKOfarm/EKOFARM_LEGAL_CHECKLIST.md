@@ -50,6 +50,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 4. Názvy „Brázda“ a „Klas“: rychlá rešerše značek zemědělských strojů v ČR a EU.
 5. Licence vývojových nástrojů: sepsat verze a licence (nízká priorita, s hrou se nešíří).
 6. Pravidla Googlu pro přihlášení: před zapnutím zkontrolovat vzhled tlačítka a texty souhlasu.
+7. **Grafika v29 (domky, nástěnka, portréty):** zatím ji ve hře zastupují vlastní obrázky domků z Městečka a cedule. Nová grafika je zadaná (`ZADANI_TYM.md`). Až dorazí, zapsat do tabulky v oddílu 2 nástroj, datum, účet a prompt.
 
 ## 4. Možné rizikové podobnosti s jinými hrami
 
