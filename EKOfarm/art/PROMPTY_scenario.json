@@ -3,7 +3,7 @@
  "model": "GPT Image 2.5 Flare",
  "date": "2026-11-12",
  "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (vygenerovaný statek, b/statek_1)",
- "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé.",
+ "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé. Prompty budov v35 jsou celé; nastavení: Background transparent, Quality auto, 1 obrázek, rozměry Auto (čtverec).",
  "v32_game": [
   {
    "key": "t/cedule",
@@ -711,6 +711,278 @@
    "key": "ui/splash",
    "id": "asset_n2ZZzTF8NcjZCX9pNxc2syxG",
    "prompt": "A tall portrait illustration for the title screen of a cozy fairy-tale forest farm game: a sunny clearing in an enchanted forest, tall friendly trees framing the left and right sides, soft moss, ferns, wildflowers and a few red toadstools in the foreground, a small thatched farmhouse with a vegetable garden and a winding path in the middle distance, soft morning light with gentle light rays, a calm open sky in the upper part. Use the painting style, light and colors of the reference image. No people, no animals, no text, no letters. Tall portrait image, fully painted background."
+  }
+ ],
+ "v35_budovy": [
+  {
+   "key": "b/statek_1",
+   "id": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a cozy family farmhouse, the heart of the farm: white plastered walls with dark brown timber framing, a steep bright red clay-tile roof, a stone chimney with a curl of smoke, a wooden front porch with a bench and a hanging lantern, green wooden window shutters, red geranium flower boxes under the windows, a metal rooster weathervane on the roof ridge, a small fenced vegetable patch and a wooden cart wheel leaning on the wall. It stands centered on a flat diamond-shaped grass tile that matches its 3x3 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_2",
+   "id": "asset_xTSHmmEzNrkv6yutVG84quYp",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 2 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 2 changes: slightly bigger than the reference: a small side extension with a lean-to red tile roof, a little stone well with its own tiny roof next to the porch, a wooden water barrel. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_3",
+   "id": "asset_EAGcL6hN67ndwGJhXRP4NVob",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 3 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 3 changes: now a full two-storey farmhouse with two dormer windows, a stone foundation, a wider porch and a small white picket-fence flower garden. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_4",
+   "id": "asset_7B5rMqaBMhXUWtQYKz3dZES1",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 4 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 4 changes: a larger two-storey farmhouse with an added fieldstone side wing, a second chimney, a flowering arch over the garden gate and a bench under a small apple tree. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_5",
+   "id": "asset_3mohHd5o1vJT8AnqVxSgdiDU",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 5 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 5 changes: an L-shaped two-storey farmhouse with a carved wooden balcony full of flowers, a round bay window on the corner, hanging lanterns and a cobblestone path. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_6",
+   "id": "asset_rvCsB3XEgjgifz46ibS5k3aa",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 6 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 6 changes: a big farmhouse with a covered veranda wrapping around the front, a decorative carved front gable with a round clock face without numbers, climbing roses on the walls. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_7",
+   "id": "asset_ApTuWViBF6sUsuEBenzMmFkc",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 7 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 7 changes: a farm manor: fieldstone ground floor and timber-framed upper floor, a small bell turret on the roof ridge, tall chimneys, a cobblestone courtyard with flower tubs. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_8",
+   "id": "asset_TYknSgCBcjMaSFhmsp2Hp22h",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 8 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 8 changes: a grand farm manor with two wings and a central entrance with wide stone steps, carved wooden balconies, wrought-iron lanterns and neatly trimmed hedges. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_9",
+   "id": "asset_wvrcHd6cAKREdiN5NcnXZRkg",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 9 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 9 changes: a grand farm manor with a tall central clock tower (clock face without numbers) topped by the rooster weathervane, ornate balconies, a stone terrace with flower urns, green banners with a golden wheat-ear symbol. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/statek_10",
+   "id": "asset_CEgDd5LRy1HjLYS9pJnLam9g",
+   "reference": "asset_G2xmvBNEnxh3CXdeiAwZUf1Q (nový b/statek_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the farmhouse from the reference image upgraded to level 10 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 3x3 square footprint. Keep its identity so it is clearly the same family farm: white plastered walls with dark timber framing, bright red clay-tile roof, green shutters, red geraniums, the rooster weathervane. Level 10 changes: the finest building of the whole farm: a magnificent farm manor with golden trims along the red roof, a tall clock tower with a golden rooster weathervane, a stone terrace with a small fountain, green-and-gold banners with a wheat-ear symbol, warmly glowing windows and rich flower gardens. It still stands centered on the same 3x3 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_1",
+   "id": "asset_dAKip3yuNifkjDWvXgVNRKye",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a small farm storage shed: blue-grey painted vertical plank walls, a silver corrugated tin roof, wide open double barn doors showing crates inside, wooden crates, barrels and burlap grain sacks stacked outside, a small wooden hand cart. Simple and clearly smaller than a farmhouse. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_2",
+   "id": "asset_tLYmCssRopmgKjCEsThPqfjv",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 2 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 2 changes: a bit bigger shed with a wooden loading ramp, more stacked crates and a few hay bales. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_3",
+   "id": "asset_DX9yPJnoXQHSULwSoPWLTZ3L",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 3 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 3 changes: a taller shed with a small hay loft door under the gable and a pulley hook lifting a sack. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_4",
+   "id": "asset_6VGuUy9tj2tazxLgxmHqyPVn",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 4 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 4 changes: a taller storage barn on a fieldstone foundation with a side lean-to sheltering barrels. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_5",
+   "id": "asset_4wtrappBQiswJXgpETmp3agR",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 5 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 5 changes: a tall storage barn with an open hayloft, a pulley, a wooden ladder and piles of grain sacks and crates. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_6",
+   "id": "asset_PVr8fkbnKVLXpa7N4AjFeZfw",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 6 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 6 changes: a storage barn with a small attached round metal grain silo with a conical cap. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_7",
+   "id": "asset_AFkmmeABs5VDVBGtjHELgLjv",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 7 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 7 changes: a fieldstone-and-plank warehouse with two round metal grain silos beside it. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_8",
+   "id": "asset_1iEr15xNeudHeETtZ2KnW75x",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 8 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 8 changes: a big warehouse with a wooden loading crane arm, a tall metal silo and stacked pallets of goods. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_9",
+   "id": "asset_aYShZWJw45DunoojkmdmzyNf",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 9 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 9 changes: a large warehouse with a weathervane, two tall silos joined by a small covered conveyor bridge, many crates and barrels. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/sklad_10",
+   "id": "asset_JDHtdnYwnE4Yo85cGkzhigm7",
+   "reference": "asset_dAKip3yuNifkjDWvXgVNRKye (nový b/sklad_1 z v35)",
+   "prompt": "Square image. Farm game building asset: the storage shed from the reference image upgraded to level 10 of 10. Keep exactly the same cozy hand-painted fairy-tale storybook style, warm sunny light, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat diamond-shaped grass tile base matching a 2x2 square footprint. Keep its identity so it is clearly the same farm storage: blue-grey painted vertical plank walls, silver corrugated tin roof, wide wooden double doors, crates, barrels and burlap grain sacks. Level 10 changes: the finest storehouse on the farm: a large warehouse with golden trims, three tall shiny silos with blue conical caps, a loading crane, neat rows of crates and sacks. Everything still fits centered on the same 2x2 tile, growing mostly in height and richness, filling most of the image. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/semenarna",
+   "id": "asset_upRUY8h4e5FfRaoJwfQqJLWh",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a seed house: pale mint-green painted wooden walls, a dark green wooden-shingle roof, a small glass cold frame on the side full of young green seedlings, seed trays and little sprouting clay pots on a wooden table, small hanging cloth seed bags, a watering can. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/pekarna",
+   "id": "asset_mrr53RVitVa76n3wGzE9TguC",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a village bakery: cream-yellow plaster walls, a warm orange terracotta tile roof, a big round domed brick bread oven built onto the side with a glowing fire inside and a curl of smoke from its chimney, a wooden shelf with golden bread loaves and baskets beside the door, a hanging golden pretzel-shaped shop sign without letters, and flour sacks stacked by the wall. Smaller than a farmhouse. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/krmivarna",
+   "id": "asset_nRxBbU7BMECfQ2XsPEicCSk8",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an animal feed mill: light wooden plank walls, a rust-red corrugated tin roof, a tall round metal feed silo beside it with a hopper chute pouring grain into a sack, stacked feed sacks and a wheelbarrow full of grain. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/mlyn",
+   "id": "asset_PX9AJCoMzzRd6UpFP87GX3Gq",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a flour windmill: a round whitewashed stone tower with a conical dark-blue shingle cap and four big wooden sails with cream canvas, a small wooden door, flour sacks on a little cart at its base. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/skolka",
+   "id": "asset_DuDznunCDjb6YjYwdYuoKwc7",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a tree nursery: a small wooden-framed greenhouse with clear glass panes and a white frame, rows of young fruit-tree saplings in pots inside and around it, small trees with burlap-wrapped root balls, a spade and a watering can. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/dzusarna",
+   "id": "asset_Q7GHqx9LV3B2NSwASDnxJjwe",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a juice press house: sunny orange plastered walls, a turquoise tile roof, a red-and-white striped canvas awning over a wooden counter, a big wooden fruit press with a spout pouring juice into a barrel, crates of apples, glass juice bottles. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/mlekarna",
+   "id": "asset_S2CZHrHSHyQfQkbhr3nUYhzL",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a dairy: crisp white-painted walls, a sky-blue tile roof, a small blue-and-white checkered awning, shiny metal milk churns lined up by the door, wheels of yellow cheese on a wooden rack, a little wooden milk cart. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/konzervarna",
+   "id": "asset_8mgyC75Zf7DZqWoXT2rPhBGS",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a pickling and canning house: red brick walls, a dark grey slate roof, an arched wooden cellar door, wooden shelves full of glass jars with green pickles, a big copper kettle, stacked crates of cucumbers. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/olejna",
+   "id": "asset_VhtGDfebhaQeFa1mreWD9TCp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an oil press house: warm mustard-ochre plastered walls, a bright sunflower-yellow wooden-shingle roof, a big wooden screw press with a stone basin beside the door, golden oil bottles and clay jugs, tall sunflowers growing next to the wall, sacks of sunflower seeds. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/marmeladarna",
+   "id": "asset_CfTUSAbevD2qSYgJ2kC4K6A7",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a jam kitchen cottage: soft pink plastered walls, a raspberry-red scalloped tile roof, a big copper jam cauldron bubbling over a small fire outside, shelves of colorful jam jars with red-white checkered cloth lids, baskets of strawberries and berries. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/cukrovar",
+   "id": "asset_qsRc618vTPw17wJycdLWnWpm",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a small sugar works: pale beige stone walls, a light grey corrugated tin roof, a tall round red-brick smokestack with a puff of white steam, a wooden bin piled with big sugar beets, white sugar sacks and stacked white sugar cubes on a pallet. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/uzenarstvi",
+   "id": "asset_natUyeRJGCoAzDJ6ZSHqbenn",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a smokehouse: dark stained timber walls, a dark brown wooden-shingle roof with a big smoking vent on top, hams and sausages hanging under a small porch roof, a wooden chopping block, a neat stack of firewood. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/textilka",
+   "id": "asset_sbiQu4wfuEZUNLYb7sLKFfcn",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a weaving workshop: lavender painted walls, a purple tile roof, a big wooden spinning wheel and a loom by the open door, colorful dyed fabrics drying on a line, baskets of wool balls in many colors. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/kurnik",
+   "id": "asset_bGHxGjWnM2qRKGHdKSJKVBZU",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an empty chicken coop: a small red-and-white wooden henhouse on short stilts with a little wooden ramp and nest boxes, standing at the back corner of the tile; the front and middle of the tile is an open sandy yard with a grain feeder and a water dish, enclosed by a low white picket fence along the tile edges. No chickens or other animals. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/kravin",
+   "id": "asset_L3creDPVLLSrw7GgfsR9sHEs",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an empty cattle pen: a big classic red wooden cow barn with white trim and white X-braced double doors, a gambrel roof with dark grey shingles and an open hay loft full of golden hay; the barn stands at the back corner of the tile, and the front and middle of the tile is an open grassy pasture with a wooden water trough and a hay feeder, enclosed by a low white wooden rail fence along the tile edges. No cows or other animals. It stands centered on a flat diamond-shaped grass tile that matches its 3x3 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/prasecak",
+   "id": "asset_D3UKaW1V8tAQGNdsvaQiDnPS",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an empty pig pen: a low wooden pigsty shelter with a rusty-orange corrugated tin roof standing at the back corner of the tile; the front and middle of the tile is an open muddy dirt yard with a mud puddle and a long wooden feeding trough, enclosed by a sturdy brown wooden rail fence along the tile edges. No pigs or other animals. It stands centered on a flat diamond-shaped grass tile that matches its 3x3 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/ovcin",
+   "id": "asset_r7oy9fjAKsVsfb5FwTG9Tkyi",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an empty sheep fold: a rustic grey fieldstone sheep shed with a dark slate roof and a wooden door standing at the back corner of the tile; the front and middle of the tile is an open grassy meadow with a wooden hay rack and a stone water trough, enclosed by a low dry-stone wall with a small wooden gate. No sheep or other animals. It stands centered on a flat diamond-shaped grass tile that matches its 3x3 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/stodola",
+   "id": "asset_J8FkPnLJsvu64SyhH2X9poiw",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a large machine barn for tractors: a long wide barn with dark green painted wooden planks and white trim, a broad sky-blue corrugated tin roof, a big open sliding door on the long front-left side showing an empty interior with tools hanging on the back wall, oil barrels, a spare tractor tyre and a red toolbox outside. The footprint is a rectangle 3 tiles by 2 tiles: the long 3-tile side faces the front-left and the short 2-tile side faces the front-right. It stands centered on a flat diamond-shaped grass tile that matches its 3x2 rectangular square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/rybnik",
+   "id": "asset_zWBsWGhiEqD1S3yCsEaQn8f9",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a fishing pond: a clear blue pond filling most of the tile, with lily pads and reeds, smooth stones and cattails around the edge, a small wooden fishing jetty with a little rowing boat tied to it, a wooden fish crate and a fishing rod on the jetty. No building. It stands centered on a flat diamond-shaped grass tile that matches its 3x3 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/vcelin",
+   "id": "asset_8dBfEkc3ZngPggXEttEke6cc",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: an apiary: a small open wooden bee shelter with a little brown shingle roof sheltering a row of colorful painted beehive boxes (yellow, blue, red and green), more hive boxes on stands beside it, flowering lavender and clover all around, a honey pot. No bees. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/rybarna",
+   "id": "asset_CTBWCpd4nP9WQRnqLc6hJaWK",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a fish kitchen hut by the water: pale sky-blue painted plank walls, a grey-blue wooden-shingle roof, fishing nets with cork floats hanging on the walls, an anchor and crossed oars, a barrel of fish, a steaming soup pot on a small stove outside. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/medarna",
+   "id": "asset_gcpooiZFsEdG33VrjURMwKw1",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a honey house: warm honey-yellow plastered walls with hexagon honeycomb-patterned shutters, a rounded golden-brown shingle roof, a big honey extractor drum by the door, shelves of golden honey jars, a straw skep beehive and a wooden honey dipper sign without letters. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/chatrc",
+   "id": "asset_NgJFRDWGJrpTbzCtYiz67ffK",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a tiny humble worker shack: rough unpainted grey wooden plank walls, a patched rusty corrugated tin roof, a crooked stovepipe chimney, one small window, a bucket and a washboard by the door, a tiny bench. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/chata",
+   "id": "asset_R954QUBtH7HES8PKzUNSxsrj",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a cozy small worker cottage: warm orange-brown painted wooden siding walls, a brown wooden-shingle roof, a stone chimney, white window frames with flower boxes, a small porch with two wooden chairs. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/dum",
+   "id": "asset_ZY6WcrxFdNFJppu3kTktwFEy",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a two-storey worker family house: pale yellow plastered walls, a deep burgundy tile roof with a dormer window, a small balcony with flowers, a green front door, a little front garden with a white picket fence and a washing line. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
   }
  ]
 }

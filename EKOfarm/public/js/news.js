@@ -1,5 +1,13 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 35, title: 'Nové budovy: pestrá farma', items: [
+    'Všechny budovy na farmě jsou nově malované a každá vypadá jinak – vlastní střecha, materiál a poznávací znak, takže je poznáš i z dálky.',
+    'Statek: bílé hrázděné stavení s červenou taškovou střechou a kohoutem na střeše. S každou úrovní roste – patro, křídlo, věžička s hodinami, až po panský statek se zlatými ozdobami.',
+    'Sklad: modrošedá kůlna s plechovou střechou. Vyšší úrovně přidají půdu s kladkou, sila a jeřáb.',
+    'Výrobny: Pekárna s pecí na chleba, Mlýn s lopatkami, Mlékárna s konvemi na mléko, Džusárna s pruhovanou markýzou, Olejna se slunečnicemi, Marmeládárna s kotlem, Cukrovar s komínem, Uzenářství s uzeninami, Textilka s kolovratem a další.',
+    'Ohrady: červený Kravín s pastvinou, Kurník na kůlech, Prasečák s blátivým výběhem, Ovčín s kamennou zídkou. Nová je i Stodola, Rybník, Včelín, Rybárna, Medárna a domky pro tým.',
+    'Hra se hraje úplně stejně – mění se jen vzhled budov.',
+  ] },
   { v: 34, title: 'Nová sezóna: Řídicí centrum, krmení na 3 hodiny, průvodce', items: [
     'Začíná nová sezóna – všechny farmy začínají znovu od úrovně 1. Účet, jméno a chat zůstávají.',
     'Zvířata: jedno krmivo vydrží 3 hodiny a zvíře za tu dobu průběžně dá výrobky – slepice 3 vejce, kráva 2 mléka, prase 2 masa, ovce 2 vlny. Sbírat můžeš kdykoli během cyklu.',

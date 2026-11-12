@@ -1,5 +1,6 @@
 # EKOfarm – pohádková grafika (v32) ze Scenario do hry.
 #   python3 tools/fantasy.py <složka s obrázky ze Scenario> [<složka pro portréty>]
+# Pozor (v35): budovy od v35 převádí tools/budovy.py – se složkou z v32 by je tento skript přepsal starými.
 # Vstup: soubory pojmenované podle klíče (b__statek_1.webp, s3__jablon.webp, c3__wheat.webp, tex__trava_a.webp,
 # ikony__1.webp, portrety__1.webp, z__slepice.webp, m__brazda60.webp, p__farmar.webp, t__plot_se.webp, les3__les.webp).
 # Výstup: public/img/{t,c,s,b,z,m,p,i}/*.webp (2× rozlišení, stejné rozměry plátna jako dosud) a public/js/assets.js.

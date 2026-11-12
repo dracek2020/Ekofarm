@@ -58,6 +58,17 @@ def glow(im, T=200, lum=140):
     a[:, :, 3] = al
     return Image.fromarray(a.astype(np.uint8))
 
+def dehalo(im, core=200, keep=4):
+    """v35: poloprůhledný opar a kouř daleko od objektu pryč – zůstane jádro (alfa ≥ core) a jeho okraj do keep px."""
+    a = np.array(im).astype(np.int16); al = a[:, :, 3]
+    c = al >= core
+    lab, n = ndimage.label(c)
+    if n > 1:   # jádro = velké souvislé plochy, ne kousky oparu
+        sz = ndimage.sum(c, lab, range(1, n + 1)); c = np.concatenate([[False], sz > sz.max() * 0.002])[lab]
+    al[~c & (ndimage.distance_transform_edt(~c) > keep)] = 0
+    a[:, :, 3] = al
+    return Image.fromarray(a.astype(np.uint8))
+
 def base_geom(im):
     """Kosočtvercový podstavec pod stromem: boční rohy (yL), střed (xc), poloosy (rx, hh), spodek (yb)."""
     m = np.array(im)[:, :, 3] > 24

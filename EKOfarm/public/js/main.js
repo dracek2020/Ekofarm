@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
-} from './rules.js?v=34';
-import { preloadAssets, spriteName } from './sprites.js?v=34';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=34';
-import { createBackend, ApiError } from './api.js?v=34';
-import { iconize, ic } from './icons.js?v=34';
-import { NEWS } from './news.js?v=34';
-import { sfx, soundOn, setSound } from './sfx.js?v=34';
-import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=34';
+} from './rules.js?v=35';
+import { preloadAssets, spriteName } from './sprites.js?v=35';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=35';
+import { createBackend, ApiError } from './api.js?v=35';
+import { iconize, ic } from './icons.js?v=35';
+import { NEWS } from './news.js?v=35';
+import { sfx, soundOn, setSound } from './sfx.js?v=35';
+import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=35';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 
 
 const game = {

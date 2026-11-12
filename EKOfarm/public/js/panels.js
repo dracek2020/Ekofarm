@@ -15,11 +15,11 @@ import {
   VILL_MAX, AREA_MIN, workAreas, areaOf, isFarmer, isSeedItem, seedCap, seedUsed, SEEDS_PER, supplyPrice, villName, villJobType, villAt, findObject,
   workMs, TRADE_IV, PLAN_ROWS, nextTrade, tradeRound, planTotal, villLevel, villOut, speedMult, stockOf, keepOf, wpGet, wpWorkers, wpCap, areaCap, crewPower, bldCap, bldCapNext, factoryRate, penStats, penOut, animalCycleMs, ANIMAL_CYCLE, hiveIv, villMainLevel, villPower, OBOR, needLvl, MAX_VLVL,
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
-} from './rules.js?v=34';
-import { fmtTime } from './render.js?v=34';
-import { TEAM } from './team-config.js?v=34';
-import { NEWS } from './news.js?v=34';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=34';
+} from './rules.js?v=35';
+import { fmtTime } from './render.js?v=35';
+import { TEAM } from './team-config.js?v=35';
+import { NEWS } from './news.js?v=35';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=35';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
