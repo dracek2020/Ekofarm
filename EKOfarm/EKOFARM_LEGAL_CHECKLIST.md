@@ -27,8 +27,9 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 
 | Součást | Původ / autor | Zdroj | Licence / podmínky | Komerční použití | Uvedení autora | Omezení | Ověřeno | Doklad | Stav |
 |---|---|---|---|---|---|---|---|---|---|
-| Grafika hry `public/img/b, c, i, m, p, s, t, z` (366 souborů, 4,7 MB) | vygeneroval autor hry v ChatGPT (OpenAI) podle archů od Clauda, upraveno skriptem `tools/assets.py` | ChatGPT | OpenAI Terms of Use (EU): uživatel výstup vlastní „v rozsahu povoleném právem“ a OpenAI na něj převádí svá práva, **pokud nějaká má**. Výstup nemusí být jedinečný, jiní uživatelé můžou dostat podobný. | podle podmínek ano | podmínky nevyžadují | výstup nevydávat za lidskou tvorbu; podobné výstupy u jiných | 12. 11. 2026 (podmínky EU, datum účinnosti na stránce neuvedeno) | chybí: datum generování, typ účtu, prompty, vstupní obrázky | **ČÁSTEČNĚ** |
-| Ikony aplikace `public/img/icon-192.png`, `icon-512.png` | vytvořené skriptem pro projekt | vlastní | vlastní | ano | ne | – | 12. 11. 2026 | `AUTORSKA_PRAVA.md` | OK |
+| **Grafika hry od v32** `public/img/b, c, i, m, p, s, t, z` (370 souborů, asi 6 MB) + portréty `art/portret_01–12.webp` (mimo hru) | 128 obrázků vygeneroval Claude 12. 11. 2026 v účtu autora hry ve **Scenario** (tarif Max), model **GPT Image 2.5 Flare** (OpenAI, přes Scenario); upraveno skriptem `tools/fantasy.py` (ořez, opar, stlačení, řezání archů). Ikony semen a sazenic kreslí skript. | Scenario (app.scenario.com), originály v knihovně projektu ve Scenario | Podmínky Scenario (Terms and Conditions, verze 2.1.1 podle stavu ověřeného 12. 11. 2026): výstupy patří uživateli, komerční použití se řídí licencí zvoleného modelu; nahraná data u samoobslužných tarifů smí Scenario použít ke zlepšení AI. Licence modelu: nápověda Scenario „Commercial use licenses of Scenario platform models“ – **u GPT Image 2.5 Flare ověřit a uložit snímek stránky**. Za modelem stojí podmínky OpenAI. | podle podmínek ano (ověřit licenci modelu) | podmínky nevyžadují | výstup nemusí být chráněný autorským právem a nemusí být jedinečný | 12. 11. 2026 | prompty jsou u každého obrázku v knihovně Scenario (nahrané podklady žádné, jen textová zadání; styl sjednocen referencí = první vygenerovaný statek); prompty neobsahují názvy her, studií ani autorů (kontrola 12. 11. 2026); **chybí export promptů a snímek licence modelu** | **ČÁSTEČNĚ** |
+| Grafika v16–v31 z ChatGPT (ve hře už není, jen v gitu, značka `v31`) | vygeneroval autor hry v ChatGPT (OpenAI) podle archů od Clauda, upraveno skriptem `tools/assets.py` | ChatGPT | OpenAI Terms of Use (EU): uživatel výstup vlastní „v rozsahu povoleném právem“ a OpenAI na něj převádí svá práva, **pokud nějaká má**. Výstup nemusí být jedinečný, jiní uživatelé můžou dostat podobný. | podle podmínek ano | podmínky nevyžadují | výstup nevydávat za lidskou tvorbu; podobné výstupy u jiných | 12. 11. 2026 (podmínky EU, datum účinnosti na stránce neuvedeno) | chybí: datum generování, typ účtu, prompty, vstupní obrázky | **ČÁSTEČNĚ** |
+| Ikony aplikace `public/img/icon-192.png`, `icon-512.png` | od v32 skript: obrázek statku ze Scenario na vlastním zeleném pozadí | jako grafika hry v32 | jako grafika hry v32 | jako grafika hry v32 | ne | – | 12. 11. 2026 | `AUTORSKA_PRAVA.md` | ČÁSTEČNĚ (jako grafika v32) |
 | Grafika budov z v12 | dodal autor hry, nástroj neuveden | ? | ? | ? | ? | ? | – | – | **NEPROVĚŘENO** – ověřit, jestli ještě nějaký soubor z v12 v `public/img/b` zůstal (v16 měl celou grafiku nahradit) |
 | SVG ikony `public/js/icons.js` | napsal Claude (Anthropic) pro projekt | vlastní kód | podmínky Anthropic pro výstupy – **ověřit aktuální znění** | předpoklad ano | ne | – | – | – | **ČÁSTEČNĚ** |
 | Zdrojový kód `public/js`, `src`, `tools`, `test` | psaný pro EKOfarm s Claudem | vlastní | jako výše | předpoklad ano | ne | – | – | git historie | **ČÁSTEČNĚ** |
@@ -37,7 +38,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 | Knihovny ve hře | žádné (bez npm závislostí za běhu) | – | – | – | – | – | 12. 11. 2026 | `package.json` | OK |
 | Google Identity Services (přihlášení) | Google | `accounts.google.com/gsi/client` (načítá se přímo od Googlu) | podmínky Google pro vývojáře a pravidla pro tlačítko „Sign in with Google“ | ano, za jejich podmínek | ne | vzhled tlačítka podle pravidel Googlu | – | – | **ČÁSTEČNĚ** (přihlášení je odložené, kód je ve hře) |
 | Hosting Cloudflare Workers + D1 | Cloudflare | služba | podmínky Cloudflare | ano | ne | limity tarifu | – | – | ČÁSTEČNĚ |
-| Vývojové nástroje (Node.js, wrangler, Pillow, Playwright) | třetí strany | npm / PyPI | open source; **přesné licence a verze ověřit** | jen při vývoji, s hrou se nedistribuují | – | – | – | – | NEPROVĚŘENO (nízké riziko) |
+| Vývojové nástroje (Node.js, wrangler, Pillow, NumPy, SciPy, Playwright) | třetí strany | npm / PyPI | open source; **přesné licence a verze ověřit** | jen při vývoji, s hrou se nedistribuují | – | – | – | – | NEPROVĚŘENO (nízké riziko) |
 | Názvy strojů „Brázda“, „Klas“ | vymyšlené | – | – | – | – | – | – | – | **NEPROVĚŘENO** – ověřit, že nejde o značky výrobců zemědělské techniky |
 | Jména pracovníků (Anička, Pepa…) | běžná česká jména | – | – | ano | – | – | – | – | OK |
 
@@ -50,7 +51,8 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 4. Názvy „Brázda“ a „Klas“: rychlá rešerše značek zemědělských strojů v ČR a EU.
 5. Licence vývojových nástrojů: sepsat verze a licence (nízká priorita, s hrou se nešíří).
 6. Pravidla Googlu pro přihlášení: před zapnutím zkontrolovat vzhled tlačítka a texty souhlasu.
-7. **Grafika v29 (domky, nástěnka, portréty):** zatím ji ve hře zastupují vlastní obrázky domků z Městečka a cedule. Nová grafika je zadaná (`ZADANI_TYM.md`). Až dorazí, zapsat do tabulky v oddílu 2 nástroj, datum, účet a prompt.
+7. **Grafika v29 (domky, nástěnka, portréty):** hotovo ve v32 (Scenario), zapsané v oddílu 2.
+8. **Grafika v32 ze Scenario:** (a) uložit snímek stránky s licencí modelu GPT Image 2.5 Flare ve Scenario a znění podmínek Scenario platné 12. 11. 2026; (b) exportovat prompty všech 128 obrázků z knihovny Scenario (každý obrázek je má u sebe) a uložit je k projektu; (c) zvážit, jestli nevadí, že Scenario smí nahraná data u samoobslužného tarifu použít ke zlepšení AI (nahrané podklady jsme nepoužili).
 
 ## 4. Možné rizikové podobnosti s jinými hrami
 
@@ -104,6 +106,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 
 | Datum | Kdo | Co | Výsledek |
 |---|---|---|---|
+| 12. 11. 2026 | Claude | v32: celá grafika nahrazená obrázky ze Scenario (GPT Image 2.5 Flare); kontrola promptů na názvy jiných her, studií a autorů (žádné); žádná nová knihovna ani závislost (`package.json` beze změny), nástroj `tools/fantasy.py` používá jen Pillow, NumPy a SciPy (jen při vývoji); nové texty novinek napsané pro EKOfarm | tabulka v oddílu 2 doplněná, úkol 8 v oddílu 3 |
 | 12. 11. 2026 | Claude | v31: kontrola změn od v30 – žádná nová knihovna ani závislost (`package.json` beze změny), žádný nový obrázek, zvuk ani písmo; texty a rozhraní (síla obsluhy, přehled chovu) napsané pro EKOfarm; hledání zmínek o jiných hrách v rozdílu kódu | bez nálezu, tabulka v oddílu 2 beze změny |
 | 12. 11. 2026 | Claude | Inventura souborů a zdrojů v repozitáři v27, hledání zmínek o jiných hrách, ověření citovaných ustanovení (§ 2976–2982 OZ podle znění od 6. 1. 2023), rozsudku 10 C 13/2023 a podmínek OpenAI (EU), orientační webová rešerše názvu | viz oddíly 2–5; zmínka v `STAV.md` odstraněna |
 
@@ -113,5 +116,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 - Občanský zákoník, nekalá soutěž (znění od 6. 1. 2023): https://www.podnikatel.cz/zakony/novy-obcansky-zakonik/zneni-20230106/f4588398/
 - Městský soud v Praze 10 C 13/2023 (komentář): https://www.epravo.cz/top/clanky/mestsky-soud-v-praze-o-umele-inteligenci-a-autorskem-pravu-117318.html
 - Podmínky OpenAI pro EU: https://openai.com/policies/eu-terms-of-use/
+- Podmínky Scenario: https://scenario.com/terms-and-conditions
+- Licence modelů ve Scenario (komerční použití): https://help.scenario.com/en/articles/commercial-use-licenses-of-scenario-platform-models
 - Databáze ochranných známek ÚPV: https://www.upv.gov.cz/informacni-zdroje/narodni-databaze/databaze-ochrannych-znamek
 - Orientační rešerše názvu (výsledky vyhledávání): https://apps.apple.com/us/app/-/id1130240645 (Eco City), https://apps.apple.com/app/id1658271657 (Ecotopia), https://apps.apple.com/us/app/-/id6443502803 (Green farm)

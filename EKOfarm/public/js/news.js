@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 32, title: 'Nová pohádková grafika', items: [
+    'Celá farma má nový útulný pohádkový vzhled: Statek, Sklad, výrobny, ohrady, zvířata, stroje, lidé, stromy, plodiny, cesty i Městečko.',
+    'Nové jsou i všechny ikony výrobků, semínek a sazenic a ikona aplikace.',
+    'Domky pro tým (chatrč, chata, dům) a Nástěnka v Městečku mají konečně vlastní obrázky.',
+    'Stromy v sadu i v lese stojí v trsu trávy s kvítím, záhony mají nové rostliny ve všech třech fázích.',
+    'Hra se hraje úplně stejně – ceny, časy, výroba a uložené farmy se nemění.',
+  ] },
   { v: 31, title: 'Víc lidí ve výrobnách a ohradách, přehled chovu', items: [
     'Vylepšená výrobna má místo pro víc pracovníků: od 4. úrovně pro dva, od 7. pro tři a na 10. úrovni pro čtyři. Ohrada od 5. úrovně pro dva.',
     'Síla obsluhy: víc lidí ve výrobně naloží do jedné dávky víc kusů. Druhý přidá 60 % svého výkonu, třetí 40 %, čtvrtý 30 %. Výroba trvá stejně dlouho a suroviny se odečtou přesně podle dávky.',

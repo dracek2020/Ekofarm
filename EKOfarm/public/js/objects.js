@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=31';
-import { TW, TH } from './render.js?v=31';
-import { drawIcon } from './icons.js?v=31';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=31';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock } from './rules.js?v=32';
+import { TW, TH } from './render.js?v=32';
+import { drawIcon } from './icons.js?v=32';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=32';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -146,9 +146,9 @@ function drawOrchard(ctx, o, now, t) {
   const tr = TREES[o.tree];
   const img = asset('s', `${tr.id}_${st.state === 'dead' ? 'dead' : st.state === 'ready' ? 'ready' : 'grow'}`);
   const g = st.state === 'growing' && o.left === tr.harvests ? 0.5 + 0.5 * st.progress : 1;
-  if (img) {
-    const w = 96 * g, h = 120 * g;
-    ctx.drawImage(img, cx - w / 2, cy + 8 - 91 * g, w, h);
+  if (img) {   // v32: plátno 192×256, pata kmene na středu políčka 105 px pod horním okrajem
+    const w = 96 * g, h = w * img.naturalHeight / img.naturalWidth;
+    ctx.drawImage(img, cx - w / 2, cy - 105 * g, w, h);
   }
   if (st.state === 'dead') bubble(ctx, cx, cy - 58 + Math.sin(t / 300) * 2, 'axe', 0);   // uschlý strom: pokácet
 }
@@ -245,11 +245,12 @@ export function drawTownHouse(ctx, gx, gy, variant) {
 }
 
 // ---------- budovy ----------
-// v29: nástěnka v Městečku (zatím obrázek cedule); bublina, když čekají uchazeči
+// v29: nástěnka v Městečku (v32 vlastní obrázek, dokud se nenačte, cedule); bublina, když čekají uchazeči
 function drawBoard(ctx, o, now, t, farm) {
   const [x, y] = iso(o.x + 0.5, o.y + 0.5);
-  const im = asset('t', 'cedule');
-  if (im) { const w = 80, h = w * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, x - w / 2, y + 14 - h, w, h); }
+  const im = asset('b', 'nastenka'), ced = asset('t', 'cedule');
+  if (im) { const b = spriteBox(o); ctx.drawImage(im, b.x, b.top, b.w, b.h); }
+  else if (ced) { const w = 80, h = w * ced.naturalHeight / ced.naturalWidth; ctx.drawImage(ced, x - w / 2, y + 14 - h, w, h); }
   else placeholder(ctx, o);
   const ads = (farm && farm.board && farm.board.ads) || [];
   const ready = ads.filter(a => a.ready <= now).length;

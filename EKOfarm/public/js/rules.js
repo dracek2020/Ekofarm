@@ -1,6 +1,6 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=31';
+import { TEAM } from './team-config.js?v=32';
 
 export const RULES_VERSION = 19;
 export const GRID_W = 17;

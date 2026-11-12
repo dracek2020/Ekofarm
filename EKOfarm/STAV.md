@@ -61,6 +61,18 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v32 (12. 11. 2026) – pohádková grafika celé hry (jen vzhled, pravidla beze změny)**:
+  - Všech 368 obrázků v `public/img` vyměněných + 4 nové budovy (`b/chatrc`, `b/chata`, `b/dum`, `b/nastenka`); domky týmu už nepotřebují `STAND_IN`. Zdroj: 128 obrázků vygenerovaných ve **Scenario** (model GPT Image 2.5 Flare, průhledné pozadí, styl sjednocený referencí = první vygenerovaný statek), originály nejsou v repozitáři. Portréty pracovníků (12) jsou zatím jen v `art/portret_NN.webp`, ve hře nejsou.
+  - **`tools/fantasy.py <složka se Scenario> [art]`** – převod do hry. Vstupní soubory podle klíče (`b__statek_1.webp`, `c3__wheat.webp`, `s3__jablon.webp`, `les3__les.webp`, `tex__trava_a.webp`, `ikony__1..10.webp`, `portrety__1..2.webp`, `z__*`, `m__*`, `p__*`, `t__*`). Postup:
+    - `dehaze` (bělavý opar a bílé pozadí spojené s okrajem; `pockets` = i uzavřené bílé kapsy mezi rostlinami), `glow` (nažloutlá záře u okraje).
+    - Budovy: podstavce ze Scenario mají poměr asi 1,65 : 1, hra 2 : 1 → obrázek se svisle stlačí podle změřeného podstavce (`base_geom`, mimo rozsah 1,5–1,95 se bere 1,67), pak `canvas` jako dřív. `tools/building_sizes.json` = rozměry půdorysů.
+    - Stromy (sad i les): podstavec se rozplyne do trsu trávy (`soft_bases` – geometrie podle mediánu trojice), plátno **192×256**, pata kmene na x 96, y 210 = střed políčka. `drawOrchard` a `drawTree` kreslí `y − 105·s` a výšku podle poměru obrázku.
+    - Plodiny: 3 fáze z jednoho obrázku (`parts` řeže v nejprázdnějším sloupci u třetin), střed záhonu na stejném místě pro všechny fáze.
+    - Dlaždice: `seamless` (prolnutí s kopií posunutou o půl → bez švů, varianta b trávy a louky ve stejném tónu), `cesta_b` = zrcadlená `cesta_a`, pak `iso_tile`.
+    - Ikony: archy 4×3 (`ICONS`, `grid` podle středu objektu), ikony budov/zvířat/strojů z herní grafiky, semena a sazenice kreslené (`packet`, `pot`).
+  - Cedule pozemku: vysoká cedule s lucernou, tabule v 46 % výšky (`drawSaleSign`). Nástěnka se kreslí jako budova (`drawBoard` → `b/nastenka`, záloha cedule).
+  - Ikona aplikace `icon-192/512.png` z nového statku. Service worker `IMG_CACHE` = `ekofarm-img-v20` (stará grafika se smaže z mezipaměti).
+  - `tools/assets.py` je starý převod z ChatGPT archů (v16–v31) – **nespouštět**, přepsal by novou grafiku. Stará grafika je v gitu (značka `v31`).
 - **v31 (12. 11. 2026) – víc lidí ve výrobnách a ohradách, síla obsluhy, přehled chovu, výkon výpočtu** (podrobně `TYM_NAVRH.md`, oddíl 0):
   - `RULES_VERSION` 19 (`normalize` jen smaže staré `v.uc`). Záloha v30: značka `v30`, větev `zaloha-v30`.
   - **Kapacita podle úrovně budovy** `TEAM.cap` (pole po úrovních 1–10): výrobna 1/2/3/4 od úrovně 1/4/7/10, ohrada 1 a od 5. úrovně 2, včelín a sklad 1. `bldCap(o)`, `bldCapNext(o)`; `wpCap` je používá. `upgradeEffect` píše „místo pro N. pracovníka“.
@@ -126,7 +138,8 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `public/js/icons.js` | Vlastní SVG ikony (`ICONS`), `ic()`, `iconize()` pro text s `:klic:`, `drawIcon`/`drawIconText` pro canvas |
 | `public/js/news.js` | Novinky pro hráče (`NEWS`, nejnovější nahoře) |
 | `public/js/sprites.js` | Načítání grafiky z `public/img/<druh>/` (`asset`, `preloadAssets`), obrázek budovy podle druhu a úrovně |
-| `tools/assets.py` | Převod grafiky od hráče (archy z ChatGPT) do `public/img` a seznamu `public/js/assets.js` |
+| `tools/fantasy.py` | Od v32: převod obrázků ze Scenario do `public/img` a seznamu `public/js/assets.js` (opar, podstavce, stromy, dlaždice bez švů, ikony z archů) |
+| `tools/assets.py` | Starý převod archů z ChatGPT (v16–v31) – nespouštět, přepsal by grafiku v32 |
 | `public/js/sfx.js` | Zvuky skládané v prohlížeči (WebAudio), zapnutí/vypnutí |
 | `public/js/panels.js` | HTML panelů: Stavět, obchod, prodejna strojů (`dealerHtml`), velké pole (`bigfieldHtml`), statek se zakázkami, sad, výroba, ohrada, sklad (tlačítka `data-act`) |
 | `public/js/main.js` | Herní smyčka, dotyk (tah, pinch, setí/sklizeň tažením, posun ducha), režim stavby, obsluha panelů, fronta akcí a synchronizace |

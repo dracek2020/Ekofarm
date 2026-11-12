@@ -28,5 +28,6 @@ Cíl: hru půjde vydat veřejně (web, Google Play, App Store) bez cizích autor
 - **v11**: ikony ryb, medu, rybníka, včelína, udic a jídel; kreslení rybníka, včelína a minihry rybaření – vše vlastní kód.
 - **v12 – grafika budov** (`public/img/b/`: statek 1–10, sklad 1–10, 4 ohrady, 13 výroben): dodal autor hry (vojtech). **Doplnit, čím byla vytvořená a za jakých podmínek** (u AI generátoru ověřit, že podmínky dovolují komerční použití).
 - **v16 – grafika celé hry** (`public/img/t, c, s, b, z, m, p, i`): vygenerovaná autorem hry v ChatGPT (OpenAI) podle zadání `ZADANI_PRO_CHATGPT.md`, upravená (ořez, zmenšení) nástrojem `tools/assets.py`. Podle podmínek OpenAI patří výstupy uživateli; před vydáním ověřit aktuální podmínky.
+- **v32 – nová grafika celé hry** (`public/img/t, c, s, b, z, m, p, i` + ikona aplikace): vygenerovaná 12. 11. 2026 ve **Scenario** (model GPT Image 2.5 Flare) z textových zadání napsaných pro EKOfarm, upravená nástrojem `tools/fantasy.py`. Grafika z v16 už ve hře není. Podrobnosti a stav ověření licence v `EKOFARM_LEGAL_CHECKLIST.md`.
 
 Tohle je technický přehled, ne právní rada.

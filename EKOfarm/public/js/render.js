@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=31';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=31';
-import { drawIconText, drawIcon } from './icons.js?v=31';
-import { asset } from './sprites.js?v=31';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=32';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=32';
+import { drawIconText, drawIcon } from './icons.js?v=32';
+import { asset } from './sprites.js?v=32';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -76,13 +76,13 @@ function groundTile(farm, gx, gy) {
   return ['louka_' + v, BASE];   // louka i za okrajem mapy
 }
 
-// les kolem farmy
+// les kolem farmy (v32: plátno 192×256, pata kmene na středu políčka 105 px pod horním okrajem)
 function drawTree(ctx, t) {
   const im = asset('s', 'les_' + 'abc'[Math.floor(t.h * 3)]);
   if (!im) return;
   const [x, y] = cellCenter(t.gx, t.gy);
-  const w = 96 * t.s, h = 120 * t.s;
-  ctx.drawImage(im, x - w / 2, y + 8 - 91 * t.s, w, h);
+  const w = 96 * t.s, h = w * im.naturalHeight / im.naturalWidth;
+  ctx.drawImage(im, x - w / 2, y - 105 * t.s, w, h);
 }
 
 // plot kolem vlastní země – jen na hranách, kde vlastní políčko sousedí s cizím
@@ -121,15 +121,17 @@ function townLabel(ctx, o) {
 function drawSaleSign(ctx, farm, p) {
   const [x, y] = cellCenter(p.x + p.w / 2 - 0.5, p.y + p.h / 2 - 0.5);
   const im = asset('t', 'cedule');
-  if (im) ctx.drawImage(im, x - 48, y + 4 - 96 * im.naturalHeight / im.naturalWidth, 96, 96 * im.naturalHeight / im.naturalWidth);
+  // v32: vysoká cedule s lucernou, tabule je v 46 % výšky obrázku
+  const w = 88, h = im ? w * im.naturalHeight / im.naturalWidth : 190, mid = y + 10 - h + h * 0.46;
+  if (im) ctx.drawImage(im, x - w / 2, y + 10 - h, w, h);
   ctx.fillStyle = '#4a3218'; ctx.textAlign = 'center';
   ctx.font = '800 12px system-ui, sans-serif';
-  ctx.fillText('NA PRODEJ', x, y - 66);
+  ctx.fillText('NA PRODEJ', x, mid - 6);
   ctx.font = '700 13px system-ui, sans-serif';
   if (farm.level < landLevel(farm)) {
-    drawIcon(ctx, 'lock', x - 30, y - 52, 14);
-    ctx.fillText(`úroveň ${landLevel(farm)}`, x + 6, y - 48);
-  } else drawIconText(ctx, `${landPrice(farm)} :coin:`, x, y - 48, 15);
+    drawIcon(ctx, 'lock', x - 30, mid + 6, 14);
+    ctx.fillText(`úroveň ${landLevel(farm)}`, x + 6, mid + 10);
+  } else drawIconText(ctx, `${landPrice(farm)} :coin:`, x, mid + 10, 15);
 }
 
 // malé pole: záhon a plodina z obrázku
