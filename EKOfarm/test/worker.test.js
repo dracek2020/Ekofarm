@@ -182,3 +182,38 @@ test('v27: akce tick dopočítá práci vesničanů a farma se uloží', async (
   const v1 = (await call('/api/state', { token })).data.farm;
   assert.deepEqual(v1.vill, []);
 });
+
+test('v31: souběžné požadavky – tým pracuje, zboží se nezdvojí, farma se uloží celá', async () => {
+  const R = await import('../public/js/rules.js');
+  let r = await call('/api/register', { method: 'POST', body: { name: 'Soubeh', password: 'tajne123' } });
+  const token = r.data.token, now0 = Date.now();
+  // farma s mlýnem úrovně 4 (2 místa) a dvěma řemeslníky; 300 pšenice
+  const f = (await call('/api/state', { token })).data.farm;
+  f.level = 20; f.xp = R.LEVEL_XP[20]; f.coins = 5000; f.siloCap = 1000;
+  f.objects.find(o => o.kind === 'statek').lvl = 5;
+  let mlyn = 0;
+  for (let y = 0; y < 17 && !mlyn; y++) for (let x = 0; x < 17 && !mlyn; x++) if (R.fits(f, x, y, 2, 2)) mlyn = R.applyAction(f, { type: 'place', kind: 'mlyn', x, y }, now0).id;
+  R.findObject(f, mlyn).lvl = 4;
+  for (const id of [9001, 9002]) { f.vill.push({ id, prof: 'vyroba', xp: { vyroba: 400 }, hist: [], at: 0, area: null, t: now0, n: 0 }); assert.ok(R.applyAction(f, { type: 'assignVill', id, at: mlyn }, now0).ok); }
+  assert.ok(R.applyAction(f, { type: 'plan', w: 'b' + mlyn, key: 'mouka', pct: 100 }, now0).ok);
+  assert.ok(R.applyAction(f, { type: 'keep', item: 'corn', n: 5 }, now0).ok);
+  f.silo = { wheat: 300 };
+  await env.DB.prepare("UPDATE farms SET state = ?, version = version + 1 WHERE user_id = (SELECT id FROM users WHERE name = 'Soubeh')").bind(JSON.stringify(f)).run();
+  const coins0 = f.coins;
+  // 6 požadavků naráz: každý dopočítá práci a prodá 10 pšenice
+  const res = await Promise.all(Array.from({ length: 6 }, () => call('/api/actions', { method: 'POST', token, body: { actions: [{ type: 'tick' }, { type: 'sell', item: 'wheat', qty: 10 }] } })));
+  let sold = 0, coins = 0;
+  for (const x of res) {
+    assert.ok(x.status === 200 || x.status === 409, 'projde, nebo „zkus znovu“');
+    if (x.status === 200 && x.data.results[1].ok) { sold++; coins += 10 * R.sellPrice('wheat', x.data.now); }
+  }
+  assert.ok(sold >= 1);
+  const g = (await call('/api/state', { token })).data.farm;
+  const o = R.findObject(g, mlyn);
+  const made = (g.silo.mouka || 0) + o.queue.reduce((n, q) => n + (q.n || 1), 0) + g.vill.reduce((n, v) => n + (v.job && v.job.k === 'load' ? v.job.n : 0), 0);
+  assert.equal((g.silo.wheat || 0) + 10 * sold + 3 * made, 300, 'pšenice: zbytek + prodáno + na mouku = 300, nic navíc ani navíc prodané');
+  assert.equal(g.coins - coins0, coins, 'mince jen za skutečné prodeje');
+  // uložilo se všechno: tým, plán, rezerva, kapacita
+  assert.deepEqual(g.vill.map(v => [v.id, v.at]), [[9001, mlyn], [9002, mlyn]]);
+  assert.deepEqual(o.plan, { mouka: 100 }); assert.deepEqual(g.keep, { corn: 5 }); assert.equal(g.v, R.RULES_VERSION);
+});

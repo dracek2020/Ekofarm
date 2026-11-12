@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=30';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=30';
-import { drawIconText, drawIcon } from './icons.js?v=30';
-import { asset } from './sprites.js?v=30';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=31';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=31';
+import { drawIconText, drawIcon } from './icons.js?v=31';
+import { asset } from './sprites.js?v=31';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -270,7 +270,9 @@ function drawAreas(ctx, farm, view, t, seen) {
     if (!seen(top.x, top.y) && !seen(front.x, front.y)) continue;
     // cíl: políčko, na kterém pracuje; jinak odpočívá u předního rohu oblasti
     let tx = front.x + 0.9, ty = front.y + 1.05, atWork = false;
-    if (v.job) for (const c of g.cells) if (c.id === v.job.id) { tx = c.x + 0.62; ty = c.y + 0.86; atWork = true; break; }
+    // sloučený úkon (v31): přechází z políčka na políčko podle toho, jak práce postupuje
+    const j = v.job, cid = j && (j.ids ? j.ids[Math.min(j.ids.length - 1, Math.max(0, Math.floor((view.now - j.s) / Math.max(1, j.e - j.s) * j.ids.length)))] : j.id);
+    if (j) for (const c of g.cells) if (c.id === cid) { tx = c.x + 0.62; ty = c.y + 0.86; atWork = true; break; }
     let p = villPos.get(v.id);
     if (!p || p.farm !== farm.created || Math.hypot(p.x - tx, p.y - ty) > 14) { p = { x: tx, y: ty, t, farm: farm.created, dir: -1 }; villPos.set(v.id, p); }
     const dt = Math.min(0.1, Math.max(0, (t - p.t) / 1000)); p.t = t;
@@ -339,12 +341,16 @@ export function drawScene(ctx, view) {
     }
     else {
       drawObject(ctx, it.o, view.now, t, farm);
-      const vg = !it.o.town && farm.vill && villAt(farm, it.o.id);
-      if (vg) {   // vesničan stojí u předního rohu budovy; při práci se hýbe a má nad hlavou průběh úkonu
-        const sz = objSize(it.o), gx = it.o.x + 0.35, gy = it.o.y + sz.h + 0.1;
-        const px = (gx - gy) * TW / 2, py = (gx + gy) * TH / 2;
-        drawPerson(ctx, px, py, 'pomocnik', 1, t, false, !!vg.job);
-        drawVillMark(ctx, px, py, vg, view.now);
+      // pracovníci stojí podél předního okraje budovy (v31: může jich být víc); při práci se hýbou a mají nad hlavou průběh
+      const crew = !it.o.town && farm.vill && villAt(farm, it.o.id) ? farm.vill.filter(x => x.at === it.o.id) : null;
+      if (crew) {
+        const sz = objSize(it.o);
+        crew.slice(0, 4).forEach((vg, i) => {
+          const gx = it.o.x + 0.35 + i * Math.min(0.55, (sz.w - 0.5) / Math.max(1, crew.length - 1)), gy = it.o.y + sz.h + 0.1;
+          const px = (gx - gy) * TW / 2, py = (gx + gy) * TH / 2;
+          drawPerson(ctx, px, py, 'pomocnik', 1, t, false, !!vg.job);
+          drawVillMark(ctx, px, py, vg, view.now);
+        });
       }
     }
   }

@@ -104,6 +104,7 @@ Stav položek: **OK** = doložené, **ČÁSTEČNĚ** = něco chybí, **NEPROVĚ�
 
 | Datum | Kdo | Co | Výsledek |
 |---|---|---|---|
+| 12. 11. 2026 | Claude | v31: kontrola změn od v30 – žádná nová knihovna ani závislost (`package.json` beze změny), žádný nový obrázek, zvuk ani písmo; texty a rozhraní (síla obsluhy, přehled chovu) napsané pro EKOfarm; hledání zmínek o jiných hrách v rozdílu kódu | bez nálezu, tabulka v oddílu 2 beze změny |
 | 12. 11. 2026 | Claude | Inventura souborů a zdrojů v repozitáři v27, hledání zmínek o jiných hrách, ověření citovaných ustanovení (§ 2976–2982 OZ podle znění od 6. 1. 2023), rozsudku 10 C 13/2023 a podmínek OpenAI (EU), orientační webová rešerše názvu | viz oddíly 2–5; zmínka v `STAV.md` odstraněna |
 
 ## Zdroje

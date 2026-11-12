@@ -1,8 +1,16 @@
 # EKOfarm – Farmářský tým: analýza, návrh a plán
 
-Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu, ve v30 plán u pracoviště a kapacity** (oddíl 0). Zbytek dokumentu je návrh dalších etap; co je hotové, je u něj napsáno.
+Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu, ve v30 plán u pracoviště a kapacity, ve v31 víc lidí ve výrobnách a ohradách a přehled chovu** (oddíl 0). Zbytek dokumentu je návrh dalších etap; co je hotové, je u něj napsáno.
 
-## 0. Co je hotové ve v29 a v30
+## 0. Co je hotové ve v29–v31
+
+### v31 – víc lidí ve výrobnách a ohradách
+- **Kapacita podle úrovně budovy** (`TEAM.cap`): výrobna 1 / 2 / 3 / 4 od úrovně 1 / 4 / 7 / 10, ohrada 1 a od úrovně 5 dva, včelín a sklad 1, pole a sady 1 na 4 pole.
+- **Síla obsluhy** (`TEAM.crew`): pracovníci seřazení podle výkonu přispívají 100 / 60 / 40 / 30 %. Výrobna: kusů v jedné dávce (doba stejná, suroviny přesně podle dávky). Ohrada: druhý chovatel přidá 25 % svého výnosu z krmení. Kdo nemá praxi, nepočítá se. Zkušenosti se dělí podle podílu.
+- **Příklady:** 1 řemeslník úr. 5 = 2,47 kusu na dávku; 2 = 3,95; 4 na úrovni 12 = 27,6 (2,3× víc než jeden). Ohrada: 2 chovatelé úr. 12 = 3,75 produktu z krmení (jeden 3).
+- **Přehled chovu** v ohradě a ve Statku (záložka Chov): krmivo, rezerva, spotřeba a produkce za hodinu, výdrž, Krmivárna, upozornění.
+- **Výkon výpočtu:** sloučené úkony (nejvýš 12 kusů / 30 s), buzení čekajících po jednom, rozpočet podle událostí, kolegové se po dokončeném úkonu znovu rozhodnou (výsledek nezávisí na dělení času).
+- Bez vody, péče o plodiny a ročních období (neschváleno).
 
 ### v30 – plán u pracoviště
 - **Plán patří pracovišti**, ne pracovníkovi: výrobna (`o.plan`, `o.target`, `o.auto`), sklad (`o.plan`), oblast polí / sadů (`farm.areas`). Přeřazení ani výměna plán nemaže a jde ho nastavit i bez pracovníka. Plány z v29 se převedly samy (strop zásoby → cílová zásoba, rezerva skladníka → `farm.keep`).
@@ -32,7 +40,7 @@ Stav k 12. 11. 2026. **Ve v29 je hotový základ Farmářského týmu, ve v30 pl
 - **Obrazovka Farmářský tým** (tlačítko Tým): seznam, filtr podle profese, detail s dovednostmi, přeřazení a propuštění.
 - Dva nové kroky průvodce. Placený pomocník končí, najatý doběhne.
 
-**Zatím platí:** ve výrobně, ohradě, včelíně a skladu je jeden pracovník (víc lidí podle úrovně budovy a síla obsluhy `S` z 4.3 jsou na později). Strojník a expedice zakázek také později.
+**Zatím platí:** včelín a sklad mají jednoho pracovníka. Strojník, expedice zakázek a portréty a animace práce přijdou později.
 
 Značení stavu, které se používá v celém dokumentu:
 
@@ -324,7 +332,7 @@ Oblast se počítá z polí, která sousedí (to existuje). Její klíč je druh
 
 ### 3.3 Kapacita pracovišť (konfigurovatelné, `team-config.js`)
 
-**Platí od v30 (rozhodnuto 12. 11.):** výrobna, ohrada, včelín a sklad 1 pracovník; oblast polí / sadů ⌊počet políček / 4⌋, aspoň 1 (6 → 1, 8 → 2, 12 → 3). Původní návrh níže zůstává jako možnost na později.
+**Platí od v31:** výrobna 1 / 2 / 3 / 4 od úrovně 1 / 4 / 7 / 10 (stejný rytmus jako místa ve frontě), ohrada 1 a od úrovně 5 dva, včelín a sklad 1; oblast polí / sadů ⌊počet políček / 4⌋, aspoň 1 (od v30). Původní návrh níže pro srovnání.
 
 | Pracoviště | Původní návrh kapacity | Poznámka |
 |---|---|---|
@@ -617,7 +625,7 @@ Každý balíček má nové číslo verze a jde nasadit samostatně. Hra mezi ni
 | **v28** (tento) | 1–2 | Analýza, návrh, právní checklist. Kód beze změny. |
 | **v29 – HOTOVO** | 3 (+ základ 7) | `team-config.js`; profese, `xp` po oborech, reset uložených her; obrazovka **Farmářský tým**; **nástěnka v Městečku** (inzerát, pohoštění, uchazeči s vlastností), **pověst farmy** a zájemci, kteří se ozvou sami; **reset týmu** (2.7); **domky** chatrč, chata, dům (2.8); **odemykání za zásluhy** a nové rozložení průmyslu (2.9); konec nákupu pracovníků a placeného pomocníka; zkušenosti se začnou sbírat. |
 | **v30 – HOTOVO** | 4 + 6 (+ část 7) | Plán u pracoviště (výrobna, sklad, `farm.areas` s `replant`), kapacity (budovy 1, oblast 1 na 4 pole, `workplace_full`, výměna `swap`), víc pěstitelů v oblasti, procenta jako podíl času, nevyužitá kapacita a „přerozdělit“, cílové zásoby v pořadí, rezervy `farm.keep`, odhad za hodinu, přehled výroby, posuvníky, převod plánů z v29. |
-| **v31** | 7 | Víc pracovníků ve výrobnách a ohradách podle úrovně budovy (síla obsluhy `S`), přehled chovu, slučování úkonů kvůli výkonu (dávka práce místo jednotlivých políček), praxe v budově. |
+| **v31 – HOTOVO** | 7 | Víc pracovníků ve výrobnách a ohradách podle úrovně budovy, síla obsluhy (100 / 60 / 40 / 30 %, ohrada +25 %), přehled chovu, sloučené úkony, buzení po jednom, rozpočet podle událostí, testy 30 pracovníků a souběžných požadavků. |
 | **v32** | 8 | Výkonové testy (30 pracovníků, 15 výroben, 4 oblasti), test souběžných požadavků, převody z v23–v31, kontrola UI na telefonu, tabletu a počítači, vyvážení simulací. |
 | později | – | Strojník, expedice zakázek, ekologie, portréty a animace práce. |
 
@@ -649,12 +657,12 @@ Když budeš chtít menší kroky, každá etapa jde i jako samostatný balíče
 | 13 | Sklizeň až po dozrání | existuje | – |
 | 14 | Bez semen se nesází | existuje | – |
 | 15 | Cílové zásoby | test (v30): přednost v pořadí, přesně do cíle | – |
-| 16 | Žádná duplikace při souběžných požadavcích | ochrana existuje, test ne | v32 (dva požadavky naráz proti serveru) |
+| 16 | Žádná duplikace při souběžných požadavcích | test (v31): 6 požadavků naráz, bilance pšenice a mincí | – |
 | 17 | Přerušení nezpůsobí ztrátu | částečně (vracení materiálu) | v32 |
 | 18 | Offline produkce | existuje | – |
 | 19 | Staré uložené hry | existuje (v26 → v27) | každý balíček |
 | 20 | UI na zařízeních | telefon (Playwright) | v32 + tablet a počítač |
-| + | Výkon | test „měsíc pryč“, rozpočet dávky | v32: 30 pracovníků, dávka do 30 ms na vývojovém stroji |
+| + | Výkon | test (v31): 30 pracovníků, den pryč, rozpočet podle událostí, uložení uprostřed a jiné dělení času | – |
 | + | Nástěnka: inzerát odečte pohoštění, bez něj nejde vyvěsit | – | v29 |
 | + | Uchazeči stejní na serveru i v prohlížeči, opakované načtení je nezmění | – | v29 |
 | + | Přijetí nad limit pověsti nejde, ostatní uchazeči odejdou, po 24 h odejdou všichni | – | v29 |

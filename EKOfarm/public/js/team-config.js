@@ -6,8 +6,19 @@ for (let L = 1; L <= 12; L++) MULT.push(Math.round(Math.pow(12, (L - 1) / 11) * 
 
 export const TEAM = {
   maxTeam: 30,                      // víc lidí na farmě nebude, i kdyby bylo víc lůžek
-  // kolik pracovníků může být na jednom místě (v30: ve výrobě a v ostatních budovách zatím vždy 1)
-  cap: { factory: 1, pen: 1, hive: 1, trader: 1 },
+  // kolik pracovníků může být v budově podle její úrovně 1–10 (v31): výrobna 1 / 2 / 3 / 4 od úrovně 1 / 4 / 7 / 10,
+  // ohrada 1 a od úrovně 5 dva; včelín a sklad 1
+  cap: {
+    factory: [1, 1, 1, 2, 2, 2, 3, 3, 3, 4],
+    pen:     [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+    hive:    [1],
+    trader:  [1],
+  },
+  // síla obsluhy: pracovníci seřazení podle výkonu přispívají 100 %, 60 %, 40 %, 30 % (druhý člověk výrobu nezdvojnásobí)
+  // výrobna: součet = kolik kusů jde do jedné dávky; ohrada: výnos z jednoho krmení (druhý chovatel přidá čtvrtinu svého)
+  crew: { factory: [1, 0.6, 0.4, 0.3], pen: [1, 0.25] },
+  // slučování práce (výkon výpočtu): jeden úkon = nejvýš 12 políček / zvířat a nejvýš 30 s práce
+  batch: { max: 12, ms: 30000 },
   areaPer: 4,                       // oblast polí a sadů: 1 pracovník na každá 4 políčka (6 → 1, 8 → 2, 12 → 3)
   usedWindowH: 4,                   // procenta = podíl výrobního času; pamatuje si asi poslední 4 h výroby
   logH: 6,                          // přehled výroby za posledních 6 hodin

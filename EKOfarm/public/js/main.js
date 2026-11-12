@@ -6,17 +6,17 @@ import {
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize,
-} from './rules.js?v=30';
-import { preloadAssets, spriteName } from './sprites.js?v=30';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=30';
-import { createBackend, ApiError } from './api.js?v=30';
-import { iconize, ic } from './icons.js?v=30';
-import { NEWS } from './news.js?v=30';
-import { sfx, soundOn, setSound } from './sfx.js?v=30';
-import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=30';
+} from './rules.js?v=31';
+import { preloadAssets, spriteName } from './sprites.js?v=31';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=31';
+import { createBackend, ApiError } from './api.js?v=31';
+import { iconize, ic } from './icons.js?v=31';
+import { NEWS } from './news.js?v=31';
+import { sfx, soundOn, setSound } from './sfx.js?v=31';
+import { pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, TUTORIAL, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=31';
 
 const $ = id => document.getElementById(id);
-const APP_VERSION = 30;
+const APP_VERSION = 31;
 
 
 const game = {

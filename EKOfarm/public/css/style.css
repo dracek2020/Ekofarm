@@ -589,3 +589,15 @@ body.sheet-open #catchUp { display: none; }
 .upg.worker.plan { gap: 4px; }
 .chip.full { background: #f6efdc; border-style: dashed; }
 .item .pr .kp { color: var(--wood-d); font-weight: 800; }
+
+/* ---------- v31: víc lidí v budově, přehled chovu ---------- */
+.upg.worker .crew { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px; margin: 2px 0 4px; background: #eef6e2; border: 1px solid #c4e09c; border-radius: 12px; font-size: 13px; }
+.upg.worker .crew b { color: #2f5a14; }
+.upg.worker .crew small { font-size: 12px; }
+.penbox { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; margin: 6px 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; }
+.penbox.warn { background: #fff7dc; border-color: #e8c45a; }
+.penbox small { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.penbox small b { color: var(--ink); }
+.penbox small.miss { color: #8a3b0c; font-weight: 800; }
+.penbox .ic { width: 16px; height: 16px; vertical-align: -3px; }
+.penbox .btn.sm { align-self: flex-start; margin: 4px 0 0; }

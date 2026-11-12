@@ -1,5 +1,13 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 31, title: 'Víc lidí ve výrobnách a ohradách, přehled chovu', items: [
+    'Vylepšená výrobna má místo pro víc pracovníků: od 4. úrovně pro dva, od 7. pro tři a na 10. úrovni pro čtyři. Ohrada od 5. úrovně pro dva.',
+    'Síla obsluhy: víc lidí ve výrobně naloží do jedné dávky víc kusů. Druhý přidá 60 % svého výkonu, třetí 40 %, čtvrtý 30 %. Výroba trvá stejně dlouho a suroviny se odečtou přesně podle dávky.',
+    'V ohradě druhý chovatel přidá čtvrtinu svého výnosu z jednoho krmení – krmiva se nespotřebuje víc. Kdo na zvíře ještě nemá praxi, nepočítá se.',
+    'Přehled chovu: v ohradě a ve Statku na nové záložce Chov vidíš krmivo, spotřebu a produkci za hodinu, na jak dlouho krmivo vydrží, kolik dělá Krmivárna a upozornění, když krmivo dochází nebo je celé v rezervě.',
+    'Pracovníci na polích, v sadech a u zvířat dělají víc kusů jedním úkonem. Výsledek je stejný, jen se rychleji dopočítá, co se dělo, když jsi byl pryč.',
+    'Chovatelé teď respektují rezervy ve Skladu i u krmiva.',
+  ] },
   { v: 30, title: 'Plán práce u budov a polí, víc lidí na větších polích', items: [
     'Plán práce teď patří budově nebo oblasti polí, ne pracovníkovi. Když někoho přeřadíš nebo vyměníš, plán zůstane – a připravit ho můžeš, i když tam zatím nikdo není. Plány z minulé verze se přenesly samy.',
     'Kolik lidí kam: ve výrobně, ohradě, včelíně a skladu je zatím místo pro jednoho. Oblast polí nebo sadů vezme jednoho pracovníka na každá 4 pole – 6 polí obslouží jeden, 8 polí dva, 12 polí tři. Pracují spolu a nepřekážejí si.',
