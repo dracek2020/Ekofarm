@@ -7,16 +7,16 @@ import {
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, canRotate, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
-} from './rules.js?v=44';
-import { preloadAssets, spriteName } from './sprites.js?v=44';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=44';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=44';
-import { iconize, ic } from './icons.js?v=44';
-import { NEWS } from './news.js?v=44';
-import { sfx, soundOn, setSound } from './sfx.js?v=44';
-import { TEAM } from './team-config.js?v=44';
-import { CHAPTERS } from './story.js?v=44';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=44';
+} from './rules.js?v=45';
+import { preloadAssets, spriteName } from './sprites.js?v=45';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=45';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=45';
+import { iconize, ic } from './icons.js?v=45';
+import { NEWS } from './news.js?v=45';
+import { sfx, soundOn, setSound } from './sfx.js?v=45';
+import { TEAM } from './team-config.js?v=45';
+import { CHAPTERS } from './story.js?v=45';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=45';
 
 const $ = id => document.getElementById(id);
 

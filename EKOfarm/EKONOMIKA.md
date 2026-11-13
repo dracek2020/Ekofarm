@@ -13,7 +13,7 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 | Mrkev | Zelenina | 3 | 5 | 10 min | 12 | Krmivo pro krávy, Mrkvová šťáva, Semena mrkev |
 | Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky, Semena okurka |
 | Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Rybí polévka, Semena brambory |
-| Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem, Semena jahody |
+| Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem, Ovocný jogurt, Jahodové knedlíky, Ovocná zmrzlina, Semena jahody |
 | Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Bolen na bylinkách, Semena cibule |
 | Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce, Semena sója |
 | Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Pečený lín, Amur na grilu, Semena česnek |
@@ -29,18 +29,18 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 ## Sad (stromy a keře)
 | Strom/keř | Úroveň | Sazenice | První úroda | Další | Úrod × kusů | Ovoce cena | Použití |
 |---|---|---|---|---|---|---|---|
-| Jabloň | 3 | 40 | 30 min | 20 min | 4 × 3 | 10 | Jablečný džus, Sazenice: Jabloň |
-| Malinový keř | 4 | 30 | 20 min | 15 min | 5 × 3 | 8 | Malinový džem, Sazenice: Malinový keř |
-| Hrušeň | 4 | 60 | 45 min | 30 min | 4 × 3 | 14 | Hruškový džus, Sazenice: Hrušeň |
-| Rybíz | 5 | 35 | 25 min | 18 min | 5 × 3 | 9 | Rybízová marmeláda, Sazenice: Rybíz |
-| Švestka | 5 | 80 | 1 h | 40 min | 4 × 4 | 12 | Švestková povidla, Sazenice: Švestka |
-| Angrešt | 6 | 40 | 30 min | 20 min | 5 × 3 | 10 | Angreštový kompot, Sazenice: Angrešt |
-| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč, Sazenice: Třešeň |
-| Borůvčí | 7 | 50 | 35 min | 25 min | 5 × 4 | 9 | Borůvkové muffiny, Sazenice: Borůvčí |
+| Jabloň | 3 | 40 | 30 min | 20 min | 4 × 3 | 10 | Jablečný džus, Křížaly, Jablečný závin, Ovocný salát, Sazenice: Jabloň |
+| Malinový keř | 4 | 30 | 20 min | 15 min | 5 × 3 | 8 | Malinový džem, Malinový čaj, Malinový sirup, Ovocný jogurt, Ovocný salát, Ovocný dort, Sazenice: Malinový keř |
+| Hrušeň | 4 | 60 | 45 min | 30 min | 4 × 3 | 14 | Hruškový džus, Sušené hrušky, Ovocný salát, Sazenice: Hrušeň |
+| Rybíz | 5 | 35 | 25 min | 18 min | 5 × 3 | 9 | Rybízová marmeláda, Ovocný čaj, Sazenice: Rybíz |
+| Švestka | 5 | 80 | 1 h | 40 min | 4 × 4 | 12 | Švestková povidla, Sušené švestky, Švestkové knedlíky, Sazenice: Švestka |
+| Angrešt | 6 | 40 | 30 min | 20 min | 5 × 3 | 10 | Angreštový kompot, Angreštový koláč, Sazenice: Angrešt |
+| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč, Třešňová bublanina, Třešňový džus, Ovocný salát, Ovocný dort, Sazenice: Třešeň |
+| Borůvčí | 7 | 50 | 35 min | 25 min | 5 × 4 | 9 | Borůvkové muffiny, Sušené borůvky, Sazenice: Borůvčí |
 | Višeň | 7 | 100 | 1.3 h | 50 min | 4 × 4 | 16 | Višňový džus, Sazenice: Višeň |
-| Meruňka | 8 | 160 | 2 h | 1.5 h | 5 × 4 | 20 | Meruňkový džem, Sazenice: Meruňka |
-| Vinná réva | 9 | 90 | 1 h | 45 min | 6 × 4 | 16 | Hroznový mošt, Sazenice: Vinná réva |
-| Broskvoň | 10 | 200 | 2.5 h | 1.7 h | 5 × 4 | 24 | Broskvový kompot, Sazenice: Broskvoň |
+| Meruňka | 8 | 160 | 2 h | 1.5 h | 5 × 4 | 20 | Meruňkový džem, Sušené meruňky, Sazenice: Meruňka |
+| Vinná réva | 9 | 90 | 1 h | 45 min | 6 × 4 | 16 | Hroznový mošt, Rozinky, Sazenice: Vinná réva |
+| Broskvoň | 10 | 200 | 2.5 h | 1.7 h | 5 × 4 | 24 | Broskvový kompot, Broskvový sirup, Sazenice: Broskvoň |
 | Ořešák | 11 | 240 | 3 h | 2 h | 5 × 5 | 22 | Ořechový koláč, Sazenice: Ořešák |
 
 ## Zvířata
@@ -137,6 +137,26 @@ Rybník: 10 min na rybu, 1 návnada na hod. Včelín: plástev (12 mincí) za 20
 | Uzený úhoř | Uzenářství | 11 | 2× Úhoř | 25 min | 109 |
 | Bolen na bylinkách | Rybárna | 13 | 1× Bolen, 1× Máslo, 1× Cibule | 20 min | 383 |
 | Kaviár | Rybárna | 18 | 1× Jeseter | 30 min | 116 |
+| Křížaly | Sušárna ovoce | 3 | 3× Jablko | 10 min | 48 |
+| Sušené hrušky | Sušárna ovoce | 3 | 3× Hruška | 10 min | 62 |
+| Malinový čaj | Sušárna ovoce | 3 | 3× Maliny | 8 min | 39 |
+| Sušené švestky | Sušárna ovoce | 4 | 3× Švestka | 12 min | 57 |
+| Ovocný čaj | Sušárna ovoce | 5 | 1× Křížaly, 2× Rybíz | 10 min | 91 |
+| Sušené borůvky | Sušárna ovoce | 5 | 3× Borůvky | 12 min | 46 |
+| Sušené meruňky | Sušárna ovoce | 7 | 3× Meruňka | 15 min | 89 |
+| Rozinky | Sušárna ovoce | 9 | 3× Hrozny | 15 min | 75 |
+| Jablečný závin | Pekárna | 4 | 1× Mouka, 3× Jablko | 15 min | 73 |
+| Švestkové knedlíky | Pekárna | 4 | 1× Mouka, 3× Švestka | 15 min | 81 |
+| Třešňová bublanina | Pekárna | 4 | 1× Mouka, 1× Vejce, 2× Třešně | 15 min | 123 |
+| Angreštový koláč | Pekárna | 4 | 1× Mouka, 1× Vejce, 3× Angrešt | 15 min | 115 |
+| Malinový sirup | Džusárna | 5 | 3× Maliny | 10 min | 41 |
+| Třešňový džus | Džusárna | 6 | 3× Třešně | 12 min | 79 |
+| Broskvový sirup | Džusárna | 9 | 3× Broskev | 15 min | 103 |
+| Ovocný jogurt | Mlékárna | 7 | 1× Mléko, 1× Jahody, 1× Maliny | 15 min | 130 |
+| Ovocný salát | Cukrárna | 11 | 1× Jablko, 1× Hruška, 1× Maliny, 1× Třešně | 10 min | 72 |
+| Jahodové knedlíky | Cukrárna | 11 | 1× Mouka, 2× Jahody, 1× Smetana | 15 min | 190 |
+| Ovocná zmrzlina | Cukrárna | 12 | 1× Mléko, 1× Smetana, 2× Jahody | 15 min | 255 |
+| Ovocný dort | Cukrárna | 13 | 2× Mouka, 2× Vejce, 1× Smetana, 1× Maliny, 1× Třešně | 30 min | 304 |
 
 ## Semena a sazenice
 Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.
@@ -191,6 +211,7 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | Sad | 2 | zdarma |
 | Krmivárna | 2 | 40 |
 | Kurník | 2 | 50 |
+| Sušárna ovoce | 2 | 80 |
 | Lavička | 2 | 30 |
 | Mlýn | 3 | 120 |
 | Školka stromků | 3 | 120 |
@@ -207,6 +228,7 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | Dům | 5 | 1000 |
 | Větší rybník | 5 | 600 |
 | Konzervárna | 6 | 180 |
+| Cukrárna | 6 | 320 |
 | Medárna | 6 | 280 |
 | Rybárna | 6 | 300 |
 | Olejna | 7 | 250 |

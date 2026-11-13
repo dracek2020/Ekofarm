@@ -1,8 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=44';
-import { EVENTS } from './events.js?v=44';
-import { STORY, CHAPTERS } from './story.js?v=44';
+import { TEAM } from './team-config.js?v=45';
+import { EVENTS } from './events.js?v=45';
+import { STORY, CHAPTERS } from './story.js?v=45';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -219,6 +219,17 @@ export const PRODUCTS = {
   stika_cibule: P('stika_cibule', 'Štika na cibulce'), sumcovy_gulas: P('sumcovy_gulas', 'Sumcový guláš'),
   rybi_karbanatky: P('rybi_karbanatky', 'Rybí karbanátky'), amur_gril: P('amur_gril', 'Amur na grilu'), uzeny_uhor: P('uzeny_uhor', 'Uzený úhoř'),
   bolen_bylinky: P('bolen_bylinky', 'Bolen na bylinkách'), kaviar: P('kaviar', 'Kaviár'),
+  // v45: ovoce – Sušárna (od Statku 2), ovocné recepty v Pekárně, Džusárně a Mlékárně, Cukrárna (od Statku 6)
+  krizaly: P('krizaly', 'Křížaly'), susene_hrusky: P('susene_hrusky', 'Sušené hrušky'), malinovy_caj: P('malinovy_caj', 'Malinový čaj'),
+  susene_svestky: P('susene_svestky', 'Sušené švestky'), ovocny_caj: P('ovocny_caj', 'Ovocný čaj'),
+  susene_boruvky: P('susene_boruvky', 'Sušené borůvky'), susene_merunky: P('susene_merunky', 'Sušené meruňky'), rozinky: P('rozinky', 'Rozinky'),
+  zavin: P('zavin', 'Jablečný závin'), svestkove_knedliky: P('svestkove_knedliky', 'Švestkové knedlíky'), bublanina: P('bublanina', 'Třešňová bublanina'),
+  angrestovy_kolac: P('angrestovy_kolac', 'Angreštový koláč'),
+  malinovy_sirup: P('malinovy_sirup', 'Malinový sirup'), tresnovy_dzus: P('tresnovy_dzus', 'Třešňový džus'),
+  broskvovy_sirup: P('broskvovy_sirup', 'Broskvový sirup'),
+  ovocny_jogurt: P('ovocny_jogurt', 'Ovocný jogurt'),
+  ovocny_salat: P('ovocny_salat', 'Ovocný salát'), jahodove_knedliky: P('jahodove_knedliky', 'Jahodové knedlíky'),
+  zmrzlina: P('zmrzlina', 'Ovocná zmrzlina'), ovocny_dort: P('ovocny_dort', 'Ovocný dort'),
 };
 
 // semena (Semenárna: 2 plodiny → 3 balíčky) a sazenice (Školka: 3 plody → 1 sazenice)
@@ -295,6 +306,29 @@ export const RECIPES = {
   uzeny_uhor:     R('uzeny_uhor',     'uzenarstvi', 11, { uhor: 2 }, 1500, 9),
   bolen_bylinky:  R('bolen_bylinky',  'rybarna', 13, { bolen: 1, maslo: 1, cibule: 1 }, 1200, 10),
   kaviar:         R('kaviar',         'rybarna', 18, { jeseter: 1 }, 1800, 14),
+  // v45: Sušárna ovoce (Statek 2) – první využití ovoce hned se sadem
+  krizaly:        R('krizaly',        'susarna', 3, { jablko: 3 }, 600, 3),
+  susene_hrusky:  R('susene_hrusky',  'susarna', 3, { hruska: 3 }, 600, 3),
+  malinovy_caj:   R('malinovy_caj',   'susarna', 3, { maliny: 3 }, 480, 3),
+  susene_svestky: R('susene_svestky', 'susarna', 4, { svestka: 3 }, 720, 4),
+  ovocny_caj:     R('ovocny_caj',     'susarna', 5, { krizaly: 1, rybiz: 2 }, 600, 4),
+  susene_boruvky: R('susene_boruvky', 'susarna', 5, { boruvky: 3 }, 720, 4),
+  susene_merunky: R('susene_merunky', 'susarna', 7, { merunka: 3 }, 900, 5),
+  rozinky:        R('rozinky',        'susarna', 9, { hrozny: 3 }, 900, 6),
+  // v45: ovocné recepty v Pekárně, Džusárně a Mlékárně (nízká úroveň Vaření)
+  zavin:          R('zavin',          'pekarna', 4, { mouka: 1, jablko: 3 }, 900, 5),
+  svestkove_knedliky: R('svestkove_knedliky', 'pekarna', 4, { mouka: 1, svestka: 3 }, 900, 5),
+  bublanina:      R('bublanina',      'pekarna', 4, { mouka: 1, vejce: 1, tresne: 2 }, 900, 5),
+  angrestovy_kolac: R('angrestovy_kolac', 'pekarna', 4, { mouka: 1, vejce: 1, angrest: 3 }, 900, 5),
+  malinovy_sirup: R('malinovy_sirup', 'dzusarna', 5, { maliny: 3 }, 600, 4),
+  tresnovy_dzus:  R('tresnovy_dzus',  'dzusarna', 6, { tresne: 3 }, 720, 5),
+  broskvovy_sirup: R('broskvovy_sirup', 'dzusarna', 9, { broskev: 3 }, 900, 6),
+  ovocny_jogurt:  R('ovocny_jogurt',  'mlekarna', 7, { mleko: 1, jahody: 1, maliny: 1 }, 900, 5),
+  // v45: Cukrárna (Statek 6)
+  ovocny_salat:   R('ovocny_salat',   'cukrarna', 11, { jablko: 1, hruska: 1, maliny: 1, tresne: 1 }, 600, 6),
+  jahodove_knedliky: R('jahodove_knedliky', 'cukrarna', 11, { mouka: 1, jahody: 2, smetana: 1 }, 900, 7),
+  zmrzlina:       R('zmrzlina',       'cukrarna', 12, { mleko: 1, smetana: 1, jahody: 2 }, 900, 8),
+  ovocny_dort:    R('ovocny_dort',    'cukrarna', 13, { mouka: 2, vejce: 2, smetana: 1, maliny: 1, tresne: 1 }, 1800, 11),
 };
 // qty = kolik kusů recept vyrobí (semena 3, jinak 1)
 for (const c of CROP_LIST) RECIPES['s_' + c.id] = { ...R('s_' + c.id, 'semenarna', c.level, { [c.id]: 2 }, 60 + Math.round(c.time / 12), 1), qty: 3 };
@@ -362,6 +396,7 @@ export const BUILDINGS = {
   // statek 2
   krmivarna:    B('krmivarna', 'Krmivárna', 'factory', 2, 40, 2, 2, 4, 1, 'krmivo_slepice'),
   kurnik:       B('kurnik', 'Kurník', 'pen', 2, 50, 2, 2, 5, 1, 'hen', { animal: 'slepice' }),
+  susarna:      B('susarna', 'Sušárna ovoce', 'factory', 2, 80, 2, 2, 4, 1, 'krizaly'),   // v45
   lavicka:      B('lavicka', 'Lavička', 'deco', 2, 30, 1, 1, 2, 0, 'bench'),
   // statek 3
   mlyn:         B('mlyn', 'Mlýn', 'factory', 3, 120, 2, 2, 6, 1, 'mouka'),
@@ -393,6 +428,7 @@ export const BUILDINGS = {
   rybnik2:      B('rybnik2', 'Větší rybník', 'pond', 5, 600, 4, 4, 12, 1, 'pond', { info: 'Až 8 ryb, vzácné ryby o něco častěji.' }),
   // statek 6
   konzervarna:  B('konzervarna', 'Konzervárna', 'factory', 6, 180, 2, 2, 8, 1, 'okurky'),
+  cukrarna:     B('cukrarna', 'Cukrárna', 'factory', 6, 320, 2, 2, 9, 1, 'ovocny_dort'),   // v45
   medarna:      B('medarna', 'Medárna', 'factory', 6, 280, 2, 2, 9, 1, 'med'),
   rybarna:      B('rybarna', 'Rybárna', 'factory', 6, 300, 2, 2, 9, 1, 'rybi_polevka'),
   // statek 7
@@ -750,7 +786,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 44;   // v44: starší aplikace se samy načtou znovu (pomalejší dovednosti)
+export const CLIENT_MIN = 45;   // v45: starší aplikace se samy načtou znovu (ovoce: Sušárna, Cukrárna)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));

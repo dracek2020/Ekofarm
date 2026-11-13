@@ -17,12 +17,12 @@ import {
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
   bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
-} from './rules.js?v=44';
-import { fmtTime } from './render.js?v=44';
-import { TEAM } from './team-config.js?v=44';
-import { NEWS } from './news.js?v=44';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=44';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=44';
+} from './rules.js?v=45';
+import { fmtTime } from './render.js?v=45';
+import { TEAM } from './team-config.js?v=45';
+import { NEWS } from './news.js?v=45';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=45';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=45';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

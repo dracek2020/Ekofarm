@@ -1745,5 +1745,35 @@
    "background": "opaque",
    "prompt": "Wide landscape image (3:2). A cozy hand-painted storybook illustration for an event card in a fairy-tale farm game: a joyful harvest festival on a meadow at dusk, a big wheat wreath with colourful ribbons hanging on a tall wooden pole, glowing lanterns, long tables full of food, a small music stage with instruments. Warm soft painterly style and colors like the reference, gentle light, rich detail, no outlines. Fully painted background. No people, no text, no letters, no numbers, no logos, no frame, no border."
   }
+ ],
+ "v45": [
+  {
+   "key": "ikony/ovoce1",
+   "id": "asset_2PqFpCmryWWTbYjDNjfmkQt8",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a string of dried apple rings on a twine; a small paper bag of dried pear halves; a cup of pink raspberry tea with two fresh raspberries on the saucer; a small wooden bowl of dark dried plums. Row 2 from left to right: a little paper bag of fruit tea with dried apple pieces and red currants spilling out; a small cloth bag of dried blueberries; a small glass jar of orange dried apricots; a small bowl of raisins. Row 3 from left to right: a slice of apple strudel dusted with powdered sugar; a plate of three round plum dumplings topped with melted butter and sugar; a square slice of sponge cake studded with red cherries; a slice of gooseberry crumble cake with green gooseberries. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/ovoce2",
+   "id": "asset_5RWR3eoH8F4SFPyeZowYVy4t",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 2 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a glass bottle of red raspberry syrup with a cork; a glass of dark red cherry juice with two cherries; a glass bottle of golden peach syrup with a cork and a peach slice; a small cup of pink fruit yogurt topped with a strawberry and a raspberry. Row 2 from left to right: a bowl of colourful fruit salad with apple, pear, raspberries and cherries; a plate of round strawberry dumplings with a dollop of cream; a waffle cone of pink fruit ice cream with a raspberry on top; a round cream cake topped with raspberries and cherries. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/susarna",
+   "id": "asset_7jN72fABP2rsTPQNjLMXGzXg",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a small fruit-drying house: a cozy hut of honey-coloured timber with a slatted ventilated loft under a green shingle roof, wooden drying racks full of apple rings and plums on the sunny side, a little brick chimney with a wisp of smoke, a basket of apples by the door. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "b/cukrarna",
+   "id": "asset_RgA6gn1W1YpkXvQM2i7R15kF",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a charming little pastry shop: pastel pink and cream plastered walls, a red tiled roof, a pink-and-white striped awning over a big shop window showing a tiered fruit cake and ice cream cones, a cake-shaped hanging sign without any letters, a tiny round table with two chairs outside. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
+  }
  ]
 }

@@ -1,5 +1,11 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 45, title: 'Ovoce: Sušárna, Cukrárna a nové recepty', items: [
+    'Nová budova Sušárna ovoce (od Statku 2): křížaly, sušené hrušky, malinový čaj a se Statkem dál sušené švestky, ovocný čaj, sušené borůvky, sušené meruňky a rozinky.',
+    'Nové ovocné recepty: v Pekárně jablečný závin, švestkové knedlíky, třešňová bublanina a angreštový koláč, v Džusárně malinový sirup, třešňový džus a broskvový sirup, v Mlékárně ovocný jogurt.',
+    'Nová budova Cukrárna (od Statku 6): ovocný salát, jahodové knedlíky, ovocná zmrzlina a ovocný dort.',
+    'Každé ovoce se teď dá zpracovat hned se Statkem, který ho odemkne – sad se vyplatí od začátku.',
+  ] },
   { v: 44, title: 'Dovednosti rostou pomaleji', items: [
     'Farmaření, Rybaření a Vaření rostou mnohem pomaleji: úroveň 10 je zhruba na týden hraní, úroveň 20 na měsíc.',
     'Zkušenosti za kus podle náročnosti práce (ne podle ceny). Práce tvého týmu se počítá čtvrtinou, úlovky v rybníku pětinásobně.',

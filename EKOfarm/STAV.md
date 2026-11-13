@@ -61,6 +61,9 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v45 (13. 11. 2026) – ovoce: Sušárna ovoce, Cukrárna, 20 ovocných výrobků** (testy `test/v45.test.js`):
+  - Budovy `susarna` (Statek 2, 80 :coin:) a `cukrarna` (Statek 6, 320 :coin:), typ factory. Recepty (Statek / Vaření): Sušárna – křížaly, sušené hrušky, malinový čaj (2/1), sušené švestky (3/3), ovocný čaj (3/4), sušené borůvky (4/4), sušené meruňky (4/7), rozinky (5/10); Pekárna – jablečný závin, švestkové knedlíky, třešňová bublanina, angreštový koláč (3/4); Džusárna – malinový sirup (4/1), třešňový džus (4/3), broskvový sirup (5/7); Mlékárna – ovocný jogurt (5/3); Cukrárna – ovocný salát, jahodové knedlíky (6/1), zmrzlina (6/3), ovocný dort (6/4). Ceny, `st` a `cook` se dopočítají samy.
+  - Každé ovoce do Statku 5 se dá zpracovat hned se Statkem, který ho odemyká (test). Grafika: 2 archy ikon a 2 budovy ze Scenario, převod `tools/v45art.py`. `CLIENT_MIN` 45.
 - **v44 (13. 11. 2026) – dovednosti mnohem pomaleji** (testy `test/v44.test.js`):
   - Křivka `SKILL_XP[L] = SKILL_K × (L − 1)²`, `SKILL_K` = 100 (úroveň 10 = 8 100, 20 = 36 100, 50 = 240 100 XP; dřív 20 × (L − 1)^1,7).
   - XP za kus `unitSkill(id)` (`UNIT_SKILL`, `unitSkillInit` po načtení dat) = XP za ruční práci: plodina `c.xp / c.yield`, ovoce `t.xp / t.yield`, od zvířat `an.xp`, výrobek `r.xp / recipeQty`, ryba `f.xp × SKILL_FISH` (5), plástev 1. Dřív cena / 4 (mléko 18 XP za kus).
@@ -221,6 +224,8 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `tools/v36art.py` | v36: rostliny po jedné, stroje, udice, pes a ilustrace událostí ze Scenario → `public/img` |
 | `public/js/story.js` | v39: hlavní příběh (kapitoly, díly, postavy) – jen data |
 | `tools/v39art.py` | v39: ilustrace dílů příběhu a vzácné ozdoby ze Scenario → `public/img` |
+| `test/v45.test.js` | v45: ovoce (Sušárna, Cukrárna, recepty, každé ovoce zpracovatelné) |
+| `tools/v45art.py` | v45: ikony ovocných výrobků a budovy Sušárna a Cukrárna ze Scenario |
 | `test/v44.test.js` | v44: tempo dovedností (křivka, XP za kus, tým čtvrtinou, přepočet) |
 | `test/v43.test.js` | v43: otáčení budov (stavění, přesun, Stodola napříč, velké pole) |
 | `test/v42.test.js` | v42: setí ze zásob / za mince (políčko, traktor, velké pole) |
