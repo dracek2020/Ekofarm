@@ -1,8 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=42';
-import { EVENTS } from './events.js?v=42';
-import { STORY, CHAPTERS } from './story.js?v=42';
+import { TEAM } from './team-config.js?v=44';
+import { EVENTS } from './events.js?v=44';
+import { STORY, CHAPTERS } from './story.js?v=44';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -523,11 +523,15 @@ export const stOk = (farm, x) => statekLevel(farm) >= x.st;
 //   f = farmaření (sklizeň plodin a ovoce, dary zvířat) → odemyká stroje
 //   r = rybaření (úlovky) → odemyká udice a druhy ryb (první udice navíc až s prvním rybníkem)
 //   v = vaření (výrobky z výroben) → odemyká recepty (budovu a suroviny dál odemyká Statek)
-// XP za kus = cena / 4 (aspoň 1). Nákupy a dárky se nepočítají.
+// v44: XP za kus = zkušenosti, které by hráč dostal za ruční práci (plodina c.xp / úroda, ovoce t.xp / úroda, od zvířat an.xp,
+// výrobek r.xp / počet kusů, ryba f.xp × 5 – rybaří jen hráč). Práce týmu se počítá jen z části (TEAM.playerXp = čtvrtina).
+// Nákupy a dárky se nepočítají. Křivka: SKILL_XP[L] = SKILL_K × (L − 1)² (úroveň 10 asi za týden, 20 asi za měsíc s týmem).
 // ---------------------------------------------------------------------------------------------------------
 export const SKILLS = { f: { name: 'Farmaření', icon: 'wheat' }, r: { name: 'Rybaření', icon: 'udice' }, v: { name: 'Vaření', icon: 'chleb' } };
 export const SKILL_MAX = 50;
-export const SKILL_XP = Array.from({ length: SKILL_MAX + 1 }, (_, L) => (L <= 1 ? 0 : Math.round(20 * Math.pow(L - 1, 1.7))));
+export const SKILL_K = 100;
+export const SKILL_XP = Array.from({ length: SKILL_MAX + 1 }, (_, L) => (L <= 1 ? 0 : Math.round(SKILL_K * (L - 1) * (L - 1))));
+export const SKILL_FISH = 5;   // ryby jen ručně – za úlovek víc
 export function skillLevel(farm, k) {
   const x = (farm.sk && farm.sk[k]) || 0;
   let L = 1;
@@ -539,11 +543,22 @@ export function skillProgress(farm, k) {
   return L >= SKILL_MAX ? { L, cur: 1, need: 1 } : { L, cur: x - SKILL_XP[L], need: SKILL_XP[L + 1] - SKILL_XP[L] };
 }
 const SKILL_OF = { harvest: 'f', fruit: 'f', animal: 'f', fish: 'r', produce: 'v' };
-function skillAdd(farm, id, n) {
+const UNIT_SKILL = {};   // XP dovednosti za kus (doplní se po načtení všech dat, viz unitSkillInit)
+function unitSkillInit() {
+  for (const c of CROP_LIST) UNIT_SKILL[c.id] = c.xp / c.yield;
+  for (const t of TREE_LIST) if (t.fruit) UNIT_SKILL[t.fruit] = t.xp / t.yield;
+  for (const a of ANIMAL_LIST) UNIT_SKILL[a.product] = a.xp;
+  for (const f of FISH_LIST) UNIT_SKILL[f.id] = f.xp * SKILL_FISH;
+  for (const r of Object.values(RECIPES)) UNIT_SKILL[r.id] = r.xp / recipeQty(r);
+  UNIT_SKILL.plast = 1;
+}
+export const unitSkill = id => UNIT_SKILL[id] || 0;
+function skillAdd(farm, id, n, team = false) {
   const k = SKILL_OF[statOf(id)];
   if (!k || !ITEMS[id] || !(n > 0)) return;
   if (!farm.sk) farm.sk = { f: 0, r: 0, v: 0 };
-  farm.sk[k] = (farm.sk[k] || 0) + n * Math.max(1, Math.round(ITEMS[id].price / 4));
+  const add = n * unitSkill(id) * (team ? TEAM.playerXp : 1);
+  farm.sk[k] = Math.round(((farm.sk[k] || 0) + add) * 100) / 100;
 }
 // stroje podle farmaření (udice podle rybaření)
 const SK_LV = {
@@ -565,6 +580,7 @@ for (const b of Object.keys(BUILDINGS)) {
   for (const r of rs) r.cook = /^(krmivo_|navnada$|s_|z_)/.test(r.id) ? 1 : 1 + Math.round((r.level - L0) * 1.5);
 }
 export const hasPond = farm => farm.objects.some(o => BUILDINGS[o.kind].type === 'pond');
+unitSkillInit();   // v44
 export const recipeOk = (farm, r) => stOk(farm, r) && skillLevel(farm, 'v') >= r.cook;
 export const fishOk = (farm, f) => skillLevel(farm, 'r') >= f.fishLv;
 // stroj: dovednost (a u udice rybník); vrací null, nebo důvod
@@ -734,7 +750,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 42;   // v42: starší aplikace se samy načtou znovu (setí ze zásob, nebo za mince)
+export const CLIENT_MIN = 44;   // v44: starší aplikace se samy načtou znovu (pomalejší dovednosti)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -866,9 +882,15 @@ export function normalize(farm) {
   const xk = (farm.v || 0) < 22 ? XP_K : (farm.v || 0) < 23 ? XP_K / 3 : 1;
   if (xk !== 1) farm.xp = Math.round((farm.xp || 0) * xk);
   // v38: dovednosti (farmaření, rybaření, vaření) – dosavadní hráči začnou podle toho, co už nasbírali
-  if (!farm.sk || typeof farm.sk !== 'object') {
-    const st = farm.stats || {};
-    farm.sk = { f: 2 * (st.harvest || 0) + 3 * (st.fruit || 0) + 4 * (st.animal || 0), r: 5 * (st.fish || 0), v: 6 * (st.produce || 0) };
+  // v44: dovednosti se přepočítají podle nového tempa – odhad ze statistik (průměrné XP za kus, asi 80 % práce udělal tým)
+  if (farm.skv !== 2 || !farm.sk || typeof farm.sk !== 'object') {
+    const st = farm.stats || {}, mix = 0.2 + 0.8 * TEAM.playerXp;
+    farm.sk = {
+      f: Math.round(mix * (0.75 * (st.harvest || 0) + (st.fruit || 0) + 3 * (st.animal || 0))),
+      r: Math.round(3 * SKILL_FISH * (st.fish || 0)),
+      v: Math.round(mix * 3 * (st.produce || 0)),
+    };
+    farm.skv = 2;
   }
   // v41: zakázka, která chce něco, co hráč ještě nemůže získat, se vymění za novou (hned připravenou)
   if (farm.objects.some(o => o.kind === 'statek')) {
@@ -934,11 +956,11 @@ export function seedUsed(farm) {
 }
 export const seedFree = farm => Math.max(0, seedCap(farm) - seedUsed(farm));
 export const spaceFor = (farm, id) => (isSeedItem(id) ? seedFree(farm) : siloFree(farm));
-function addItem(farm, id, n) {
+function addItem(farm, id, n, team = !!villHook) {
   const s = storeOf(farm, id);
   s[id] = (s[id] || 0) + n;
   addStat(farm, statOf(id), n);
-  skillAdd(farm, id, n);   // v38
+  skillAdd(farm, id, n, team);   // v38; v44: práce týmu (během dopočítávání nebo dávka od týmu) jen z části
   if (villHook) { villHook.add.push(id); if (villHook.away) villHook.away.got[id] = (villHook.away.got[id] || 0) + n; }
 }
 function takeItem(farm, id, n) {
@@ -2249,10 +2271,14 @@ export function findObject(farm, id) {
 
 // objekt, který zabírá políčko x,y
 // velikost objektu (velké pole má vlastní)
+// v43: otočená (zrcadlená) budova o.r = 1 – obdélníková má prohozené rozměry na mapě (velké pole má vlastní o.w × o.h)
 export function objSize(o) {
   const d = BUILDINGS[o.kind];
-  return { w: o.w || d.w, h: o.h || d.h };
+  if (o.w) return { w: o.w, h: o.h };
+  return o.r && d.w !== d.h ? { w: d.h, h: d.w } : { w: d.w, h: d.h };
 }
+// které budovy jde otočit (zrcadlit): všechny s obrázkem na farmě kromě sadu, velkého pole a městských budov
+export const canRotate = d => !d.town && !['orchard', 'bigfield', 'board'].includes(d.type);
 
 export function objectAt(farm, x, y) {
   for (const o of farm.objects) {
@@ -2542,6 +2568,8 @@ function doAction(farm, a, now) {
         w = a.w; h = a.h;
         if (!isInt(w) || !isInt(h) || w < FIELD_MIN || h < FIELD_MIN || w > FIELD_MAX || h > FIELD_MAX) return fail('bad_size');
       }
+      const rot = !!a.r && canRotate(d);   // v43: postavit rovnou otočenou
+      if (rot && w !== h) [w, h] = [h, w];
       const cost = d.type === 'orchard' ? orchardPrice(farm) : d.type === 'bigfield' ? w * h * FIELD_CELL_PRICE : d.cost;
       if (d.town) return fail('town');
       if (!free) {
@@ -2556,6 +2584,7 @@ function doAction(farm, a, now) {
       if (free) farm.pending.splice(farm.pending.indexOf(d.id), 1);
       else farm.coins -= cost;
       const o = { id: farm.nextId++, kind: d.id, x: a.x, y: a.y };
+      if (rot) o.r = 1;
       if (d.type === 'factory') o.queue = [];
       if (d.type === 'pen') o.animals = [];
       if (d.type !== 'deco' && d.type !== 'orchard' && d.type !== 'bigfield') o.lvl = 1;
@@ -2570,9 +2599,15 @@ function doAction(farm, a, now) {
     case 'move': {   // přesun jakékoli budovy (i Statku) na volné místo
       const o = findObject(farm, a.id);
       if (!o) return fail('no_object');
-      const sz = objSize(o);
+      const d = BUILDINGS[o.kind];
+      let sz = objSize(o), r = o.r ? 1 : 0;
+      // v43: otočení při přesunu – budova s obrázkem se zrcadlí (r), velké pole prohodí šířku a délku (w, h)
+      if (d.type === 'bigfield') { if (a.w === sz.h && a.h === sz.w) sz = { w: a.w, h: a.h }; }
+      else if (a.r !== undefined && canRotate(d)) { r = a.r ? 1 : 0; sz = objSize({ kind: o.kind, r }); }
       if (!fits(farm, a.x, a.y, sz.w, sz.h, o.id)) return fail('occupied');
       o.x = a.x; o.y = a.y;
+      if (d.type === 'bigfield') { o.w = sz.w; o.h = sz.h; }
+      else if (r) o.r = 1; else delete o.r;
       return { ok: true };
     }
     case 'movePlot': {   // přesun malého pole i s tím, co na něm roste
@@ -2608,7 +2643,7 @@ function doAction(farm, a, now) {
           const q = o.queue[0], per = recipeQty(RECIPES[q.r]), left = q.n || 1;
           const fit = Math.min(left, Math.floor(spaceFor(farm, q.r) / per));
           if (fit < 1) { full = true; seedsFull = isSeedItem(q.r); break; }
-          addItem(farm, q.r, fit * per);
+          addItem(farm, q.r, fit * per, !!q.t || !!villHook);
           logMade(o, q.r, fit * per, now);
           items.push({ item: q.r, qty: fit * per });
           if (q.t) xpTeam += RECIPES[q.r].xp * fit; else xp += RECIPES[q.r].xp * fit;

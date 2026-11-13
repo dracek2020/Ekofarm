@@ -47,7 +47,7 @@ test('dosavadní hráč: dovednosti se odhadnou ze statistik, XP ×8/3 z v37, je
   assert.equal(f.v, RULES_VERSION);
   assert.equal(f.xp, 4000);
   assert.equal(f.level, 12);
-  assert.deepEqual(f.sk, { f: 200, r: 20, v: 60 });
+  assert.deepEqual(f.sk, { f: 30, r: 60, v: 12 });   // v44: nové tempo (odhad ze statistik)
   assert.equal(normalize(f).xp, 4000);
   assert.ok(LEVEL_XP[12] <= f.xp && f.xp < LEVEL_XP[13]);
 });

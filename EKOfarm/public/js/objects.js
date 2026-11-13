@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=42';
-import { TW, TH } from './render.js?v=42';
-import { drawIcon } from './icons.js?v=42';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=42';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=44';
+import { TW, TH } from './render.js?v=44';
+import { drawIcon } from './icons.js?v=44';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=44';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -304,7 +304,11 @@ export function drawObject(ctx, o, now, t, farm) {
   const im = name && asset('b', name);
   if (!im) { placeholder(ctx, o); return; }
   const b = spriteBox(o);
-  ctx.drawImage(im, b.x, b.top, b.w, b.h);
+  if (o.r) {   // v43: otočená budova = obrázek zrcadlený kolem středu
+    ctx.save(); ctx.translate(b.cx * 2, 0); ctx.scale(-1, 1);
+    ctx.drawImage(im, b.x, b.top, b.w, b.h);
+    ctx.restore();
+  } else ctx.drawImage(im, b.x, b.top, b.w, b.h);
   const st = objectStatus(o, now, farm);
   const by = b.top + b.h * spriteTop(im) + 6 + Math.sin(t / 300) * 2;
   if (d.type === 'factory' && st.done) {
@@ -334,7 +338,7 @@ export function drawGhost(ctx, g, now, t) {
   if (g.kind !== 'plot') {
     ctx.save();
     ctx.globalAlpha = 0.7;
-    drawObject(ctx, { kind: g.kind, x: g.x, y: g.y, w: g.w, h: g.h, queue: [], animals: [], job: null }, now, t);
+    drawObject(ctx, { kind: g.kind, x: g.x, y: g.y, w: g.w, h: g.h, r: g.r, queue: [], animals: [], job: null }, now, t);
     ctx.restore();
   }
 }

@@ -61,6 +61,16 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v44 (13. 11. 2026) – dovednosti mnohem pomaleji** (testy `test/v44.test.js`):
+  - Křivka `SKILL_XP[L] = SKILL_K × (L − 1)²`, `SKILL_K` = 100 (úroveň 10 = 8 100, 20 = 36 100, 50 = 240 100 XP; dřív 20 × (L − 1)^1,7).
+  - XP za kus `unitSkill(id)` (`UNIT_SKILL`, `unitSkillInit` po načtení dat) = XP za ruční práci: plodina `c.xp / c.yield`, ovoce `t.xp / t.yield`, od zvířat `an.xp`, výrobek `r.xp / recipeQty`, ryba `f.xp × SKILL_FISH` (5), plástev 1. Dřív cena / 4 (mléko 18 XP za kus).
+  - Práce týmu `× TEAM.playerXp` (čtvrtina): `addItem(farm, id, n, team = !!villHook)`, dávka od týmu ve výrobně (`q.t`) taky. Dovednosti se ukládají se zlomky (2 desetinná místa).
+  - Přepočet dosavadních (`farm.skv` = 2, jednou v `normalize`): odhad ze statistik, 80 % práce týmem: f = 0,4 × (0,75 × sklizeň + ovoce + 3 × od zvířat), r = 15 × ryby, v = 0,4 × 3 × výrobky. Stroje zůstávají, recepty a ryby se zamknou podle nové úrovně.
+  - Měření (`tools/bench-team.mjs` upravený, 24 h): tým 8 lidí = Farmaření +470, Vaření +81 za den; tým 15 = +1 807 a +761. `CLIENT_MIN` 44.
+- **v43 (13. 11. 2026) – otáčení budov (zrcadlení)** (testy `test/v43.test.js`):
+  - `o.r = 1` = otočená budova; `objSize` u obdélníku (Stodola 3×2) prohodí rozměry, `canRotate(d)` = vše kromě sadu, velkého pole a městských budov. Akce `place { r }` a `move { r }` (bez `r` zůstane, jak je); velké pole při `move { w, h }` prohodí rozměry (jen prohození, jiný rozměr se ignoruje).
+  - Kreslení (`drawObject` v objects.js): obrázek zrcadlený kolem středu `spriteBox` – u obdélníku sedí rohy na prohozenou stopu; duch při stavění taky (`g.r`).
+  - UI: tlačítko ↻ `#bannerRot` v liště stavění a přesunu (`rotatable`, main.js). `CLIENT_MIN` 43.
 - **v42 (13. 11. 2026) – setí ze zásob, nebo za mince** (testy `test/v42.test.js`):
   - `payCrop(farm, c, n, pay)`: `'seed'` jen osivem (musí stačit, jinak `no_seeds`), `'coin'` jen mincemi, jinak jako dřív (nejdřív osivo). Akce `plant { pay }`, `sowAll { pay }`, `fieldSow { pay }` (u strojů jen `'coin'` mění chování).
   - Okno „Co zasadit?“ (`renderPicker` v main.js): skupina „Ze zásob osiva“ (jen plodiny s osivem) a „Za mince“ (všechny podle kategorií); `setSow(id, pay)` + `sowAt` – tažení pokračuje stejnou platbou, při `no_seeds` / `no_coins` setí skončí. Lišta ukazuje zbývající osivo.
@@ -211,6 +221,8 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `tools/v36art.py` | v36: rostliny po jedné, stroje, udice, pes a ilustrace událostí ze Scenario → `public/img` |
 | `public/js/story.js` | v39: hlavní příběh (kapitoly, díly, postavy) – jen data |
 | `tools/v39art.py` | v39: ilustrace dílů příběhu a vzácné ozdoby ze Scenario → `public/img` |
+| `test/v44.test.js` | v44: tempo dovedností (křivka, XP za kus, tým čtvrtinou, přepočet) |
+| `test/v43.test.js` | v43: otáčení budov (stavění, přesun, Stodola napříč, velké pole) |
 | `test/v42.test.js` | v42: setí ze zásob / za mince (políčko, traktor, velké pole) |
 | `test/v41.test.js` | v41: dostupné zboží (zakázky, Stánek, pohoštění, odpovědi v událostech), týdenní soutěž |
 | `test/v39.test.js` | v39/v40: příběh (data, kdy přijde díl, kapitoly podle Statku, paměť voleb, odměna kapitoly), denní série, suroviny na vylepšení |

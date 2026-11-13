@@ -1,5 +1,15 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 44, title: 'Dovednosti rostou pomaleji', items: [
+    'Farmaření, Rybaření a Vaření rostou mnohem pomaleji: úroveň 10 je zhruba na týden hraní, úroveň 20 na měsíc.',
+    'Zkušenosti za kus podle náročnosti práce (ne podle ceny). Práce tvého týmu se počítá čtvrtinou, úlovky v rybníku pětinásobně.',
+    'Dovednosti všech hráčů se jednou přepočítaly podle nového tempa. Koupené stroje a udice ti zůstávají, některé recepty a ryby se znovu odemknou, až dovednost doroste.',
+  ] },
+  { v: 43, title: 'Otáčení budov', items: [
+    'Budovy jdou otočit čelem na druhou stranu: při stavění nebo přesunu (podrž prst na budově) klepni dole na ↻ a potvrď ✓.',
+    'Stodola na stroje se při otočení položí napříč, velké pole při přesunu prohodí šířku a délku.',
+    'Otočit jde i Statek, výrobny, ohrady, rybníky, domky a ozdoby. Sad a budovy v Městečku zůstávají, jak jsou.',
+  ] },
   { v: 42, title: 'Setí ze zásob, nebo za mince', items: [
     'V okně „Co zasadit?“ jsou dvě skupiny: nahoře „Ze zásob osiva“ (nestojí mince, osivo ubude ze zásob) a pod tím „Za mince“ (osivo ve zásobách zůstane tvému týmu).',
     'Setí tažením prstu pokračuje tak, jak jsi začal. Když dojde osivo nebo mince, setí skončí s hláškou.',

@@ -17,12 +17,12 @@ import {
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
   bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
-} from './rules.js?v=42';
-import { fmtTime } from './render.js?v=42';
-import { TEAM } from './team-config.js?v=42';
-import { NEWS } from './news.js?v=42';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=42';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=42';
+} from './rules.js?v=44';
+import { fmtTime } from './render.js?v=44';
+import { TEAM } from './team-config.js?v=44';
+import { NEWS } from './news.js?v=44';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=44';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=44';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -103,7 +103,7 @@ export function buildHtml(farm, tab = 'farma') {
       lines: free ? [':gift: dostal jsi zdarma'] : gift ? [`<small>${b.gift}</small>`] : locked && meritShort(b.st) ? [`<small>${meritShort(b.st)}</small>`] : b.beds ? [`:helper: ${bedsText(b.beds)}`] : [], cta });
   });
   const head = `<p class="muted">Statek úrovně <b>${statekLevel(farm)}</b>. Každé vylepšení Statku odemkne nové budovy a víc polí a sadů. Stroje a stánek najdeš dole v <b>městečku</b>.</p>
-    <p class="tip">↔ <b>Přesun:</b> podrž prst na budově nebo poli a táhni. Potvrď ✓ dole.</p>`;
+    <p class="tip">↔ <b>Přesun:</b> podrž prst na budově nebo poli a táhni. ↻ budovu otočí. Potvrď ✓ dole.</p>`;
   return tabsHtml(BUILD_TABS, tab, 'btab') + (tab === 'farma' ? head : '') + `<div class="crops cards">${tab === 'farma' ? fieldCards(farm).join('') : ''}${cards.join('')}</div>`;
 }
 
@@ -1290,7 +1290,8 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:plot: Zrušení výsevu:</b> zasadil jsi něco omylem? Klepni dvakrát na rostoucí políčko → Zrušit výsev. U velkého pole klepni na pole → Zrušit osetí. Osivo a mince za setí propadnou, ale pole je hned volné.')
       + p('<b>:sign: Pozemky:</b> klepni na ceduli „Na prodej“ za plotem a farmu zvětšíš.')
       + p('<b>:chleb: Tabulka práce:</b> v okně budovy nebo oblasti nastavíš, co se tam dělá: na poli jakou část čím osázet, ve výrobně podíl výrobků a strop zásoby, ve skladu kolik procent zásoby jde na trh a kolik si nechat.')
-      + p('<b>↔ Přesun:</b> podrž prst na budově nebo poli, zvedne se a můžeš ho táhnout. Potvrď ✓ dole. Přesunout jde všechno, i Statek, a pole i s tím, co na něm roste.');
+      + p('<b>↔ Přesun:</b> podrž prst na budově nebo poli, zvedne se a můžeš ho táhnout. Potvrď ✓ dole. Přesunout jde všechno, i Statek, a pole i s tím, co na něm roste.')
+      + p('<b>↻ Otočení:</b> při stavění nebo přesunu budovy klepni dole na ↻ – budova se otočí čelem na druhou stranu (Stodola leží napříč, velké pole prohodí šířku a délku). Potvrď ✓.');
   } else if (tab === 'statek') {
     const rows = [];
     for (let L = 1; L <= MAX_BLD_LEVEL; L++) {
@@ -1313,7 +1314,7 @@ export function helpHtml(farm, tab = 'zaklady') {
       + `<div class="chips">${skillUnlocks(farm, k).map(([L, ic, n]) => `<span class="chip${skillLevel(farm, k) >= L ? '' : ' dim'}">${L} · :${ic}: ${esc(n)}</span>`).join('')}</div>`).join('');
     body = p(`Tvoje úroveň: <b>${farm.level}</b>. Úroveň hráče roste pomalu a odemyká pozemky, pomocníka, psa, události a je potřeba na vylepšení Statku. Co můžeš pěstovat, chovat a stavět, odemyká <b>Statek</b> (záložka Statek).`)
       + `<table class="help"><tr><th>Úroveň</th><th>Odemkne</th></tr>${rows}</table>`
-      + p(`<b>Dovednosti</b> (max. ${SKILL_MAX}) rostou samy tím, co děláš – i když práci udělá tvůj tým. Za dražší věci je víc zkušeností. Nákupy a dárky se nepočítají.`)
+      + p(`<b>Dovednosti</b> (max. ${SKILL_MAX}) rostou samy tím, co děláš. Za náročnější práci je víc zkušeností, práce tvého týmu se počítá čtvrtinou a úlovky v rybníku pětinásobně. Nákupy a dárky se nepočítají. Každá další úroveň chce víc – úroveň 10 je zhruba na týden, 20 na měsíc hraní.`)
       + skr;
   } else if (tab === 'mesto') {
     body = p('Po prašné cestě ze spodního rohu farmy dojdeš do <b>městečka</b> (tlačítko Městečko vpravo nahoře).')
@@ -1572,7 +1573,7 @@ export function plotHtml(farm, p, now, ask) {
 }
 
 // ---------- v38: úrovně hráče a dovednosti ----------
-const SKILL_HOW = { f: 'sklizní plodin a ovoce a dary od zvířat (i práce týmu)', r: 'úlovky v rybníku', v: 'výrobky z výroben (i práce týmu)' };
+const SKILL_HOW = { f: 'sklizní plodin a ovoce a dary od zvířat (práce týmu čtvrtinou)', r: 'úlovky v rybníku', v: 'výrobky z výroben (práce týmu čtvrtinou)' };
 // co daná dovednost odemyká: [[úroveň, ikona, název]]
 export function skillUnlocks(farm, k) {
   const out = [];
@@ -1588,7 +1589,7 @@ export function skillsHtml(farm) {
     const pr = skillProgress(farm, k);
     const next = skillUnlocks(farm, k).filter(x => x[0] > pr.L).slice(0, 4);
     return `<div class="row"><span class="ico">:${sk.icon}:</span><div class="info"><b>${sk.name}: úroveň ${pr.L}</b>
-      <small>${pr.L >= SKILL_MAX ? 'nejvyšší úroveň' : `${pr.cur} / ${pr.need} XP do další`} · roste za ${SKILL_HOW[k]}</small>${bar(pr.cur, pr.need)}
+      <small>${pr.L >= SKILL_MAX ? 'nejvyšší úroveň' : `${Math.floor(pr.cur)} / ${pr.need} XP do další`} · roste za ${SKILL_HOW[k]}</small>${bar(pr.cur, pr.need)}
       ${next.length ? `<small>Další: ${next.map(([L, ic, n]) => `:${ic}: ${esc(n)} (${L})`).join(', ')}</small>` : ''}</div></div>`;
   }).join('');
   return `<div class="row"><span class="ico">:star:</span><div class="info"><b>Úroveň hráče ${farm.level}</b>

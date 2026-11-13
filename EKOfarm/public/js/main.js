@@ -4,19 +4,19 @@ import {
   applyAction, normalize, plotState, findPlot, findObject, objectAt, objectStatus, fits,
   siloUsed, levelProgress, maxPlots, plotPrice, have,
   TREES, TREE_LIST, FREE_PLOTS, treeState, maxOrchards, orchardPrice, countKind,
-  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
+  MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, canRotate, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
-} from './rules.js?v=42';
-import { preloadAssets, spriteName } from './sprites.js?v=42';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=42';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=42';
-import { iconize, ic } from './icons.js?v=42';
-import { NEWS } from './news.js?v=42';
-import { sfx, soundOn, setSound } from './sfx.js?v=42';
-import { TEAM } from './team-config.js?v=42';
-import { CHAPTERS } from './story.js?v=42';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=42';
+} from './rules.js?v=44';
+import { preloadAssets, spriteName } from './sprites.js?v=44';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=44';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=44';
+import { iconize, ic } from './icons.js?v=44';
+import { NEWS } from './news.js?v=44';
+import { sfx, soundOn, setSound } from './sfx.js?v=44';
+import { TEAM } from './team-config.js?v=44';
+import { CHAPTERS } from './story.js?v=44';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=44';
 
 const $ = id => document.getElementById(id);
 
@@ -46,6 +46,7 @@ window.__eko = game; // pro testy a ladění
 try { game.seedPay = localStorage.getItem('ekofarm_pay') === '1' ? 'coin' : 'seed'; } catch { game.seedPay = 'seed'; }   // v42: velká pole – osivo, nebo jen mince
 window.__ekoPanel = p => openPanel(p);   // v36: pro testy – otevře okno (např. { kind: 'town', t: 'prodejna', tab: 'udice' })
 window.__ekoPicker = i => openPicker(game.farm.plots[i]);   // v42: pro testy – výběr plodiny pro i-té pole
+window.__ekoPlace = (kind, moveId) => startPlace(kind, moveId);   // v43: pro testy – stavění / přesun budovy
 game.ground = groundInfo;
 
 // ---------- canvas ----------
@@ -84,7 +85,7 @@ function ghostView() {
   if (!p) return null;
   const s = placeSize();
   const same = p.movePlot && p.movePlot[0] === p.x && p.movePlot[1] === p.y;
-  return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, moveId: p.moveId, movePlot: p.movePlot, ok: same || fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
+  return { kind: p.kind, x: p.x, y: p.y, w: s.w, h: s.h, r: p.r, moveId: p.moveId, movePlot: p.movePlot, ok: same || fits(game.farm, p.x, p.y, s.w, s.h, p.moveId || 0) };
 }
 
 // když telefon nestíhá, kreslí se 30× za sekundu místo 60× (šetří baterii)
@@ -560,13 +561,14 @@ function startPlace(kind, moveId, movePlot) {
   setSow(null);
   let pos;
   const size = moveId ? objSize(findObject(game.farm, moveId)) : kind === 'velkepole' ? { w: 4, h: 4 } : sizeOf(kind);
-  if (moveId) { const o = findObject(game.farm, moveId); pos = [o.x, o.y]; }
+  let r = 0;
+  if (moveId) { const o = findObject(game.farm, moveId); pos = [o.x, o.y]; r = o.r ? 1 : 0; }
   else if (movePlot) pos = movePlot;
   else {
     const [cx, cy] = screenToCell(W / 2, H / 2, game.cam, W, H);
     pos = nearestFree(size, cx, cy) || [cx, cy];
   }
-  game.place = { kind, moveId, movePlot, x: 0, y: 0, w: size.w, h: size.h };
+  game.place = { kind, moveId, movePlot, x: 0, y: 0, w: size.w, h: size.h, r };
   setGhost(pos[0], pos[1]);
   updateBanner();
 }
@@ -590,9 +592,9 @@ function confirmPlace() {
     updateBanner();
     return;
   }
-  const r = p.moveId
-    ? act({ type: 'move', id: p.moveId, x: p.x, y: p.y })
-    : act(p.kind === 'velkepole' ? { type: 'place', kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h } : { type: 'place', kind: p.kind, x: p.x, y: p.y });
+  const r = p.moveId   // v43: i otočení (r u budov, prohozené w × h u velkého pole)
+    ? act(p.kind === 'velkepole' ? { type: 'move', id: p.moveId, x: p.x, y: p.y, w: p.w, h: p.h } : { type: 'move', id: p.moveId, x: p.x, y: p.y, r: p.r ? 1 : 0 })
+    : act(p.kind === 'velkepole' ? { type: 'place', kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h } : { type: 'place', kind: p.kind, x: p.x, y: p.y, r: p.r ? 1 : 0 });
   if (!r.ok) return;
   if (!p.moveId && p.kind === 'sad' && countKind(game.farm, 'sad') < maxOrchards(game.farm) && game.farm.coins >= orchardPrice(game.farm)) {
     const next = nearestFree({ w: 1, h: 1 }, p.x + 1, p.y);
@@ -1401,10 +1403,22 @@ function updateBanner() {
   }
   $('bannerText').innerHTML = iconize(text);
   $('bannerSize').hidden = !(p && p.kind === 'velkepole' && !p.moveId);
+  $('bannerRot').hidden = !(p && rotatable(p));   // v43
   $('bannerOk').hidden = !ok;
   $('banner').hidden = !text;
 }
 $('bannerOk').addEventListener('click', confirmPlace);
+// v43: otočit budovu při stavění nebo přesunu (zrcadlení; obdélník prohodí rozměry, velké pole šířku a délku)
+const rotatable = p => !p.movePlot && p.kind !== 'plot' && (p.kind === 'velkepole' ? !!p.moveId && p.w !== p.h : canRotate(BUILDINGS[p.kind]));
+$('bannerRot').addEventListener('click', () => {
+  const p = game.place;
+  if (!p || !rotatable(p)) return;
+  if (p.kind !== 'velkepole') p.r = p.r ? 0 : 1;
+  if (p.w !== p.h) [p.w, p.h] = [p.h, p.w];
+  setGhost(p.x, p.y);
+  updateBanner();
+  sfx('tap');
+});
 $('bannerSize').addEventListener('click', e => {
   const b = e.target.closest('[data-size]');
   if (!b || !game.place) return;
