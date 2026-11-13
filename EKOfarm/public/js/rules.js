@@ -1,8 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=40';
-import { EVENTS } from './events.js?v=40';
-import { STORY, CHAPTERS } from './story.js?v=40';
+import { TEAM } from './team-config.js?v=41';
+import { EVENTS } from './events.js?v=41';
+import { STORY, CHAPTERS } from './story.js?v=41';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -734,7 +734,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 40;   // v40: starší aplikace se samy načtou znovu (příběh, denní série, suroviny na vylepšení)
+export const CLIENT_MIN = 41;   // v41: starší aplikace se samy načtou znovu (hra chce jen dostupné zboží)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -869,6 +869,11 @@ export function normalize(farm) {
   if (!farm.sk || typeof farm.sk !== 'object') {
     const st = farm.stats || {};
     farm.sk = { f: 2 * (st.harvest || 0) + 3 * (st.fruit || 0) + 4 * (st.animal || 0), r: 5 * (st.fish || 0), v: 6 * (st.produce || 0) };
+  }
+  // v41: zakázka, která chce něco, co hráč ještě nemůže získat, se vymění za novou (hned připravenou)
+  if (farm.objects.some(o => o.kind === 'statek')) {
+    const ok = farmAvail(farm);
+    farm.orders = farm.orders.map(o => (o && o.items.every(x => ok.has(x.item)) ? o : genOrder(farm, 0)));
   }
   farm.v = RULES_VERSION;
   return farm;
@@ -2077,7 +2082,20 @@ export function repTier(farm) {
 }
 export const repNext = farm => TEAM.rep.tiers[repTier(farm)] ?? null;   // body na další stupeň (null = nejvyšší)
 // pohoštění k inzerátu podle velikosti týmu: dvě možnosti [[položka, ks], …]
-export const adOffers = farm => (TEAM.board.offers.find(o => farm.vill.length <= o.upTo) || TEAM.board.offers[TEAM.board.offers.length - 1]).opts;
+// pohoštění pro inzerát: dvě možnosti podle velikosti týmu. v41: co ještě nejde získat, nahradí nejdražší dostupná věc
+// se stejnou nebo nižší cenou (víc kusů, aby hodnota zůstala, nejvýš 20) – obě možnosti se liší
+export function adOffers(farm) {
+  const opts = (TEAM.board.offers.find(o => farm.vill.length <= o.upTo) || TEAM.board.offers[TEAM.board.offers.length - 1]).opts;
+  const ok = farmAvail(farm);
+  const subs = farmOrderable(farm).sort((a, b) => ITEMS[b].price - ITEMS[a].price || (a < b ? -1 : 1));
+  const used = new Set(opts.flat().map(([id]) => id).filter(id => ok.has(id)));
+  return opts.map(opt => opt.map(([id, n]) => {
+    if (ok.has(id)) return [id, n];
+    const s = subs.find(x => ITEMS[x].price <= ITEMS[id].price && !used.has(x)) || subs.find(x => !used.has(x)) || subs[0];
+    used.add(s);
+    return [s, Math.min(20, Math.max(n, Math.ceil(ITEMS[id].price * n / ITEMS[s].price)))];
+  }));
+}
 export const adWaitMs = farm => (TEAM.board.waitMin + TEAM.board.perMember * farm.vill.length) * 60000;
 const TRAIT_IDS = Object.keys(TEAM.traits);
 const PROF_IDS = Object.keys(TEAM.profs);
@@ -2126,8 +2144,9 @@ export function stallOffers(farm, now) {
   const L = townLevel(farm, 'stanek');
   const lv = farm.stall && farm.stall.p === period && farm.stall.st ? farm.stall.st : statekLevel(farm);   // v37: nabídka podle Statku
   const ck = farm.stall && farm.stall.p === period && farm.stall.ck ? farm.stall.ck : skillLevel(farm, 'v');
+  const rk = farm.stall && farm.stall.p === period && farm.stall.rk ? farm.stall.rk : skillLevel(farm, 'r');   // v41
   const r = seeded(`${farm.created}:${period}:${L}`);
-  const pool = orderableItems(lv, ck);
+  const pool = orderableItems(lv, ck, rk);
   const pick = n => { const left = [...pool], out = []; for (let i = 0; i < n && left.length; i++) out.push(left.splice(Math.floor(r() * left.length), 1)[0]); return out; };
   const buy = pick(4 + Math.floor((L - 1) / 3)).map(id => ({
     item: id, qty: 3 + Math.floor(r() * (ITEMS[id].price < 20 ? 8 : 4)),
@@ -2141,7 +2160,7 @@ export function stallOffers(farm, now) {
 }
 function stallState(farm, now) {
   const period = Math.floor(now / STALL_PERIOD);
-  if (!farm.stall || farm.stall.p !== period) farm.stall = { p: period, st: statekLevel(farm), ck: skillLevel(farm, 'v'), b: {}, s: {} };
+  if (!farm.stall || farm.stall.p !== period) farm.stall = { p: period, st: statekLevel(farm), ck: skillLevel(farm, 'v'), rk: skillLevel(farm, 'r'), b: {}, s: {} };
   return farm.stall;
 }
 export function stallLeft(farm, now, kind, i, total) {
@@ -2158,15 +2177,43 @@ function rnd(farm) {
 }
 
 // v37: co hráč se Statkem st umí získat (plodiny, ovoce, výrobky, dary zvířat); semena a sazenice ne
-export function orderableItems(st = 99, cook = 99) {
-  const out = CROP_LIST.filter(c => c.st <= st).map(c => c.id);
-  for (const r of Object.values(RECIPES)) if (PRODUCTS[r.id] && r.st <= st && r.cook <= cook) out.push(r.id);   // v38: i úroveň vaření
-  for (const a of ANIMAL_LIST) if (a.st <= st) out.push(a.product);
-  for (const t of TREE_LIST) if (t.st <= st) out.push(t.fruit);
+// v41: co jde teď získat – odemčené Statkem (st) a dovednostmi Vaření (cook) a Rybaření (fish) a vyrobitelné ze surovin,
+// které jsou taky k dispozici (opakovaně: výrobky z výrobků, ryby jen ty, co už berou). Budovu možná ještě hráč musí postavit.
+// Množina všech takových věcí (plodiny, ovoce, od zvířat, ryby, plástve, výrobky, krmiva, návnada, semena a sazenice).
+const AV_CACHE = new Map();
+export function availableItems(st = 99, cook = 99, fish = 99) {
+  const key = st + '|' + cook + '|' + fish;
+  if (AV_CACHE.has(key)) return AV_CACHE.get(key);
+  const ok = new Set(CROP_LIST.filter(c => c.st <= st).map(c => c.id));
+  for (const a of ANIMAL_LIST) if (a.st <= st) ok.add(a.product);
+  for (const t of TREE_LIST) if (t.st <= st && t.fruit) ok.add(t.fruit);
+  for (const f of FISH_LIST) if (f.st <= st && f.fishLv <= fish) ok.add(f.id);
+  if (BUILDINGS.vcelin.st <= st) ok.add('plast');
+  if (BUILDINGS.velkepole.st <= st) ok.add('slama');
+  for (let more = true; more;) {
+    more = false;
+    for (const r of Object.values(RECIPES)) {
+      if (ok.has(r.id) || r.st > st || r.cook > cook) continue;
+      if (Object.keys(r.in).every(x => ok.has(x))) { ok.add(r.id); more = true; }
+    }
+  }
+  AV_CACHE.set(key, ok);
+  return ok;
+}
+export const farmAvail = farm => availableItems(statekLevel(farm), skillLevel(farm, 'v'), skillLevel(farm, 'r'));
+export const itemAvail = (farm, id) => farmAvail(farm).has(id);
+// co se dá chtít v zakázce, ve Stánku a v dárcích: plodiny, výrobky, od zvířat, ovoce (z toho, co je k dispozici)
+export function orderableItems(st = 99, cook = 99, fish = 99) {
+  const ok = availableItems(st, cook, fish);
+  const out = CROP_LIST.filter(c => ok.has(c.id)).map(c => c.id);
+  for (const r of Object.values(RECIPES)) if (PRODUCTS[r.id] && ok.has(r.id)) out.push(r.id);
+  for (const a of ANIMAL_LIST) if (ok.has(a.product)) out.push(a.product);
+  for (const t of TREE_LIST) if (t.fruit && ok.has(t.fruit)) out.push(t.fruit);
   return [...new Set(out)];
 }
+export const farmOrderable = farm => orderableItems(statekLevel(farm), skillLevel(farm, 'v'), skillLevel(farm, 'r'));
 function genOrder(farm, readyAt) {
-  const pool = orderableItems(statekLevel(farm), skillLevel(farm, 'v'));
+  const pool = farmOrderable(farm);   // v41: i podle rybaření a surovin
   const kinds = Math.min(pool.length, 1 + Math.floor(rnd(farm) * Math.min(3, 1 + farm.level / 3)));
   const items = [];
   const left = [...pool];
@@ -3373,7 +3420,8 @@ export function storyCond(farm, c) {
   if (c.not && stF(farm).includes(c.not)) return false;
   return relOk(farm, c.need);
 }
-export const answerShown = (farm, e, ans) => !STORY_BY[e.id] || storyCond(farm, ans);
+// v41: odpověď, která spotřebuje konkrétní věc, se ukáže, jen když ji hráč už může získat
+export const answerShown = (farm, e, ans) => (!ans.use || !ans.use.item || itemAvail(farm, ans.use.item)) && (!STORY_BY[e.id] || storyCond(farm, ans));
 // text dílu včetně vět podle dřívějších voleb
 export const storyText = (farm, e) => [e.text, ...(e.more || []).filter(m => storyCond(farm, m)).map(m => m.t)].join(' ');
 export const chapterOf = e => CHAPTERS[e.ch - 1];
@@ -3459,7 +3507,7 @@ function giveSome(farm, spec, n) {
   let pool;
   if (spec.item) pool = [spec.item];
   else if (spec.pick === 'seed') pool = CROP_LIST.filter(c => stOk(farm, c)).map(c => 's_' + c.id);
-  else if (spec.pick === 'product') pool = orderableItems(statekLevel(farm), skillLevel(farm, 'v')).filter(id => PICKS.product(id));
+  else if (spec.pick === 'product') pool = farmOrderable(farm).filter(id => PICKS.product(id));
   else if (spec.pick === 'fruit') pool = Object.values(TREES).filter(t => stOk(farm, t)).map(t => t.fruit).filter(Boolean);
   else pool = CROP_LIST.filter(c => stOk(farm, c)).map(c => c.id);
   if (!pool.length) pool = CROP_LIST.filter(c => stOk(farm, c)).map(c => c.id);
@@ -3570,7 +3618,16 @@ export const WEEK_TASKS = [
   { k: 'fruit',   name: 'Sklizeň ovoce',      icon: 'jablko', unit: 'plodů' },
   { k: 'sold',    name: 'Výdělek z prodeje',  icon: 'coin',   unit: 'mincí' },
 ];
-export const weekTask = w => WEEK_TASKS[((w % WEEK_TASKS.length) + WEEK_TASKS.length) % WEEK_TASKS.length];
+// v41: od týdne WEEK_V41 (pondělí 16. 11. 2026) jen úkoly, které zvládne každý od začátku hry
+export const WEEK_V41 = 2968;
+export const WEEK_TASKS_ALL = [
+  { k: 'harvest', name: 'Sklizeň plodin',     icon: 'wheat',  unit: 'plodin' },
+  { k: 'orders',  name: 'Zakázky',            icon: 'truck',  unit: 'zakázek' },
+  { k: 'sold',    name: 'Výdělek z prodeje',  icon: 'coin',   unit: 'mincí' },
+  { k: 'plant',   name: 'Setí',               icon: 'plot',   unit: 'políček' },
+];
+const modW = (w, n) => ((w % n) + n) % n;
+export const weekTask = w => (w >= WEEK_V41 ? WEEK_TASKS_ALL[modW(w - WEEK_V41, WEEK_TASKS_ALL.length)] : WEEK_TASKS[modW(w, WEEK_TASKS.length)]);
 export const WEEK_PRIZES = [{ coins: 2000, xp: 300 }, { coins: 1200, xp: 200 }, { coins: 700, xp: 120 }];
 export const weekDue = (farm, now) => !farm.wk || farm.wk.w < weekNo(now);
 // nový týden: rank = umístění v minulém týdnu (dodá server; v testovací verzi null = bez odměny)

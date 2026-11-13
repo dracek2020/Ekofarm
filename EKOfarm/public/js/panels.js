@@ -17,12 +17,12 @@ import {
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
   bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
-} from './rules.js?v=40';
-import { fmtTime } from './render.js?v=40';
-import { TEAM } from './team-config.js?v=40';
-import { NEWS } from './news.js?v=40';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=40';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=40';
+} from './rules.js?v=41';
+import { fmtTime } from './render.js?v=41';
+import { TEAM } from './team-config.js?v=41';
+import { NEWS } from './news.js?v=41';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=41';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=41';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1335,7 +1335,7 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:book: Příběh – Kronika údolí</b> (od začátku hry): jednou denně přijde místo jedné události díl příběhu o farmě, dědovi Matoušovi, sousedce Hedvice, Kryštofovi a městečku. Díl na tebe počká, dokud ho nezahraješ. Hra si pamatuje tvoje volby: podle nich se objeví jiné odpovědi a věty v dalších dílech a lepší vztahy zvýší odměnu za kapitolu. Každá kapitola má 4 díly a na konci dá mince, zkušenosti a vzácnou ozdobu, kterou jinak nezískáš. Další kapitolu odemkne vylepšení Statku (kapitola 2 se Statkem 2, kapitola 3 se Statkem 3…). Přehled najdeš v okně Událost → Kronika údolí.')
       + p('<b>:gift: Denní série</b> (Úkoly → Odměny): za každý další den po sobě, kdy si přijdeš pro odměnu, je odměna větší, každý 7. den dvojnásobná. Když den vynecháš, série začne znovu od 1. Na 7., 14., 30., 50. a 100. den po sobě dostaneš vzácnou ozdobu.')
       + p('<b>:pes: Farmářský pes</b> (Obchod → Zvířata, od úrovně 6) chodí s farmářem. U lišky, zloděje, myší, větru a utečených zvířat zvýší šanci na dobrý konec a ztráty i zhoršení zmírní na polovinu.')
-      + p('<b>:trophy: Týdenní soutěž</b> (Úkoly → Soutěž): každý týden se soutěží v něčem jiném (sklizeň, výroba, rybaření, zakázky…). Počítá se jen to, co získáš sám. První tři dostanou v pondělí odměnu.')
+      + p('<b>:trophy: Týdenní soutěž</b> (Úkoly → Soutěž): každý týden se soutěží v něčem jiném, co zvládne každý od začátku hry: sklizeň plodin, zakázky, výdělek z prodeje, setí. Počítá se jen to, co získáš sám. První tři dostanou v pondělí odměnu.')
       + p('<b>:gift: Pomoc kamarádovi</b> (jen online): na návštěvě cizí farmy klepni na <b>Pomoct</b>. Jednou denně urychlíš kamarádovi výrobu nebo pole a oba dostanete pár mincí a zkušeností. Jedné farmě můžou pomoct nejvýš 3 lidé denně.');
   } else {
     body = p('<b>:bell: Upozornění</b> ti do telefonu napíše, když je úroda zralá, výroba hotová nebo když ti někdo koupil zboží na tržišti. Zapneš je v Menu.')

@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 41, title: 'Hra chce jen to, co můžeš mít', items: [
+    'Zakázky, Stánek, dárky z událostí a pohoštění na nástěnce chtějí jen zboží, které ti už odemkl Statek a tvoje dovednosti Vaření a Rybaření – a které se dá vyrobit ze surovin, ke kterým se dostaneš. Například uzeného pstruha až s Rybařením 7.',
+    'Zakázky, které chtěly něco, co ještě nemůžeš mít, se samy vyměnily za nové.',
+    'Pohoštění pro inzerát: když jedna z možností chce něco, co ještě nemáš odemčené, nabídne se místo toho jiné zboží podobné hodnoty.',
+    'V událostech se neukáže odpověď, která potřebuje věc, kterou ještě nemůžeš mít (třeba návnadu před Krmivárnou).',
+    'Týdenní soutěž je od pondělí 16. 11. jen v tom, co zvládne každý od začátku: sklizeň plodin, zakázky, výdělek z prodeje a setí.',
+  ] },
   { v: 40, title: 'Příběh Kronika údolí, denní série a férovější vylepšení', items: [
     'Nový příběh: na půdě jsi našel dědovu kroniku. Jednou denně přijde místo jedné události nový díl – 5 kapitol po 4 dílech s dědou Matoušem, sousedkou Hedvikou, malým Kryštofem a celým městečkem.',
     'Příběh začíná pro všechny od 1. kapitoly. Každou další kapitolu odemkne vylepšení Statku (kapitola 2 se Statkem 2, kapitola 3 se Statkem 3…). Díl na tebe počká, nic nepropásneš.',
