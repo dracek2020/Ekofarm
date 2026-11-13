@@ -792,3 +792,17 @@ h3.sub .ic { width: 24px; height: 24px; vertical-align: -5px; }
 .paysw button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 7px 6px; font-weight: 800; font-size: 13px; color: var(--wood-d); }
 .paysw button.on { border-color: var(--green); background: #eaf7dd; box-shadow: 0 0 0 2px #bfe6a0; }
 .paysw .ic { width: 18px; height: 18px; vertical-align: -4px; }
+/* v43: otočit budovu */
+#banner #bannerRot { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--ink); font-size: 22px; font-weight: 900; line-height: 1; border: 2px solid #c9b37a; flex: none; }
+/* v46: rozšíření – nové recepty, vedlejší produkty, plán výroby, ocenění */
+.newtag { align-self: flex-start; display: inline-block; font-style: normal; font-size: 11px; font-weight: 900; color: #fff; background: var(--green); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: 2px; }
+.byh { display: inline-flex; align-items: center; gap: 1px; margin-left: 6px; font-size: 12px; font-weight: 800; color: #6f5a2a; }
+.byh .ic { width: 16px; height: 16px; }
+.planf { display: grid; gap: 8px; margin: 6px 0 10px; }
+.plansel { width: 100%; font: inherit; font-weight: 800; font-size: 15px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+.planq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pstep .chips { margin: 4px 0 0; }
+.pstep small .ic { width: 18px; height: 18px; vertical-align: -4px; }
+.row.award .ico { filter: grayscale(1) opacity(.55); }
+.row.award.got .ico { filter: none; }
+.row.award.got b { color: #a0721a; }

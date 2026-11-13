@@ -7,16 +7,18 @@ import {
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, canRotate, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
-} from './rules.js?v=45';
-import { preloadAssets, spriteName } from './sprites.js?v=45';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=45';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=45';
-import { iconize, ic } from './icons.js?v=45';
-import { NEWS } from './news.js?v=45';
-import { sfx, soundOn, setSound } from './sfx.js?v=45';
-import { TEAM } from './team-config.js?v=45';
-import { CHAPTERS } from './story.js?v=45';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=45';
+  recipeOut, recipeName, AWARDS,
+} from './rules.js?v=46';
+import { PLAN_MAX_QTY } from './eco-config.js?v=46';
+import { preloadAssets, spriteName } from './sprites.js?v=46';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=46';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=46';
+import { iconize, ic } from './icons.js?v=46';
+import { NEWS } from './news.js?v=46';
+import { sfx, soundOn, setSound } from './sfx.js?v=46';
+import { TEAM } from './team-config.js?v=46';
+import { CHAPTERS } from './story.js?v=46';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=46';
 
 const $ = id => document.getElementById(id);
 
@@ -260,6 +262,10 @@ function afterChange(a, r) {
     if (parts.length) floatAt(at[0], at[1], parts.join(' '));
   }
   if (a.type === 'plant') floatAt(a.x, a.y, r.seed ? `−1 :s_${a.crop}:` : `−${CROPS[a.crop].cost} :coin:`);
+  // v46: nové kosmetické ocenění (Mistr údolní kuchyně)
+  const aw = Array.isArray(game.farm.aw) ? game.farm.aw : [];
+  if (game.awN !== undefined && aw.length > game.awN) for (const id of aw.slice(game.awN)) { const x = AWARDS.find(y => y.id === id); if (x) toast(`:${x.icon}: Ocenění: <b>${x.name}</b>!`, 'lvlup', 3600); }
+  game.awN = aw.length;
   updateHud();
 }
 
@@ -643,7 +649,7 @@ function showStatekUp(L) {
   for (const a of Object.values(ANIMALS)) if (a.st === L) items.push([a.icon, a.name, 'zvíře']);
   for (const fi of Object.values(FISH)) if (fi.st === L) items.push([fi.icon, fi.name, fi.fishLv > skillLevel(game.farm, 'r') ? `ryba · rybaření ${fi.fishLv}` : 'ryba']);
   for (const ch of CHAPTERS) if (ch.st === L) items.push(['book', `Příběh: ${ch.n}. kapitola`, ch.title]);   // v40: kapitolu odemyká Statek
-  for (const r of Object.values(RECIPES)) if (r.st === L && !r.id.startsWith('s_') && !r.id.startsWith('z_')) items.push([ITEMS[r.id].icon, ITEMS[r.id].name, r.cook > skillLevel(game.farm, 'v') ? `výrobek · vaření ${r.cook}` : 'výrobek']);
+  for (const r of Object.values(RECIPES)) if (r.st === L && !r.id.startsWith('s_') && !r.id.startsWith('z_')) items.push([ITEMS[recipeOut(r)].icon, recipeName(r), r.cook > skillLevel(game.farm, 'v') ? `výrobek · vaření ${r.cook}` : 'výrobek']);
   luShow(L, 'Statek vylepšen!', 'STATEK', items, items.length ? 'Nově můžeš:' : '');
 }
 function luShow(L, title, label, items, sub) {
@@ -909,7 +915,7 @@ function renderPanel() {
   else if (p.kind === 'news') { title = ':news: Novinky'; body = newsHtml(); }
   else if (p.kind === 'wiki') { title = ':book: Deník farmáře'; body = wikiHtml(f, p.tab); }
   else if (p.kind === 'team') { title = ':helper: Farmářský tým'; body = teamHtml(f, now(), p.f || 'all', p.sel || 0, !!p.ask); }
-  else if (p.kind === 'center') { title = ':house: Řídicí centrum'; body = centerHtml(f, now(), p.tab || 'prehled'); }
+  else if (p.kind === 'center') { title = ':house: Řídicí centrum'; body = centerHtml(f, now(), p.tab || 'prehled', p); }
   else if (p.kind === 'item') { title = `:${ITEMS[p.id].icon}: ${ITEMS[p.id].name}`; body = itemHtml(f, p.id, !!p.back); }
   else if (p.kind === 'silo') { title = ':barn: ' + siloTitle(f); body = siloHtml(f, now(), !!p.keepAdd); }
   else if (p.kind === 'land') { title = ':sign: Pozemky'; body = landHtml(f, p.sel); }
@@ -990,6 +996,8 @@ $('panelBody').addEventListener('input', e => {
   if (pv) pv.textContent = val;
 });
 $('panelBody').addEventListener('change', e => {
+  const ps = e.target.closest('.plansel');   // v46: plán výroby – výběr výrobku
+  if (ps && game.panel) { game.panel.pi = ps.value; game.panel.pk = {}; renderPanel(); return; }
   const s = e.target.closest('.pslide');
   if (!s) return;
   game.sliding = false; game.panelDirty = false;
@@ -1071,6 +1079,25 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'stab': game.panel.tab = v; renderPanel(); break;
+    // v46 (etapa C): plán výrobního řetězce
+    case 'planOpen': {
+      const r = Object.values(RECIPES).find(x => x.building === v && !x.out && !x.id.startsWith('s_') && !x.id.startsWith('z_') && stOk(f, x));
+      openPanel({ kind: 'center', tab: 'plan', pi: r ? r.id : undefined, pq: 10 });
+      break;
+    }
+    case 'planQ': { const d = Number(v.split('|')[1]); game.panel.pq = Math.max(1, Math.min(PLAN_MAX_QTY, (game.panel.pq || 10) + d)); renderPanel(); break; }
+    case 'planQn': game.panel.pq = Number(v); renderPanel(); break;
+    case 'planPref': game.panel.pp = v; game.panel.pk = {}; renderPanel(); break;
+    case 'planOrd': game.panel.po = !game.panel.po; renderPanel(); break;
+    case 'planPick': { const [out, rid] = v.split('|'); game.panel.pk = { ...(game.panel.pk || {}), [out]: rid }; renderPanel(); break; }
+    case 'planApply': {
+      const p = game.panel, sel = $('panelBody').querySelector('.plansel');
+      const r = act({ type: 'planApply', item: (sel && sel.value) || p.pi, qty: p.pq || 10, pref: p.pp || 'cena', pick: p.pk || {}, orders: !!p.po });
+      if (r.ok) toast(`:hammer: Cílové zásoby nastaveny (${r.set.length} ${r.set.length === 1 ? 'výrobek' : r.set.length < 5 ? 'výrobky' : 'výrobků'}). Vyrábět bude tým.`, '', 2600);
+      renderPanel();
+      break;
+    }
+    case 'penStraw': if (act({ type: 'penStraw', id: Number(v) }).ok) { toast(':slama: Nastláno! Zvířatům se tu bude dařit o kousek líp.', '', 2400); renderPanel(); } break;
     case 'btab': game.panel.tab = v; renderPanel(); $('panel').scrollTop = 0; break;
     case 'upgrade': {
       const r = act(b.dataset.town ? { type: 'upgrade', town: v } : { type: 'upgrade', id: Number(v) });

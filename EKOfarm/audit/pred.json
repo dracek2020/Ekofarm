@@ -1,0 +1,318 @@
+{
+ "version": 23,
+ "client": 45,
+ "recipes": 83,
+ "products": 83,
+ "crops": 20,
+ "trees": 13,
+ "fish": 14,
+ "animals": 4,
+ "factories": 17,
+ "unused": [
+  "slama"
+ ],
+ "gaps": [
+  [
+   "corn",
+   1,
+   2
+  ],
+  [
+   "redkvicka",
+   1,
+   6
+  ],
+  [
+   "salat",
+   1,
+   6
+  ],
+  [
+   "potato",
+   2,
+   6
+  ],
+  [
+   "jahody",
+   2,
+   5
+  ],
+  [
+   "krizaly",
+   2,
+   3
+  ],
+  [
+   "carrot",
+   2,
+   4
+  ],
+  [
+   "okurka",
+   2,
+   6
+  ],
+  [
+   "rajce",
+   2,
+   6
+  ],
+  [
+   "amur",
+   3,
+   6
+  ],
+  [
+   "bolen",
+   3,
+   6
+  ],
+  [
+   "candat",
+   3,
+   6
+  ],
+  [
+   "cejn",
+   3,
+   6
+  ],
+  [
+   "cibule",
+   3,
+   6
+  ],
+  [
+   "cesnek",
+   3,
+   6
+  ],
+  [
+   "jeseter",
+   3,
+   6
+  ],
+  [
+   "kapr",
+   3,
+   6
+  ],
+  [
+   "karas",
+   3,
+   6
+  ],
+  [
+   "lin",
+   3,
+   6
+  ],
+  [
+   "okoun",
+   3,
+   6
+  ],
+  [
+   "plotice",
+   3,
+   6
+  ],
+  [
+   "pstruh",
+   3,
+   8
+  ],
+  [
+   "repka",
+   3,
+   7
+  ],
+  [
+   "soy",
+   3,
+   9
+  ],
+  [
+   "sumec",
+   3,
+   6
+  ],
+  [
+   "stika",
+   3,
+   6
+  ],
+  [
+   "uhor",
+   3,
+   8
+  ],
+  [
+   "beet",
+   4,
+   8
+  ],
+  [
+   "mleko",
+   4,
+   5
+  ],
+  [
+   "paprika",
+   4,
+   6
+  ],
+  [
+   "sun",
+   4,
+   7
+  ],
+  [
+   "zeli",
+   4,
+   6
+  ],
+  [
+   "dyne",
+   5,
+   6
+  ],
+  [
+   "hrach",
+   5,
+   6
+  ],
+  [
+   "maslo",
+   5,
+   6
+  ],
+  [
+   "meloun",
+   5,
+   8
+  ],
+  [
+   "plast",
+   5,
+   6
+  ],
+  [
+   "s_dyne",
+   5,
+   7
+  ],
+  [
+   "orech",
+   6,
+   8
+  ],
+  [
+   "maso",
+   7,
+   8
+  ],
+  [
+   "vlna",
+   9,
+   10
+  ]
+ ],
+ "bySt": [
+  {
+   "st": 1,
+   "recipes": 1,
+   "products": 1,
+   "bestZak": 162,
+   "bestZakName": "Chléb",
+   "bestSklad": 54,
+   "bestSkladName": "Chléb"
+  },
+  {
+   "st": 2,
+   "recipes": 6,
+   "products": 6,
+   "bestZak": 315,
+   "bestZakName": "Krmivo pro slepice",
+   "bestSklad": 105,
+   "bestSkladName": "Krmivo pro slepice"
+  },
+  {
+   "st": 3,
+   "recipes": 15,
+   "products": 15,
+   "bestZak": 315,
+   "bestZakName": "Krmivo pro slepice",
+   "bestSklad": 105,
+   "bestSkladName": "Krmivo pro slepice"
+  },
+  {
+   "st": 4,
+   "recipes": 27,
+   "products": 27,
+   "bestZak": 315,
+   "bestZakName": "Krmivo pro slepice",
+   "bestSklad": 105,
+   "bestSkladName": "Krmivo pro slepice"
+  },
+  {
+   "st": 5,
+   "recipes": 34,
+   "products": 34,
+   "bestZak": 336,
+   "bestZakName": "Máslo",
+   "bestSklad": 112,
+   "bestSkladName": "Máslo"
+  },
+  {
+   "st": 6,
+   "recipes": 60,
+   "products": 60,
+   "bestZak": 369,
+   "bestZakName": "Bolen na bylinkách",
+   "bestSklad": 123,
+   "bestSkladName": "Bolen na bylinkách"
+  },
+  {
+   "st": 7,
+   "recipes": 65,
+   "products": 65,
+   "bestZak": 369,
+   "bestZakName": "Bolen na bylinkách",
+   "bestSklad": 123,
+   "bestSkladName": "Bolen na bylinkách"
+  },
+  {
+   "st": 8,
+   "recipes": 79,
+   "products": 79,
+   "bestZak": 369,
+   "bestZakName": "Bolen na bylinkách",
+   "bestSklad": 123,
+   "bestSkladName": "Bolen na bylinkách"
+  },
+  {
+   "st": 9,
+   "recipes": 80,
+   "products": 80,
+   "bestZak": 369,
+   "bestZakName": "Bolen na bylinkách",
+   "bestSklad": 123,
+   "bestSkladName": "Bolen na bylinkách"
+  },
+  {
+   "st": 10,
+   "recipes": 83,
+   "products": 83,
+   "bestZak": 464,
+   "bestZakName": "Vlněná deka",
+   "bestSklad": 155,
+   "bestSkladName": "Vlněná deka"
+  }
+ ],
+ "cycles": [],
+ "multi": [],
+ "maxSkladPerH": 155,
+ "maxZakPerH": 464,
+ "medianZakPerH": 192
+}

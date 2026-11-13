@@ -1775,5 +1775,56 @@
    "background": "transparent",
    "prompt": "Square image. Farm game building asset. Use the reference image ONLY as a style guide: copy its cozy hand-painted fairy-tale storybook painting technique, warm sunny light, soft painterly shading, chunky slightly rounded shapes, the same classic 2:1 isometric camera from the front corner with both side walls visible, and the same kind of flat grass tile base. Do NOT copy the reference building: no thatched roof, no moss on the roof, no log-cabin walls. Design a completely different building: a charming little pastry shop: pastel pink and cream plastered walls, a red tiled roof, a pink-and-white striped awning over a big shop window showing a tiered fruit cake and ice cream cones, a cake-shaped hanging sign without any letters, a tiny round table with two chairs outside. It stands centered on a flat diamond-shaped grass tile that matches its 2x2 square footprint, filling most of the image. Clear bold silhouette and distinct colors so it is instantly recognizable even when small on a phone screen. No outlines, no people, no live animals, no text, no letters, no numbers, transparent background."
   }
+ ],
+ "v46": [
+  {
+   "key": "ikony/eco1",
+   "id": "asset_2UwRijZYv8PA78sDoWz9spT7",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: an open sandwich of rustic bread with a green lettuce leaf and sliced red radishes; a small burlap sack of pale yellow soy flour with a wooden scoop; a round golden loaf of soy bread with a few yellow soybeans beside it; a small glass jar of creamy white spread speckled with pink radish pieces. Row 2 from left to right: a small glass jar of walnuts glazed in golden honey; a small bowl of smooth green pea spread with a garlic clove; a plate of three golden crispy potato pancakes; a glass jar of red pepper and tomato pieces preserved in golden oil. Row 3 from left to right: a glass bottle of pale golden soybean oil with a cork and a few yellow soybeans; a slice of pie full of dark red sour cherries; a glass jar of dark red sour cherry jam with a checked cloth lid; a small jar of light brown walnut cream with a walnut beside it. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/eco2",
+   "id": "asset_4JXcdxZK4Nv6gAzvEzcRU19k",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a plate of three round orange pumpkin fritters; a small open burlap sack of light brown wheat bran flakes; a small stack of flat round brown pressed oilseed cakes; a small wooden bucket of shredded pale grey-white sugar beet pulp. Row 2 from left to right: a small wooden bucket of mashed fruit pomace with apple peel and pips; a small wooden bowl of pale oat flakes; a little stack of round oat cookies; a slice of oat crumble cake with bright red cherries. Row 3 from left to right: a glass bottle of golden linseed oil with a cork and a sprig of little sky-blue flax flowers; a skein of natural beige linen yarn; a neatly folded stack of natural beige linen cloth; a folded white linen tablecloth with a simple red embroidered border. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/eco3",
+   "id": "asset_17z5bNT92gi35PcNyKD3Ki9h",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a glass jar of green pickled cucumbers with dill sprigs and garlic; a bowl of clear fish soup with potato pieces and fresh green parsley; a plate with a golden fried carp fillet topped with chopped parsley and a pat of melting butter; a plate with a whole silver baked fish topped with feathery green dill and melting butter. Row 2 from left to right: a large festive wooden platter with two grilled fish fillets, parsley sprigs and a small jug of golden oil; a tall two-tier festive cake decorated with dark red sour cherries and white cream; a big wooden board with sausages, sliced smoked meat, boiled potatoes and a red pepper; a round golden medal with a crossed wooden spoon and wheat ear on it, hanging on a red ribbon. Row 3 from left to right: a bundle of golden oat stalks with drooping oat grain clusters tied with twine; a bundle of green flax stalks with small sky-blue flowers; a bunch of fresh flat-leaf parsley with white roots; a bunch of feathery green dill with yellow flower umbels. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "c1/oves",
+   "id": "asset_ffYSKffh3C3ynYz3W7N6DKYd",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single oat plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small green sprout. MIDDLE = a tall green clump of oat stalks. RIGHT = a ripe golden clump of oat stalks with drooping oat grain clusters. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/len",
+   "id": "asset_oPvLtSNGz3UkXfpGrTQ65ELy",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single flax plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small green sprout. MIDDLE = a clump of slender green flax stems. RIGHT = a clump of slender flax stems covered with small sky-blue flowers and round seed bolls. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/petrzel",
+   "id": "asset_gWTiS5XX47qWGngbB2r4W5Wp",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single parsley plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small sprout with two leaves. MIDDLE = a leafy rosette of flat-leaf parsley. RIGHT = a big lush rosette of flat-leaf parsley with a white root showing at the soil. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/kopr",
+   "id": "asset_RENSMzheBZfr5wMa46joKih1",
+   "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
+   "background": "transparent",
+   "prompt": "Wide landscape image. Three growth stages of ONE single dill plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small feathery sprout. MIDDLE = a tall clump of feathery green dill. RIGHT = a tall clump of feathery dill with flat yellow flower umbels. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  }
  ]
 }

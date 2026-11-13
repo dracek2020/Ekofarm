@@ -1,0 +1,40 @@
+﻿id;nazev;druh;skupina;cena;vykup_sklad_stred;stanek_vykup_od_do;zakazka_stred;jak_vznikla
+oves;Oves;plodina;eco_crops;20;10;14–18;30;interpolace mezi plodinami se stejným strojem podle doby růstu
+len;Len;plodina;eco_crops;30;15;21–26;45;interpolace mezi plodinami se stejným strojem podle doby růstu
+petrzel;Petržel;plodina;eco_crops;15;8;11–13;23;interpolace mezi plodinami se stejným strojem podle doby růstu
+kopr;Kopr;plodina;eco_crops;16;8;11–14;24;interpolace mezi plodinami se stejným strojem podle doby růstu
+s_oves;Semena oves;osivo;eco_crops;9;5;6–8;14;jako cena osiva za mince (stejně jako u ostatních plodin)
+s_len;Semena len;osivo;eco_crops;14;7;10–12;21;jako cena osiva za mince (stejně jako u ostatních plodin)
+s_petrzel;Semena petržel;osivo;eco_crops;6;3;4–5;9;jako cena osiva za mince (stejně jako u ostatních plodin)
+s_kopr;Semena kopr;osivo;eco_crops;7;4;5–6;11;jako cena osiva za mince (stejně jako u ostatních plodin)
+otruby;Otruby;vedlejší produkt;eco_byproducts;2;1;1–2;3;80 % hodnoty suroviny, kterou nahradí v alternativní krmné směsi
+pokrutiny;Pokrutiny;vedlejší produkt;eco_byproducts;16;8;11–14;24;80 % hodnoty suroviny, kterou nahradí v alternativní krmné směsi
+repne_rizky;Řepné řízky;vedlejší produkt;eco_byproducts;6;3;4–5;9;80 % hodnoty suroviny, kterou nahradí v alternativní krmné směsi
+ovocne_vylisky;Ovocné výlisky;vedlejší produkt;eco_byproducts;16;8;11–14;24;80 % hodnoty suroviny, kterou nahradí v alternativní krmné směsi
+farmarsky_sendvic;Farmářský sendvič;výrobek;eco_recipes;42;21;29–37;63;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+sojova_mouka;Sójová mouka;výrobek;eco_recipes;73;37;51–64;110;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+sojovy_chleb;Sójový chléb;výrobek;eco_recipes;111;56;78–98;167;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+zeleninova_pomazanka;Zeleninová pomazánka;výrobek;eco_recipes;140;70;98–123;210;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+medove_orechy;Medové ořechy;výrobek;eco_recipes;110;55;77–97;165;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+hrachova_pomazanka;Hrachová pomazánka;výrobek;eco_recipes;83;42;58–73;125;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+bramboraky;Bramboráky;výrobek;eco_recipes;176;88;123–155;264;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+zelenina_v_oleji;Zelenina v oleji;výrobek;eco_recipes;184;92;129–162;276;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+sojovy_olej;Sójový olej;výrobek;eco_recipes;81;41;57–71;122;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+visnovy_kolac;Višňový koláč;výrobek;eco_recipes;121;61;85–106;182;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+visnova_marmelada;Višňová marmeláda;výrobek;eco_recipes;177;89;124–156;266;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+orechovy_krem;Ořechový krém;výrobek;eco_recipes;232;116;162–204;348;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+dynove_placicky;Dýňové placičky;výrobek;eco_recipes;174;87;122–153;261;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+ovesne_vlocky;Ovesné vločky;výrobek;eco_crops;81;41;57–71;122;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+ovesne_susenky;Ovesné sušenky;výrobek;eco_crops;160;80;112–141;240;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+tresnovy_ovesny_kolac;Třešňový ovesný koláč;výrobek;eco_crops;204;102;143–180;306;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+lneny_olej;Lněný olej;výrobek;eco_crops;125;63;88–110;188;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+lnena_prize;Lněná příze;výrobek;eco_crops;128;64;90–113;192;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+lnena_tkanina;Lněná tkanina;výrobek;eco_crops;334;167;234–294;501;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+lneny_ubrus;Lněný ubrus;výrobek;eco_crops;839;420;587–738;1259;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+koprove_okurky;Koprové okurky;výrobek;eco_crops;80;40;56–70;120;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+bylinkova_polevka;Bylinková rybí polévka;výrobek;eco_crops;75;38;53–66;113;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+kapr_petrzel;Kapr s petrželí;výrobek;eco_crops;359;180;251–316;539;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+bolen_kopr;Bolen s koprem;výrobek;eco_crops;394;197;276–347;591;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+rybi_talir;Mistrovský rybí talíř;výrobek;eco_mastery;217;109;152–191;326;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+slavnostni_dort;Slavnostní ovocný dort;výrobek;eco_mastery;427;214;299–376;641;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky
+hostina;Farmářská hostina;výrobek;eco_mastery;762;381;533–671;1143;(Σ suroviny × 1,2 + minuty + 2) / kusů – stejný vzorec jako všechny výrobky

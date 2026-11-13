@@ -1,0 +1,197 @@
+﻿typ;id;vystup_id;nazev;budova;statek;vareni;vstupy;pocet_vstupu;kusu;cas_s;cena_vstupu;cena_vyrobku;marze_sklad;zisk_sklad_za_slot_h;marze_zakazka;zisk_zakazka_za_slot_h;pomer_vystup_vstup;xp;xp_za_h;poznamka
+recept;krmivo_slepice;krmivo_slepice;Krmivo pro slepice;Krmivárna;2;1;2× Pšenice + 1× Kukuřice;3;1;120;14;21;3,5;105;10,5;315;1,5;1;30;
+recept;krmivo_kravy;krmivo_kravy;Krmivo pro krávy;Krmivárna;4;1;2× Kukuřice + 1× Mrkev;3;1;300;28;41;6,5;78;19,5;234;1,46;2;24;
+recept;krmivo_prasata;krmivo_prasata;Krmivo pro prasata;Krmivárna;7;1;2× Brambory + 1× Kukuřice + 1× Salát;4;1;300;43;59;8;96;24;288;1,37;3;36;
+recept;krmivo_ovce;krmivo_ovce;Krmivo pro ovce;Krmivárna;9;1;2× Pšenice + 1× Zelí + 1× Sója;4;1;360;44;61;8,5;85;25,5;255;1,39;3;30;
+recept;chleb;chleb;Chléb;Pekárna;1;1;3× Pšenice;3;1;300;9;18;4,5;54;13,5;162;2;3;36;
+recept;kolac;kolac;Koláč;Pekárna;2;4;2× Pšenice + 2× Vejce;4;1;900;76;108;16;64;48;192;1,42;6;24;
+recept;tresnovy_kolac;tresnovy_kolac;Třešňový koláč;Pekárna;3;9;2× Mouka + 2× Třešně + 1× Vejce;5;1;1200;105;148;21,5;64,5;64,5;193,5;1,41;8;24;
+recept;muffiny;muffiny;Borůvkové muffiny;Pekárna;4;10;1× Mouka + 2× Borůvky + 1× Vejce;4;1;900;70;101;15,5;62;46,5;186;1,44;7;28;
+recept;buchty;buchty;Buchty;Pekárna;8;12;2× Mouka + 1× Cukr + 1× Vejce;4;1;900;153;201;24;96;72;288;1,31;7;28;
+recept;orechovy_kolac;orechovy_kolac;Ořechový koláč;Pekárna;8;16;2× Mouka + 2× Ořechy + 1× Cukr;5;1;1500;162;221;29,5;70,8;88,5;212,4;1,36;10;24;
+recept;mouka;mouka;Mouka;Mlýn;3;1;3× Pšenice;3;1;240;9;17;4;60;12;180;1,89;2;30;
+recept;smetana;smetana;Smetana;Mlékárna;5;1;1× Mléko;1;1;600;71;97;13;78;39;234;1,37;3;18;
+recept;syr;syr;Sýr;Mlékárna;5;3;2× Mléko;2;1;1200;142;192;25;75;75;225;1,35;6;18;
+recept;maslo;maslo;Máslo;Mlékárna;5;4;2× Smetana;2;1;900;194;250;28;112;84;336;1,29;6;24;
+recept;olej;olej;Řepkový olej;Olejna;7;1;2× Řepka;2;1;600;44;65;10,5;63;31,5;189;1,48;4;24;
+recept;sl_olej;sl_olej;Slunečnicový olej;Olejna;7;3;3× Slunečnice;3;1;720;78;108;15;75;45;225;1,38;5;25;
+recept;cukr;cukr;Cukr;Cukrovar;8;1;2× Cukrová řepa;2;1;600;60;84;12;72;36;216;1,4;4;24;
+recept;salat_mix;salat_mix;Zeleninový salát;Konzervárna;6;1;2× Salát + 1× Rajče + 1× Okurka + 1× Ředkvička;5;1;300;33;47;7;84;21;252;1,42;4;48;
+recept;okurky;okurky;Kyselé okurky;Konzervárna;6;3;3× Okurka + 1× Česnek;4;1;900;44;70;13;52;39;156;1,59;5;20;
+recept;kecup;kecup;Kečup;Konzervárna;6;3;4× Rajče + 1× Cibule;5;1;900;47;73;13;52;39;156;1,55;5;20;
+recept;lecho;lecho;Lečo;Konzervárna;6;4;2× Paprika + 2× Rajče + 1× Cibule;5;1;1200;61;95;17;51;51;153;1,56;6;18;
+recept;kysane_zeli;kysane_zeli;Kysané zelí;Konzervárna;6;6;2× Zelí + 1× Cibule;3;1;1200;51;83;16;48;48;144;1,63;6;18;
+recept;kompot;kompot;Angreštový kompot;Konzervárna;8;6;3× Angrešt + 1× Cukr;4;1;900;114;154;20;80;60;240;1,35;6;24;
+recept;hrachovka;hrachovka;Hrachová polévka;Konzervárna;6;7;2× Hrách + 1× Brambory + 1× Cibule;4;1;1200;68;104;18;54;54;162;1,53;7;21;
+recept;dynovka;dynovka;Dýňová polévka;Konzervárna;6;9;1× Dýně + 1× Cibule + 1× Smetana;3;1;1200;138;188;25;75;75;225;1,36;8;24;
+recept;broskve_sklo;broskve_sklo;Broskvový kompot;Konzervárna;8;9;3× Broskev + 1× Cukr;4;1;1200;156;209;26,5;79,5;79,5;238,5;1,34;8;24;
+recept;dzus_mrkev;dzus_mrkev;Mrkvová šťáva;Džusárna;4;1;3× Mrkev;3;1;480;36;53;8,5;63,75;25,5;191,25;1,47;3;22,5;
+recept;dzus_jablko;dzus_jablko;Jablečný džus;Džusárna;4;1;4× Jablko;4;1;600;40;60;10;60;30;180;1,5;4;24;
+recept;dzus_hruska;dzus_hruska;Hruškový džus;Džusárna;4;1;3× Hruška;3;1;600;42;62;10;60;30;180;1,48;4;24;
+recept;dzus_visne;dzus_visne;Višňový džus;Džusárna;4;4;3× Višně;3;1;720;48;72;12;60;36;180;1,5;5;25;
+recept;most;most;Hroznový mošt;Džusárna;5;7;3× Hrozny;3;1;900;48;75;13,5;54;40,5;162;1,56;6;24;
+recept;napoj;napoj;Melounový nápoj;Džusárna;8;9;1× Meloun + 1× Cukr;2;1;600;118;154;18;108;54;324;1,31;6;36;
+recept;povidla;povidla;Švestková povidla;Marmeládárna;7;1;4× Švestka;4;1;900;48;75;13,5;54;40,5;162;1,56;5;20;
+recept;dzem_malina;dzem_malina;Malinový džem;Marmeládárna;8;4;3× Maliny + 1× Cukr;4;1;900;108;147;19,5;78;58,5;234;1,36;6;24;
+recept;dzem_jahoda;dzem_jahoda;Jahodový džem;Marmeládárna;8;4;3× Jahody + 1× Cukr;4;1;900;129;172;21,5;86;64,5;258;1,33;6;24;
+recept;marmelada;marmelada;Rybízová marmeláda;Marmeládárna;8;4;3× Rybíz + 1× Cukr;4;1;900;111;150;19,5;78;58,5;234;1,35;6;24;
+recept;dzem_merunka;dzem_merunka;Meruňkový džem;Marmeládárna;8;6;3× Meruňka + 1× Cukr;4;1;900;144;190;23;92;69;276;1,32;7;28;
+recept;klobasa;klobasa;Klobása;Uzenářství;8;1;2× Maso + 1× Česnek;3;1;1200;214;279;32,5;97,5;97,5;292,5;1,3;7;21;
+recept;uzene;uzene;Uzené maso;Uzenářství;8;3;2× Maso;2;1;1500;200;267;33,5;80,4;100,5;241,2;1,34;7;16,8;
+recept;klubko;klubko;Klubko vlny;Textilka;10;1;2× Vlna;2;1;900;214;274;30;120;90;360;1,28;7;28;
+recept;svetr;svetr;Svetr;Textilka;10;3;2× Klubko vlny;2;1;1800;548;690;71;142;213;426;1,26;10;20;
+recept;deka;deka;Vlněná deka;Textilka;10;4;3× Klubko vlny;3;1;2400;822;1028;103;154,5;309;463,5;1,25;12;18;
+recept;seminkovy_chleb;seminkovy_chleb;Chléb se semínky;Pekárna;4;9;2× Mouka + 2× Semena slunečnice;4;1;900;58;87;14,5;58;43,5;174;1,5;7;28;
+recept;prazena_seminka;prazena_seminka;Pražená semínka;Mlýn;4;6;4× Semena slunečnice;4;1;480;48;68;10;75;30;225;1,42;4;30;
+recept;dynovy_olej;dynovy_olej;Dýňový olej;Olejna;7;7;4× Semena dýně;4;1;900;48;75;13,5;54;40,5;162;1,56;7;28;
+recept;navnada;navnada;Návnada;Krmivárna;3;1;1× Pšenice + 1× Kukuřice;2;3;120;11;18;3,5;105;10,5;315;1,64;1;30;
+recept;med;med;Med;Medárna;6;1;2× Plástev medu;2;1;300;24;36;6;72;18;216;1,5;3;36;
+recept;svicka;svicka;Svíčka z vosku;Medárna;6;3;3× Plástev medu;3;1;600;36;55;9,5;57;28,5;171;1,53;4;24;
+recept;medovnik;medovnik;Medovník;Pekárna;6;9;2× Mouka + 1× Med + 2× Vejce;5;1;1500;140;195;27,5;66;82,5;198;1,39;9;21,6;
+recept;pernik;pernik;Perník;Pekárna;6;7;1× Mouka + 1× Med;2;1;600;53;76;11,5;69;34,5;207;1,43;5;30;
+recept;rybi_polevka;rybi_polevka;Rybí polévka;Rybárna;6;1;2× Plotice + 1× Cibule + 1× Brambory;4;1;900;42;67;12,5;50;37,5;150;1,6;5;20;
+recept;smazeny_kapr;smazeny_kapr;Smažený kapr;Rybárna;6;3;1× Kapr + 1× Mouka + 1× Vejce;3;1;900;66;96;15;60;45;180;1,45;5;20;
+recept;peceny_lin;peceny_lin;Pečený lín;Rybárna;6;4;2× Lín + 1× Česnek;3;1;1200;46;77;15,5;46,5;46,5;139,5;1,67;6;18;
+recept;rybi_prsty;rybi_prsty;Rybí prsty;Rybárna;6;6;2× Okoun + 1× Mouka;3;1;900;53;81;14;56;42;168;1,53;6;24;
+recept;uzeny_pstruh;uzeny_pstruh;Uzený pstruh;Uzenářství;8;1;2× Pstruh;2;1;1500;48;85;18,5;44,4;55,5;133,2;1,77;8;19,2;
+recept;candat_maslo;candat_maslo;Candát na másle;Rybárna;6;10;1× Candát + 1× Máslo;2;1;1200;280;358;39;117;117;351;1,28;8;24;
+recept;stika_cibule;stika_cibule;Štika na cibulce;Rybárna;6;13;1× Štika + 2× Cibule;3;1;1200;58;92;17;51;51;153;1,59;9;27;
+recept;sumcovy_gulas;sumcovy_gulas;Sumcový guláš;Rybárna;6;18;1× Sumec + 2× Paprika + 1× Cibule;4;1;1800;93;144;25,5;51;76,5;153;1,55;12;24;
+recept;rybi_karbanatky;rybi_karbanatky;Rybí karbanátky;Rybárna;6;3;2× Karas + 1× Cejn + 1× Mouka;4;1;900;43;69;13;52;39;156;1,6;5;20;
+recept;amur_gril;amur_gril;Amur na grilu;Rybárna;6;9;1× Amur + 1× Česnek + 1× Paprika;3;1;1200;58;92;17;51;51;153;1,59;8;24;
+recept;uzeny_uhor;uzeny_uhor;Uzený úhoř;Uzenářství;8;6;2× Úhoř;2;1;1500;68;109;20,5;49,2;61,5;147,6;1,6;9;21,6;
+recept;bolen_bylinky;bolen_bylinky;Bolen na bylinkách;Rybárna;6;15;1× Bolen + 1× Máslo + 1× Cibule;3;1;1200;301;383;41;123;123;369;1,27;10;30;
+recept;kaviar;kaviar;Kaviár;Rybárna;6;22;1× Jeseter;1;1;1800;70;116;23;46;69;138;1,66;14;28;
+recept;krizaly;krizaly;Křížaly;Sušárna ovoce;2;1;3× Jablko;3;1;600;30;48;9;54;27;162;1,6;3;18;
+recept;susene_hrusky;susene_hrusky;Sušené hrušky;Sušárna ovoce;2;1;3× Hruška;3;1;600;42;62;10;60;30;180;1,48;3;18;
+recept;malinovy_caj;malinovy_caj;Malinový čaj;Sušárna ovoce;2;1;3× Maliny;3;1;480;24;39;7,5;56,25;22,5;168,75;1,63;3;22,5;
+recept;susene_svestky;susene_svestky;Sušené švestky;Sušárna ovoce;3;3;3× Švestka;3;1;720;36;57;10,5;52,5;31,5;157,5;1,58;4;20;
+recept;ovocny_caj;ovocny_caj;Ovocný čaj;Sušárna ovoce;3;4;1× Křížaly + 2× Rybíz;3;1;600;66;91;12,5;75;37,5;225;1,38;4;24;
+recept;susene_boruvky;susene_boruvky;Sušené borůvky;Sušárna ovoce;4;4;3× Borůvky;3;1;720;27;46;9,5;47,5;28,5;142,5;1,7;4;20;
+recept;susene_merunky;susene_merunky;Sušené meruňky;Sušárna ovoce;4;7;3× Meruňka;3;1;900;60;89;14,5;58;43,5;174;1,48;5;20;
+recept;rozinky;rozinky;Rozinky;Sušárna ovoce;5;10;3× Hrozny;3;1;900;48;75;13,5;54;40,5;162;1,56;6;24;
+recept;zavin;zavin;Jablečný závin;Pekárna;3;4;1× Mouka + 3× Jablko;4;1;900;47;73;13;52;39;156;1,55;5;20;
+recept;svestkove_knedliky;svestkove_knedliky;Švestkové knedlíky;Pekárna;3;4;1× Mouka + 3× Švestka;4;1;900;53;81;14;56;42;168;1,53;5;20;
+recept;bublanina;bublanina;Třešňová bublanina;Pekárna;3;4;1× Mouka + 1× Vejce + 2× Třešně;4;1;900;88;123;17,5;70;52,5;210;1,4;5;20;
+recept;angrestovy_kolac;angrestovy_kolac;Angreštový koláč;Pekárna;3;4;1× Mouka + 1× Vejce + 3× Angrešt;5;1;900;82;115;16,5;66;49,5;198;1,4;5;20;
+recept;malinovy_sirup;malinovy_sirup;Malinový sirup;Džusárna;4;1;3× Maliny;3;1;600;24;41;8,5;51;25,5;153;1,71;4;24;
+recept;tresnovy_dzus;tresnovy_dzus;Třešňový džus;Džusárna;4;3;3× Třešně;3;1;720;54;79;12,5;62,5;37,5;187,5;1,46;5;25;
+recept;broskvovy_sirup;broskvovy_sirup;Broskvový sirup;Džusárna;5;7;3× Broskev;3;1;900;72;103;15,5;62;46,5;186;1,43;6;24;
+recept;ovocny_jogurt;ovocny_jogurt;Ovocný jogurt;Mlékárna;5;3;1× Mléko + 1× Jahody + 1× Maliny;3;1;900;94;130;18;72;54;216;1,38;5;20;
+recept;ovocny_salat;ovocny_salat;Ovocný salát;Cukrárna;6;1;1× Jablko + 1× Hruška + 1× Maliny + 1× Třešně;4;1;600;50;72;11;66;33;198;1,44;6;36;
+recept;jahodove_knedliky;jahodove_knedliky;Jahodové knedlíky;Cukrárna;6;1;1× Mouka + 2× Jahody + 1× Smetana;4;1;900;144;190;23;92;69;276;1,32;7;28;
+recept;zmrzlina;zmrzlina;Ovocná zmrzlina;Cukrárna;6;3;1× Mléko + 1× Smetana + 2× Jahody;4;1;900;198;255;28,5;114;85,5;342;1,29;8;32;
+recept;ovocny_dort;ovocny_dort;Ovocný dort;Cukrárna;6;4;2× Mouka + 2× Vejce + 1× Smetana + 1× Maliny + 1× Třešně;7;1;1800;227;304;38,5;77;115,5;231;1,34;11;22;
+recept;farmarsky_sendvic;farmarsky_sendvic;Farmářský sendvič;Pekárna;2;1;1× Chléb + 1× Salát + 1× Ředkvička;3;1;480;27;42;7,5;56,25;22,5;168,75;1,56;2;15;
+recept;sojova_mouka;sojova_mouka;Sójová mouka;Mlýn;3;2;3× Sója;3;1;360;54;73;9,5;95;28,5;285;1,35;4;40;
+recept;sojovy_chleb;sojovy_chleb;Sójový chléb;Pekárna;4;6;1× Sójová mouka + 2× Pšenice;3;1;840;79;111;16;68,57;48;205,71;1,41;6;25,71;
+recept;zeleninova_pomazanka;zeleninova_pomazanka;Zeleninová pomazánka;Mlékárna;5;3;1× Smetana + 2× Ředkvička;3;1;720;105;140;17,5;87,5;52,5;262,5;1,33;8;40;
+recept;medove_orechy;medove_orechy;Medové ořechy;Medárna;6;3;2× Ořechy + 1× Med;3;1;720;80;110;15;75;45;225;1,38;6;30;
+recept;hrachova_pomazanka;hrachova_pomazanka;Hrachová pomazánka;Konzervárna;6;5;2× Hrách + 1× Česnek;3;1;840;56;83;13,5;57,86;40,5;173,57;1,48;5;21,43;
+recept;bramboraky;bramboraky;Bramboráky;Pekárna;7;7;2× Brambory + 1× Vejce + 1× Řepkový olej;4;1;1080;130;176;23;76,67;69;230;1,35;10;33,33;
+recept;zelenina_v_oleji;zelenina_v_oleji;Zelenina v oleji;Konzervárna;7;7;1× Paprika + 1× Rajče + 1× Slunečnicový olej;3;1;1320;133;184;25,5;69,55;76,5;208,64;1,38;11;30;
+recept;sojovy_olej;sojovy_olej;Sójový olej;Olejna;7;4;3× Sója;3;1;840;54;81;13,5;57,86;40,5;173,57;1,5;5;21,43;
+recept;visnovy_kolac;visnovy_kolac;Višňový koláč;Pekárna;4;8;1× Mouka + 2× Višně + 1× Vejce;4;1;1080;84;121;18,5;61,67;55,5;185;1,44;7;23,33;
+recept;visnova_marmelada;visnova_marmelada;Višňová marmeláda;Marmeládárna;8;6;3× Višně + 1× Cukr;4;1;1020;132;177;22,5;79,41;67,5;238,24;1,34;10;35,29;
+recept;orechovy_krem;orechovy_krem;Ořechový krém;Cukrárna;8;8;2× Ořechy + 1× Med + 1× Smetana;4;1;1080;177;232;27,5;91,67;82,5;275;1,31;14;46,67;
+recept;dynove_placicky;dynove_placicky;Dýňové placičky;Pekárna;7;8;1× Dýně + 1× Vejce + 1× Řepkový olej;3;1;960;130;174;22;82,5;66;247,5;1,34;10;37,5;
+recept;ovesne_vlocky;ovesne_vlocky;Ovesné vločky;Mlýn;3;2;3× Oves;3;1;420;60;81;10,5;90;31,5;270;1,35;5;42,86;
+recept;ovesne_susenky;ovesne_susenky;Ovesné sušenky;Pekárna;4;7;1× Ovesné vločky + 1× Pšenice + 1× Vejce;3;1;900;119;160;20,5;82;61,5;246;1,34;9;36;
+recept;tresnovy_ovesny_kolac;tresnovy_ovesny_kolac;Třešňový ovesný koláč;Pekárna;4;9;2× Třešně + 1× Ovesné vločky + 1× Vejce;4;1;1200;152;204;26;78;78;234;1,34;12;36;
+recept;krmivo_slepice__oves;krmivo_slepice;Ovesná krmná směs;Krmivárna;3;1;1× Oves + 1× Kukuřice;2;2;240;28;42;7;105;21;315;1,5;1;15;alternativní recept
+recept;lneny_olej;lneny_olej;Lněný olej;Olejna;7;5;3× Len;3;1;900;90;125;17,5;70;52,5;210;1,39;7;28;
+recept;lnena_prize;lnena_prize;Lněná příze;Textilka;10;6;3× Len;3;1;1080;90;128;19;63,33;57;190;1,42;7;23,33;
+recept;lnena_tkanina;lnena_tkanina;Lněná tkanina;Textilka;10;9;2× Lněná příze;2;1;1500;256;334;39;93,6;117;280,8;1,3;19;45,6;
+recept;lneny_ubrus;lneny_ubrus;Lněný ubrus;Textilka;10;14;2× Lněná tkanina;2;1;2100;668;839;85,5;146,57;256,5;439,71;1,26;49;84;
+recept;koprove_okurky;koprove_okurky;Koprové okurky;Konzervárna;6;6;2× Okurka + 1× Česnek + 1× Kopr;4;1;1080;50;80;15;50;45;150;1,6;5;16,67;
+recept;bylinkova_polevka;bylinkova_polevka;Bylinková rybí polévka;Rybárna;6;8;2× Plotice + 1× Brambory + 1× Petržel;4;1;1080;46;75;14,5;48,33;43,5;145;1,63;4;13,33;
+recept;kapr_petrzel;kapr_petrzel;Kapr s petrželí;Rybárna;6;8;1× Kapr + 1× Máslo + 1× Petržel;3;1;1320;279;359;40;109,09;120;327,27;1,29;21;57,27;
+recept;bolen_kopr;bolen_kopr;Bolen s koprem;Rybárna;6;15;1× Bolen + 1× Máslo + 1× Kopr;3;1;1500;306;394;44;105,6;132;316,8;1,29;23;55,2;
+recept;krmivo_slepice__otruby;krmivo_slepice;Krmivo pro slepice s otrubami;Krmivárna;3;1;1× Otruby + 1× Pšenice + 1× Kukuřice;3;1;180;13;21;4;80;12;240;1,62;1;20;alternativní recept
+recept;krmivo_prasata__pokrutiny;krmivo_prasata;Krmivo pro prasata s pokrutinami;Krmivárna;7;4;1× Pokrutiny + 1× Brambory + 1× Kukuřice;3;1;360;39;59;10;100;30;300;1,51;3;30;alternativní recept
+recept;krmivo_kravy__rizky;krmivo_kravy;Krmivo pro krávy s řepnými řízky;Krmivárna;8;5;1× Řepné řízky + 1× Kukuřice + 1× Mrkev;3;1;360;26;41;7,5;75;22,5;225;1,58;2;20;alternativní recept
+recept;krmivo_prasata__vylisky;krmivo_prasata;Ovocná krmná směs pro prasata;Krmivárna;7;7;1× Ovocné výlisky + 1× Brambory + 1× Kukuřice;3;1;360;39;59;10;100;30;300;1,51;3;30;alternativní recept
+recept;rybi_talir;rybi_talir;Mistrovský rybí talíř;Rybárna;7;25;1× Candát + 1× Štika + 1× Řepkový olej + 1× Petržel;4;1;2400;146;217;35,5;53,25;106,5;159,75;1,49;13;19,5;
+recept;slavnostni_dort;slavnostni_dort;Slavnostní ovocný dort;Cukrárna;8;30;2× Mouka + 2× Vejce + 1× Smetana + 2× Višně + 1× Cukr;8;1;2700;317;427;55;73,33;165;220;1,35;25;33,33;
+recept;hostina;hostina;Farmářská hostina;Uzenářství;8;40;1× Klobása + 1× Uzené maso + 2× Brambory + 1× Paprika;5;1;3000;592;762;85;102;255;306;1,29;44;52,8;
+
+typ;id;nazev;puvod;statek_od;pocet_pouziti;prvni_recept_statek;prvni_recept_vareni;cekani_statku;pouziti
+surovina;chleb;Chléb;výroba;1;1;2;1;1;Farmářský sendvič
+surovina;corn;Kukuřice;pole;1;9;2;1;1;Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata, Návnada, Ovesná krmná směs, Krmivo pro slepice s otrubami, Krmivo pro prasata s pokrutinami, Krmivo pro krávy s řepnými řízky, Ovocná krmná směs pro prasata
+surovina;wheat;Pšenice;pole;1;9;1;1;0;Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Návnada, Sójový chléb, Ovesné sušenky, Krmivo pro slepice s otrubami
+surovina;redkvicka;Ředkvička;pole;1;3;2;1;1;Zeleninový salát, Farmářský sendvič, Zeleninová pomazánka
+surovina;salat;Salát;pole;1;3;2;1;1;Krmivo pro prasata, Zeleninový salát, Farmářský sendvič
+surovina;potato;Brambory;pole;2;8;6;1;4;Krmivo pro prasata, Hrachová polévka, Rybí polévka, Bramboráky, Bylinková rybí polévka, Krmivo pro prasata s pokrutinami, Ovocná krmná směs pro prasata, Farmářská hostina
+surovina;hruska;Hruška;sad;2;3;2;1;0;Hruškový džus, Sušené hrušky, Ovocný salát
+surovina;jablko;Jablko;sad;2;4;2;1;0;Jablečný džus, Křížaly, Jablečný závin, Ovocný salát
+surovina;jahody;Jahody;pole;2;4;5;3;3;Jahodový džem, Ovocný jogurt, Jahodové knedlíky, Ovocná zmrzlina
+surovina;krizaly;Křížaly;výroba;2;1;3;4;1;Ovocný čaj
+surovina;maliny;Maliny;sad;2;6;2;1;0;Malinový džem, Malinový čaj, Malinový sirup, Ovocný jogurt, Ovocný salát, Ovocný dort
+surovina;carrot;Mrkev;pole;2;3;4;1;2;Krmivo pro krávy, Mrkvová šťáva, Krmivo pro krávy s řepnými řízky
+surovina;okurka;Okurka;pole;2;3;6;1;4;Zeleninový salát, Kyselé okurky, Koprové okurky
+surovina;rajce;Rajče;pole;2;4;6;1;4;Zeleninový salát, Kečup, Lečo, Zelenina v oleji
+surovina;vejce;Vejce;zvířata;2;15;2;4;0;Koláč, Třešňový koláč, Borůvkové muffiny, Buchty, Medovník, Smažený kapr, Třešňová bublanina, Angreštový koláč, Ovocný dort, Bramboráky, Višňový koláč, Dýňové placičky, Ovesné sušenky, Třešňový ovesný koláč, Slavnostní ovocný dort
+surovina;amur;Amur;rybník;3;1;6;9;3;Amur na grilu
+surovina;angrest;Angrešt;sad;3;2;3;4;0;Angreštový kompot, Angreštový koláč
+surovina;bolen;Bolen;rybník;3;2;6;15;3;Bolen na bylinkách, Bolen s koprem
+surovina;candat;Candát;rybník;3;2;6;10;3;Candát na másle, Mistrovský rybí talíř
+surovina;cejn;Cejn;rybník;3;1;6;3;3;Rybí karbanátky
+surovina;cibule;Cibule;pole;3;9;6;1;3;Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Bolen na bylinkách
+surovina;cesnek;Česnek;pole;3;6;6;3;3;Kyselé okurky, Klobása, Pečený lín, Amur na grilu, Hrachová pomazánka, Koprové okurky
+surovina;jeseter;Jeseter;rybník;3;1;6;22;3;Kaviár
+surovina;kapr;Kapr;rybník;3;2;6;3;3;Smažený kapr, Kapr s petrželí
+surovina;karas;Karas;rybník;3;1;6;3;3;Rybí karbanátky
+surovina;lin;Lín;rybník;3;1;6;4;3;Pečený lín
+surovina;mouka;Mouka;výroba;3;18;3;4;0;Třešňový koláč, Borůvkové muffiny, Buchty, Ořechový koláč, Chléb se semínky, Medovník, Perník, Smažený kapr, Rybí prsty, Rybí karbanátky, Jablečný závin, Švestkové knedlíky, Třešňová bublanina, Angreštový koláč, Jahodové knedlíky, Ovocný dort, Višňový koláč, Slavnostní ovocný dort
+surovina;okoun;Okoun;rybník;3;1;6;6;3;Rybí prsty
+surovina;otruby;Otruby;vedlejší produkt;3;1;3;1;0;Krmivo pro slepice s otrubami
+surovina;oves;Oves;pole;3;2;3;1;0;Ovesné vločky, Ovesná krmná směs
+surovina;ovesne_vlocky;Ovesné vločky;výroba;3;2;4;7;1;Ovesné sušenky, Třešňový ovesný koláč
+surovina;plotice;Plotice;rybník;3;2;6;1;3;Rybí polévka, Bylinková rybí polévka
+surovina;pstruh;Pstruh;rybník;3;1;8;1;5;Uzený pstruh
+surovina;rybiz;Rybíz;sad;3;2;3;4;0;Rybízová marmeláda, Ovocný čaj
+surovina;repka;Řepka;pole;3;1;7;1;4;Řepkový olej
+surovina;soy;Sója;pole;3;3;3;2;0;Krmivo pro ovce, Sójová mouka, Sójový olej
+surovina;sojova_mouka;Sójová mouka;výroba;3;1;4;6;1;Sójový chléb
+surovina;sumec;Sumec;rybník;3;1;6;18;3;Sumcový guláš
+surovina;stika;Štika;rybník;3;2;6;13;3;Štika na cibulce, Mistrovský rybí talíř
+surovina;svestka;Švestka;sad;3;3;3;3;0;Švestková povidla, Sušené švestky, Švestkové knedlíky
+surovina;tresne;Třešně;sad;3;6;3;4;0;Třešňový koláč, Třešňová bublanina, Třešňový džus, Ovocný salát, Ovocný dort, Třešňový ovesný koláč
+surovina;uhor;Úhoř;rybník;3;1;8;6;5;Uzený úhoř
+surovina;boruvky;Borůvky;sad;4;2;4;4;0;Borůvkové muffiny, Sušené borůvky
+surovina;beet;Cukrová řepa;pole;4;1;8;1;4;Cukr
+surovina;merunka;Meruňka;sad;4;2;4;7;0;Meruňkový džem, Sušené meruňky
+surovina;mleko;Mléko;zvířata;4;4;5;1;1;Smetana, Sýr, Ovocný jogurt, Ovocná zmrzlina
+surovina;ovocne_vylisky;Ovocné výlisky;vedlejší produkt;4;1;7;7;3;Ovocná krmná směs pro prasata
+surovina;paprika;Paprika;pole;4;5;6;4;2;Lečo, Sumcový guláš, Amur na grilu, Zelenina v oleji, Farmářská hostina
+surovina;s_sun;Semena slunečnice;semena;4;2;4;6;0;Chléb se semínky, Pražená semínka
+surovina;slama;Sláma;velké pole (lis);4;0;;;;
+surovina;sun;Slunečnice;pole;4;1;7;3;3;Slunečnicový olej
+surovina;visne;Višně;sad;4;4;4;4;0;Višňový džus, Višňový koláč, Višňová marmeláda, Slavnostní ovocný dort
+surovina;zeli;Zelí;pole;4;2;6;6;2;Krmivo pro ovce, Kysané zelí
+surovina;broskev;Broskev;sad;5;2;5;7;0;Broskvový kompot, Broskvový sirup
+surovina;dyne;Dýně;pole;5;2;6;9;1;Dýňová polévka, Dýňové placičky
+surovina;hrach;Hrách;pole;5;2;6;5;1;Hrachová polévka, Hrachová pomazánka
+surovina;hrozny;Hrozny;sad;5;2;5;7;0;Hroznový mošt, Rozinky
+surovina;maslo;Máslo;výroba;5;4;6;8;1;Candát na másle, Bolen na bylinkách, Kapr s petrželí, Bolen s koprem
+surovina;meloun;Meloun;pole;5;1;8;9;3;Melounový nápoj
+surovina;plast;Plástev medu;včelín;5;2;6;1;1;Med, Svíčka z vosku
+surovina;s_dyne;Semena dýně;semena;5;1;7;7;2;Dýňový olej
+surovina;smetana;Smetana;výroba;5;8;5;3;0;Máslo, Dýňová polévka, Jahodové knedlíky, Ovocná zmrzlina, Ovocný dort, Zeleninová pomazánka, Ořechový krém, Slavnostní ovocný dort
+surovina;kopr;Kopr;pole;6;2;6;6;0;Koprové okurky, Bolen s koprem
+surovina;med;Med;výroba;6;4;6;3;0;Medovník, Perník, Medové ořechy, Ořechový krém
+surovina;orech;Ořechy;sad;6;3;6;3;0;Ořechový koláč, Medové ořechy, Ořechový krém
+surovina;petrzel;Petržel;pole;6;3;6;8;0;Bylinková rybí polévka, Kapr s petrželí, Mistrovský rybí talíř
+surovina;len;Len;pole;7;2;7;5;0;Lněný olej, Lněná příze
+surovina;maso;Maso;zvířata;7;2;8;1;1;Klobása, Uzené maso
+surovina;pokrutiny;Pokrutiny;vedlejší produkt;7;1;7;4;0;Krmivo pro prasata s pokrutinami
+surovina;olej;Řepkový olej;výroba;7;3;7;7;0;Bramboráky, Dýňové placičky, Mistrovský rybí talíř
+surovina;sl_olej;Slunečnicový olej;výroba;7;1;7;7;0;Zelenina v oleji
+surovina;cukr;Cukr;výroba;8;11;8;4;0;Buchty, Ořechový koláč, Angreštový kompot, Broskvový kompot, Melounový nápoj, Malinový džem, Jahodový džem, Rybízová marmeláda, Meruňkový džem, Višňová marmeláda, Slavnostní ovocný dort
+surovina;klobasa;Klobása;výroba;8;1;8;40;0;Farmářská hostina
+surovina;repne_rizky;Řepné řízky;vedlejší produkt;8;1;8;5;0;Krmivo pro krávy s řepnými řízky
+surovina;uzene;Uzené maso;výroba;8;1;8;40;0;Farmářská hostina
+surovina;vlna;Vlna;zvířata;9;1;10;1;1;Klubko vlny
+surovina;klubko;Klubko vlny;výroba;10;2;10;3;0;Svetr, Vlněná deka
+surovina;lnena_prize;Lněná příze;výroba;10;1;10;9;0;Lněná tkanina
+surovina;lnena_tkanina;Lněná tkanina;výroba;10;1;10;14;0;Lněný ubrus

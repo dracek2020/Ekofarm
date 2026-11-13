@@ -1,8 +1,9 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=45';
-import { EVENTS } from './events.js?v=45';
-import { STORY, CHAPTERS } from './story.js?v=45';
+import { TEAM } from './team-config.js?v=46';
+import { EVENTS } from './events.js?v=46';
+import { STORY, CHAPTERS } from './story.js?v=46';
+import { ECO_FLAGS, ecoOn, ECO_FROM, ECO_CROPS, ECO_BYPRODUCTS, BYPRODUCT_WORTH, ECO_RECIPES, ECO_STRAW, ECO_AWARDS, PLAN_PREFS, PLAN_MAX_QTY, PLAN_MAX_DEPTH } from './eco-config.js?v=46';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -118,6 +119,24 @@ export const CROPS = {
   jahody:    crop('jahody',    'Jahody',       'ovoce',    4, 6,  900,  15, 3, 'tractor'),
   meloun:    crop('meloun',    'Meloun',       'ovoce',    9, 14, 2700, 34, 6, 'tractor'),
 };
+// v46 (etapa E): nové plodiny z eco-config.js – úroveň podle Statku, osivo/cena/XP lineárně z plodin se stejným strojem
+// a podobnou dobou růstu (žádná ručně vymyšlená čísla), výnos 2 jako u všech polních plodin
+const ECO_CROP_IDS = [];
+function stLevel(st) { for (let L = 1; L < 200; L++) if (stOfLevel(L) >= st) return L; return 1; }   // nejnižší úroveň hráče pro Statek st
+{
+  const lvOf = stLevel;
+  for (const e of ECO_CROPS) {
+    if (!ecoOn(e.flag) || CROPS[e.id]) continue;
+    const t = e.min * 60, same = Object.values(CROPS).filter(c => c.harvester === e.harvester && !c.eco).sort((a, b) => a.time - b.time);
+    let lo = same[0], hi = same[same.length - 1];
+    for (const c of same) { if (c.time <= t) lo = c; if (c.time >= t && hi.time >= c.time) { hi = c; break; } }
+    // mimo rozsah (delší růst než všechny) úměrně času od nejbližší plodiny, jinak lineárně mezi sousedy
+    const k = hi.time === lo.time ? 0 : (t - lo.time) / (hi.time - lo.time), out = t > hi.time || t < lo.time;
+    const mix = f => Math.max(1, Math.round(out ? lo[f] * t / lo.time : lo[f] + (hi[f] - lo[f]) * k));
+    CROPS[e.id] = { ...crop(e.id, e.name, e.cat, lvOf(e.st), e.cost || mix('cost'), t, e.price || mix('price'), e.xp || mix('xp'), e.harvester), stMin: e.st, eco: e.flag };
+    ECO_CROP_IDS.push(e.id);
+  }
+}
 export const CROP_LIST = Object.values(CROPS).sort((a, b) => a.level - b.level || a.cost - b.cost);
 export const CROP_CATS = { obili: 'Obilí a olejniny', zelenina: 'Zelenina', ovoce: 'Ovoce' };
 
@@ -231,6 +250,26 @@ export const PRODUCTS = {
   ovocny_salat: P('ovocny_salat', 'Ovocný salát'), jahodove_knedliky: P('jahodove_knedliky', 'Jahodové knedlíky'),
   zmrzlina: P('zmrzlina', 'Ovocná zmrzlina'), ovocny_dort: P('ovocny_dort', 'Ovocný dort'),
 };
+// v46 (etapa D): vedlejší produkty – samostatné předměty (cena se dopočítá níž z krmné směsi, kterou nahrazují)
+export const BYPRODUCTS = ECO_BYPRODUCTS.filter(b => ecoOn(b.flag) && b.from.length);
+for (const b of BYPRODUCTS) PRODUCTS[b.id] = { ...P(b.id, b.name), by: 1 };
+// v46 (etapy B, D, E, F): nové recepty – jen se zapnutou skupinou a jen když existují všechny suroviny (i výrobky jiných
+// nových receptů). Alternativní recept (out) vyrábí EXISTUJÍCÍ předmět, nový předmět nevzniká.
+const ECO_ON = [];
+{
+  const known = id => !!(CROPS[id] || FRUITS[id] || FISH[id] || PRODUCTS[id]);
+  let left = ECO_RECIPES.filter(r => ecoOn(r.flag));
+  for (let more = true; more;) {
+    more = false;
+    left = left.filter(r => {
+      if (!Object.keys(r.in).every(known) || (r.out && !PRODUCTS[r.out])) return true;
+      if (!r.out) PRODUCTS[r.id] = P(r.id, r.name);
+      ECO_ON.push(r); more = true;
+      return false;
+    });
+  }
+  for (const b of BYPRODUCTS) b.from = b.from.filter(id => PRODUCTS[id]);
+}
 
 // semena (Semenárna: 2 plodiny → 3 balíčky) a sazenice (Školka: 3 plody → 1 sazenice)
 // zasazení bere nejdřív semena ze skladu, teprve potom platíš mincemi
@@ -330,10 +369,30 @@ export const RECIPES = {
   zmrzlina:       R('zmrzlina',       'cukrarna', 12, { mleko: 1, smetana: 1, jahody: 2 }, 900, 8),
   ovocny_dort:    R('ovocny_dort',    'cukrarna', 13, { mouka: 2, vejce: 2, smetana: 1, maliny: 1, tresne: 1 }, 1800, 11),
 };
+// v46: nové recepty – úroveň (pro praxi pracovníků) obráceně ze vzorce Vaření; Vaření a Statek jsou dané (cook0, stMin)
+{
+  const L0 = {};
+  for (const r of Object.values(RECIPES)) L0[r.building] = Math.min(L0[r.building] ?? 99, r.level);
+  for (const e of ECO_ON) {
+    const r = R(e.id, e.b, (L0[e.b] ?? stLevel(e.st)) + Math.round((e.cook - 1) / 1.5), { ...e.in }, Math.round(e.min * 60), 0);
+    if (e.out) { r.out = e.out; r.name = e.name; }
+    if (e.qty > 1) r.qty = e.qty;
+    RECIPES[e.id] = { ...r, stMin: e.st, cook0: e.cook, eco: e.flag };
+  }
+}
 // qty = kolik kusů recept vyrobí (semena 3, jinak 1)
 for (const c of CROP_LIST) RECIPES['s_' + c.id] = { ...R('s_' + c.id, 'semenarna', c.level, { [c.id]: 2 }, 60 + Math.round(c.time / 12), 1), qty: 3 };
 for (const t of TREE_LIST) RECIPES['z_' + t.id] = { ...R('z_' + t.id, 'skolka', t.level, { [t.fruit]: 3 }, 300 + Math.round(t.first / 6), 2), qty: 1 };
 export const recipeQty = r => r.qty || 1;
+// v46: recept ≠ výrobek – alternativní recept (out) vyrábí existující předmět; jinak je výrobek id receptu
+export const recipeOut = r => r.out || r.id;
+export const RECIPES_BY_OUT = {};
+for (const r of Object.values(RECIPES)) (RECIPES_BY_OUT[recipeOut(r)] = RECIPES_BY_OUT[recipeOut(r)] || []).push(r);
+export const recipesFor = id => RECIPES_BY_OUT[id] || [];
+export const recipeName = r => (r.out ? r.name : ITEMS[r.id].name);
+// vedlejší produkty podle výrobku, ze kterého vznikají
+export const BY_OF = {};
+for (const b of BYPRODUCTS) for (const id of b.from) (BY_OF[id] = BY_OF[id] || []).push(b);
 
 // zvířata: max = kolik se jich vejde do ohrady (úroveň ohrady přidává další)
 // v34: jedno krmení (1 krmivo na zvíře) vydrží ANIMAL_CYCLE = 3 hodiny; za tu dobu zvíře průběžně dá `per` výrobků
@@ -346,7 +405,9 @@ export const ANIMALS = {
   prase:   { id: 'prase',   name: 'Prase',   acc: 'prase',   home: 'prasecak', level: 7, cost: 90,  feed: 'krmivo_prasata', product: 'maso',  per: 2, time: 2400, xp: 5, max: 3, icon: 'pig' },
   ovce:    { id: 'ovce',    name: 'Ovce',    acc: 'ovci',    home: 'ovcin',    level: 9, cost: 120, feed: 'krmivo_ovce',    product: 'vlna',  per: 2, time: 3000, xp: 6, max: 3, icon: 'sheep' },
 };
-export const animalCycleMs = o => Math.round(ANIMAL_CYCLE * 1000 * speedMult(o));
+export const animalCycleMs = o => Math.round(ANIMAL_CYCLE * 1000 * speedMult(o) * strawMult(o));
+// v46 (etapa D): ohrada dobrovolně vylepšená slámou (o.pod) má o kousek kratší cyklus – jen se zapnutou skupinou
+export const strawMult = o => (o && o.pod && ecoOn(ECO_STRAW.flag) ? ECO_STRAW.cycle : 1);
 // nakrmit jedno zvíře: začne nový tříhodinový cyklus
 function startCycle(x, o, t, farm) { x.fed = t; x.dur = Math.round(animalCycleMs(o) * (farm ? fxMult(farm, 'animal', t) : 1)); x.got = 0; }   // v36: + události
 // sebrat u zvířete u kusů; po posledním výrobku cyklu má zase hlad
@@ -369,6 +430,25 @@ export const ANIMAL_LIST = Object.values(ANIMALS);
         PRODUCTS[a.product].price = Math.round(PRODUCTS[a.feed].price * 1.3 + a.time / 60 * 0.5 + 3);
       }
     }
+  }
+}
+// v46: cena vedlejšího produktu = BYPRODUCT_WORTH × hodnota surovin, které nahradí v alternativní krmné směsi
+// (původní recept krmiva minus ostatní suroviny směsi); XP nových receptů ve stejném poměru k ceně jako u dosavadních
+{
+  const ITEM_PRICE = id => (CROPS[id] || FRUITS[id] || PRODUCTS[id] || SEEDS[id] || FISH[id] || {}).price;
+  const val = inp => Object.entries(inp).reduce((n, [id, q]) => n + (ITEM_PRICE(id) || 0) * q, 0);
+  for (const b of BYPRODUCTS) {
+    const alt = Object.values(RECIPES).find(r => r.out && r.in[b.id]);
+    const main = alt && RECIPES[alt.out];
+    let sub = 0;
+    if (main) { const rest = { ...alt.in }; delete rest[b.id]; sub = val(main.in) - val(rest); }
+    PRODUCTS[b.id].price = Math.max(1, Math.floor(BYPRODUCT_WORTH * sub));
+  }
+  const old = Object.values(RECIPES).filter(r => PRODUCTS[r.id] && !r.eco && r.xp > 0).map(r => PRODUCTS[r.id].price * recipeQty(r) / r.xp).sort((a, b) => a - b);
+  const ratio = old[Math.floor(old.length / 2)];
+  for (const r of Object.values(RECIPES)) {
+    if (!r.eco || r.xp) continue;
+    r.xp = r.out ? RECIPES[r.out].xp : Math.max(1, Math.round(PRODUCTS[r.id].price * recipeQty(r) / ratio));
   }
 }
 
@@ -531,18 +611,19 @@ export function stOfLevel(L) {
   for (let k = 2; k <= 10; k++) if (TEAM.statek[k] && TEAM.statek[k].player <= L) s = k;
   return s;
 }
-for (const c of CROP_LIST) c.st = stOfLevel(c.level);
+for (const c of CROP_LIST) c.st = Math.max(stOfLevel(c.level), c.stMin || 0);
 for (const t of TREE_LIST) t.st = stOfLevel(t.level);
 for (const a of ANIMAL_LIST) a.st = Math.max(BUILDINGS[a.home].st, stOfLevel(a.level));
 for (const f of FISH_LIST) f.st = BUILDINGS.rybnik.st;                 // v38: druhy ryb odemyká úroveň rybaření (fishLv)
 for (const r of Object.values(RECIPES)) {
-  r.st = BUILDINGS[r.building].st;                                        // v38: recepty v budově postupně odemyká úroveň vaření (cook)
-  const eater = ANIMAL_LIST.find(a => a.feed === r.id);
+  r.st = Math.max(BUILDINGS[r.building].st, r.stMin || 0);              // v38: recepty v budově postupně odemyká úroveň vaření (cook); v46: stMin
+  const eater = ANIMAL_LIST.find(a => a.feed === recipeOut(r));
   if (eater) r.st = Math.max(r.st, eater.st);                  // krmivo až se zvířetem
   if (r.id === 'navnada') r.st = Math.max(r.st, BUILDINGS.rybnik.st);
 }
 // výrobek ne dřív než všechny jeho suroviny (med, ryby, výrobky jiných budov…) – opakovat, dokud se něco mění
 const ITEM_ST = id => (CROPS[id] ? CROPS[id].st : FISH[id] ? FISH[id].st : RECIPES[id] ? RECIPES[id].st
+  : PRODUCTS[id] && PRODUCTS[id].by ? Math.min(...BYPRODUCTS.find(b => b.id === id).from.map(x => RECIPES[x].st))   // v46: jako výrobek, ze kterého vzniká
   : (TREE_LIST.find(t => t.fruit === id) || {}).st || (ANIMAL_LIST.find(a => a.product === id) || {}).st || (id === 'plast' ? BUILDINGS.vcelin.st : 1));
 for (let changed = true, n = 0; changed && n < 20; n++) {
   changed = false;
@@ -595,6 +676,13 @@ function skillAdd(farm, id, n, team = false) {
   if (!farm.sk) farm.sk = { f: 0, r: 0, v: 0 };
   const add = n * unitSkill(id) * (team ? TEAM.playerXp : 1);
   farm.sk[k] = Math.round(((farm.sk[k] || 0) + add) * 100) / 100;
+  checkAwards(farm);
+}
+// v46 (etapa F): kosmetická ocenění za nejvyšší úroveň dovednosti (bez výrobního bonusu) – farm.aw = seznam id
+export const AWARDS = ECO_AWARDS.filter(x => ecoOn(x.flag));
+export const hasAward = (farm, id) => Array.isArray(farm.aw) && farm.aw.includes(id);
+function checkAwards(farm) {
+  for (const x of AWARDS) if (!hasAward(farm, x.id) && skillLevel(farm, x.skill) >= x.level) (farm.aw = Array.isArray(farm.aw) ? farm.aw : []).push(x.id);
 }
 // stroje podle farmaření (udice podle rybaření)
 const SK_LV = {
@@ -610,11 +698,12 @@ const FISH_LV = { plotice: 1, karas: 1, kapr: 2, cejn: 3, lin: 4, okoun: 5, pstr
 for (const f of FISH_LIST) f.fishLv = FISH_LV[f.id] || 1;
 // recepty podle vaření: první recept každé budovy hned, další podle dřívější úrovně (krmivo, návnada, semena a sazenice vždy)
 for (const b of Object.keys(BUILDINGS)) {
-  const rs = Object.values(RECIPES).filter(r => r.building === b);
+  const rs = Object.values(RECIPES).filter(r => r.building === b && !r.cook0);   // v46: nové recepty mají Vaření dané (cook0) a nemění staré
   if (!rs.length) continue;
   const L0 = Math.min(...rs.map(r => r.level));
   for (const r of rs) r.cook = /^(krmivo_|navnada$|s_|z_)/.test(r.id) ? 1 : 1 + Math.round((r.level - L0) * 1.5);
 }
+for (const r of Object.values(RECIPES)) if (r.cook0) r.cook = r.cook0;
 export const hasPond = farm => farm.objects.some(o => BUILDINGS[o.kind].type === 'pond');
 unitSkillInit();   // v44
 export const recipeOk = (farm, r) => stOk(farm, r) && skillLevel(farm, 'v') >= r.cook;
@@ -786,7 +875,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 45;   // v45: starší aplikace se samy načtou znovu (ovoce: Sušárna, Cukrárna)
+export const CLIENT_MIN = 46;   // v46: starší aplikace se samy načtou znovu (rozšíření: recepty, plán výroby, vedlejší produkty, nové plodiny, mistrovské recepty)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -928,6 +1017,10 @@ export function normalize(farm) {
     };
     farm.skv = 2;
   }
+  // v46: věci, které tahle verze nezná (vypnutá skupina rozšíření), se odloží a vrátí, až zase budou; ocenění
+  holdUnknown(farm);
+  checkAwards(farm);
+  if (farm.byc && typeof farm.byc !== 'object') delete farm.byc;
   // v41: zakázka, která chce něco, co hráč ještě nemůže získat, se vymění za novou (hned připravenou)
   if (farm.objects.some(o => o.kind === 'statek')) {
     const ok = farmAvail(farm);
@@ -935,6 +1028,112 @@ export function normalize(farm) {
   }
   farm.v = RULES_VERSION;
   return farm;
+}
+
+// v46: zpětná bezpečnost přepínačů. Předměty ve Skladu, dávky ve frontě a osevy s id, které pravidla neznají
+// (skupina rozšíření byla vypnuta), se přesunou do farm.hold – nic se nesmaže a hra nespadne. Až id zase existuje,
+// vrátí se zpátky (předměty do zásob, dávky do fronty své výrobny). Zasetá neznámá plodina se vrátí jako osivo.
+function holdUnknown(farm) {
+  const h = farm.hold && typeof farm.hold === 'object' ? farm.hold : {};
+  const put = (id, n) => { if (n > 0) { const s = h.s || (h.s = {}); s[id] = (s[id] || 0) + n; } };
+  if (h.s) for (const id of Object.keys(h.s)) if (ITEMS[id]) { const s = storeOf(farm, id); s[id] = (s[id] || 0) + h.s[id]; delete h.s[id]; }
+  if (Array.isArray(h.q)) h.q = h.q.filter(([oid, q]) => { const o = findObject(farm, oid); if (!o || !Array.isArray(o.queue) || !RECIPES[q.r]) return true; o.queue.push(q); return false; });
+  for (const st of [farm.silo, farm.seeds]) for (const id of Object.keys(st || {})) if (!ITEMS[id]) { put(id, st[id]); delete st[id]; }
+  for (const o of farm.objects) {
+    if (Array.isArray(o.queue) && o.queue.some(q => !RECIPES[q.r])) { (h.q = h.q || []).push(...o.queue.filter(q => !RECIPES[q.r]).map(q => [o.id, q])); o.queue = o.queue.filter(q => RECIPES[q.r]); }
+    if (o.plan) for (const k of Object.keys(o.plan)) if (BUILDINGS[o.kind].type === 'factory' && !RECIPES[k]) delete o.plan[k];
+    if (Array.isArray(o.target)) o.target = o.target.filter(x => RECIPES[x[0]]);
+    if (o.crop && !CROPS[o.crop] && BUILDINGS[o.kind].type === 'bigfield') { put('s_' + o.crop, 1); o.crop = null; o.readyAt = 0; o.soil = 'raw'; o.mult = 1; delete o.ty; delete o.job; delete o.load; }
+  }
+  for (const p of farm.plots || []) if (p.crop && !CROPS[p.crop]) { put('s_' + p.crop, 1); p.crop = null; delete p.d; }
+  for (const v of farm.vill) { const j = v.job; if (j && ((j.k === 'load' && !RECIPES[j.x]) || ((j.k === 'plant' || j.k === 'sow') && [].concat(j.xs || j.x).some(c => typeof c === 'string' && !CROPS[c])))) v.job = null; }
+  for (const k of Object.keys(farm.keep || {})) if (!ITEMS[k]) delete farm.keep[k];
+  if (Array.isArray(h.q) && !h.q.length) delete h.q;
+  if (h.s && !Object.keys(h.s).length) delete h.s;
+  if (Object.keys(h).length) farm.hold = h; else delete farm.hold;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// v46 (etapa C): plán výrobního řetězce – čistý výpočet nad kopií stavu (nic nespotřebuje ani nezmění).
+// Pro výrobek a počet rozbalí recepty až na suroviny, odečte použitelné zásoby (sklad minus rezerva, volitelně minus
+// zboží na zakázky), potom očekávané dodávky (fronty výroben, rostoucí pole), zbytek vyrobí (dávky, mezikroky)
+// nebo hlásí jako chybějící surovinu. Každý kus se přidělí jen jednou (účetní kniha free/exp). Cyklus nebo moc
+// hluboký strom se zastaví a ohlásí. Mezi recepty na stejný výrobek vybere hráč, jinak podle preference
+// (cena / čas / rezervy) – deterministicky, při shodě hlavní recept a potom podle id.
+// Časy jsou ODHAD: současná síla obsluhy (pracovníci) a vylepšení budovy, bez počasí, událostí a čekání na suroviny.
+// ---------------------------------------------------------------------------------------------------------
+const planSrc = id => (CROPS[id] ? 'pole' : FRUITS[id] ? 'sad' : FISH[id] ? 'rybník' : ANIMAL_LIST.some(a => a.product === id) ? 'zvířata'
+  : id === 'plast' ? 'včelín' : id === 'slama' ? 'velké pole (lis)' : PRODUCTS[id] && PRODUCTS[id].by ? 'vedlejší produkt' : 'výroba');
+const unitPrice = id => (ITEMS[id] ? ITEMS[id].price : 0);
+function chainPick(farm, id, opts, keepOf2) {
+  const all = recipesFor(id).filter(r => r.building !== 'semenarna' || isSeedItem(id));
+  if (!all.length) return null;
+  const choice = opts.pick && opts.pick[id] && all.find(r => r.id === opts.pick[id]);
+  if (choice) return choice;
+  const ok = all.filter(r => recipeOk(farm, r));
+  const list = ok.length ? ok : all;
+  const cost = r => Object.entries(r.in).reduce((n, [x, k]) => n + unitPrice(x) * k, 0) / recipeQty(r);
+  const score = r => (opts.pref === 'cas' ? r.time / recipeQty(r)
+    : opts.pref === 'rezervy' ? Object.entries(r.in).reduce((n, [x, k]) => n + unitPrice(x) * k * (keepOf2(x) > 0 ? 10 : 1), 0) / recipeQty(r)
+    : cost(r));
+  return [...list].sort((a, b) => score(a) - score(b) || (b.id === id) - (a.id === id) || (a.id < b.id ? -1 : 1))[0];
+}
+export function planChain(farm, item, qty, opts = {}) {
+  const now = opts.now || 0, res = { item, qty: 0, ok: true, steps: [], use: [], expect: [], reserved: [], missing: [], warn: [], time: { min: 0, max: 0, by: {} } };
+  if (!ITEMS[item] || !recipesFor(item).length) return { ...res, ok: false, warn: [{ k: 'not_product', id: item }] };
+  qty = Math.max(1, Math.min(PLAN_MAX_QTY, Math.floor(Number(qty) || 1)));
+  res.qty = qty;
+  // rezervy: sklad (farm.keep) + volitelně zboží, které chtějí současné zakázky
+  const ord = {};
+  if (opts.orders) for (const o of farm.orders || []) if (o) for (const x of o.items) ord[x.item] = (ord[x.item] || 0) + x.qty;
+  const keepOf2 = id => keepOf(farm, id) + (ord[id] || 0);
+  const free = {}, resv = {}, exp = {}, used = {}, fromExp = {}, miss = {}, steps = {};
+  const usable = id => { if (!(id in free)) { const h = have(farm, id), k = Math.min(h, keepOf2(id)); free[id] = h - k; resv[id] = k; } return free[id]; };
+  // očekávané dodávky: rozpracovaná výroba (i u pracovníků) a rostoucí úroda
+  for (const o of farm.objects) for (const q of o.queue || []) { const r = RECIPES[q.r]; if (r) exp[recipeOut(r)] = (exp[recipeOut(r)] || 0) + recipeQty(r) * (q.n || 1); }
+  for (const v of farm.vill) { const j = v.job, r = j && j.k === 'load' && RECIPES[j.x]; if (r) exp[recipeOut(r)] = (exp[recipeOut(r)] || 0) + recipeQty(r) * (j.n || 1); }
+  for (const p of farm.plots || []) if (p.crop && CROPS[p.crop]) exp[p.crop] = (exp[p.crop] || 0) + CROPS[p.crop].yield;
+  for (const o of farm.objects) if (BUILDINGS[o.kind].type === 'bigfield' && o.crop && CROPS[o.crop] && o.readyAt) exp[o.crop] = (exp[o.crop] || 0) + fieldYield(o);
+  const need = (id, n, path) => {
+    if (n <= 0) return;
+    const u = Math.min(n, usable(id));
+    if (u > 0) { free[id] -= u; used[id] = (used[id] || 0) + u; n -= u; }
+    const e = Math.min(n, exp[id] || 0);
+    if (e > 0) { exp[id] -= e; fromExp[id] = (fromExp[id] || 0) + e; n -= e; }
+    if (n <= 0) return;
+    const r = !path.includes(id) && path.length <= PLAN_MAX_DEPTH ? chainPick(farm, id, opts, keepOf2) : null;
+    if (path.includes(id) || path.length > PLAN_MAX_DEPTH) res.warn.push({ k: 'cycle', id });
+    if (!r) { miss[id] = (miss[id] || 0) + n; return; }
+    const k = recipeQty(r), b = Math.ceil(n / k);
+    const s = steps[r.id] || (steps[r.id] = { rid: r.id, out: recipeOut(r), batches: 0, units: 0, depth: path.length });
+    s.batches += b; s.units += b * k; s.depth = Math.max(s.depth, path.length);
+    free[id] = usable(id) + (b * k - n);   // přebytek dávky (semena po 3) zůstane pro další kroky
+    for (const [x, q] of Object.entries(r.in)) need(x, q * b, [...path, id]);
+  };
+  need(item, qty, []);
+  // kroky: budova, zamčení, odhad času (dávky po síle obsluhy, zrychlení budovy)
+  const st = statekLevel(farm), byB = {};
+  for (const s of Object.values(steps).sort((a, b) => b.depth - a.depth || (a.rid < b.rid ? -1 : 1))) {
+    const r = RECIPES[s.rid], o = farm.objects.find(x => x.kind === r.building) || null;
+    const per = o ? Math.max(1, Math.floor(crewPower(farm, o, r.level).S)) : 1;
+    const sec = Math.ceil(s.batches / per) * r.time * (o ? speedMult(o) : 1);
+    const alt = recipesFor(s.out).length > 1 ? recipesFor(s.out).map(x => x.id) : null;
+    res.steps.push({ ...s, building: r.building, has: !!o, per, sec: Math.round(sec), locked: !recipeOk(farm, r) ? (stOk(farm, r) ? 'cook' : 'statek') : null, cook: r.cook, st: r.st, alt });
+    byB[r.building] = (byB[r.building] || 0) + Math.round(sec);
+    if (!o) res.warn.push({ k: 'no_building', id: r.building });
+    if (!recipeOk(farm, r)) res.warn.push({ k: 'locked', id: s.rid });
+  }
+  res.time.by = byB;
+  res.time.min = Math.max(0, ...Object.values(byB));
+  res.time.max = Object.values(byB).reduce((a, b) => a + b, 0);
+  res.bottleneck = Object.keys(byB).sort((a, b) => byB[b] - byB[a])[0] || null;
+  const list = m => Object.entries(m).filter(([, n]) => n > 0).map(([id, n]) => ({ id, n }));
+  res.use = list(used); res.expect = list(fromExp);
+  res.reserved = Object.entries(resv).filter(([id, n]) => n > 0 && (used[id] || miss[id] || steps[id] || id === item)).map(([id, n]) => ({ id, n }));
+  res.missing = list(miss).map(x => ({ ...x, src: planSrc(x.id), harvests: CROPS[x.id] ? Math.ceil(x.n / CROPS[x.id].yield) : 0, avail: itemAvail(farm, x.id) }));
+  for (const x of res.missing) if (!x.avail) res.warn.push({ k: 'unavailable', id: x.id });
+  res.blocked = res.warn.some(w => w.k === 'locked' || w.k === 'cycle' || w.k === 'unavailable' || w.k === 'no_building');
+  return res;
 }
 
 export function levelForXp(xp) {
@@ -1004,6 +1203,31 @@ function takeItem(farm, id, n) {
   s[id] -= n;
   if (!s[id]) delete s[id];
   if (villHook) { villHook.take.push(id); if (s === farm.seeds) villHook.seedRoom = true; else villHook.room = true; }
+}
+// v46: přidat do zásob bez statistik a bez XP dovedností (vedlejší produkty, vrácení odloženého)
+function addRaw(farm, id, n) {
+  const s = storeOf(farm, id);
+  s[id] = (s[id] || 0) + n;
+  if (villHook) { villHook.add.push(id); if (villHook.away) villHook.away.got[id] = (villHook.away.got[id] || 0) + n; }
+}
+// v46 (etapa D): vedlejší produkty. Za každou HOTOVOU a odnesenou dávku výrobku se u farmy přičte počítadlo (farm.byc);
+// za každých `per` dávek přibude n kusů. Jen dávky, které začaly od ECO_FROM a zároveň od chvíle, kdy farma poprvé
+// běžela s vedlejšími produkty (farm.byFrom – dopočet nepřítomnosti před aktualizací se nepočítá), jen celé kusy,
+// a když se do Skladu nevejdou, počítadlo zůstane a vydají se při dalším odnesení – nic se neztratí ani nezdvojí.
+function byproductTick(farm, r, q, runs) {
+  const list = BY_OF[recipeOut(r)];
+  if (!list || !(runs > 0)) return [];
+  if (q.end - (q.d || r.time * 1000) < Math.max(ECO_FROM, farm.byFrom || 0)) return [];   // dávka začala dřív, než platí
+  const c = farm.byc || (farm.byc = {}), got = [];
+  for (const b of list) {
+    c[b.id] = (c[b.id] || 0) + runs;
+    const units = Math.min(Math.floor(c[b.id] / b.per), Math.floor(siloFree(farm) / b.n));
+    if (units < 1) continue;
+    c[b.id] -= units * b.per;
+    addRaw(farm, b.id, units * b.n);
+    got.push({ item: b.id, qty: units * b.n });
+  }
+  return got;
 }
 // zařadí výrobek do fronty výrobny; k = násobič času – šikovnější vesničan vyrábí rychleji
 // n = kolik kusů v dávce (pracovník podle výkonu naloží víc najednou; doba je stejná) – dávka od týmu má t: 1
@@ -1213,7 +1437,7 @@ function upgradePool(st) {
   for (let more = true; more;) {
     more = false;
     for (const r of Object.values(RECIPES)) {
-      if (ok.has(r.id) || !PRODUCTS[r.id] || r.st > st || r.cook > 1) continue;
+      if (ok.has(r.id) || !PRODUCTS[r.id] || r.eco || r.st > st || r.cook > 1) continue;   // v46: nové recepty ceny vylepšení nemění
       if (Object.keys(r.in).every(x => ok.has(x) || fish.has(x))) { ok.add(r.id); more = true; }
     }
   }
@@ -1556,10 +1780,11 @@ export const availFor = (farm, id) => Math.max(0, have(farm, id) - keepOf(farm, 
 const hasInputsKeep = (farm, r) => Object.entries(r.in).every(([id, n]) => availFor(farm, id) >= n);
 // kolik výrobku je na skladě + ve frontě + v rukou pracovníků (pro cílové zásoby)
 export function stockOf(farm, o, id) {
-  const r = RECIPES[id];
+  if (RECIPES[id] && RECIPES[id].out) id = RECIPES[id].out;   // v46: cíl na alternativní recept = zásoba jeho výrobku
   let n = have(farm, id);
-  for (const q of o.queue || []) if (q.r === id) n += recipeQty(r) * (q.n || 1);
-  for (const v of farm.vill) if (v.at === o.id && v.job && v.job.k === 'load' && v.job.x === id) n += recipeQty(r) * (v.job.n || 1);
+  const outOfR = rid => (RECIPES[rid] ? recipeOut(RECIPES[rid]) : rid);   // v46: i alternativní recepty na stejný výrobek
+  for (const q of o.queue || []) if (outOfR(q.r) === id) n += recipeQty(RECIPES[q.r]) * (q.n || 1);
+  for (const v of farm.vill) if (v.at === o.id && v.job && v.job.k === 'load' && outOfR(v.job.x) === id) n += recipeQty(RECIPES[v.job.x]) * (v.job.n || 1);
   return n;
 }
 // záznam výroby po hodinách (posledních TEAM.logH hodin)
@@ -1737,10 +1962,10 @@ const VILL_TASK = {
     if (q.length) {
       if (q[0].end > t) { if (q[0].end < wake) wake = q[0].end; }
       else if (!hauling) {
-        const r = RECIPES[q[0].r];
-        if (spaceFor(farm, r.id) >= recipeQty(r)) return job('haul', o.id);
+        const r = RECIPES[q[0].r], out = recipeOut(r);
+        if (spaceFor(farm, out) >= recipeQty(r)) return job('haul', o.id);
         w = 'full';
-        if (isSeedItem(r.id)) seedRoom = true; else room = true;
+        if (isSeedItem(out)) seedRoom = true; else room = true;
       }
     }
     if (q.length + loading >= queueSize(o)) return idle(w, wake, null, room, null, seedRoom);
@@ -1989,12 +2214,12 @@ export function tradeRound(farm, v, t) {
   const cap = Math.round(TEAM.trade.cap[L] * (v.prof === 'sklad' || traitOf(v).any ? 1 : TEAM.offProf.power) * (traitOf(v).out || 1));
   const k = 1 + (TEAM.trade.bonus[L] || 0) / 100;
   const o = v.at && findObject(farm, v.at), plan = (o && o.plan) || {};
-  const rows = [], rowsMax = TEAM.trade.rows[L] || 0;
+  const rows = [], rowsMax = TEAM.trade.rows[L] || 0, held = planHeld(farm);
   let want = 0;
   for (const [item, pct] of Object.entries(plan)) {
     if (!ITEMS[item] || isSeedItem(item) || !(pct > 0)) continue;
     if (rows.length >= rowsMax) break;   // víc druhů zboží pracovník zatím nezvládne
-    const free = have(farm, item) - keepOf(farm, item);
+    const free = have(farm, item) - Math.max(keepOf(farm, item), held[item] || 0);   // v46: ani zboží držené pro cílové zásoby
     const n = free > 0 ? Math.min(free, Math.ceil(free * pct / 100)) : 0;
     rows.push({ item, pct, want: n, n, f: 0, price: 0, coins: 0 });
     want += n;
@@ -2008,6 +2233,21 @@ export function tradeRound(farm, v, t) {
   const fs = fxMult(farm, 'sell', t);   // v36: události mění výkupní ceny
   for (const r of rows) { r.price = sellPrice(r.item, t); r.coins = Math.round(r.n * r.price * k * fs); coins += r.coins; n += r.n; }
   return { rows, n, coins, cap, want };
+}
+// v46 (etapa C): co skladník neprodá kvůli cílovým zásobám výroben (i potvrzeným plánům): výrobek do výše cíle
+// a suroviny na dávky, které do cíle ještě chybí. Bez zapnutého plánovače se nic nemění.
+export function planHeld(farm) {
+  const held = {};
+  if (!ecoOn('eco_planner')) return held;
+  for (const o of farm.objects) for (const [rid, n] of o.target || []) {
+    const r = RECIPES[rid];
+    if (!r || !(n > 0)) continue;
+    const out = recipeOut(r), s = stockOf(farm, o, out);
+    held[out] = (held[out] || 0) + Math.min(n, have(farm, out));
+    const runs = Math.ceil(Math.max(0, n - s) / recipeQty(r));
+    for (const [x, k] of Object.entries(r.in)) held[x] = (held[x] || 0) + runs * k;
+  }
+  return held;
 }
 function tradeNow(farm, v, t) {
   const tr = tradeRound(farm, v, t);
@@ -2254,9 +2494,11 @@ export function availableItems(st = 99, cook = 99, fish = 99) {
   for (let more = true; more;) {
     more = false;
     for (const r of Object.values(RECIPES)) {
-      if (ok.has(r.id) || r.st > st || r.cook > cook) continue;
-      if (Object.keys(r.in).every(x => ok.has(x))) { ok.add(r.id); more = true; }
+      const out = recipeOut(r);   // v46: alternativní recept vyrábí existující předmět
+      if (ok.has(out) || r.st > st || r.cook > cook) continue;
+      if (Object.keys(r.in).every(x => ok.has(x))) { ok.add(out); more = true; }
     }
+    for (const b of BYPRODUCTS) if (!ok.has(b.id) && b.from.some(x => ok.has(x))) { ok.add(b.id); more = true; }   // v46: vedlejší produkt s výrobkem
   }
   AV_CACHE.set(key, ok);
   return ok;
@@ -2410,6 +2652,8 @@ export const ERRORS = {
   plot_ready: 'Úroda je zralá – sklidi ji.',
   plot_busy: 'Na tomhle poli zrovna pracuje tvůj tým.',
   old_client: 'Je tu nová verze hry – načítám ji.',
+  pod_done: 'Tahle ohrada už podestýlku ze slámy má.',
+  plan_blocked: 'Plán má zamčený recept, chybějící výrobnu nebo surovinu, kterou ještě nemůžeš získat.',
   help_full: 'Kamarádovi už dnes pomohli tři lidé. Zkus to zítra.',
   help_nothing: 'Na farmě kamaráda teď není co urychlit – nic se nevyrábí ani neroste.',
   help_used: 'Dnes už jsi pomohl. Další pomoc můžeš poslat zítra.',
@@ -2484,6 +2728,7 @@ export const ERRORS = {
 // lim = { left } – společný rozpočet úkonů vesničanů (server ho dává jeden na celý požadavek)
 export function applyAction(farm, a, now, lim) {
   normalize(farm);
+  if (BYPRODUCTS.length && !(farm.byFrom > 0)) farm.byFrom = now;   // v46: vedlejší produkty u farmy až od prvního načtení s nimi (ne zpětně za offline)
   ensureQuests(farm, now);
   let c = farm.coins;
   if (farm.helper) { runHelper(farm, now); ledger(farm, 'other', farm.coins - c, now); }
@@ -2676,13 +2921,14 @@ function doAction(farm, a, now) {
         // dávka od týmu (q.n kusů) se odnáší po částech, kolik se vejde; XP za ni dostane hráč jen z části (TEAM.playerXp)
         while (o.queue.length && o.queue[0].end <= now) {
           anyReady = true;
-          const q = o.queue[0], per = recipeQty(RECIPES[q.r]), left = q.n || 1;
-          const fit = Math.min(left, Math.floor(spaceFor(farm, q.r) / per));
-          if (fit < 1) { full = true; seedsFull = isSeedItem(q.r); break; }
-          addItem(farm, q.r, fit * per, !!q.t || !!villHook);
-          logMade(o, q.r, fit * per, now);
-          items.push({ item: q.r, qty: fit * per });
-          if (q.t) xpTeam += RECIPES[q.r].xp * fit; else xp += RECIPES[q.r].xp * fit;
+          const q = o.queue[0], rq = RECIPES[q.r], out = recipeOut(rq), per = recipeQty(rq), left = q.n || 1;   // v46: výrobek receptu (out)
+          const fit = Math.min(left, Math.floor(spaceFor(farm, out) / per));
+          if (fit < 1) { full = true; seedsFull = isSeedItem(out); break; }
+          addItem(farm, out, fit * per, !!q.t || !!villHook);
+          logMade(o, out, fit * per, now);
+          items.push({ item: out, qty: fit * per });
+          for (const b of byproductTick(farm, rq, q, fit)) items.push(b);   // v46: vedlejší produkty za hotové dávky
+          if (q.t) xpTeam += rq.xp * fit; else xp += rq.xp * fit;
           if (fit < left) { q.n = left - fit; full = true; break; }
           o.queue.shift();
         }
@@ -3061,6 +3307,41 @@ function doAction(farm, a, now) {
       if (i >= 0) T[i][1] = a.n;
       else if (T.length >= PLAN_ROWS) return fail('plan_rows');
       else T.push([a.key, a.n]);
+      return { ok: true };
+    }
+    case 'planApply': {   // v46 (etapa C): potvrzený plán řetězce → cílové zásoby výroben (atomicky: buď všechny, nebo nic)
+      if (!ecoOn('eco_planner')) return fail('bad_action');
+      if (typeof a.item !== 'string' || !getItem(a.item) || !isInt(a.qty) || a.qty < 1 || a.qty > PLAN_MAX_QTY) return fail('bad_action');
+      const pref = PLAN_PREFS.some(p => p[0] === a.pref) ? a.pref : 'cena', pick = {};
+      if (a.pick && typeof a.pick === 'object') for (const [k, v] of Object.entries(a.pick)) if (typeof v === 'string' && own(RECIPES, v) && recipeOut(RECIPES[v]) === k) pick[k] = v;
+      const p = planChain(farm, a.item, a.qty, { pref, pick, orders: !!a.orders, now });
+      if (!p.steps.length) return fail('nothing');
+      if (p.blocked) return fail('plan_blocked');
+      const set = [];
+      for (const s of p.steps) {
+        const o = farm.objects.find(x => x.kind === RECIPES[s.rid].building);
+        const T = o.target || [], cur = T.find(x => x[0] === s.rid);
+        const n = Math.min(9999, stockOf(farm, o, s.out) + s.units);
+        if (!cur && T.length + set.filter(x => x[0] === o && !x[3]).length >= PLAN_ROWS) return fail('plan_rows');
+        set.push([o, s.rid, cur ? Math.max(cur[1], n) : n, !!cur]);   // starší vyšší cíl zůstane
+      }
+      for (const [o, rid, n] of set) {
+        const T = o.target || (o.target = []), cur = T.find(x => x[0] === rid);
+        if (cur) cur[1] = n; else T.push([rid, n]);
+      }
+      return { ok: true, set: set.map(([o, rid, n]) => [o.id, rid, n]) };
+    }
+    case 'penStraw': {    // v46 (etapa D): jednorázová dobrovolná podestýlka ze slámy do ohrady
+      if (!ecoOn(ECO_STRAW.flag)) return fail('bad_action');
+      const o = findObject(farm, a.id);
+      if (!o || BUILDINGS[o.kind].type !== 'pen') return fail('no_object');
+      if (o.pod) return fail('pod_done');
+      if (statekLevel(farm) < ECO_STRAW.st) return fail('statek_low');
+      if (have(farm, ECO_STRAW.item) < ECO_STRAW.qty) return fail('no_inputs');
+      if (farm.coins < ECO_STRAW.coins) return fail('no_coins');
+      takeItem(farm, ECO_STRAW.item, ECO_STRAW.qty);
+      farm.coins -= ECO_STRAW.coins;
+      o.pod = 1;
       return { ok: true };
     }
     case 'planOrder': {    // výrobna: posunout cíl v pořadí (d = -1 nahoru, 1 dolů)

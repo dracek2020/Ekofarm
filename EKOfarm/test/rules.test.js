@@ -1184,7 +1184,7 @@ test('v9: ekonomika – každá plodina a ovoce má využití a vše má cenu', 
       assert.ok(3 * ITEMS[r.id].price >= ITEMS[cid].price, r.id);
       continue;
     }
-    const out = ITEMS[r.id].price * (r.qty || 1);
+    const out = ITEMS[r.out || r.id].price * (r.qty || 1);   // v46: alternativní recept vyrábí existující předmět (out)
     const inp = Object.entries(r.in).reduce((n, [id, q]) => n + ITEMS[id].price * q, 0);
     assert.ok(out > inp, 'výrobek se musí vyplatit: ' + r.id);
   }

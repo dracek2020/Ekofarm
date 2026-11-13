@@ -5,26 +5,30 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 ## Plodiny (malé pole, výnos 2 ks)
 | Plodina | Druh | Úroveň | Osivo | Růst | Cena/ks | Použití |
 |---|---|---|---|---|---|---|
-| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Návnada, Semena pšenice |
-| Ředkvička | Zelenina | 1 | 2 | 2 min | 4 | Zeleninový salát, Semena ředkvička |
-| Salát | Zelenina | 2 | 2 | 3 min | 5 | Krmivo pro prasata, Zeleninový salát, Semena salát |
+| Pšenice | Obilí a olejniny | 1 | 1 | 1 min | 3 | Krmivo pro slepice, Krmivo pro ovce, Chléb, Koláč, Mouka, Návnada, Sójový chléb, Ovesné sušenky, Semena pšenice |
+| Ředkvička | Zelenina | 1 | 2 | 2 min | 4 | Zeleninový salát, Farmářský sendvič, Zeleninová pomazánka, Semena ředkvička |
+| Salát | Zelenina | 2 | 2 | 3 min | 5 | Krmivo pro prasata, Zeleninový salát, Farmářský sendvič, Semena salát |
 | Kukuřice | Obilí a olejniny | 2 | 3 | 5 min | 8 | Krmivo pro slepice, Krmivo pro krávy, Krmivo pro prasata, Návnada, Semena kukuřice |
-| Rajče | Zelenina | 3 | 4 | 8 min | 9 | Zeleninový salát, Kečup, Lečo, Semena rajče |
+| Rajče | Zelenina | 3 | 4 | 8 min | 9 | Zeleninový salát, Kečup, Lečo, Zelenina v oleji, Semena rajče |
 | Mrkev | Zelenina | 3 | 5 | 10 min | 12 | Krmivo pro krávy, Mrkvová šťáva, Semena mrkev |
-| Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky, Semena okurka |
-| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Rybí polévka, Semena brambory |
+| Okurka | Zelenina | 4 | 4 | 9 min | 10 | Zeleninový salát, Kyselé okurky, Koprové okurky, Semena okurka |
+| Brambory | Zelenina | 4 | 6 | 15 min | 15 | Krmivo pro prasata, Hrachová polévka, Rybí polévka, Bramboráky, Bylinková rybí polévka, Farmářská hostina, Semena brambory |
 | Jahody | Ovoce | 4 | 6 | 15 min | 15 | Jahodový džem, Ovocný jogurt, Jahodové knedlíky, Ovocná zmrzlina, Semena jahody |
 | Cibule | Zelenina | 5 | 5 | 12 min | 11 | Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Bolen na bylinkách, Semena cibule |
-| Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce, Semena sója |
-| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Pečený lín, Amur na grilu, Semena česnek |
+| Sója | Obilí a olejniny | 5 | 8 | 20 min | 18 | Krmivo pro ovce, Sójová mouka, Sójový olej, Semena sója |
+| Oves | Obilí a olejniny | 5 | 9 | 22 min | 20 | Ovesné vločky, Krmivo pro slepice, Semena oves |
+| Česnek | Zelenina | 6 | 6 | 15 min | 14 | Kyselé okurky, Klobása, Pečený lín, Amur na grilu, Hrachová pomazánka, Koprové okurky, Semena česnek |
 | Řepka | Obilí a olejniny | 6 | 10 | 25 min | 22 | Řepkový olej, Semena řepka |
-| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo, Sumcový guláš, Amur na grilu, Semena paprika |
+| Paprika | Zelenina | 7 | 7 | 18 min | 16 | Lečo, Sumcový guláš, Amur na grilu, Zelenina v oleji, Farmářská hostina, Semena paprika |
 | Slunečnice | Obilí a olejniny | 7 | 12 | 30 min | 26 | Slunečnicový olej, Semena slunečnice |
 | Zelí | Zelenina | 8 | 8 | 25 min | 20 | Krmivo pro ovce, Kysané zelí, Semena zelí |
 | Cukrová řepa | Zelenina | 8 | 14 | 40 min | 30 | Cukr, Semena cukrová řepa |
-| Hrách | Zelenina | 9 | 9 | 25 min | 21 | Hrachová polévka, Semena hrách |
+| Hrách | Zelenina | 9 | 9 | 25 min | 21 | Hrachová polévka, Hrachová pomazánka, Semena hrách |
 | Meloun | Ovoce | 9 | 14 | 45 min | 34 | Melounový nápoj, Semena meloun |
-| Dýně | Zelenina | 10 | 12 | 40 min | 30 | Dýňová polévka, Semena dýně |
+| Dýně | Zelenina | 10 | 12 | 40 min | 30 | Dýňová polévka, Dýňové placičky, Semena dýně |
+| Petržel | Zelenina | 11 | 6 | 16 min | 15 | Bylinková rybí polévka, Kapr s petrželí, Mistrovský rybí talíř, Semena petržel |
+| Kopr | Zelenina | 11 | 7 | 18 min | 16 | Koprové okurky, Bolen s koprem, Semena kopr |
+| Len | Obilí a olejniny | 13 | 14 | 35 min | 30 | Lněný olej, Lněná příze, Semena len |
 
 ## Sad (stromy a keře)
 | Strom/keř | Úroveň | Sazenice | První úroda | Další | Úrod × kusů | Ovoce cena | Použití |
@@ -35,13 +39,13 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 | Rybíz | 5 | 35 | 25 min | 18 min | 5 × 3 | 9 | Rybízová marmeláda, Ovocný čaj, Sazenice: Rybíz |
 | Švestka | 5 | 80 | 1 h | 40 min | 4 × 4 | 12 | Švestková povidla, Sušené švestky, Švestkové knedlíky, Sazenice: Švestka |
 | Angrešt | 6 | 40 | 30 min | 20 min | 5 × 3 | 10 | Angreštový kompot, Angreštový koláč, Sazenice: Angrešt |
-| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč, Třešňová bublanina, Třešňový džus, Ovocný salát, Ovocný dort, Sazenice: Třešeň |
+| Třešeň | 6 | 120 | 1.5 h | 1 h | 4 × 4 | 18 | Třešňový koláč, Třešňová bublanina, Třešňový džus, Ovocný salát, Ovocný dort, Třešňový ovesný koláč, Sazenice: Třešeň |
 | Borůvčí | 7 | 50 | 35 min | 25 min | 5 × 4 | 9 | Borůvkové muffiny, Sušené borůvky, Sazenice: Borůvčí |
-| Višeň | 7 | 100 | 1.3 h | 50 min | 4 × 4 | 16 | Višňový džus, Sazenice: Višeň |
+| Višeň | 7 | 100 | 1.3 h | 50 min | 4 × 4 | 16 | Višňový džus, Višňový koláč, Višňová marmeláda, Slavnostní ovocný dort, Sazenice: Višeň |
 | Meruňka | 8 | 160 | 2 h | 1.5 h | 5 × 4 | 20 | Meruňkový džem, Sušené meruňky, Sazenice: Meruňka |
 | Vinná réva | 9 | 90 | 1 h | 45 min | 6 × 4 | 16 | Hroznový mošt, Rozinky, Sazenice: Vinná réva |
 | Broskvoň | 10 | 200 | 2.5 h | 1.7 h | 5 × 4 | 24 | Broskvový kompot, Broskvový sirup, Sazenice: Broskvoň |
-| Ořešák | 11 | 240 | 3 h | 2 h | 5 × 5 | 22 | Ořechový koláč, Sazenice: Ořešák |
+| Ořešák | 11 | 240 | 3 h | 2 h | 5 × 5 | 22 | Ořechový koláč, Medové ořechy, Ořechový krém, Sazenice: Ořešák |
 
 ## Zvířata
 | Zvíře | Úroveň | Cena | Krmivo | Produkt | Čas | Cena produktu |
@@ -54,18 +58,18 @@ Výkup ve skladu platí **50 % ceny** × tržní výkyv (0,7–1,4×). Stánek v
 ## Ryby (rybník)
 | Ryba | Úroveň | Cena | Obtížnost | Použití |
 |---|---|---|---|---|
-| Plotice | 3 | 8 | 15 % | Rybí polévka |
+| Plotice | 3 | 8 | 15 % | Rybí polévka, Bylinková rybí polévka |
 | Karas | 3 | 7 | 10 % | Rybí karbanátky |
-| Kapr | 4 | 14 | 30 % | Smažený kapr |
+| Kapr | 4 | 14 | 30 % | Smažený kapr, Kapr s petrželí |
 | Cejn | 5 | 12 | 30 % | Rybí karbanátky |
 | Lín | 5 | 16 | 35 % | Pečený lín |
 | Okoun | 6 | 18 | 45 % | Rybí prsty |
 | Pstruh | 8 | 24 | 55 % | Uzený pstruh |
 | Amur | 9 | 28 | 60 % | Amur na grilu |
-| Candát | 10 | 30 | 65 % | Candát na másle |
+| Candát | 10 | 30 | 65 % | Candát na másle, Mistrovský rybí talíř |
 | Úhoř | 11 | 34 | 70 % | Uzený úhoř |
-| Štika | 12 | 36 | 75 % | Štika na cibulce |
-| Bolen | 13 | 40 | 80 % | Bolen na bylinkách |
+| Štika | 12 | 36 | 75 % | Štika na cibulce, Mistrovský rybí talíř |
+| Bolen | 13 | 40 | 80 % | Bolen na bylinkách, Bolen s koprem |
 | Sumec | 15 | 50 | 90 % | Sumcový guláš |
 | Jeseter | 18 | 70 | 95 % | Kaviár |
 
@@ -119,7 +123,7 @@ Rybník: 10 min na rybu, 1 návnada na hod. Včelín: plástev (12 mincí) za 20
 | Chléb se semínky | Pekárna | 7 | 2× Mouka, 2× Semena slunečnice | 15 min | 87 |
 | Pražená semínka | Mlýn | 7 | 4× Semena slunečnice | 8 min | 68 |
 | Dýňový olej | Olejna | 10 | 4× Semena dýně | 15 min | 75 |
-| Návnada | Krmivárna | 3 | 1× Pšenice, 1× Kukuřice | 2 min | 6 |
+| Návnada | Krmivárna | 3 | 1× Pšenice, 1× Kukuřice | 2 min | 18 |
 | Med | Medárna | 5 | 2× Plástev medu | 5 min | 36 |
 | Svíčka z vosku | Medárna | 6 | 3× Plástev medu | 10 min | 55 |
 | Medovník | Pekárna | 7 | 2× Mouka, 1× Med, 2× Vejce | 25 min | 195 |
@@ -157,6 +161,38 @@ Rybník: 10 min na rybu, 1 návnada na hod. Včelín: plástev (12 mincí) za 20
 | Jahodové knedlíky | Cukrárna | 11 | 1× Mouka, 2× Jahody, 1× Smetana | 15 min | 190 |
 | Ovocná zmrzlina | Cukrárna | 12 | 1× Mléko, 1× Smetana, 2× Jahody | 15 min | 255 |
 | Ovocný dort | Cukrárna | 13 | 2× Mouka, 2× Vejce, 1× Smetana, 1× Maliny, 1× Třešně | 30 min | 304 |
+| Farmářský sendvič | Pekárna | 2 | 1× Chléb, 1× Salát, 1× Ředkvička | 8 min | 42 |
+| Sójová mouka | Mlýn | 5 | 3× Sója | 6 min | 73 |
+| Sójový chléb | Pekárna | 5 | 1× Sójová mouka, 2× Pšenice | 14 min | 111 |
+| Zeleninová pomazánka | Mlékárna | 7 | 1× Smetana, 2× Ředkvička | 12 min | 140 |
+| Medové ořechy | Medárna | 6 | 2× Ořechy, 1× Med | 12 min | 110 |
+| Hrachová pomazánka | Konzervárna | 8 | 2× Hrách, 1× Česnek | 14 min | 83 |
+| Bramboráky | Pekárna | 6 | 2× Brambory, 1× Vejce, 1× Řepkový olej | 18 min | 176 |
+| Zelenina v oleji | Konzervárna | 9 | 1× Paprika, 1× Rajče, 1× Slunečnicový olej | 22 min | 184 |
+| Sójový olej | Olejna | 8 | 3× Sója | 14 min | 81 |
+| Višňový koláč | Pekárna | 7 | 1× Mouka, 2× Višně, 1× Vejce | 18 min | 121 |
+| Višňová marmeláda | Marmeládárna | 9 | 3× Višně, 1× Cukr | 17 min | 177 |
+| Ořechový krém | Cukrárna | 16 | 2× Ořechy, 1× Med, 1× Smetana | 18 min | 232 |
+| Dýňové placičky | Pekárna | 7 | 1× Dýně, 1× Vejce, 1× Řepkový olej | 16 min | 174 |
+| Ovesné vločky | Mlýn | 5 | 3× Oves | 7 min | 81 |
+| Ovesné sušenky | Pekárna | 6 | 1× Ovesné vločky, 1× Pšenice, 1× Vejce | 15 min | 160 |
+| Třešňový ovesný koláč | Pekárna | 7 | 2× Třešně, 1× Ovesné vločky, 1× Vejce | 20 min | 204 |
+| Ovesná krmná směs → Krmivo pro slepice | Krmivárna | 2 | 1× Oves, 1× Kukuřice | 4 min | 42 |
+| Lněný olej | Olejna | 9 | 3× Len | 15 min | 125 |
+| Lněná příze | Textilka | 13 | 3× Len | 18 min | 128 |
+| Lněná tkanina | Textilka | 15 | 2× Lněná příze | 25 min | 334 |
+| Lněný ubrus | Textilka | 19 | 2× Lněná tkanina | 35 min | 839 |
+| Koprové okurky | Konzervárna | 8 | 2× Okurka, 1× Česnek, 1× Kopr | 18 min | 80 |
+| Bylinková rybí polévka | Rybárna | 9 | 2× Plotice, 1× Brambory, 1× Petržel | 18 min | 75 |
+| Kapr s petrželí | Rybárna | 9 | 1× Kapr, 1× Máslo, 1× Petržel | 22 min | 359 |
+| Bolen s koprem | Rybárna | 13 | 1× Bolen, 1× Máslo, 1× Kopr | 25 min | 394 |
+| Krmivo pro slepice s otrubami → Krmivo pro slepice | Krmivárna | 2 | 1× Otruby, 1× Pšenice, 1× Kukuřice | 3 min | 21 |
+| Krmivo pro prasata s pokrutinami → Krmivo pro prasata | Krmivárna | 4 | 1× Pokrutiny, 1× Brambory, 1× Kukuřice | 6 min | 59 |
+| Krmivo pro krávy s řepnými řízky → Krmivo pro krávy | Krmivárna | 5 | 1× Řepné řízky, 1× Kukuřice, 1× Mrkev | 6 min | 41 |
+| Ovocná krmná směs pro prasata → Krmivo pro prasata | Krmivárna | 6 | 1× Ovocné výlisky, 1× Brambory, 1× Kukuřice | 6 min | 59 |
+| Mistrovský rybí talíř | Rybárna | 20 | 1× Candát, 1× Štika, 1× Řepkový olej, 1× Petržel | 40 min | 217 |
+| Slavnostní ovocný dort | Cukrárna | 30 | 2× Mouka, 2× Vejce, 1× Smetana, 2× Višně, 1× Cukr | 45 min | 427 |
+| Farmářská hostina | Uzenářství | 34 | 1× Klobása, 1× Uzené maso, 2× Brambory, 1× Paprika | 50 min | 762 |
 
 ## Semena a sazenice
 Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mince). Sázení bere nejdřív semena, pak mince.
@@ -175,6 +211,7 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | 3× Semena jahody | 2× Jahody | 2 min | 6 |
 | 3× Semena cibule | 2× Cibule | 2 min | 5 |
 | 3× Semena sója | 2× Sója | 3 min | 8 |
+| 3× Semena oves | 2× Oves | 3 min | 9 |
 | 3× Semena česnek | 2× Česnek | 2 min | 6 |
 | 3× Semena řepka | 2× Řepka | 3 min | 10 |
 | 3× Semena paprika | 2× Paprika | 3 min | 7 |
@@ -184,6 +221,9 @@ Semenárna: 2 plodiny → 3 balíčky semen (balíček má cenu jako osivo za mi
 | 3× Semena hrách | 2× Hrách | 3 min | 9 |
 | 3× Semena meloun | 2× Meloun | 5 min | 14 |
 | 3× Semena dýně | 2× Dýně | 4 min | 12 |
+| 3× Semena petržel | 2× Petržel | 2 min | 6 |
+| 3× Semena kopr | 2× Kopr | 3 min | 7 |
+| 3× Semena len | 2× Len | 4 min | 14 |
 | 1× Sazenice: Jabloň | 3× Jablko | 10 min | 40 |
 | 1× Sazenice: Malinový keř | 3× Maliny | 8 min | 30 |
 | 1× Sazenice: Hrušeň | 3× Hruška | 13 min | 60 |

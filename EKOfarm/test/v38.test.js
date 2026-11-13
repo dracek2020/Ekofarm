@@ -101,7 +101,7 @@ test('recepty: první v každé výrobně hned, další podle vaření', () => {
   const by = {};
   for (const r of Object.values(RECIPES)) (by[r.building] = by[r.building] || []).push(r);
   for (const [b, rs] of Object.entries(by)) assert.ok(rs.some(r => r.cook === 1), `${b}: aspoň jeden recept hned`);
-  for (const r of Object.values(RECIPES)) if (/^(krmivo_|navnada$|s_|z_)/.test(r.id)) assert.equal(r.cook, 1, r.id);
+  for (const r of Object.values(RECIPES)) if (/^(krmivo_|navnada$|s_|z_)/.test(r.id) && !r.out) assert.equal(r.cook, 1, r.id);   // v46: alternativní směsi (out) mají vlastní Vaření
   const hard = Object.values(RECIPES).filter(r => PRODUCTS[r.id] && r.cook > 1);
   assert.ok(hard.length > 10);
   for (const r of hard) assert.equal(recipeOk(f, r), false, r.id);

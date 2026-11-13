@@ -1,0 +1,33 @@
+﻿ID návrhu;Název výrobku / receptu;Budova;Statek od;Vaření od;Čas min návrh;Vstupy;Výstup;Kusů;Etapa;Stav
+eco_rec_farmarsky_sendvic;Farmářský sendvič;Pekárna;2;1;8;1× Chléb + 1× Salát + 1× Ředkvička;eco_item_farmarsky_sendvic;1;B;NÁVRH — nezavedeno
+eco_rec_sojova_mouka;Sójová mouka;Mlýn;3;2;6;3× Sója;eco_item_sojova_mouka;1;B;NÁVRH — nezavedeno
+eco_rec_sojovy_chleb;Sójový chléb;Pekárna;4;6;14;1× eco_item_sojova_mouka + 2× Pšenice;eco_item_sojovy_chleb;1;B;NÁVRH — nezavedeno
+eco_rec_zeleninova_pomazanka;Zeleninová pomazánka;Mlékárna;5;3;12;1× Smetana + 2× Ředkvička;eco_item_zeleninova_pomazanka;1;B;NÁVRH — nezavedeno
+eco_rec_medove_orechy;Medové ořechy;Medárna;6;3;12;2× Ořechy + 1× Med;eco_item_medove_orechy;1;B;NÁVRH — nezavedeno
+eco_rec_hrachova_pomazanka;Hrachová pomazánka;Konzervárna;6;5;14;2× Hrách + 1× Česnek;eco_item_hrachova_pomazanka;1;B;NÁVRH — nezavedeno
+eco_rec_bramboraky;Bramboráky;Pekárna;7;7;18;2× Brambory + 1× Vejce + 1× Řepkový olej;eco_item_bramboraky;1;B;NÁVRH — nezavedeno
+eco_rec_zelenina_v_oleji;Zelenina v oleji;Konzervárna;7;7;22;1× Paprika + 1× Rajče + 1× Slunečnicový olej;eco_item_zelenina_v_oleji;1;B;NÁVRH — nezavedeno
+eco_rec_sojovy_olej;Sójový olej;Olejna;7;4;14;3× Sója;eco_item_sojovy_olej;1;B;NÁVRH — nezavedeno
+eco_rec_visnovy_kolac;Višňový koláč;Pekárna;4;8;18;1× Mouka + 2× Višně + 1× Vejce;eco_item_visnovy_kolac;1;B;NÁVRH — nezavedeno
+eco_rec_visnova_marmelada;Višňová marmeláda;Marmeládárna;8;6;17;3× Višně + 1× Cukr;eco_item_visnova_marmelada;1;B;NÁVRH — nezavedeno
+eco_rec_orechovy_krem;Ořechový krém;Cukrárna;8;8;18;2× Ořechy + 1× Med + 1× Smetana;eco_item_orechovy_krem;1;B;NÁVRH — nezavedeno
+eco_rec_dynove_placicky;Dýňové placičky;Pekárna;7;8;16;1× Dýně + 1× Vejce + 1× Řepkový olej;eco_item_dynove_placicky;1;B;NÁVRH — nezavedeno
+eco_rec_ovesne_vlocky;Ovesné vločky;Mlýn;3;2;7;3× eco_crop_oves;eco_item_ovesne_vlocky;1;E;NÁVRH — nezavedeno
+eco_rec_ovesne_susenky;Ovesné sušenky;Pekárna;4;7;15;1× eco_item_ovesne_vlocky + 1× Pšenice + 1× Vejce;eco_item_ovesne_susenky;1;E;NÁVRH — nezavedeno
+eco_rec_tresnovy_ovesny_kolac;Třešňový ovesný koláč;Pekárna;4;9;20;2× Třešně + 1× eco_item_ovesne_vlocky + 1× Vejce;eco_item_tresnovy_ovesny_kolac;1;E;NÁVRH — nezavedeno
+eco_rec_ovesne_krmivo;Ovesná krmná směs;Krmivárna;3;1;4;2× eco_crop_oves + 1× Kukuřice;Krmivo pro slepice;1;E;NÁVRH — nezavedeno
+eco_rec_lneny_olej;Lněný olej;Olejna;7;5;15;3× eco_crop_len;eco_item_lneny_olej;1;E;NÁVRH — nezavedeno
+eco_rec_lnena_prize;Lněná příze;Textilka;10;6;18;3× eco_crop_len;eco_item_lnena_prize;1;E;NÁVRH — nezavedeno
+eco_rec_lnena_tkanina;Lněná tkanina;Textilka;10;9;25;2× eco_item_lnena_prize;eco_item_lnena_tkanina;1;E;NÁVRH — nezavedeno
+eco_rec_lneny_ubrus;Lněný ubrus;Textilka;10;14;35;2× eco_item_lnena_tkanina;eco_item_lneny_ubrus;1;E;NÁVRH — nezavedeno
+eco_rec_koprove_okurky;Koprové okurky;Konzervárna;6;6;18;2× Okurka + 1× Česnek + 1× eco_crop_kopr;eco_item_koprove_okurky;1;E;NÁVRH — nezavedeno
+eco_rec_bylinkova_rybi_polevka;Bylinková rybí polévka;Rybárna;6;8;18;2× Plotice + 1× Brambory + 1× eco_crop_petrzel;eco_item_bylinkova_rybi_polevka;1;E;NÁVRH — nezavedeno
+eco_rec_kapr_s_petrzeli;Kapr s petrželí;Rybárna;6;8;22;1× Kapr + 1× Máslo + 1× eco_crop_petrzel;eco_item_kapr_s_petrzeli;1;E;NÁVRH — nezavedeno
+eco_rec_bolen_s_koprem;Bolen s koprem;Rybárna;6;15;25;1× Bolen + 1× Máslo + 1× eco_crop_kopr;eco_item_bolen_s_koprem;1;E;NÁVRH — nezavedeno
+eco_rec_krmivo_s_otrubami;Krmivo pro slepice s otrubami (alternativní recept);Krmivárna;3;1;3;1× eco_item_otruby + 1× Pšenice + 1× Kukuřice;Krmivo pro slepice;1;D;NÁVRH — nezavedeno
+eco_rec_krmivo_s_pokrutinami;Krmivo pro prasata s pokrutinami (alternativní recept);Krmivárna;7;4;6;1× eco_item_pokrutiny + 1× Brambory + 1× Kukuřice;Krmivo pro prasata;1;D;NÁVRH — nezavedeno
+eco_rec_krmivo_s_rizky;Krmivo pro krávy s řepnými řízky (alternativní recept);Krmivárna;8;5;6;1× eco_item_repne_rizky + 1× Kukuřice + 1× Mrkev;Krmivo pro krávy;1;D;NÁVRH — nezavedeno
+eco_rec_krmivo_s_vylisky;Ovocná krmná směs pro prasata (alternativní recept);Krmivárna;8;7;6;1× eco_item_ovocne_vylisky + 1× Brambory + 1× Kukuřice;Krmivo pro prasata;1;D;NÁVRH — nezavedeno
+eco_rec_mistrovsky_rybi_talir;Mistrovský rybí talíř;Rybárna;7;25;40;1× Candát + 1× Štika + 1× Řepkový olej + 1× eco_crop_petrzel;eco_item_mistrovsky_rybi_talir;1;F;NÁVRH — nezavedeno
+eco_rec_slavnostni_ovocny_dort;Slavnostní ovocný dort;Cukrárna;8;30;45;2× Mouka + 2× Vejce + 1× Smetana + 2× Višně + 1× Cukr;eco_item_slavnostni_ovocny_dort;1;F;NÁVRH — nezavedeno
+eco_rec_farmarska_hostina;Farmářská hostina;Uzenářství;8;40;50;1× Klobása + 1× Uzené maso + 2× Brambory + 1× Paprika;eco_item_farmarska_hostina;1;F;NÁVRH — nezavedeno

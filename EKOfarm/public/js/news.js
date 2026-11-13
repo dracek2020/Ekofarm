@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 46, title: 'Nové recepty, plán výroby, oves, len, petržel a kopr', items: [
+    'Nové recepty z plodin, které dosud ležely ve skladu: Farmářský sendvič (už od Statku 2), Sójová mouka, Sójový chléb, Sójový olej, Zeleninová a Hrachová pomazánka, Bramboráky, Zelenina v oleji, Dýňové placičky, Medové ořechy, Ořechový krém, Višňový koláč a Višňová marmeláda.',
+    'Nové plodiny: Oves (Statek 3), Petržel a Kopr (Statek 6) a Len (Statek 7) – na malém i velkém poli, semena v Semenárně. Z nich Ovesné vločky, sušenky a třešňový ovesný koláč, Lněný olej a v Textilce lněná příze, tkanina a ubrus, Koprové okurky, Bylinková rybí polévka, Kapr s petrželí a Bolen s koprem.',
+    'Plán výroby v Řídicím centru: vybereš výrobek a počet a uvidíš celý řetězec až na suroviny, co máš, co chybí a jak dlouho to potrvá. Potvrzením nastavíš výrobnám cílové zásoby.',
+    'Vedlejší produkty: z mouky občas zbudou otruby, z olejů pokrutiny, z cukru řepné řízky a z ovocných šťáv výlisky. Z nich jsou levnější krmné směsi v Krmivárně – krmivo je pořád stejné.',
+    'Sláma z lisu se hodí na podestýlku: jednorázové dobrovolné vylepšení ohrady (od Statku 4) zkrátí krmný cyklus o 3 %.',
+    'Mistrovské recepty pro zkušené kuchaře: Mistrovský rybí talíř (Vaření 25), Slavnostní ovocný dort (30) a Farmářská hostina (40). Na Vaření 50 čeká ocenění Mistr údolní kuchyně.',
+    'Dosavadní recepty, ceny a vylepšení budov se nemění.',
+  ] },
   { v: 45, title: 'Ovoce: Sušárna, Cukrárna a nové recepty', items: [
     'Nová budova Sušárna ovoce (od Statku 2): křížaly, sušené hrušky, malinový čaj a se Statkem dál sušené švestky, ovocný čaj, sušené borůvky, sušené meruňky a rozinky.',
     'Nové ovocné recepty: v Pekárně jablečný závin, švestkové knedlíky, třešňová bublanina a angreštový koláč, v Džusárně malinový sirup, třešňový džus a broskvový sirup, v Mlékárně ovocný jogurt.',
