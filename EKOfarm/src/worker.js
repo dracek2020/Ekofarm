@@ -1,5 +1,5 @@
 // EKOfarm – Cloudflare Worker (API). Statické soubory z public/ servíruje Workers Assets.
-import { newFarm, applyAction, normalize, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V,
+import { newFarm, applyAction, normalize, publicFarm, marketTake, marketGive, marketPayout, MARKET_SLOTS, ERRORS, ITEMS, MACHINES, readyEvents, VILL_BUDGET, isOldSeason, RESET_V,
   weekDue, weekRoll, weekNo, weekTask, WEEK_PRIZES, helpUsed, helpApply, helpReward, CLIENT_MIN } from '../public/js/rules.js';
 import { sendPush, pushReady } from './webpush.js';
 import { verifyGoogleToken } from './google.js';
@@ -310,7 +310,7 @@ async function actions(req, env, user) {
     const extra = paySales(env, user.id, row.farm, sales, now);
     const before = onlyTick && !sales.length && !row.reset && !rolled ? sig(row.farm) : null;
     const lim = { left: VILL_BUDGET };   // práce vesničanů: jeden rozpočet na celý požadavek (zbytek dožene další požadavek)
-    const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim));
+    const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim, SRV));   // v47: SRV = tajný výběr ryby
     // nic se nezměnilo (žádná akce neprošla; nebo jen tick, při kterém tým nic nedokončil ani nezačal) → neukládat
     if ((!results.some(r => r.ok) || (before !== null && sig(row.farm) === before)) && !sales.length && !row.reset && !rolled) return json({ farm: row.farm, now, results });
     if (await saveFarm(env, user.id, row, now, extra)) return json({ farm: row.farm, now, results, sales });
@@ -455,9 +455,14 @@ export async function pushRound(env, now = Date.now()) {
   return sent;
 }
 
+// v47: serverový kontext pravidel – náhoda, kterou prohlížeč nezná (výběr ryby, semínko minihry)
+const SRV = { rand: () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 4294967296; } };
+
 // ---------- pomocné ----------
 
+// v47: farma jde do prohlížeče vždy bez tajných údajů serveru (farm.sx – ryba na háčku) – i při návštěvě a přihlášení
 function json(data, status = 200) {
+  if (data && data.farm && typeof data.farm === 'object') data = { ...data, farm: publicFarm(data.farm) };
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },

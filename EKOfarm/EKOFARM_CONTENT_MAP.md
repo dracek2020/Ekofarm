@@ -1,6 +1,6 @@
 # EKOfarm – mapa obsahu rozšíření (v46)
 
-Vygenerováno `node tools/eco-docs.mjs` ze skutečných pravidel. Přepínače (public/js/eco-config.js): `eco_recipes` **zapnuto** · `eco_planner` **zapnuto** · `eco_byproducts` **zapnuto** · `eco_straw` **zapnuto** · `eco_crops` **zapnuto** · `eco_mastery` **zapnuto**.
+Vygenerováno `node tools/eco-docs.mjs` ze skutečných pravidel. Přepínače (public/js/eco-config.js): `eco_recipes` **zapnuto** · `eco_planner` **zapnuto** · `eco_byproducts` **zapnuto** · `eco_straw` **zapnuto** · `eco_crops` **zapnuto** · `eco_mastery` **zapnuto** · `fishing_minigame_v2` **zapnuto** · `fishing_baits_v2` **zapnuto** · `fishing_fish_pack_v2` **zapnuto** · `bakery_extra_v2` **zapnuto**.
 
 Návrhová ID ze zadání (`eco_rec_*`, `eco_item_*`, `eco_crop_*`) nejsou ID ve hře – ve hře platí sloupec **ID ve hře** (jména jsou česky zvlášť). Výrobek receptu má stejné ID jako recept; alternativní recept (`out`) vyrábí existující krmivo a nový předmět nevytváří.
 

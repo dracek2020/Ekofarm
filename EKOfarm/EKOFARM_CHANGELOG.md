@@ -1,4 +1,58 @@
-# EKOfarm – changelog rozšíření ekonomiky (v46)
+# EKOfarm – changelog rozšíření (v47, v46)
+
+# v47 – rybaření, 8 návnad, nové ryby, rybí recepty a pečivo
+
+13. 11. 2026 · větev `rybareni` · záloha: tag `zaloha-pred-rybarenim` + větev `zaloha-v46` (= v46, commit a6a98b0), zip `ZALOHA_EKOfarm_v46.zip` · `CLIENT_MIN` 47, verze aplikace 47, `RULES_VERSION` beze změny (23 – nová pole farmy jsou volitelná).
+
+Zadání: balíček `EKOfarm_Rybareni_8_navnad_a_pecivo_pro_Claude` (01_ZADANI/MASTER_PROMPT_PRO_CLAUDE.md, postup A–G). Analýza, ID a duplicity: `RYBARENI_ANALYZA.md`. Testy: `RYBARENI_TEST_REPORT.md`. Simulace: `RYBARENI_SIMULACE.md`. Grafika: `RYBARENI_GRAFIKA.md`. Ekonomika celé hry: `EKOFARM_ECONOMY_AUDIT.md/.csv`, `EKONOMIKA.md`.
+
+## Přepínače (feature flags)
+| Skupina | Ve v47 | Co zapíná |
+|---|---|---|
+| `fishing_minigame_v2` | zapnuto | Nová minihra, serverové tajemství ryby, okénko návnad, akce `fishGiveUp`, denní úkoly „Nahodit s návnadou“ a „Uvařit rybích jídel“. Vypnuto = původní rybaření. |
+| `fishing_baits_v2` | zapnuto | 8 návnad a jejich preference, Červ a Třpytka ve Stánku, Masová návnada v Krmivárně, „Návnada“ se jmenuje „Těsto na ryby“ |
+| `fishing_fish_pack_v2` | zapnuto | 10 nových ryb a 16 rybích receptů |
+| `bakery_extra_v2` | zapnuto | Žito, mák, žitná mouka, mletý mák, tvaroh a 18 pečiv; Rohlík (pečivo i návnada) jde se zapnutými návnadami nebo pečivem |
+
+Vypnutá skupina se chová jako v46 (test `flags-off` vypíná všechny skupiny najednou). Věci z vypnuté skupiny ve skladu odloží `holdUnknown` stranou a po zapnutí vrátí (mechanismus z v46).
+
+## A – analýza a záloha
+- Před změnami: tag `zaloha-pred-rybarenim`, větev `zaloha-v46`, zip celé v46. Původní rybaření (v26–v46): akce `fishCast`/`fishLand`, druh losovaný deterministicky ze seedu farmy v prohlížeči i na serveru – v prohlížeči tedy šel zjistit předem. To nové zadání nedovoluje → serverové tajemství.
+- `RYBARENI_ANALYZA.md`: EXISTUJÍCÍ vs. v47, stabilní ID ryb, návnad a receptů, návrh ze zadání → skutečné hodnoty, kontrola duplicit (0 shod ID, názvu ani nevysvětlených surovin; Tvaroh a Sýr mají stejné suroviny, ale jsou to dva různé výrobky podle zadání).
+
+## B – kompatibilita a migrace
+- Databáze beze změny. Nová volitelná pole farmy: `sx` (jen server), `fb`, `fj.b`, `stats.cast`, `stats.fishdish`, `hook` u rybníka. Stará farma se načte beze ztráty (test T29). Rozběhnutý nához ze staré verze (háček s druhem ryby) `normalize()` zruší a rybu vrátí do rybníku.
+- „Návnada“ (`navnada`) zůstává stejná položka i recept Krmivárny (1 pšenice + 1 kukuřice → 3), jen se jmenuje „Těsto na ryby“; staré zásoby i rozjetá fronta fungují (test T06).
+- Žádná stávající cena, recept, ryba, udice, kapacita rybníku ani budova se nezměnila (porovnání pravidel v46 a v47: jediný rozdíl je název `navnada`).
+
+## C – okénko návnady a 8 návnad
+- Okénko „Vyber návnadu“ (4 × 2 karty) se otevře před náhozem: skutečné počty ze skladu nad rezervou, prázdné a zamčené (Statek / Rybaření) karty nejdou vybrat, výchozí je poslední použitá. Otevření, změna výběru ani zavření nic nestojí. Během minihry se okénko neukazuje.
+- Server při `fishCast` ověří udici, rybník, ryby v rybníku, zámek návnady a volný kus nad rezervou skladu, odečte přesně 1 kus. Opakovaný požadavek se stejným klíčem vrátí stejný nához (žádná druhá návnada), druhý nához během rozběhnutého nejde.
+
+## D – minihra a validace
+- Fáze: nához (póza nápřahu a náhozu) → čekání na záběr (splávek, vlnky) → „Záběr!“ → souboj (ťukání / mezerník, šipka ujíždí doleva, zelená zóna se pohybuje, ryba občas zabere) → úlovek („Úlovek!“, ryba, váha, rekord, deník) nebo „Ryba unikla!“.
+- Server: druh a váhu losuje jen server (`crypto`), prohlížeč dostane profil obtížnosti 1–3 a seed zóny. Při vylovení server přehraje klepnutí (pevný krok 30 Hz, < 0,1 ms na souboj) a ověří, že uplynul potřebný čas. Podvržené vylovení bez klepnutí, s náhodným klepáním nebo moc rychle neprojde (T13, i přes API).
+- Po prohře nebo vypršení se rezervovaná ryba vrací do rybníka; návnada se nevrací.
+
+## E – 10 ryb, 16 receptů, deník a úkoly
+- Ryby: Perlín ostrobřichý (Rybaření 2), Ouklej obecná (4), Cejnek malý (6), Ježdík obecný (7) – Rybník; Jelec tloušť (8), Jelec jesen (12) – Větší rybník; Tolstolobik bílý (15) – Velký rybník; Siven americký (20), Síh maréna (27), Mník jednovousý (35) – Jezero. Cena, obtížnost a váha interpolací podle stávajících ryb.
+- 16 receptů: 13 v Rybárně, Uzený tolstolobik a Uzená maréna v Uzenářství, Rybí koláč v Pekárně (Statek 6–10, Vaření 3–40, podle zadání).
+- Deník: nové ryby, „bral(a) na: …“; denní úkoly `cast` a `fishdish`.
+
+## F – pečivo
+- Žito (Statek 3) a Mák (Statek 4) na malém i velkém poli (kombajn), osivo v Semenárně. Mlýn: Žitná mouka (3 žito), Mletý mák (3 mák). Mlékárna: Tvaroh (2 mléko).
+- 19 pečiv v Pekárně: Rohlík (St1, také návnada), Pletýnka, Cibulová placka, Preclík, Žitný bochník, Česneková bulka, Třešňový šáteček, Makový koláček, Sýrová houska, Dýňová bulka, Hroznový koláč, Tvarohový šáteček, Malinový croissant, Ořechové sušenky, Jahodová roláda, Makový závin, Višňová kapsa, Vánočka, Mistrovský ořechový věnec. Cukr až se Statkem 8 (podle zadání).
+
+## G – testy a měření
+- `npm test`: 245 PASS / 0 FAIL (z toho `test/v47.test.js` 24 testů = akceptační testy 1–29, starý nához z v46 a úkoly). Prohlížeč (`tools/ui-check-v47.cjs`): telefon 390 × 844, tablet 1180 × 820 se 4× zpomaleným CPU, PC 1280 × 800 s reduced motion – vše úlovek, bez přetékání, okénko nic nestojí.
+- Úspěšnost minihry (automat, ne hráči), vliv návnad (10 000 losů) a hodnota úlovku proti ceně návnady: `RYBARENI_SIMULACE.md`. **Ekonomická poznámka:** Sýr (celý výrobek Mlékárny, 192 mincí) a Masová návnada (1 maso → 3, 42 mincí) jsou dražší než průměrný úlovek – volba hráče; ponecháno přesně podle zadání, úprava (např. 1 maso → 6) až podle zkušeností hráčů.
+
+## Co v47 NENÍ
+- Úspěšnost a obtížnost minihry nejsou ověřené na skutečných hráčích (jen automat a ruční zkouška v prohlížeči). Doporučení: sledovat podíl úspěšných náhozů podle profilu a udice.
+- Testy na fyzických telefonech (iOS Safari, Android Chrome) neproběhly – jen emulace v Chromiu.
+- Žádné nové zvuky – minihra používá stávající zvuky hry (záběr, úlovek, únik).
+
+# v46 – rozšíření ekonomiky
 
 13. 11. 2026 · větev `rozsireni` · záloha: tag `zaloha-pred-rozsirenim` + větev `zaloha-v45` (= v45, commit 6f1034d), zip `ZALOHA_EKOfarm_v45.zip` · `CLIENT_MIN` 46, verze aplikace 46, `RULES_VERSION` beze změny (23 – nová pole farmy jsou volitelná).
 

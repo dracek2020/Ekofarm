@@ -27,8 +27,10 @@ for (const m of js.matchAll(/^(?:const|let|function|class|async function)\s+([A-
 // obrázky budov vložit přímo do souboru (testovací verze nemá vlastní server)
 import { ASSETS } from '../public/js/assets.js';
 const SPRITE_FILES = Object.entries(ASSETS).flatMap(([k, list]) => list.map(n => `img/${k}/${n}.webp`));
+// v47: velké obrázky můžou mít menší kopii jen pro testovací verzi (tools/artifact-shrink.py → build/img-small) – limit 16 MB
+const small = p => join(ROOT, 'build', 'img-small', p.slice(4));
 const sprites = 'const SPRITE_DATA = {\n' + SPRITE_FILES.filter(p => existsSync(join(ROOT, 'public', p)))
-  .map(p => `  '${p}': 'data:image/webp;base64,${readFileSync(join(ROOT, 'public', p)).toString('base64')}',`).join('\n') + '\n};';
+  .map(p => `  '${p}': 'data:image/webp;base64,${readFileSync(existsSync(small(p)) ? small(p) : join(ROOT, 'public', p)).toString('base64')}',`).join('\n') + '\n};';
 // v33: obrázky a písmo z CSS (url("/img/u/…"), url("/fonts/…")) vložit přímo do stylu
 const MIME = { webp: 'image/webp', png: 'image/png', woff2: 'font/woff2', svg: 'image/svg+xml' };
 const css = read('public/css/style.css').replace(/url\(("|')?\/((?:img|fonts)\/[^)"']+)\1\)/g, (m, q, p) => {

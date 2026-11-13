@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 47, title: 'Nové rybaření, 8 návnad, nové ryby a pečivo', items: [
+    'Nové rybaření: farmář nahodí prut, počká na záběr a pak ťukáním (nebo mezerníkem) držíš šipku v zeleném poli. V zeleném se plní postup chytání, mimo něj se napíná vlasec. Jakou rybu držíš, uvidíš až po vylovení.',
+    'Před nahozením si v malém okénku vybereš návnadu – ukáže, kolik kusů máš ve skladu. Výběr nic nestojí, kus se vezme až při nahození. Návnady: Červ, Kukuřice, Těsto (dřívější Návnada – tvoje zásoby zůstávají), Rohlík, Hrášek, Sýr, Masová návnada a Třpytka.',
+    'Každá návnada láká jiné ryby o něco víc, ale nic nezaručí. Co na co bralo, se zapíše do rybářského deníku. Červy a třpytky koupíš ve Stánku (Zásoby), masovou návnadu uděláš v Krmivárně.',
+    '10 nových ryb: Perlín ostrobřichý, Ouklej obecná, Cejnek malý, Ježdík obecný, Jelec tloušť, Jelec jesen, Tolstolobik bílý, Siven americký, Síh maréna a Mník jednovousý – berou podle Rybaření a velikosti vody.',
+    '16 nových rybích jídel (Rybárna, Uzenářství a rybí koláč v Pekárně) a 19 nových pečiv v Pekárně – od rohlíku a preclíku po makový závin, vánočku a mistrovský ořechový věnec.',
+    'Nové plodiny Žito (Statek 3) a Mák (Statek 4) – v Mlýně z nich bude žitná mouka a mletý mák. V Mlékárně nově tvaroh.',
+    'Nové denní úkoly: Nahodit s návnadou a Uvařit rybích jídel. Rybníky, udice, ryby, deník a rekordy zůstávají, jak byly.',
+  ] },
   { v: 46, title: 'Nové recepty, plán výroby, oves, len, petržel a kopr', items: [
     'Nové recepty z plodin, které dosud ležely ve skladu: Farmářský sendvič (už od Statku 2), Sójová mouka, Sójový chléb, Sójový olej, Zeleninová a Hrachová pomazánka, Bramboráky, Zelenina v oleji, Dýňové placičky, Medové ořechy, Ořechový krém, Višňový koláč a Višňová marmeláda.',
     'Nové plodiny: Oves (Statek 3), Petržel a Kopr (Statek 6) a Len (Statek 7) – na malém i velkém poli, semena v Semenárně. Z nich Ovesné vločky, sušenky a třešňový ovesný koláč, Lněný olej a v Textilce lněná příze, tkanina a ubrus, Koprové okurky, Bylinková rybí polévka, Kapr s petrželí a Bolen s koprem.',

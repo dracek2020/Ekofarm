@@ -1,6 +1,6 @@
 # EKOfarm – ekonomický audit (vygenerováno: `node tools/eco-audit.mjs`)
 
-Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v46), zapnuté skupiny rozšíření: `eco_recipes`, `eco_planner`, `eco_byproducts`, `eco_straw`, `eco_crops`, `eco_mastery`.
+Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v47), zapnuté skupiny rozšíření: `eco_recipes`, `eco_planner`, `eco_byproducts`, `eco_straw`, `eco_crops`, `eco_mastery`, `fishing_minigame_v2`, `fishing_baits_v2`, `fishing_fish_pack_v2`, `bakery_extra_v2`.
 
 ## Jak se počítá
 - **Cena výrobku** se v kódu dopočítává z receptu: `(Σ cena surovin × 1,2 + čas v min + 2) / kusů` – ceny se nevyplňují ručně.
@@ -11,69 +11,73 @@ Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v46)
 ## Souhrn
 | | před (v45) | teď |
 |---|---|---|
-| Recepty na výrobky | 83 | 115 |
-| Různé výrobky | 83 | 110 |
-| Plodiny | 20 | 24 |
+| Recepty na výrobky | 83 | 154 |
+| Různé výrobky | 83 | 149 |
+| Plodiny | 20 | 26 |
 | Stromy a keře | 13 | 13 |
-| Ryby | 14 | 14 |
+| Ryby | 14 | 24 |
 | Výrobny (budovy) | 17 | 17 |
-| Nejvyšší zisk za slot-hodinu – Sklad | 155 | 155 |
-| Nejvyšší zisk za slot-hodinu – zakázky | 464 | 464 |
+| Nejvyšší zisk za slot-hodinu – Sklad | 155 | 156 |
+| Nejvyšší zisk za slot-hodinu – zakázky | 464 | 468 |
 | Medián zisku za slot-hodinu – zakázky | 192 | 210 |
 | Nevyužité suroviny | 1 | 1 |
-| Suroviny čekající na recept (Statek) | 41 | 43 |
+| Suroviny čekající na recept (Statek) | 41 | 45 |
 | Cykly v grafu receptů | 0 | 0 |
 
 ### Nejvýnosnější recept podle Statku (zakázky, mince za slot-hodinu)
 | Statek | Receptů | Nejlepší před | Nejlepší teď |
 |---|---|---|---|
-| 1 | 1 | 162 (Chléb) | 162 (Chléb) |
-| 2 | 7 | 315 (Krmivo pro slepice) | 315 (Krmivo pro slepice) |
-| 3 | 20 | 315 (Krmivo pro slepice) | 315 (Krmivo pro slepice) |
-| 4 | 36 | 315 (Krmivo pro slepice) | 315 (Krmivo pro slepice) |
-| 5 | 44 | 336 (Máslo) | 336 (Máslo) |
-| 6 | 76 | 369 (Bolen na bylinkách) | 369 (Bolen na bylinkách) |
-| 7 | 89 | 369 (Bolen na bylinkách) | 369 (Bolen na bylinkách) |
-| 8 | 108 | 369 (Bolen na bylinkách) | 369 (Bolen na bylinkách) |
-| 9 | 109 | 369 (Bolen na bylinkách) | 369 (Bolen na bylinkách) |
-| 10 | 115 | 464 (Vlněná deka) | 464 (Vlněná deka) |
+| 1 | 2 | 162 (Chléb) | 162 (Chléb) |
+| 2 | 9 | 315 (Krmivo pro slepice) | 315 (Krmivo pro slepice) |
+| 3 | 28 | 315 (Krmivo pro slepice) | 324 (Žitná mouka) |
+| 4 | 46 | 315 (Krmivo pro slepice) | 324 (Žitná mouka) |
+| 5 | 60 | 336 (Máslo) | 354 (Sýrová houska) |
+| 6 | 103 | 369 (Bolen na bylinkách) | 369 (Bolen na bylinkách) |
+| 7 | 118 | 369 (Bolen na bylinkách) | 468 (Masová návnada) |
+| 8 | 141 | 369 (Bolen na bylinkách) | 468 (Masová návnada) |
+| 9 | 142 | 369 (Bolen na bylinkách) | 468 (Masová návnada) |
+| 10 | 154 | 464 (Vlněná deka) | 468 (Masová návnada) |
 
 ## Suroviny – použití a čekání na první recept
 | Surovina | Původ | Statek od | Použití | První recept (Statek / Vaření) | Čeká Statků |
 |---|---|---|---|---|---|
-| Chléb | výroba | 1 | 1 | 2 / 1 | **1** |
+| Chléb | výroba | 1 | 2 | 2 / 1 | **1** |
 | Kukuřice | pole | 1 | 9 | 2 / 1 | **1** |
-| Pšenice | pole | 1 | 9 | 1 / 1 | 0 |
+| Pšenice | pole | 1 | 12 | 1 / 1 | 0 |
 | Ředkvička | pole | 1 | 3 | 2 / 1 | **1** |
 | Salát | pole | 1 | 3 | 2 / 1 | **1** |
-| Brambory | pole | 2 | 8 | 6 / 1 | **4** |
+| Brambory | pole | 2 | 10 | 6 / 1 | **4** |
 | Hruška | sad | 2 | 3 | 2 / 1 | 0 |
 | Jablko | sad | 2 | 4 | 2 / 1 | 0 |
-| Jahody | pole | 2 | 4 | 5 / 3 | **3** |
+| Jahody | pole | 2 | 5 | 5 / 3 | **3** |
 | Křížaly | výroba | 2 | 1 | 3 / 4 | **1** |
-| Maliny | sad | 2 | 6 | 2 / 1 | 0 |
-| Mrkev | pole | 2 | 3 | 4 / 1 | **2** |
+| Maliny | sad | 2 | 7 | 2 / 1 | 0 |
+| Mrkev | pole | 2 | 4 | 4 / 1 | **2** |
 | Okurka | pole | 2 | 3 | 6 / 1 | **4** |
-| Rajče | pole | 2 | 4 | 6 / 1 | **4** |
-| Vejce | zvířata | 2 | 15 | 2 / 4 | 0 |
+| Rajče | pole | 2 | 5 | 6 / 1 | **4** |
+| Vejce | zvířata | 2 | 22 | 2 / 4 | 0 |
 | Amur | rybník | 3 | 1 | 6 / 9 | **3** |
 | Angrešt | sad | 3 | 2 | 3 / 4 | 0 |
 | Bolen | rybník | 3 | 2 | 6 / 15 | **3** |
 | Candát | rybník | 3 | 2 | 6 / 10 | **3** |
 | Cejn | rybník | 3 | 1 | 6 / 3 | **3** |
-| Cibule | pole | 3 | 9 | 6 / 1 | **3** |
-| Česnek | pole | 3 | 6 | 6 / 3 | **3** |
+| Cejnek malý | rybník | 3 | 1 | 6 / 6 | **3** |
+| Cibule | pole | 3 | 16 | 3 / 5 | 0 |
+| Česnek | pole | 3 | 10 | 3 / 6 | 0 |
 | Jeseter | rybník | 3 | 1 | 6 / 22 | **3** |
+| Ježdík obecný | rybník | 3 | 1 | 6 / 7 | **3** |
 | Kapr | rybník | 3 | 2 | 6 / 3 | **3** |
 | Karas | rybník | 3 | 1 | 6 / 3 | **3** |
 | Lín | rybník | 3 | 1 | 6 / 4 | **3** |
-| Mouka | výroba | 3 | 18 | 3 / 4 | 0 |
+| Mouka | výroba | 3 | 36 | 3 / 4 | 0 |
 | Okoun | rybník | 3 | 1 | 6 / 6 | **3** |
 | Otruby | vedlejší produkt | 3 | 1 | 3 / 1 | 0 |
+| Ouklej obecná | rybník | 3 | 1 | 6 / 3 | **3** |
 | Oves | pole | 3 | 2 | 3 / 1 | 0 |
 | Ovesné vločky | výroba | 3 | 2 | 4 / 7 | **1** |
-| Plotice | rybník | 3 | 2 | 6 / 1 | **3** |
-| Pstruh | rybník | 3 | 1 | 8 / 1 | **5** |
+| Perlín ostrobřichý | rybník | 3 | 1 | 6 / 5 | **3** |
+| Plotice | rybník | 3 | 3 | 6 / 1 | **3** |
+| Pstruh | rybník | 3 | 3 | 6 / 13 | **3** |
 | Rybíz | sad | 3 | 2 | 3 / 4 | 0 |
 | Řepka | pole | 3 | 1 | 7 / 1 | **4** |
 | Sója | pole | 3 | 3 | 3 / 2 | 0 |
@@ -81,38 +85,47 @@ Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v46)
 | Sumec | rybník | 3 | 1 | 6 / 18 | **3** |
 | Štika | rybník | 3 | 2 | 6 / 13 | **3** |
 | Švestka | sad | 3 | 3 | 3 / 3 | 0 |
-| Třešně | sad | 3 | 6 | 3 / 4 | 0 |
+| Třešně | sad | 3 | 7 | 3 / 4 | 0 |
 | Úhoř | rybník | 3 | 1 | 8 / 6 | **5** |
+| Žitná mouka | výroba | 3 | 1 | 3 / 5 | 0 |
+| Žito | pole | 3 | 1 | 3 / 1 | 0 |
 | Borůvky | sad | 4 | 2 | 4 / 4 | 0 |
 | Cukrová řepa | pole | 4 | 1 | 8 / 1 | **4** |
+| Mák | pole | 4 | 1 | 4 / 1 | 0 |
 | Meruňka | sad | 4 | 2 | 4 / 7 | 0 |
-| Mléko | zvířata | 4 | 4 | 5 / 1 | **1** |
+| Mléko | zvířata | 4 | 6 | 5 / 1 | **1** |
+| Mletý mák | výroba | 4 | 2 | 4 / 8 | 0 |
 | Ovocné výlisky | vedlejší produkt | 4 | 1 | 7 / 7 | **3** |
-| Paprika | pole | 4 | 5 | 6 / 4 | **2** |
+| Paprika | pole | 4 | 6 | 6 / 4 | **2** |
 | Semena slunečnice | semena | 4 | 2 | 4 / 6 | 0 |
 | Sláma | velké pole (lis) | 4 | 0 | **žádný** | – |
 | Slunečnice | pole | 4 | 1 | 7 / 3 | **3** |
-| Višně | sad | 4 | 4 | 4 / 4 | 0 |
+| Višně | sad | 4 | 5 | 4 / 4 | 0 |
 | Zelí | pole | 4 | 2 | 6 / 6 | **2** |
 | Broskev | sad | 5 | 2 | 5 / 7 | 0 |
-| Dýně | pole | 5 | 2 | 6 / 9 | **1** |
+| Dýně | pole | 5 | 3 | 5 / 9 | 0 |
 | Hrách | pole | 5 | 2 | 6 / 5 | **1** |
-| Hrozny | sad | 5 | 2 | 5 / 7 | 0 |
-| Máslo | výroba | 5 | 4 | 6 / 8 | **1** |
+| Hrozny | sad | 5 | 3 | 5 / 7 | 0 |
+| Jelec jesen | rybník | 5 | 1 | 6 / 12 | **1** |
+| Jelec tloušť | rybník | 5 | 1 | 6 / 8 | **1** |
+| Máslo | výroba | 5 | 7 | 6 / 8 | **1** |
 | Meloun | pole | 5 | 1 | 8 / 9 | **3** |
 | Plástev medu | včelín | 5 | 2 | 6 / 1 | **1** |
 | Semena dýně | semena | 5 | 1 | 7 / 7 | **2** |
-| Smetana | výroba | 5 | 8 | 5 / 3 | 0 |
+| Smetana | výroba | 5 | 11 | 5 / 3 | 0 |
+| Sýr | výroba | 5 | 1 | 5 / 8 | 0 |
+| Tvaroh | výroba | 5 | 2 | 5 / 10 | 0 |
 | Kopr | pole | 6 | 2 | 6 / 6 | 0 |
-| Med | výroba | 6 | 4 | 6 / 3 | 0 |
-| Ořechy | sad | 6 | 3 | 6 / 3 | 0 |
+| Med | výroba | 6 | 6 | 6 / 3 | 0 |
+| Ořechy | sad | 6 | 5 | 6 / 3 | 0 |
 | Petržel | pole | 6 | 3 | 6 / 8 | 0 |
 | Len | pole | 7 | 2 | 7 / 5 | 0 |
-| Maso | zvířata | 7 | 2 | 8 / 1 | **1** |
+| Maso | zvířata | 7 | 3 | 7 / 1 | 0 |
 | Pokrutiny | vedlejší produkt | 7 | 1 | 7 / 4 | 0 |
 | Řepkový olej | výroba | 7 | 3 | 7 / 7 | 0 |
 | Slunečnicový olej | výroba | 7 | 1 | 7 / 7 | 0 |
-| Cukr | výroba | 8 | 11 | 8 / 4 | 0 |
+| Tolstolobik bílý | rybník | 7 | 3 | 7 / 15 | 0 |
+| Cukr | výroba | 8 | 14 | 8 / 4 | 0 |
 | Klobása | výroba | 8 | 1 | 8 / 40 | 0 |
 | Řepné řízky | vedlejší produkt | 8 | 1 | 8 / 5 | 0 |
 | Uzené maso | výroba | 8 | 1 | 8 / 40 | 0 |
@@ -120,6 +133,9 @@ Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v46)
 | Klubko vlny | výroba | 10 | 2 | 10 / 3 | 0 |
 | Lněná příze | výroba | 10 | 1 | 10 / 9 | 0 |
 | Lněná tkanina | výroba | 10 | 1 | 10 / 14 | 0 |
+| Mník jednovousý | rybník | 10 | 1 | 10 / 35 | 0 |
+| Síh maréna | rybník | 10 | 3 | 10 / 28 | 0 |
+| Siven americký | rybník | 10 | 2 | 10 / 21 | 0 |
 
 ### Sledované suroviny (zadání A4)
 - **Sója** – k dispozici od Statku 3, použití 3: Krmivo pro ovce, Sójová mouka, Sójový olej
@@ -130,10 +146,10 @@ Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v46)
 - **Sláma** – k dispozici od Statku 4, použití 0 (v45 nevyužitá): —
 - **Řepkový olej** – k dispozici od Statku 7, použití 3: Bramboráky, Dýňové placičky, Mistrovský rybí talíř
 - **Slunečnicový olej** – k dispozici od Statku 7, použití 1: Zelenina v oleji
-- **Višně** – k dispozici od Statku 4, použití 4: Višňový džus, Višňový koláč, Višňová marmeláda, Slavnostní ovocný dort
-- **Ořechy** – k dispozici od Statku 6, použití 3: Ořechový koláč, Medové ořechy, Ořechový krém
-- **Mouka** – k dispozici od Statku 3, použití 18: Třešňový koláč, Borůvkové muffiny, Buchty, Ořechový koláč, Chléb se semínky, Medovník, Perník, Smažený kapr, Rybí prsty, Rybí karbanátky, Jablečný závin, Švestkové knedlíky, Třešňová bublanina, Angreštový koláč, Jahodové knedlíky, Ovocný dort, Višňový koláč, Slavnostní ovocný dort
-- **Cibule** – k dispozici od Statku 3, použití 9: Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Bolen na bylinkách
+- **Višně** – k dispozici od Statku 4, použití 5: Višňový džus, Višňový koláč, Višňová marmeláda, Slavnostní ovocný dort, Višňová kapsa
+- **Ořechy** – k dispozici od Statku 6, použití 5: Ořechový koláč, Medové ořechy, Ořechový krém, Ořechové sušenky, Mistrovský ořechový věnec
+- **Mouka** – k dispozici od Statku 3, použití 36: Třešňový koláč, Borůvkové muffiny, Buchty, Ořechový koláč, Chléb se semínky, Medovník, Perník, Smažený kapr, Rybí prsty, Rybí karbanátky, Jablečný závin, Švestkové knedlíky, Třešňová bublanina, Angreštový koláč, Jahodové knedlíky, Ovocný dort, Višňový koláč, Slavnostní ovocný dort, Cejnek v těstíčku, Rybí koláč, Cibulová placka, Preclík, Česneková bulka, Třešňový šáteček, Makový koláček, Sýrová houska, Dýňová bulka, Hroznový koláč, Tvarohový šáteček, Malinový croissant, Ořechové sušenky, Jahodová roláda, Makový závin, Višňová kapsa, Vánočka, Mistrovský ořechový věnec
+- **Cibule** – k dispozici od Statku 3, použití 16: Kečup, Lečo, Kysané zelí, Hrachová polévka, Dýňová polévka, Rybí polévka, Štika na cibulce, Sumcový guláš, Bolen na bylinkách, Polévka z ježdíka, Tloušť na cibuli, Rybí pomazánka, Tolstolobik na zelenině, Pečená maréna, Mník na másle, Cibulová placka
 - **Sláma** – žádný recept ji nežere (záměr: žádná povinná podestýlka); nově jde dobrovolně a jednorázově na podestýlka ze slámy (10× sláma + 40 mincí, cyklus ohrady × 0,97).
 
 ### Strop příjmu jedné výrobní fronty (F03)
@@ -142,10 +158,10 @@ Statický výpočet, **ne simulace hráče**: nejlepší recept dostupný na dan
 | Statek | 1 den před | 1 den po | 7 dní po | 30 dní po | 90 dní po |
 |---|---|---|---|---|---|
 | 2 | 7 560 | 7 560 | 52 920 | 226 800 | 680 400 |
-| 4 | 7 560 | 7 560 | 52 920 | 226 800 | 680 400 |
+| 4 | 7 560 | 7 776 | 54 432 | 233 280 | 699 840 |
 | 6 | 8 856 | 8 856 | 61 992 | 265 680 | 797 040 |
-| 8 | 8 856 | 8 856 | 61 992 | 265 680 | 797 040 |
-| 10 | 11 136 | 11 136 | 77 952 | 334 080 | 1 002 240 |
+| 8 | 8 856 | 11 232 | 78 624 | 336 960 | 1 010 880 |
+| 10 | 11 136 | 11 232 | 78 624 | 336 960 | 1 010 880 |
 
 Nové recepty strop **nezvyšují** (nejlepší recept na každém Statku je stejný jako ve v45), zvyšují jen počet rozumných možností (medián zisku za slot-hodinu 192 → 210). Offline se tým dopočítá nejvýš 24 h, takže 7 dní nepřítomnosti nedá víc než 1 den.
 
@@ -160,16 +176,19 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Výrobek | Budova | Statek | Vaření | Suroviny | Čas | Cena surovin | Cena | Zisk Sklad / h | Zisk zakázky / h | Pozn. |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Chléb | Pekárna | 1 | 1 | 3× Pšenice | 5 min | 9 | 18 | 54 | 162 |  |
+| Rohlík | Pekárna | 1 | 1 | 2× Pšenice | 4 min | 6 | 13 | 53 | 158 |  |
 | Krmivo pro slepice | Krmivárna | 2 | 1 | 2× Pšenice + 1× Kukuřice | 2 min | 14 | 21 | 105 | 315 |  |
 | Křížaly | Sušárna ovoce | 2 | 1 | 3× Jablko | 10 min | 30 | 48 | 54 | 162 |  |
 | Sušené hrušky | Sušárna ovoce | 2 | 1 | 3× Hruška | 10 min | 42 | 62 | 60 | 180 |  |
 | Malinový čaj | Sušárna ovoce | 2 | 1 | 3× Maliny | 8 min | 24 | 39 | 56 | 169 |  |
 | Farmářský sendvič | Pekárna | 2 | 1 | 1× Chléb + 1× Salát + 1× Ředkvička | 8 min | 27 | 42 | 56 | 169 |  |
 | Koláč | Pekárna | 2 | 4 | 2× Pšenice + 2× Vejce | 15 min | 76 | 108 | 64 | 192 |  |
+| Pletýnka | Pekárna | 2 | 4 | 3× Pšenice + 1× Vejce | 8 min | 44 | 63 | 71 | 214 |  |
 | Mouka | Mlýn | 3 | 1 | 3× Pšenice | 4 min | 9 | 17 | 60 | 180 |  |
-| Návnada | Krmivárna | 3 | 1 | 1× Pšenice + 1× Kukuřice | 2 min | 11 | 18 | 105 | 315 |  |
+| Těsto na ryby | Krmivárna | 3 | 1 | 1× Pšenice + 1× Kukuřice | 2 min | 11 | 18 | 105 | 315 |  |
 | Ovesná krmná směs | Krmivárna | 3 | 1 | 1× Oves + 1× Kukuřice | 4 min | 28 | 42 | 105 | 315 | alternativní recept |
 | Krmivo pro slepice s otrubami | Krmivárna | 3 | 1 | 1× Otruby + 1× Pšenice + 1× Kukuřice | 3 min | 13 | 21 | 80 | 240 | alternativní recept |
+| Žitná mouka | Mlýn | 3 | 1 | 3× Žito | 5 min | 54 | 72 | 108 | 324 |  |
 | Sójová mouka | Mlýn | 3 | 2 | 3× Sója | 6 min | 54 | 73 | 95 | 285 |  |
 | Ovesné vločky | Mlýn | 3 | 2 | 3× Oves | 7 min | 60 | 81 | 90 | 270 |  |
 | Sušené švestky | Sušárna ovoce | 3 | 3 | 3× Švestka | 12 min | 36 | 57 | 53 | 158 |  |
@@ -178,12 +197,18 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Švestkové knedlíky | Pekárna | 3 | 4 | 1× Mouka + 3× Švestka | 15 min | 53 | 81 | 56 | 168 |  |
 | Třešňová bublanina | Pekárna | 3 | 4 | 1× Mouka + 1× Vejce + 2× Třešně | 15 min | 88 | 123 | 70 | 210 |  |
 | Angreštový koláč | Pekárna | 3 | 4 | 1× Mouka + 1× Vejce + 3× Angrešt | 15 min | 82 | 115 | 66 | 198 |  |
+| Cibulová placka | Pekárna | 3 | 5 | 1× Mouka + 1× Cibule | 10 min | 28 | 46 | 54 | 162 |  |
+| Preclík | Pekárna | 3 | 5 | 2× Mouka + 1× Vejce | 12 min | 69 | 97 | 70 | 210 |  |
+| Žitný bochník | Pekárna | 3 | 5 | 2× Žitná mouka + 1× Pšenice | 14 min | 147 | 192 | 96 | 289 |  |
+| Česneková bulka | Pekárna | 3 | 6 | 1× Mouka + 1× Česnek | 10 min | 31 | 49 | 54 | 162 |  |
+| Třešňový šáteček | Pekárna | 3 | 6 | 1× Mouka + 2× Třešně | 15 min | 53 | 81 | 56 | 168 |  |
 | Třešňový koláč | Pekárna | 3 | 9 | 2× Mouka + 2× Třešně + 1× Vejce | 20 min | 105 | 148 | 65 | 194 |  |
 | Krmivo pro krávy | Krmivárna | 4 | 1 | 2× Kukuřice + 1× Mrkev | 5 min | 28 | 41 | 78 | 234 |  |
 | Mrkvová šťáva | Džusárna | 4 | 1 | 3× Mrkev | 8 min | 36 | 53 | 64 | 191 |  |
 | Jablečný džus | Džusárna | 4 | 1 | 4× Jablko | 10 min | 40 | 60 | 60 | 180 |  |
 | Hruškový džus | Džusárna | 4 | 1 | 3× Hruška | 10 min | 42 | 62 | 60 | 180 |  |
 | Malinový sirup | Džusárna | 4 | 1 | 3× Maliny | 10 min | 24 | 41 | 51 | 153 |  |
+| Mletý mák | Mlýn | 4 | 1 | 3× Mák | 6 min | 63 | 84 | 105 | 315 |  |
 | Třešňový džus | Džusárna | 4 | 3 | 3× Třešně | 12 min | 54 | 79 | 63 | 188 |  |
 | Višňový džus | Džusárna | 4 | 4 | 3× Višně | 12 min | 48 | 72 | 60 | 180 |  |
 | Sušené borůvky | Sušárna ovoce | 4 | 4 | 3× Borůvky | 12 min | 27 | 46 | 48 | 143 |  |
@@ -192,17 +217,24 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Sušené meruňky | Sušárna ovoce | 4 | 7 | 3× Meruňka | 15 min | 60 | 89 | 58 | 174 |  |
 | Ovesné sušenky | Pekárna | 4 | 7 | 1× Ovesné vločky + 1× Pšenice + 1× Vejce | 15 min | 119 | 160 | 82 | 246 |  |
 | Višňový koláč | Pekárna | 4 | 8 | 1× Mouka + 2× Višně + 1× Vejce | 18 min | 84 | 121 | 62 | 185 |  |
+| Makový koláček | Pekárna | 4 | 8 | 1× Mouka + 1× Mletý mák | 15 min | 101 | 138 | 74 | 222 |  |
 | Chléb se semínky | Pekárna | 4 | 9 | 2× Mouka + 2× Semena slunečnice | 15 min | 58 | 87 | 58 | 174 |  |
 | Třešňový ovesný koláč | Pekárna | 4 | 9 | 2× Třešně + 1× Ovesné vločky + 1× Vejce | 20 min | 152 | 204 | 78 | 234 |  |
 | Borůvkové muffiny | Pekárna | 4 | 10 | 1× Mouka + 2× Borůvky + 1× Vejce | 15 min | 70 | 101 | 62 | 186 |  |
 | Smetana | Mlékárna | 5 | 1 | 1× Mléko | 10 min | 71 | 97 | 78 | 234 |  |
+| Tvaroh | Mlékárna | 5 | 1 | 2× Mléko | 12 min | 142 | 184 | 105 | 315 |  |
 | Sýr | Mlékárna | 5 | 3 | 2× Mléko | 20 min | 142 | 192 | 75 | 225 |  |
 | Ovocný jogurt | Mlékárna | 5 | 3 | 1× Mléko + 1× Jahody + 1× Maliny | 15 min | 94 | 130 | 72 | 216 |  |
 | Zeleninová pomazánka | Mlékárna | 5 | 3 | 1× Smetana + 2× Ředkvička | 12 min | 105 | 140 | 88 | 263 |  |
 | Máslo | Mlékárna | 5 | 4 | 2× Smetana | 15 min | 194 | 250 | 112 | 336 |  |
 | Hroznový mošt | Džusárna | 5 | 7 | 3× Hrozny | 15 min | 48 | 75 | 54 | 162 |  |
 | Broskvový sirup | Džusárna | 5 | 7 | 3× Broskev | 15 min | 72 | 103 | 62 | 186 |  |
+| Sýrová houska | Pekárna | 5 | 8 | 1× Mouka + 1× Sýr | 15 min | 209 | 268 | 118 | 354 |  |
+| Dýňová bulka | Pekárna | 5 | 9 | 1× Mouka + 1× Dýně | 15 min | 47 | 73 | 52 | 156 |  |
+| Hroznový koláč | Pekárna | 5 | 9 | 2× Mouka + 2× Hrozny + 1× Vejce | 18 min | 101 | 141 | 67 | 200 |  |
 | Rozinky | Sušárna ovoce | 5 | 10 | 3× Hrozny | 15 min | 48 | 75 | 54 | 162 |  |
+| Tvarohový šáteček | Pekárna | 5 | 10 | 1× Mouka + 1× Tvaroh + 1× Vejce | 18 min | 236 | 303 | 112 | 335 |  |
+| Malinový croissant | Pekárna | 5 | 11 | 1× Mouka + 1× Smetana + 2× Maliny | 20 min | 130 | 178 | 72 | 216 |  |
 | Zeleninový salát | Konzervárna | 6 | 1 | 2× Salát + 1× Rajče + 1× Okurka + 1× Ředkvička | 5 min | 33 | 47 | 84 | 252 |  |
 | Med | Medárna | 6 | 1 | 2× Plástev medu | 5 min | 24 | 36 | 72 | 216 |  |
 | Rybí polévka | Rybárna | 6 | 1 | 2× Plotice + 1× Cibule + 1× Brambory | 15 min | 42 | 67 | 50 | 150 |  |
@@ -215,22 +247,33 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Rybí karbanátky | Rybárna | 6 | 3 | 2× Karas + 1× Cejn + 1× Mouka | 15 min | 43 | 69 | 52 | 156 |  |
 | Ovocná zmrzlina | Cukrárna | 6 | 3 | 1× Mléko + 1× Smetana + 2× Jahody | 15 min | 198 | 255 | 114 | 342 |  |
 | Medové ořechy | Medárna | 6 | 3 | 2× Ořechy + 1× Med | 12 min | 80 | 110 | 75 | 225 |  |
+| Rybí jednohubky | Rybárna | 6 | 3 | 2× Ouklej obecná + 1× Chléb | 12 min | 50 | 74 | 60 | 180 |  |
 | Lečo | Konzervárna | 6 | 4 | 2× Paprika + 2× Rajče + 1× Cibule | 20 min | 61 | 95 | 51 | 153 |  |
 | Pečený lín | Rybárna | 6 | 4 | 2× Lín + 1× Česnek | 20 min | 46 | 77 | 47 | 140 |  |
 | Ovocný dort | Cukrárna | 6 | 4 | 2× Mouka + 2× Vejce + 1× Smetana + 1× Maliny + 1× Třešně | 30 min | 227 | 304 | 77 | 231 |  |
 | Hrachová pomazánka | Konzervárna | 6 | 5 | 2× Hrách + 1× Česnek | 14 min | 56 | 83 | 58 | 174 |  |
+| Perlín na česneku | Rybárna | 6 | 5 | 2× Perlín ostrobřichý + 1× Česnek | 15 min | 42 | 67 | 50 | 150 |  |
 | Kysané zelí | Konzervárna | 6 | 6 | 2× Zelí + 1× Cibule | 20 min | 51 | 83 | 48 | 144 |  |
 | Rybí prsty | Rybárna | 6 | 6 | 2× Okoun + 1× Mouka | 15 min | 53 | 81 | 56 | 168 |  |
 | Koprové okurky | Konzervárna | 6 | 6 | 2× Okurka + 1× Česnek + 1× Kopr | 18 min | 50 | 80 | 50 | 150 |  |
+| Cejnek v těstíčku | Rybárna | 6 | 6 | 2× Cejnek malý + 1× Vejce + 1× Mouka | 15 min | 94 | 130 | 72 | 216 |  |
 | Hrachová polévka | Konzervárna | 6 | 7 | 2× Hrách + 1× Brambory + 1× Cibule | 20 min | 68 | 104 | 54 | 162 |  |
 | Perník | Pekárna | 6 | 7 | 1× Mouka + 1× Med | 10 min | 53 | 76 | 69 | 207 |  |
+| Polévka z ježdíka | Rybárna | 6 | 7 | 2× Ježdík obecný + 1× Brambory + 1× Cibule | 18 min | 74 | 109 | 58 | 175 |  |
 | Bylinková rybí polévka | Rybárna | 6 | 8 | 2× Plotice + 1× Brambory + 1× Petržel | 18 min | 46 | 75 | 48 | 145 |  |
 | Kapr s petrželí | Rybárna | 6 | 8 | 1× Kapr + 1× Máslo + 1× Petržel | 22 min | 279 | 359 | 109 | 327 |  |
+| Tloušť na cibuli | Rybárna | 6 | 8 | 1× Jelec tloušť + 1× Cibule | 20 min | 37 | 66 | 44 | 131 |  |
 | Dýňová polévka | Konzervárna | 6 | 9 | 1× Dýně + 1× Cibule + 1× Smetana | 20 min | 138 | 188 | 75 | 225 |  |
 | Medovník | Pekárna | 6 | 9 | 2× Mouka + 1× Med + 2× Vejce | 25 min | 140 | 195 | 66 | 198 |  |
 | Amur na grilu | Rybárna | 6 | 9 | 1× Amur + 1× Česnek + 1× Paprika | 20 min | 58 | 92 | 51 | 153 |  |
+| Rybí pomazánka | Rybárna | 6 | 9 | 2× Plotice + 1× Smetana + 1× Cibule | 18 min | 124 | 169 | 75 | 225 |  |
 | Candát na másle | Rybárna | 6 | 10 | 1× Candát + 1× Máslo | 20 min | 280 | 358 | 117 | 351 |  |
+| Jesen se zeleninou | Rybárna | 6 | 12 | 1× Jelec jesen + 1× Paprika + 1× Mrkev | 22 min | 60 | 96 | 49 | 147 |  |
 | Štika na cibulce | Rybárna | 6 | 13 | 1× Štika + 2× Cibule | 20 min | 58 | 92 | 51 | 153 |  |
+| Pstruh na másle | Rybárna | 6 | 13 | 1× Pstruh + 1× Máslo | 20 min | 274 | 351 | 116 | 347 |  |
+| Ořechové sušenky | Pekárna | 6 | 13 | 1× Mouka + 2× Ořechy + 1× Med | 18 min | 97 | 136 | 65 | 195 |  |
+| Rybí koláč | Pekárna | 6 | 14 | 1× Pstruh + 2× Mouka + 1× Vejce | 25 min | 93 | 139 | 55 | 166 |  |
+| Jahodová roláda | Pekárna | 6 | 14 | 2× Mouka + 2× Jahody + 1× Smetana | 24 min | 161 | 219 | 73 | 218 |  |
 | Bolen na bylinkách | Rybárna | 6 | 15 | 1× Bolen + 1× Máslo + 1× Cibule | 20 min | 301 | 383 | 123 | 369 |  |
 | Bolen s koprem | Rybárna | 6 | 15 | 1× Bolen + 1× Máslo + 1× Kopr | 25 min | 306 | 394 | 106 | 317 |  |
 | Sumcový guláš | Rybárna | 6 | 18 | 1× Sumec + 2× Paprika + 1× Cibule | 30 min | 93 | 144 | 51 | 153 |  |
@@ -238,6 +281,7 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Krmivo pro prasata | Krmivárna | 7 | 1 | 2× Brambory + 1× Kukuřice + 1× Salát | 5 min | 43 | 59 | 96 | 288 |  |
 | Řepkový olej | Olejna | 7 | 1 | 2× Řepka | 10 min | 44 | 65 | 63 | 189 |  |
 | Švestková povidla | Marmeládárna | 7 | 1 | 4× Švestka | 15 min | 48 | 75 | 54 | 162 |  |
+| Masová návnada | Krmivárna | 7 | 1 | 1× Maso | 5 min | 100 | 126 | 156 | 468 |  |
 | Slunečnicový olej | Olejna | 7 | 3 | 3× Slunečnice | 12 min | 78 | 108 | 75 | 225 |  |
 | Sójový olej | Olejna | 7 | 4 | 3× Sója | 14 min | 54 | 81 | 58 | 174 |  |
 | Krmivo pro prasata s pokrutinami | Krmivárna | 7 | 4 | 1× Pokrutiny + 1× Brambory + 1× Kukuřice | 6 min | 39 | 59 | 100 | 300 | alternativní recept |
@@ -247,6 +291,7 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Zelenina v oleji | Konzervárna | 7 | 7 | 1× Paprika + 1× Rajče + 1× Slunečnicový olej | 22 min | 133 | 184 | 70 | 209 |  |
 | Ovocná krmná směs pro prasata | Krmivárna | 7 | 7 | 1× Ovocné výlisky + 1× Brambory + 1× Kukuřice | 6 min | 39 | 59 | 100 | 300 | alternativní recept |
 | Dýňové placičky | Pekárna | 7 | 8 | 1× Dýně + 1× Vejce + 1× Řepkový olej | 16 min | 130 | 174 | 83 | 248 |  |
+| Tolstolobik na zelenině | Rybárna | 7 | 15 | 1× Tolstolobik bílý + 1× Rajče + 1× Cibule | 25 min | 56 | 94 | 46 | 137 |  |
 | Mistrovský rybí talíř | Rybárna | 7 | 25 | 1× Candát + 1× Štika + 1× Řepkový olej + 1× Petržel | 40 min | 146 | 217 | 53 | 160 |  |
 | Cukr | Cukrovar | 8 | 1 | 2× Cukrová řepa | 10 min | 60 | 84 | 72 | 216 |  |
 | Klobása | Uzenářství | 8 | 1 | 2× Maso + 1× Česnek | 20 min | 214 | 279 | 98 | 293 |  |
@@ -265,6 +310,10 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Melounový nápoj | Džusárna | 8 | 9 | 1× Meloun + 1× Cukr | 10 min | 118 | 154 | 108 | 324 |  |
 | Buchty | Pekárna | 8 | 12 | 2× Mouka + 1× Cukr + 1× Vejce | 15 min | 153 | 201 | 96 | 288 |  |
 | Ořechový koláč | Pekárna | 8 | 16 | 2× Mouka + 2× Ořechy + 1× Cukr | 25 min | 162 | 221 | 71 | 212 |  |
+| Uzený tolstolobik | Uzenářství | 8 | 16 | 2× Tolstolobik bílý | 28 min | 72 | 116 | 47 | 141 |  |
+| Makový závin | Pekárna | 8 | 16 | 2× Mouka + 2× Mletý mák + 1× Cukr | 22 min | 286 | 367 | 110 | 331 |  |
+| Višňová kapsa | Pekárna | 8 | 17 | 1× Mouka + 2× Višně + 1× Cukr | 20 min | 133 | 182 | 74 | 221 |  |
+| Vánočka | Pekárna | 8 | 20 | 2× Mouka + 1× Vejce + 1× Mléko + 1× Cukr | 30 min | 224 | 301 | 77 | 231 |  |
 | Slavnostní ovocný dort | Cukrárna | 8 | 30 | 2× Mouka + 2× Vejce + 1× Smetana + 2× Višně + 1× Cukr | 45 min | 317 | 427 | 73 | 220 |  |
 | Farmářská hostina | Uzenářství | 8 | 40 | 1× Klobása + 1× Uzené maso + 2× Brambory + 1× Paprika | 50 min | 592 | 762 | 102 | 306 |  |
 | Krmivo pro ovce | Krmivárna | 9 | 1 | 2× Pšenice + 1× Zelí + 1× Sója | 6 min | 44 | 61 | 85 | 255 |  |
@@ -274,3 +323,9 @@ Skutečný recept v kódu: 1× Bolen + 1× Máslo + 1× Cibule – **bylinky neo
 | Lněná příze | Textilka | 10 | 6 | 3× Len | 18 min | 90 | 128 | 63 | 190 |  |
 | Lněná tkanina | Textilka | 10 | 9 | 2× Lněná příze | 25 min | 256 | 334 | 94 | 281 |  |
 | Lněný ubrus | Textilka | 10 | 14 | 2× Lněná tkanina | 35 min | 668 | 839 | 147 | 440 |  |
+| Siven na česneku | Rybárna | 10 | 21 | 1× Siven americký + 1× Česnek + 1× Máslo | 25 min | 314 | 404 | 108 | 324 |  |
+| Uzená maréna | Uzenářství | 10 | 28 | 2× Síh maréna | 30 min | 158 | 222 | 64 | 192 |  |
+| Pečená maréna | Rybárna | 10 | 30 | 1× Síh maréna + 1× Cibule + 1× Česnek | 30 min | 104 | 157 | 53 | 159 |  |
+| Mistrovský ořechový věnec | Pekárna | 10 | 30 | 2× Mouka + 1× Tvaroh + 1× Med + 2× Ořechy | 40 min | 298 | 400 | 77 | 230 |  |
+| Mník na másle | Rybárna | 10 | 35 | 1× Mník jednovousý + 1× Máslo + 1× Cibule | 30 min | 363 | 468 | 105 | 315 |  |
+| Slavnostní rybí mísa | Rybárna | 10 | 40 | 1× Siven americký + 1× Síh maréna + 1× Tolstolobik bílý + 1× Brambory | 45 min | 180 | 263 | 55 | 166 |  |

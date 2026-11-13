@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { weatherAt, WEATHER, growMs, fishSize, FISH, FISH_LIST, pondStock, hiveStock, TUTORIAL_DONE, townObject, dailyQuests, questProgress, isRoad, fits, dealerDiscount, maxOrchards, maxBigFields, BUILDINGS, LEVEL_XP, START_PLOTS, newFarm, applyAction, plotState, levelForXp, siloUsed, CROPS, SILO_START, maxPlots, objectAt, findObject, queueState, objectStatus, normalize, fieldState, freeMachine, treeState, marketMult, sellPrice, RECIPES, FRUITS, upgradeCost, statekLevel, machinePrice, stallOffers, stallLeft, runHelper, helperCapacity, canDeliver, orderReady, orderableItems, ITEMS, findVill, villAt, seedCap, workAreas, ANIMALS, ANIMAL_CYCLE, runVillagers, villLag, nextTrade, TRADE_IV, tradeRound, workMs, VILL_BUDGET, beds, teamCap, teamFree, repTier, repNext, adOffers, statekMerits, villLevel, needLvl, RULES_VERSION, wpOfVill, wpGet, wpWorkers, areaCap, stockOf, planTotal, bldCap, bldCapNext, crewPower, penOut, penStats, factoryRate, upgradeEffect, recipeQty, villOut } from '../public/js/rules.js';
 import { TEAM } from '../public/js/team-config.js';
+import * as R from '../public/js/rules.js';
+import { srv, botTaps, fishOnce } from './fixtures/fish-bot.mjs';
 
 const T0 = 1_700_000_000_000;
 // hráč na dané úrovni s penězi, plně vylepšeným statkem a stodolou (pro testy strojů)
@@ -966,7 +968,7 @@ test('zakázky: stejné na serveru i v prohlížeči, doručení a zrušení', (
 
 test('zakázky odpovídají úrovni', () => {
   // v37: podle úrovně Statku – výrobek až s budovou, krmivo až se zvířetem
-  assert.deepEqual(orderableItems(1).sort(), ['chleb', 'corn', 'redkvicka', 'salat', 'wheat']);
+  assert.deepEqual(orderableItems(1).sort(), ['chleb', 'corn', 'redkvicka', ...(RECIPES.rohlik ? ['rohlik'] : []), 'salat', 'wheat']);   // v47: rohlík od Statku 1
   const s2 = orderableItems(2);
   for (const id of ['carrot', 'kolac', 'krmivo_slepice', 'vejce', 'jablko', 'hruska']) assert.ok(s2.includes(id), id);
   assert.ok(!s2.includes('mleko') && !s2.includes('krmivo_kravy') && !s2.includes('mouka'));
@@ -1424,22 +1426,28 @@ test('v11: rybník – udice, návnada, zabere ryba, ulovit nebo utéct, ryby p�
   applyAction(f, { type: 'produce', id: kid, recipe: 'navnada' }, T0);
   applyAction(f, { type: 'collect', id: kid }, T0 + 600000);
   assert.equal(f.silo.navnada, 6);
-  const c1 = applyAction(f, { type: 'fishCast', id }, T0);
-  assert.ok(c1.ok && FISH[c1.fish] && FISH[c1.fish].st <= 10);
-  assert.equal(applyAction(f, { type: 'fishCast', id }, T0).error, 'hooked');
+  // v47: nová minihra – druh vybírá server (srv), vylovení = přehrání klepnutí (fishOnce)
+  const S = srv(11);
+  const c1 = applyAction(f, { type: 'fishCast', id, k: 'a' }, T0, null, S);
+  assert.ok(c1.ok && c1.session && c1.fish === undefined, 'druh se při nahození neprozradí');
+  assert.equal(applyAction(f, { type: 'fishCast', id, k: 'b' }, T0, null, S).error, 'hooked');
+  const sp = f.sx[id].f;
   const g = structuredClone(f);
-  assert.equal(applyAction(g, { type: 'fishLand', id, ok: true }, T0 + 5000).fish, c1.fish, 'stejná ryba i v kopii');
-  const r = applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000);
-  assert.ok(r.ok && f.silo[c1.fish] >= 1 && f.stats.fish >= 1);
-  assert.ok(r.kg >= FISH[c1.fish].kg[0] && r.kg <= FISH[c1.fish].kg[1] && f.fishRec[c1.fish] === r.kg && r.record);
-  assert.equal(applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 5000).error, 'no_hook');
-  assert.ok(applyAction(f, { type: 'fishCast', id }, T0 + 6000).ok);
-  const lost = applyAction(f, { type: 'fishLand', id, ok: false }, T0 + 7000);
-  assert.ok(lost.ok && lost.lost);
-  assert.equal(pondStock(o, T0 + 7000).count, 3);
-  for (let i = 0; i < 3; i++) { applyAction(f, { type: 'fishCast', id }, T0 + 8000); applyAction(f, { type: 'fishLand', id, ok: true }, T0 + 8000); }
-  assert.equal(applyAction(f, { type: 'fishCast', id }, T0 + 9000).error, 'no_fish');
-  assert.equal(pondStock(o, T0 + 9000 + 600000).count, 1, 'za 10 minut přibude ryba');
+  const P = R.fightParams(f, o.hook), b = botTaps(R, P, 1, 5);
+  const tl = T0 + R.fightMinMs(o.hook, b.steps) + 1000;
+  assert.equal(applyAction(g, { type: 'fishLand', id, k: 'a', taps: b.taps }, tl, null, S).fish, sp, 'stejná ryba i v kopii');
+  const r = applyAction(f, { type: 'fishLand', id, k: 'a', taps: b.taps }, tl, null, S);
+  assert.ok(r.ok && r.fish === sp && f.silo[sp] >= 1 && f.stats.fish >= 1, JSON.stringify(r));
+  assert.ok(r.kg >= FISH[sp].kg[0] && r.kg <= FISH[sp].kg[1] && f.fishRec[sp] === r.kg && r.record);
+  assert.equal(applyAction(f, { type: 'fishLand', id, k: 'a', taps: b.taps }, tl, null, S).error, 'no_hook');
+  const lost = fishOnce(R, f, id, tl + 1000, { win: false });
+  assert.ok(lost.land.ok && lost.land.lost && lost.land.fish === undefined);
+  assert.equal(pondStock(o, lost.t).count, 4, 'uniklá ryba se vrátila do rybníku');
+  let t = lost.t;
+  f.silo.navnada += 10;
+  for (let i = 0; i < 4; i++) { const x = fishOnce(R, f, id, t + 1000); assert.ok(x.land && x.land.ok, JSON.stringify(x.cast)); t = x.t; }
+  assert.equal(applyAction(f, { type: 'fishCast', id, k: 'z' }, t + 1000, null, S).error, 'no_fish');
+  assert.equal(pondStock(o, t + 1000 + 600000).count, 1, 'za 10 minut přibude ryba');
   // každá ryba se někde zpracuje
   const used = new Set(Object.values(RECIPES).flatMap(r => Object.keys(r.in)));
   for (const x of FISH_LIST) assert.ok(used.has(x.id), 'nevyužitá ryba ' + x.id);

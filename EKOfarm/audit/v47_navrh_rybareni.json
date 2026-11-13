@@ -1,0 +1,415 @@
+{
+  "meta": {
+    "game": "EKOfarm",
+    "status": "NAVRH_NIKOLI_IMPLEMENTACE",
+    "source": "07_PUVODNI_PREHLED/PROMPT_EKOfarm_prehled.md",
+    "design": "8 bait types, hidden hooked fish identity, mobile click/tap skill game"
+  },
+  "existing": {
+    "fishing_level_max": 50,
+    "existing_fish_count": 14,
+    "ponds": [
+      {
+        "name": "Rybník",
+        "estate": 3,
+        "capacity": 5,
+        "tier": 1
+      },
+      {
+        "name": "Větší rybník",
+        "estate": 5,
+        "capacity": 8,
+        "tier": 2
+      },
+      {
+        "name": "Velký rybník",
+        "estate": 7,
+        "capacity": 15,
+        "tier": 3
+      },
+      {
+        "name": "Jezero",
+        "estate": 10,
+        "capacity": 20,
+        "tier": 4
+      }
+    ],
+    "existing_bait_recipe": {
+      "name": "Návnada",
+      "workshop": "Krmivárna",
+      "estate": 3,
+      "inputs": {
+        "Pšenice": 1,
+        "Kukuřice": 1
+      },
+      "output": 3,
+      "duration_minutes": 2
+    }
+  },
+  "baits": [
+    {
+      "id": "bait_worm",
+      "name": "Červ",
+      "unlocked_estate": 3,
+      "fishing_level": 1,
+      "source": "Stánek – zásoby; koupě za běžné mince",
+      "stock_item": "červ",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Plotice",
+        "Karas",
+        "Cejn",
+        "Perlín ostrobřichý",
+        "Ouklej obecná",
+        "Ježdík obecný",
+        "Okoun"
+      ],
+      "notes": "Nový skladový předmět; nepřidávat farmu na červy."
+    },
+    {
+      "id": "bait_corn",
+      "name": "Kukuřice",
+      "unlocked_estate": 3,
+      "fishing_level": 1,
+      "source": "Přímo ze stávající polní úrody",
+      "stock_item": "kukuřice",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Kapr",
+        "Amur",
+        "Cejn",
+        "Tolstolobik bílý",
+        "Karas"
+      ],
+      "notes": "Použít existující skladový item; žádná nová měna."
+    },
+    {
+      "id": "bait_dough",
+      "name": "Těsto",
+      "unlocked_estate": 3,
+      "fishing_level": 1,
+      "source": "Existující recept Krmivárny: 1 pšenice + 1 kukuřice → 3× Návnada",
+      "stock_item": "existující návnada / mapování do bait_dough",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Plotice",
+        "Karas",
+        "Lín",
+        "Cejnek malý",
+        "Cejn",
+        "Síh maréna"
+      ],
+      "notes": "Povinná zpětná kompatibilita: nemazat ani nespotřebovat staré návnady; migrace názvu nebo aliasu podle kódu."
+    },
+    {
+      "id": "bait_roll",
+      "name": "Rohlík",
+      "unlocked_estate": 3,
+      "fishing_level": 2,
+      "source": "Pekárna – nově navrhovaný Rohlík, pokud ještě neexistuje; běžný výrobek lze použít na háček",
+      "stock_item": "rohlík",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Kapr",
+        "Perlín ostrobřichý",
+        "Jelec tloušť",
+        "Jelec jesen"
+      ],
+      "notes": "Rohlík může být zároveň pečivo k prodeji; bez duplikátního item ID."
+    },
+    {
+      "id": "bait_pea",
+      "name": "Hrášek",
+      "unlocked_estate": 5,
+      "fishing_level": 4,
+      "source": "Přímo ze stávající sklizně Hrách (St5)",
+      "stock_item": "hrách",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Amur",
+        "Kapr",
+        "Tolstolobik bílý",
+        "Lín"
+      ],
+      "notes": "„Hrášek“ je název na tlačítku, ve skladu používá existující Hrách."
+    },
+    {
+      "id": "bait_cheese",
+      "name": "Sýr",
+      "unlocked_estate": 5,
+      "fishing_level": 8,
+      "source": "Mlékárna – existující recept Sýr (St5, Vaření 3)",
+      "stock_item": "sýr",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Lín",
+        "Jelec tloušť",
+        "Jelec jesen",
+        "Mník jednovousý"
+      ],
+      "notes": "Používá existující sýr, žádný nový výrobek."
+    },
+    {
+      "id": "bait_meat",
+      "name": "Masová návnada",
+      "unlocked_estate": 7,
+      "fishing_level": 12,
+      "source": "Krmivárna – NAVRHOVANÝ recept 1 maso → 3 masové návnady za 5 min",
+      "stock_item": "masová návnada",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Sumec",
+        "Úhoř",
+        "Mník jednovousý",
+        "Jeseter"
+      ],
+      "notes": "Maso z prasete dostupné od St7; nepoužívat dříve."
+    },
+    {
+      "id": "bait_lure",
+      "name": "Třpytka",
+      "unlocked_estate": 7,
+      "fishing_level": 12,
+      "source": "Stánek – zásoby; nakupovaná za běžné mince",
+      "stock_item": "třpytka",
+      "consumption_per_cast": 1,
+      "preferred": [
+        "Štika",
+        "Okoun",
+        "Candát",
+        "Bolen",
+        "Pstruh",
+        "Siven americký"
+      ],
+      "notes": "Pro jednoduchou ekonomiku jedna spotřební jednotka na jeden zahájený nához; později případně odolnost, pouze po schválení."
+    }
+  ],
+  "existing_fish": [
+    {
+      "name": "Plotice",
+      "min_fishing_level": 1,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Karas",
+      "min_fishing_level": 1,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Kapr",
+      "min_fishing_level": 2,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Cejn",
+      "min_fishing_level": 3,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Lín",
+      "min_fishing_level": 4,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Okoun",
+      "min_fishing_level": 5,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Pstruh",
+      "min_fishing_level": 7,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Amur",
+      "min_fishing_level": 9,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Candát",
+      "min_fishing_level": 11,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Úhoř",
+      "min_fishing_level": 13,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Štika",
+      "min_fishing_level": 15,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Bolen",
+      "min_fishing_level": 17,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Sumec",
+      "min_fishing_level": 20,
+      "status": "existing_from_overview"
+    },
+    {
+      "name": "Jeseter",
+      "min_fishing_level": 24,
+      "status": "existing_from_overview"
+    }
+  ],
+  "new_fish": [
+    {
+      "id": "eco_fish_perlin_ostrobrichy",
+      "name": "Perlín ostrobřichý",
+      "min_fishing_level": 2,
+      "min_estate": 3,
+      "min_pond_name": "Rybník",
+      "motion_hint": "menší rychlé výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_ouklej_obecna",
+      "name": "Ouklej obecná",
+      "min_fishing_level": 4,
+      "min_estate": 3,
+      "min_pond_name": "Rybník",
+      "motion_hint": "rychlá, krátké změny směru",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_cejnek_maly",
+      "name": "Cejnek malý",
+      "min_fishing_level": 6,
+      "min_estate": 3,
+      "min_pond_name": "Rybník",
+      "motion_hint": "slabší, ale časté výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_jezdik_obecny",
+      "name": "Ježdík obecný",
+      "min_fishing_level": 7,
+      "min_estate": 3,
+      "min_pond_name": "Rybník",
+      "motion_hint": "krátké prudké výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_jelec_tloust",
+      "name": "Jelec tloušť",
+      "min_fishing_level": 8,
+      "min_estate": 5,
+      "min_pond_name": "Větší rybník",
+      "motion_hint": "svižné výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_jelec_jesen",
+      "name": "Jelec jesen",
+      "min_fishing_level": 12,
+      "min_estate": 5,
+      "min_pond_name": "Větší rybník",
+      "motion_hint": "střední síla a rychlost",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_tolstolobik_bily",
+      "name": "Tolstolobik bílý",
+      "min_fishing_level": 15,
+      "min_estate": 7,
+      "min_pond_name": "Velký rybník",
+      "motion_hint": "silný, delší výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_siven_americky",
+      "name": "Siven americký",
+      "min_fishing_level": 20,
+      "min_estate": 10,
+      "min_pond_name": "Jezero",
+      "motion_hint": "rychlé obtížnější výpady",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_sih_marena",
+      "name": "Síh maréna",
+      "min_fishing_level": 27,
+      "min_estate": 10,
+      "min_pond_name": "Jezero",
+      "motion_hint": "nepravidelný rytmus",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_fish_mnik_jednovousy",
+      "name": "Mník jednovousý",
+      "min_fishing_level": 35,
+      "min_estate": 10,
+      "min_pond_name": "Jezero",
+      "motion_hint": "vzácný a silný",
+      "base_price": null,
+      "rarity_weight": null,
+      "weight_distribution": null,
+      "status": "proposal"
+    }
+  ],
+  "preference_rules": {
+    "preferred_multiplier_example": 1.5,
+    "neutral_multiplier_example": 1.0,
+    "other_multiplier_example": 0.8,
+    "rule": "Všechny násobitele jsou návrhové. Konkrétní čísla odvodit z balance testů; nikdy neporušit level/pond eligibility. Při nulových eligible fishes žádná ztráta návnady."
+  },
+  "minigame_initial_tuning_proposal": {
+    "pointer_domain": [
+      0,
+      1
+    ],
+    "progress_domain": [
+      0,
+      100
+    ],
+    "tension_domain": [
+      0,
+      100
+    ],
+    "tap_impulse": 0.09,
+    "left_drift_per_second": 0.38,
+    "max_duration_seconds": 35,
+    "progress_gain_per_second_inside_zone": 8,
+    "progress_loss_per_second_outside_zone": 2.0,
+    "tension_gain_per_second_outside_zone": 7,
+    "tension_loss_per_second_inside_zone": 4,
+    "target_width_normalized_range": [
+      0.13,
+      0.3
+    ],
+    "update_rate_hz": 30,
+    "note": "Nesmí být hardcoded; nastavit po hráčských testech."
+  },
+  "concurrency_policy": "jedna aktivní rybářská session na hráče, atomický start a settlement, idempotency key, při přerušení krátká rejoin grace period"
+}

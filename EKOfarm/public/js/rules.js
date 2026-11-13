@@ -1,9 +1,10 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=46';
-import { EVENTS } from './events.js?v=46';
-import { STORY, CHAPTERS } from './story.js?v=46';
-import { ECO_FLAGS, ecoOn, ECO_FROM, ECO_CROPS, ECO_BYPRODUCTS, BYPRODUCT_WORTH, ECO_RECIPES, ECO_STRAW, ECO_AWARDS, PLAN_PREFS, PLAN_MAX_QTY, PLAN_MAX_DEPTH } from './eco-config.js?v=46';
+import { TEAM } from './team-config.js?v=47';
+import { EVENTS } from './events.js?v=47';
+import { STORY, CHAPTERS } from './story.js?v=47';
+import { ECO_FLAGS, ecoOn, ECO_FROM, ECO_CROPS, ECO_BYPRODUCTS, BYPRODUCT_WORTH, ECO_RECIPES, ECO_STRAW, ECO_AWARDS, PLAN_PREFS, PLAN_MAX_QTY, PLAN_MAX_DEPTH,
+  ECO_FISH, ECO_SUPPLY, BAITS, BAIT_FLAG, BAIT_PREF, BAIT_DEFAULT, FIGHT, FISH_RECIPES, BAKERY_CROPS, BAKERY_RECIPES } from './eco-config.js?v=47';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -125,7 +126,7 @@ const ECO_CROP_IDS = [];
 function stLevel(st) { for (let L = 1; L < 200; L++) if (stOfLevel(L) >= st) return L; return 1; }   // nejnižší úroveň hráče pro Statek st
 {
   const lvOf = stLevel;
-  for (const e of ECO_CROPS) {
+  for (const e of [...ECO_CROPS, ...BAKERY_CROPS]) {   // v47: + žito a mák
     if (!ecoOn(e.flag) || CROPS[e.id]) continue;
     const t = e.min * 60, same = Object.values(CROPS).filter(c => c.harvester === e.harvester && !c.eco).sort((a, b) => a.time - b.time);
     let lo = same[0], hi = same[same.length - 1];
@@ -181,6 +182,23 @@ export const FISH = {
 export const FISH_SIZES = [{ min: 0.9, name: 'obří', qty: 3 }, { min: 0.65, name: 'velká', qty: 2 }, { min: 0, name: 'běžná', qty: 1 }];
 export const fishSize = (f, kg) => FISH_SIZES.find(s => (kg - f.kg[0]) / (f.kg[1] - f.kg[0]) >= s.min - 1e-9);
 export const fmtKg = kg => (kg < 1 ? `${Math.round(kg * 1000)} g` : `${(Math.round(kg * 10) / 10).toString().replace('.', ',')} kg`);
+// v47: nové druhy ryb (eco-config ECO_FISH) – cena, obtížnost (diff) a četnost (w) lineárně podle úrovně Rybaření mezi
+// dosavadními rybami (nad nejvyšší úrovní úměrně); pond = nejmenší vodní plocha, kde berou (stávající ryby berou všude)
+export const POND_TIER = { rybnik: 1, rybnik2: 2, rybnik3: 3, rybnik4: 4 };
+const FISH_LV0 = { plotice: 1, karas: 1, kapr: 2, cejn: 3, lin: 4, okoun: 5, pstruh: 7, amur: 9, candat: 11, uhor: 13, stika: 15, bolen: 17, sumec: 20, jeseter: 24 };
+{
+  const old = Object.values(FISH).map(f => ({ ...f, L: FISH_LV0[f.id] || 1 })).sort((a, b) => a.L - b.L);
+  const at = (L, k) => {
+    const hi = old.find(f => f.L >= L) || old[old.length - 1], lo = [...old].reverse().find(f => f.L <= L) || old[0];
+    if (L > hi.L) return k === 'w' ? hi.w * hi.L / L : k === 'diff' ? Math.min(0.97, hi.diff + 0.005 * (L - hi.L)) : hi[k] * L / hi.L;
+    return hi.L === lo.L ? (hi[k] + lo[k]) / 2 : lo[k] + (hi[k] - lo[k]) * (L - lo.L) / (hi.L - lo.L);
+  };
+  for (const e of ECO_FISH) {
+    if (!ecoOn(e.flag) || FISH[e.id]) continue;
+    const f = fish(e.id, e.name, 3, Math.round(at(e.lv, 'price')), Math.round(at(e.lv, 'diff') * 100) / 100, Math.max(1, Math.round(at(e.lv, 'w'))), e.color, e.kg, !!e.fem);
+    FISH[e.id] = { ...f, pond: e.pond, fishLv0: e.lv, eco: e.flag };
+  }
+}
 export const FISH_LIST = Object.values(FISH);
 
 // stromy a keře do sadu: cost = sazenice, first = první úroda (s), regrow = další úroda (s), harvests = kolikrát plodí
@@ -253,12 +271,15 @@ export const PRODUCTS = {
 // v46 (etapa D): vedlejší produkty – samostatné předměty (cena se dopočítá níž z krmné směsi, kterou nahrazují)
 export const BYPRODUCTS = ECO_BYPRODUCTS.filter(b => ecoOn(b.flag) && b.from.length);
 for (const b of BYPRODUCTS) PRODUCTS[b.id] = { ...P(b.id, b.name), by: 1 };
+// v47: návnady ze Stánku (červ, třpytka) – pevná cena, nevyrábí se; dosavadní „Návnada“ je Těsto (stejné id, jen název)
+for (const x of ECO_SUPPLY) if (ecoOn(x.flag)) PRODUCTS[x.id] = { id: x.id, name: x.name, icon: x.id, price: x.price, sup: 1 };
+if (ecoOn(BAIT_FLAG)) PRODUCTS.navnada.name = 'Těsto na ryby';
 // v46 (etapy B, D, E, F): nové recepty – jen se zapnutou skupinou a jen když existují všechny suroviny (i výrobky jiných
 // nových receptů). Alternativní recept (out) vyrábí EXISTUJÍCÍ předmět, nový předmět nevzniká.
 const ECO_ON = [];
 {
   const known = id => !!(CROPS[id] || FRUITS[id] || FISH[id] || PRODUCTS[id]);
-  let left = ECO_RECIPES.filter(r => ecoOn(r.flag));
+  let left = [...ECO_RECIPES, ...FISH_RECIPES, ...BAKERY_RECIPES].filter(r => ecoOn(r.flag));   // v47: + rybí recepty a pečivo
   for (let more = true; more;) {
     more = false;
     left = left.filter(r => {
@@ -614,7 +635,7 @@ export function stOfLevel(L) {
 for (const c of CROP_LIST) c.st = Math.max(stOfLevel(c.level), c.stMin || 0);
 for (const t of TREE_LIST) t.st = stOfLevel(t.level);
 for (const a of ANIMAL_LIST) a.st = Math.max(BUILDINGS[a.home].st, stOfLevel(a.level));
-for (const f of FISH_LIST) f.st = BUILDINGS.rybnik.st;                 // v38: druhy ryb odemyká úroveň rybaření (fishLv)
+for (const f of FISH_LIST) f.st = BUILDINGS[f.pond || 'rybnik'].st;   // v38: druhy ryb odemyká úroveň rybaření (fishLv); v47: + vodní plocha
 for (const r of Object.values(RECIPES)) {
   r.st = Math.max(BUILDINGS[r.building].st, r.stMin || 0);              // v38: recepty v budově postupně odemyká úroveň vaření (cook); v46: stMin
   const eater = ANIMAL_LIST.find(a => a.feed === recipeOut(r));
@@ -695,7 +716,7 @@ for (const m of MACHINE_LIST) {
 }
 // druhy ryb podle rybaření
 const FISH_LV = { plotice: 1, karas: 1, kapr: 2, cejn: 3, lin: 4, okoun: 5, pstruh: 7, amur: 9, candat: 11, uhor: 13, stika: 15, bolen: 17, sumec: 20, jeseter: 24 };
-for (const f of FISH_LIST) f.fishLv = FISH_LV[f.id] || 1;
+for (const f of FISH_LIST) f.fishLv = FISH_LV[f.id] || f.fishLv0 || 1;
 // recepty podle vaření: první recept každé budovy hned, další podle dřívější úrovně (krmivo, návnada, semena a sazenice vždy)
 for (const b of Object.keys(BUILDINGS)) {
   const rs = Object.values(RECIPES).filter(r => r.building === b && !r.cook0);   // v46: nové recepty mají Vaření dané (cook0) a nemění staré
@@ -728,7 +749,11 @@ export const QUEST_TYPES = {
   fruit:   { text: 'Sklidit ovoce', icon: 'jablko', base: 6, per: 0.5, pay: 5, need: f => f.objects.some(o => o.kind === 'sad' && o.tree) },
   fish:    { text: 'Ulovit ryb', icon: 'kapr', base: 3, per: 0.2, pay: 12, need: f => f.objects.some(o => BUILDINGS[o.kind].type === 'pond') && f.machines.some(m => MACHINES[m.model].type === 'rod') },
   jobs:    { text: 'Práce strojů na velkém poli', icon: 'tractor', base: 2, per: 0.1, pay: 20, need: f => f.objects.some(o => o.kind === 'velkepole') && f.machines.some(m => MACHINES[m.model].type === 'tractor') },
+  // v47: rybaření s návnadou a rybí kuchyně (jen se zapnutou novou minihrou; staré úkoly zůstávají)
+  cast:    { text: 'Nahodit s návnadou', icon: 'cerv', base: 3, per: 0.2, pay: 8, need: f => FISHING_V2 && canFish(f) },
+  fishdish: { text: 'Uvařit rybích jídel', icon: 'smazeny_kapr', base: 2, per: 0.1, pay: 15, need: f => FISHING_V2 && canFish(f) && f.objects.some(o => o.kind === 'rybarna') },
 };
+const canFish = f => f.objects.some(o => BUILDINGS[o.kind].type === 'pond') && f.machines.some(m => MACHINES[m.model].type === 'rod');
 export const questBonus = farm => ({ coins: 100 + 10 * farm.level, xp: 10 + farm.level });
 function genQuests(farm, day) {
   const r = seeded(`${farm.created}:${day}:q`);
@@ -829,7 +854,7 @@ export const ACHIEVEMENTS = [
   { id: 'fish',    name: 'Rybář',          stat: 'fish',    tiers: [10, 100, 1000],   coins: [60, 300, 1200], icon: 'kapr',   text: 'Ulovit ryb' },
   { id: 'jobs',    name: 'Strojník',       stat: 'jobs',    tiers: [5, 50, 300],      coins: [80, 400, 1500], icon: 'tractor', text: 'Prací strojů na velkém poli' },
 ];
-const STAT_KEYS = ['harvest', 'produce', 'animal', 'fruit', 'orders', 'sold', 'jobs', 'plant', 'feed', 'fish'];
+const STAT_KEYS = ['harvest', 'produce', 'animal', 'fruit', 'orders', 'sold', 'jobs', 'plant', 'feed', 'fish', 'cast', 'fishdish'];
 
 // výkupní cena se mění každé 4 hodiny (0,7× až 1,4×), stejně na serveru i v prohlížeči
 export const MARKET_PERIOD = 4 * 3600 * 1000;
@@ -875,7 +900,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 46;   // v46: starší aplikace se samy načtou znovu (rozšíření: recepty, plán výroby, vedlejší produkty, nové plodiny, mistrovské recepty)
+export const CLIENT_MIN = 47;   // v47: starší aplikace se samy načtou znovu (rybaření se serverovým tajemstvím ryby, 8 návnad, nové ryby, recepty a pečivo)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -945,6 +970,8 @@ export function normalize(farm) {
   }
   if (!farm.objects.some(o => o.kind === 'sklad') && !farm.pending.includes('sklad')) farm.pending.push('sklad');
   for (const o of farm.objects) if (!o.lvl && UP_BASE[BUILDINGS[o.kind].type]) o.lvl = 1;
+  // v47: rozběhnutý nához ze starého rybaření (druh `f` byl vidět i v prohlížeči) se po přechodu zruší a ryba se vrátí do rybníku
+  if (FISHING_V2) for (const o of farm.objects) if (o.hook && o.hook.f) { o.hook = null; if (typeof o.sc === 'number') o.sc = Math.min(pondCap(o), o.sc + 1); }
   // v10: prodejna strojů a stánek se přestěhovaly do městečka (úroveň zůstává)
   if (!farm.town) farm.town = {};
   for (const k of TOWN_KINDS) {
@@ -1174,6 +1201,8 @@ function statOf(id) {
   return 'produce';
 }
 function addStat(farm, key, n) { farm.stats[key] = (farm.stats[key] || 0) + n; }
+let FISH_DISH = null;   // v47: výrobky Rybárny (i staré recepty) pro denní úkol „Uvařit rybích jídel“
+const isFishDish = id => (FISH_DISH ||= new Set(Object.values(RECIPES).filter(r => r.building === 'rybarna').map(r => recipeOut(r)))).has(id);
 // semena a sazenice se neskladují ve Skladu, ale v zásobě Statku (farm.seeds): 3 kusy na každé pole a sad
 const SEED_ITEMS = new Set([...Object.keys(SEEDS), ...Object.keys(SAPLINGS)]);
 export const isSeedItem = id => SEED_ITEMS.has(id);
@@ -1195,6 +1224,7 @@ function addItem(farm, id, n, team = !!villHook) {
   const s = storeOf(farm, id);
   s[id] = (s[id] || 0) + n;
   addStat(farm, statOf(id), n);
+  if (isFishDish(id)) addStat(farm, 'fishdish', n);
   skillAdd(farm, id, n, team);   // v38; v44: práce týmu (během dopočítávání nebo dávka od týmu) jen z části
   if (villHook) { villHook.add.push(id); if (villHook.away) villHook.away.got[id] = (villHook.away.got[id] || 0) + n; }
 }
@@ -1390,17 +1420,80 @@ export const hiveStock = (farm, o, now) => stockState(o, now, hiveCap(o), hiveIv
 export const beeBonus = (farm, o) => (farm.objects.some(x => x.kind === 'vcelin' && near(o, x, 4)) ? 1 : 0);
 
 // která ryba zabere (podle úrovně; vzácné častěji s lepší udicí, ve větším rybníku, v dobrém počasí a po události)
-export function pickFish(farm, roll, now = 0, o = null) {
+export function pickFish(farm, roll, now = 0, o = null, bait = null) {
   const rod = bestOwned(farm, 'rod');
   const rare = ((rod && rod.rare) || 1) * ((o && POND[o.kind] && POND[o.kind].rare) || 1);
   const wf = weatherAt(now).fish * fxMult(farm, 'fish', now);
-  const list = FISH_LIST.filter(f => fishOk(farm, f));
-  const w = f => f.w * (f.diff >= 0.5 ? rare * wf : 1);
+  const list = fishPool(farm, o);
+  const b = bait && BAITS_BY[bait];   // v47: návnada mění jen poměr mezi druhy, které tu berou (nikdy nepřidá zamčený)
+  const w = f => f.w * (f.diff >= 0.5 ? rare * wf : 1) * (b ? (b.pref.includes(f.id) ? BAIT_PREF.like : BAIT_PREF.other) : 1);
   let x = roll * list.reduce((n, f) => n + w(f), 0);
   for (const f of list) { x -= w(f); if (x < 0) return f.id; }
   return list[list.length - 1].id;
 }
 export const HOOK_MS = 120000;   // ryba na háčku vydrží 2 minuty
+// v47: druhy, které v téhle vodě berou: podle Rybaření a nejmenší vodní plochy druhu (bez rybníku = bez omezení vody)
+export const pondTier = o => (o && POND_TIER[o.kind]) || 1;
+export const fishPool = (farm, o = null) => FISH_LIST.filter(f => fishOk(farm, f) && (!o || !f.pond || pondTier(o) >= POND_TIER[f.pond]));
+
+// ---------------------------------------------------------------------------------------------------------
+// v47: návnady a nová minihra (FIGHT v eco-config). Server vybírá druh tajně (SRV.rand) a ukládá ho do farm.sx,
+// které server ani lokální „server“ testovací verze nikdy nepošle prohlížeči; v prohlížeči se nához jen předběžně
+// zapíše (bez druhu) a minihra se rozběhne až s údaji ze serveru (čekání, semínko zóny, profil obtížnosti 1–3).
+// Výsledek: prohlížeč pošle čísla kroků, ve kterých hráč klepl; server souboj přehraje stejným výpočtem a ověří čas.
+// ---------------------------------------------------------------------------------------------------------
+export const BAITS_ON = ecoOn(BAIT_FLAG) && ecoOn('fishing_minigame_v2');
+export const FISHING_V2 = ecoOn('fishing_minigame_v2');
+export const BAIT_LIST = (BAITS_ON ? BAITS : BAITS.filter(b => b.id === BAIT_DEFAULT)).filter(b => ITEMS_HAS(b.item));
+function ITEMS_HAS(id) { return !!(CROPS[id] || PRODUCTS[id] || FRUITS[id]); }
+export const BAITS_BY = Object.fromEntries(BAIT_LIST.map(b => [b.id, b]));
+export const baitLock = (farm, b) => (statekLevel(farm) < b.st ? 'statek' : skillLevel(farm, 'r') < b.lv ? 'skill' : null);
+export const baitHave = (farm, b) => have(farm, b.item);
+export const baitFree = (farm, b) => Math.max(0, have(farm, b.item) - keepOf(farm, b.item));   // nad rezervou skladu
+// aktivní nához u kteréhokoli rybníku (jeden na hráče)
+export const activeHook = (farm, now) => farm.objects.find(o => BUILDINGS[o.kind].type === 'pond' && o.hook && now - o.hook.t < HOOK_MS) || null;
+// semínkový generátor (zóna minihry) – stejný v prohlížeči i na serveru
+function mulberry(a) { return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+// parametry souboje: profil p (1–3), řada udice, Rybaření
+export function fightParams(farm, hook) {
+  const F = FIGHT, p = hook.p || 2, rod = bestOwned(farm, 'rod'), tier = (rod && rod.tier) || 1, sk = Math.min(40, skillLevel(farm, 'r'));
+  const r = mulberry(hook.z >>> 0);
+  return {
+    p, width: Math.max(F.wMin, Math.min(F.wMax, F.width[0] + F.width[1] * (p - 1) + F.width[2] * (tier - 1) + F.width[3] * sk)),
+    amp: F.amp[0] + F.amp[1] * (p - 1), w1: (F.speed[0] + F.speed[1] * (p - 1)) * (0.8 + 0.4 * r()), w2: (F.speed[0] + F.speed[1] * (p - 1)) * (1.6 + 0.8 * r()),
+    f1: r() * 6.283, f2: r() * 6.283, gain: F.gain[0] + F.gain[1] * (p - 1) + F.gain[2] * (tier - 1),
+    tensUp: Math.max(4, F.tensUp[0] + F.tensUp[1] * (p - 1) + F.tensUp[2] * (tier - 1)), max: F.maxS * F.hz,
+    pull: F.pull[p - 1], pulls: (() => { const a = []; let t = 1.5 + r() * 2; while (t < F.maxS) { a.push(Math.round(t * F.hz)); t += F.pullGap[0] + (F.pullGap[1] - F.pullGap[0]) * r(); } return a; })(),
+  };
+}
+// výpad ryby v kroku i: 0, nebo síla tahu (šipka sjíždí rychleji)
+export const pullAt = (P, i) => { const L = Math.round(FIGHT.pullLen * FIGHT.hz); for (const s of P.pulls) { if (s > i) break; if (i < s + L) return P.pull; } return 0; };
+export const zoneAt = (P, i) => { const t = i / FIGHT.hz; return 0.5 + P.amp * (0.65 * Math.sin(P.w1 * t + P.f1) + 0.35 * Math.sin(P.w2 * t + P.f2)); };
+export const fightNew = () => ({ i: 0, x: FIGHT.startX, v: 0, prog: 0, tens: FIGHT.tens0, res: null, last: -99 });
+// jeden krok 1/hz s: tap = klepnutí v tomto kroku (počítá se jen s odstupem gap kroků)
+export function fightStep(s, P, tap) {
+  const F = FIGHT, dt = 1 / F.hz;
+  if (s.res) return s;
+  if (tap && s.i - s.last >= F.gap) { s.v += F.tap; s.last = s.i; }
+  s.v *= Math.exp(-F.damp * dt);
+  s.pull = pullAt(P, s.i);
+  s.x += (s.v - F.drift - s.pull) * dt;
+  if (s.x < 0) { s.x = 0; s.v = Math.max(0, s.v); }
+  if (s.x > 1) { s.x = 1; s.v = Math.min(0, s.v); }
+  const c = zoneAt(P, s.i), inside = Math.abs(s.x - c) <= P.width / 2;
+  if (inside) { s.prog = Math.min(100, s.prog + P.gain * dt); s.tens = Math.max(0, s.tens - F.tensDown * dt); }
+  else { s.prog = Math.max(0, s.prog - F.loss * dt); s.tens = Math.min(100, s.tens + P.tensUp * dt); }
+  s.in = inside; s.i++;
+  if (s.prog >= 100) s.res = 'win'; else if (s.tens >= 100 || s.i >= P.max) s.res = 'lose';
+  return s;
+}
+// přehrání celého souboje z čísel kroků s klepnutím (rostoucí celá čísla)
+export function fightReplay(P, taps) {
+  const s = fightNew(), set = new Set(Array.isArray(taps) ? taps.filter(n => Number.isInteger(n) && n >= 0 && n < P.max) : []);
+  while (!s.res) fightStep(s, P, set.has(s.i));
+  return s;
+}
+export const fightMinMs = (hook, steps) => (hook.w || 0) + FIGHT.biteShow + steps * 1000 / FIGHT.hz - FIGHT.slack;
 
 // ---------- průvodce a upozornění ----------
 // co se na farmě stalo hotovým mezi časy from a to (pro upozornění v telefonu)
@@ -1680,6 +1773,7 @@ export function supplyPrice(farm, id) {
   if (SEEDS[id]) { const c = CROPS[SEEDS[id].seed]; return stOk(farm, c) ? c.cost : null; }
   if (SAPLINGS[id]) { const t = TREES[SAPLINGS[id].sapling]; return stOk(farm, t) ? t.cost : null; }
   if (typeof id === 'string' && id.startsWith('krmivo_') && ITEMS[id]) { const r = RECIPES[id]; return !r || recipeOk(farm, r) ? ITEMS[id].price : null; }
+  if (PRODUCTS[id] && PRODUCTS[id].sup) { const b = BAIT_LIST.find(x => x.item === id); return b && BAITS_ON && !baitLock(farm, b) ? PRODUCTS[id].price : null; }   // v47: červi a třpytky
   return null;
 }
 export const villAt = (farm, objId) => (farm.vill || []).find(v => v.at === objId) || null;
@@ -2499,6 +2593,7 @@ export function availableItems(st = 99, cook = 99, fish = 99) {
       if (Object.keys(r.in).every(x => ok.has(x))) { ok.add(out); more = true; }
     }
     for (const b of BYPRODUCTS) if (!ok.has(b.id) && b.from.some(x => ok.has(x))) { ok.add(b.id); more = true; }   // v46: vedlejší produkt s výrobkem
+    for (const b of BAIT_LIST) if (PRODUCTS[b.item] && PRODUCTS[b.item].sup && !ok.has(b.item) && b.st <= st && b.lv <= fish) { ok.add(b.item); more = true; }   // v47: návnady ze Stánku
   }
   AV_CACHE.set(key, ok);
   return ok;
@@ -2653,14 +2748,16 @@ export const ERRORS = {
   plot_busy: 'Na tomhle poli zrovna pracuje tvůj tým.',
   old_client: 'Je tu nová verze hry – načítám ji.',
   pod_done: 'Tahle ohrada už podestýlku ze slámy má.',
+  bait_locked: 'Tuhle návnadu ještě nemáš odemčenou.',
+  bait_keep: 'Návnada je chráněná skladovou rezervou.',
   plan_blocked: 'Plán má zamčený recept, chybějící výrobnu nebo surovinu, kterou ještě nemůžeš získat.',
   help_full: 'Kamarádovi už dnes pomohli tři lidé. Zkus to zítra.',
   help_nothing: 'Na farmě kamaráda teď není co urychlit – nic se nevyrábí ani neroste.',
   help_used: 'Dnes už jsi pomohl. Další pomoc můžeš poslat zítra.',
   help_self: 'Sám sobě pomoct nemůžeš.',
   no_rod: 'Na rybaření potřebuješ udici z Prodejny strojů v městečku.',
-  no_bait: 'Nemáš návnadu – vyrob ji v Krmivárně z pšenice a kukuřice.',
-  no_fish: 'V rybníku teď žádná ryba nezabírá. Chvíli počkej, ryby přibývají.',
+  no_bait: 'Tuhle návnadu už nemáš ve skladu.',
+  no_fish: 'V rybníku teď není co chytit. Chvíli počkej, ryby přibývají.',
   hooked: 'Na háčku už ryba je.',
   no_hook: 'Ryba utekla.',
   bad_price: 'Cena musí být aspoň 1 mince a nejvýš trojnásobek skutečné ceny.',
@@ -2726,7 +2823,16 @@ export const ERRORS = {
 // ---------- akce ----------
 // Aplikuje akci na farmu (mění objekt). Vrací { ok, error?, gained? }.
 // lim = { left } – společný rozpočet úkonů vesničanů (server ho dává jeden na celý požadavek)
-export function applyAction(farm, a, now, lim) {
+// v47: srv = serverový kontext { rand } – jen server (Worker) a lokální „server“ testovací verze; prohlížeč ho nemá
+// (tajný výběr ryby, semínko minihry). Bez něj se nához jen předběžně zapíše.
+let SRV = null;
+export function applyAction(farm, a, now, lim, srv = null) {
+  SRV = srv && typeof srv.rand === 'function' ? srv : null;
+  try { return applyAction0(farm, a, now, lim); } finally { SRV = null; }
+}
+// v47: farma pro prohlížeč – bez tajných údajů serveru (farm.sx = vybraná ryba na háčku)
+export function publicFarm(farm) { if (!farm || !farm.sx) return farm; const f = { ...farm }; delete f.sx; return f; }
+function applyAction0(farm, a, now, lim) {
   normalize(farm);
   if (BYPRODUCTS.length && !(farm.byFrom > 0)) farm.byFrom = now;   // v46: vedlejší produkty u farmy až od prvního načtení s nimi (ne zpětně za offline)
   ensureQuests(farm, now);
@@ -2741,6 +2847,83 @@ export function applyAction(farm, a, now, lim) {
   weekTick(farm);
   return r;
 }
+// ---------- v47: nová minihra – nahození a vylovení ----------
+// nához: ověří rybník, udici, návnadu nad rezervou a ryby v rybníku (jinak nic nespotřebuje); jeden nához na hráče,
+// opakovaný požadavek se stejným klíčem k vrátí původní nához (žádná druhá návnada). Ryba se z rybníku „rezervuje“
+// a při neúspěchu se vrátí.
+function fishSession(o) { const h = o.hook; return { id: o.id, k: h.k, b: h.b, w: h.w, z: h.z, p: h.p, t: h.t, pend: !!h.pend }; }
+function fishEndHook(farm, o, now, lost) {
+  if (lost && o.hook && o.hook.res) o.sc = (o.sc || 0) + 1;   // rezervovaná ryba zpátky do rybníku
+  o.hook = null;
+  if (farm.sx) { delete farm.sx[o.id]; if (!Object.keys(farm.sx).length) delete farm.sx; }
+}
+function fishCast2(farm, a, now) {
+  const o = findObject(farm, a.id);
+  if (!o || BUILDINGS[o.kind].type !== 'pond') return fail('no_object');
+  if (!hasTool(farm, 'rod')) return fail('no_rod');
+  if (!stOk(farm, FISH_LIST[0]) || !fishOk(farm, FISH_LIST[0])) return fail('locked');
+  const k = typeof a.k === 'string' ? a.k.slice(0, 24) : '';
+  const act = activeHook(farm, now);
+  if (act) {
+    if (act === o && k && act.hook.k === k) return { ok: true, again: true, session: fishSession(o) };   // stejný požadavek znovu
+    return fail('hooked');
+  }
+  for (const x of farm.objects) if (x.hook) fishEndHook(farm, x, now, true);   // prošlý nához (ryba se dávno pustila)
+  const bait = BAITS_BY[a.bait || BAIT_DEFAULT];
+  if (!bait) return fail('bad_action');
+  if (baitLock(farm, bait)) return fail('bait_locked');
+  if (baitHave(farm, bait) < 1) return fail('no_bait');
+  if (baitFree(farm, bait) < 1) return fail('bait_keep');
+  const s = pondStock(o, now);
+  if (s.count < 1) return fail('no_fish');
+  const rod = bestOwned(farm, 'rod');
+  const kept = rnd(farm) * 100 < (rod.bait || 0);   // v36: lepší udice občas návnadu ušetří
+  if (!kept) takeItem(farm, bait.item, 1);
+  takeStock(o, now, s.cap, pondIv(o), 1);
+  farm.fb = bait.id;
+  addStat(farm, 'cast', 1);
+  o.hook = { t: now, k, b: bait.id, res: 1 };
+  if (SRV) {   // jen server: druh, váha, čekání na záběr, semínko zóny a profil obtížnosti
+    const f = FISH[pickFish(farm, SRV.rand(), now, o, bait.id)];
+    const boost = weatherAt(now).fish * fxMult(farm, 'fish', now) * (rod.big || 1);
+    const kg = Math.round((f.kg[0] + (f.kg[1] - f.kg[0]) * Math.pow(SRV.rand(), 1.8 / boost)) * 100) / 100;
+    const heavy = (kg - f.kg[0]) / (f.kg[1] - f.kg[0]);
+    o.hook.w = Math.round(FIGHT.bite[0] + (FIGHT.bite[1] - FIGHT.bite[0]) * SRV.rand());
+    o.hook.z = Math.floor(SRV.rand() * 4294967296) >>> 0;
+    o.hook.p = Math.max(1, Math.min(3, (f.diff < 0.35 ? 1 : f.diff < 0.65 ? 2 : 3) + (heavy > 0.8 && SRV.rand() < 0.5 ? 1 : 0)));
+    (farm.sx || (farm.sx = {}))[o.id] = { f: f.id, kg };
+  } else o.hook.pend = 1;
+  return { ok: true, bait: kept, session: fishSession(o) };
+}
+// vylovení: taps = čísla kroků s klepnutím; server souboj přehraje a ověří, že od nahození uběhl aspoň potřebný čas
+function fishLand2(farm, a, now) {
+  const o = findObject(farm, a.id);
+  if (!o || BUILDINGS[o.kind].type !== 'pond') return fail('no_object');
+  if (!o.hook || now - o.hook.t > HOOK_MS + 30000 || (a.k && o.hook.k !== a.k)) { if (o.hook && now - o.hook.t > HOOK_MS + 30000) fishEndHook(farm, o, now, true); return fail('no_hook'); }
+  if (!SRV) return { ok: true, pend: true };   // prohlížeč: výsledek pošle server
+  const sec = farm.sx && farm.sx[o.id];
+  if (!sec || o.hook.pend || !FISH[sec.f]) { fishEndHook(farm, o, now, true); return fail('no_hook'); }
+  const s = fightReplay(fightParams(farm, o.hook), a.taps);
+  if (s.res !== 'win') { fishEndHook(farm, o, now, true); return { ok: true, lost: true }; }
+  if (now - o.hook.t < fightMinMs(o.hook, s.i)) { fishEndHook(farm, o, now, true); return { ok: true, lost: true, fast: true }; }
+  const f = FISH[sec.f], kg = sec.kg, size = fishSize(f, kg);
+  if (siloFree(farm) < size.qty) return fail('silo_full');   // nához trvá, uvolni místo a zkus to znovu
+  o.hook.res = 0; o.hookBait = o.hook.b;
+  fishEndHook(farm, o, now, false);
+  addItem(farm, f.id, size.qty);
+  if (!farm.fishRec) farm.fishRec = {};
+  const record = kg > (farm.fishRec[f.id] || 0);
+  if (record) farm.fishRec[f.id] = kg;
+  const jr = journalCatch(farm, f.id);
+  const fb = farm.fj.b || (farm.fj.b = {}), bl = fb[f.id] || (fb[f.id] = []);   // deník: na co už tahle ryba brala (tipy z vlastních úlovků)
+  if (o.hookBait && !bl.includes(o.hookBait)) bl.push(o.hookBait);
+  delete o.hookBait;
+  const xp = f.xp * size.qty + (record ? 3 : 0) + jr.xp;
+  farm.coins += jr.coins;
+  const levelUp = addXp(farm, xp);
+  return { ok: true, fish: f.id, kg, size: size.name, record, journal: jr.list, coins: jr.coins, steps: s.i, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
+}
+
 // samotná akce (bez dopočítání pomocníka a vesničanů – ty ji volají taky)
 function doAction(farm, a, now) {
   if (!a || typeof a.type !== 'string') return fail('bad_action');
@@ -3422,6 +3605,7 @@ function doAction(farm, a, now) {
       return { ok: true, streak, coins: r.coins, deco, gained: { items: [], xp: r.xp || 0, levelUp } };
     }
     case 'fishCast': {
+      if (FISHING_V2) return fishCast2(farm, a, now);   // v47
       const o = findObject(farm, a.id);
       if (!o || BUILDINGS[o.kind].type !== 'pond') return fail('no_object');
       if (!hasTool(farm, 'rod')) return fail('no_rod');
@@ -3443,6 +3627,7 @@ function doAction(farm, a, now) {
       return { ok: true, fish: f.id, kg, bait: kept };
     }
     case 'fishLand': {
+      if (FISHING_V2) return fishLand2(farm, a, now);   // v47
       const o = findObject(farm, a.id);
       if (!o || BUILDINGS[o.kind].type !== 'pond') return fail('no_object');
       if (!o.hook || now - o.hook.t > HOOK_MS + 30000) { o.hook = null; return fail('no_hook'); }
@@ -3461,6 +3646,12 @@ function doAction(farm, a, now) {
       farm.coins += jr.coins;
       const levelUp = addXp(farm, xp);
       return { ok: true, fish: f.id, kg, size: size.name, record, journal: jr.list, coins: jr.coins, gained: { items: [{ item: f.id, qty: size.qty }], xp, levelUp } };
+    }
+    case 'fishGiveUp': {   // v47: hráč rybu pustil / zavřel minihru – nához končí bez úlovku
+      const o = findObject(farm, a.id);
+      if (!o || !o.hook || (a.k && o.hook.k !== a.k)) return fail('no_hook');
+      fishEndHook(farm, o, now, true);
+      return { ok: true, lost: true };
     }
     case 'eventAnswer': {   // v36: odpověď na událost
       const ev = eventNow(farm, now);

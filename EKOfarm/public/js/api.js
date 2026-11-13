@@ -1,6 +1,6 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo } from './rules.js?v=46';
-export const APP_VERSION = 46;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
+import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo, publicFarm } from './rules.js?v=47';
+export const APP_VERSION = 47;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -83,6 +83,7 @@ function onlineBackend() {
   };
 }
 
+const LOCAL_SRV = { rand: () => Math.random() };   // v47: testovací verze hraje sama za server
 function localBackend() {
   function load() {
     const raw = lsGet(LOCAL_KEY);
@@ -93,7 +94,7 @@ function localBackend() {
   }
   return {
     mode: 'local',
-    async start() { return { name: 'Testovací farma', farm: load(), now: Date.now() }; },
+    async start() { return { name: 'Testovací farma', farm: publicFarm(load()), now: Date.now() }; },   // v47: bez tajných údajů (ryba na háčku)
     async login() { return this.start(); },
     async register() { return this.start(); },
     async logout() { lsSet(LOCAL_KEY, null); },
@@ -112,9 +113,9 @@ function localBackend() {
       const farm = load();
       const now = Date.now();
       const lim = { left: VILL_BUDGET };   // stejně jako server: jeden rozpočet práce vesničanů na požadavek
-      const results = actions.map(a => applyAction(farm, a, a && a.type === 'harvest' ? now + 2000 : now, lim));
+      const results = actions.map(a => applyAction(farm, a, a && a.type === 'harvest' ? now + 2000 : now, lim, LOCAL_SRV));
       lsSet(LOCAL_KEY, JSON.stringify(farm));
-      return { farm, now, results };
+      return { farm: publicFarm(farm), now, results };
     },
   };
 }

@@ -1,0 +1,944 @@
+{
+  "meta": {
+    "status": "proposal",
+    "data_not_verified_in_code": true,
+    "no_duplicate_existing_recipe_ids": true,
+    "pricing_and_time_tbd_by_audit": true
+  },
+  "recipes": [
+    {
+      "id": "eco_rec_rybi_jednohubky",
+      "name": "Rybí jednohubky",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 3,
+      "duration_minutes_proposal": 12,
+      "inputs": [
+        {
+          "name": "Ouklej obecná",
+          "quantity": 2
+        },
+        {
+          "name": "Chléb",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_perlin_na_cesneku",
+      "name": "Perlín na česneku",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 5,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Perlín ostrobřichý",
+          "quantity": 2
+        },
+        {
+          "name": "Česnek",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_cejnek_v_testicku",
+      "name": "Cejnek v těstíčku",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 6,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Cejnek malý",
+          "quantity": 2
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        },
+        {
+          "name": "Mouka",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_polevka_z_jezdika",
+      "name": "Polévka z ježdíka",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 7,
+      "duration_minutes_proposal": 18,
+      "inputs": [
+        {
+          "name": "Ježdík obecný",
+          "quantity": 2
+        },
+        {
+          "name": "Brambory",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_tloust_na_cibuli",
+      "name": "Tloušť na cibuli",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 8,
+      "duration_minutes_proposal": 20,
+      "inputs": [
+        {
+          "name": "Jelec tloušť",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_rybi_pomazanka",
+      "name": "Rybí pomazánka",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 9,
+      "duration_minutes_proposal": 18,
+      "inputs": [
+        {
+          "name": "Plotice",
+          "quantity": 2
+        },
+        {
+          "name": "Smetana",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_jesen_se_zeleninou",
+      "name": "Jesen se zeleninou",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 12,
+      "duration_minutes_proposal": 22,
+      "inputs": [
+        {
+          "name": "Jelec jesen",
+          "quantity": 1
+        },
+        {
+          "name": "Paprika",
+          "quantity": 1
+        },
+        {
+          "name": "Mrkev",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_pstruh_na_masle",
+      "name": "Pstruh na másle",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 6,
+      "cooking_level": 13,
+      "duration_minutes_proposal": 20,
+      "inputs": [
+        {
+          "name": "Pstruh",
+          "quantity": 1
+        },
+        {
+          "name": "Máslo",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_rybi_kolac",
+      "name": "Rybí koláč",
+      "kind": "ryba",
+      "workshop": "Pekárna",
+      "estate_level": 6,
+      "cooking_level": 14,
+      "duration_minutes_proposal": 25,
+      "inputs": [
+        {
+          "name": "Pstruh",
+          "quantity": 1
+        },
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_tolstolobik_na_zelenine",
+      "name": "Tolstolobik na zelenině",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 7,
+      "cooking_level": 15,
+      "duration_minutes_proposal": 25,
+      "inputs": [
+        {
+          "name": "Tolstolobik bílý",
+          "quantity": 1
+        },
+        {
+          "name": "Rajče",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_uzeny_tolstolobik",
+      "name": "Uzený tolstolobik",
+      "kind": "ryba",
+      "workshop": "Uzenářství",
+      "estate_level": 8,
+      "cooking_level": 16,
+      "duration_minutes_proposal": 28,
+      "inputs": [
+        {
+          "name": "Tolstolobik bílý",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_siven_na_cesneku",
+      "name": "Siven na česneku",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 10,
+      "cooking_level": 21,
+      "duration_minutes_proposal": 25,
+      "inputs": [
+        {
+          "name": "Siven americký",
+          "quantity": 1
+        },
+        {
+          "name": "Česnek",
+          "quantity": 1
+        },
+        {
+          "name": "Máslo",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_uzena_marena",
+      "name": "Uzená maréna",
+      "kind": "ryba",
+      "workshop": "Uzenářství",
+      "estate_level": 10,
+      "cooking_level": 28,
+      "duration_minutes_proposal": 30,
+      "inputs": [
+        {
+          "name": "Síh maréna",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_pecena_marena",
+      "name": "Pečená maréna",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 10,
+      "cooking_level": 30,
+      "duration_minutes_proposal": 30,
+      "inputs": [
+        {
+          "name": "Síh maréna",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        },
+        {
+          "name": "Česnek",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_mnik_na_masle",
+      "name": "Mník na másle",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 10,
+      "cooking_level": 35,
+      "duration_minutes_proposal": 30,
+      "inputs": [
+        {
+          "name": "Mník jednovousý",
+          "quantity": 1
+        },
+        {
+          "name": "Máslo",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_slavnostni_rybi_misa",
+      "name": "Slavnostní rybí mísa",
+      "kind": "ryba",
+      "workshop": "Rybárna",
+      "estate_level": 10,
+      "cooking_level": 40,
+      "duration_minutes_proposal": 45,
+      "inputs": [
+        {
+          "name": "Siven americký",
+          "quantity": 1
+        },
+        {
+          "name": "Síh maréna",
+          "quantity": 1
+        },
+        {
+          "name": "Tolstolobik bílý",
+          "quantity": 1
+        },
+        {
+          "name": "Brambory",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_rohlik",
+      "name": "Rohlík",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 1,
+      "cooking_level": 1,
+      "duration_minutes_proposal": 4,
+      "inputs": [
+        {
+          "name": "Pšenice",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_pletynka",
+      "name": "Pletýnka",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 2,
+      "cooking_level": 4,
+      "duration_minutes_proposal": 8,
+      "inputs": [
+        {
+          "name": "Pšenice",
+          "quantity": 3
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_cibulova_placka",
+      "name": "Cibulová placka",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 3,
+      "cooking_level": 5,
+      "duration_minutes_proposal": 10,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Cibule",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_preclik",
+      "name": "Preclík",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 3,
+      "cooking_level": 5,
+      "duration_minutes_proposal": 12,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_zitny_bochnik",
+      "name": "Žitný bochník",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 3,
+      "cooking_level": 5,
+      "duration_minutes_proposal": 14,
+      "inputs": [
+        {
+          "name": "Žitná mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Pšenice",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_cesnekova_bulka",
+      "name": "Česneková bulka",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 3,
+      "cooking_level": 6,
+      "duration_minutes_proposal": 10,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Česnek",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_syrova_houska",
+      "name": "Sýrová houska",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 5,
+      "cooking_level": 8,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Sýr",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_dynova_bulka",
+      "name": "Dýňová bulka",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 5,
+      "cooking_level": 9,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Dýně",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_tresnovy_satecek",
+      "name": "Třešňový šáteček",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 3,
+      "cooking_level": 6,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Třešně",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_makovy_kolacek",
+      "name": "Makový koláček",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 4,
+      "cooking_level": 8,
+      "duration_minutes_proposal": 15,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Mletý mák",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_hroznovy_kolac",
+      "name": "Hroznový koláč",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 5,
+      "cooking_level": 9,
+      "duration_minutes_proposal": 18,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Hrozny",
+          "quantity": 2
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_tvarohovy_satecek",
+      "name": "Tvarohový šáteček",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 5,
+      "cooking_level": 10,
+      "duration_minutes_proposal": 18,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Tvaroh",
+          "quantity": 1
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_malinovy_croissant",
+      "name": "Malinový croissant",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 5,
+      "cooking_level": 11,
+      "duration_minutes_proposal": 20,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Smetana",
+          "quantity": 1
+        },
+        {
+          "name": "Maliny",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_orechove_susenky",
+      "name": "Ořechové sušenky",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 6,
+      "cooking_level": 13,
+      "duration_minutes_proposal": 18,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Ořechy",
+          "quantity": 2
+        },
+        {
+          "name": "Med",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_jahodova_rolada",
+      "name": "Jahodová roláda",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 6,
+      "cooking_level": 14,
+      "duration_minutes_proposal": 24,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Jahody",
+          "quantity": 2
+        },
+        {
+          "name": "Smetana",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_makovy_zavin",
+      "name": "Makový závin",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 8,
+      "cooking_level": 16,
+      "duration_minutes_proposal": 22,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Mletý mák",
+          "quantity": 2
+        },
+        {
+          "name": "Cukr",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_visnova_kapsa",
+      "name": "Višňová kapsa",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 8,
+      "cooking_level": 17,
+      "duration_minutes_proposal": 20,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 1
+        },
+        {
+          "name": "Višně",
+          "quantity": 2
+        },
+        {
+          "name": "Cukr",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_vanocka",
+      "name": "Vánočka",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 8,
+      "cooking_level": 20,
+      "duration_minutes_proposal": 30,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Vejce",
+          "quantity": 1
+        },
+        {
+          "name": "Mléko",
+          "quantity": 1
+        },
+        {
+          "name": "Cukr",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    },
+    {
+      "id": "eco_rec_mistrovsky_orechovy_venec",
+      "name": "Mistrovský ořechový věnec",
+      "kind": "pecivo",
+      "workshop": "Pekárna",
+      "estate_level": 10,
+      "cooking_level": 30,
+      "duration_minutes_proposal": 40,
+      "inputs": [
+        {
+          "name": "Mouka",
+          "quantity": 2
+        },
+        {
+          "name": "Tvaroh",
+          "quantity": 1
+        },
+        {
+          "name": "Med",
+          "quantity": 1
+        },
+        {
+          "name": "Ořechy",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "base_price": null,
+      "status": "proposal"
+    }
+  ],
+  "additional_crops_and_intermediates": [
+    {
+      "id": "eco_crop_zito",
+      "name": "Žito",
+      "kind": "crop",
+      "estate_level": 3,
+      "field": "malé i velké",
+      "harvest_method": "kombajn",
+      "min_growth": null,
+      "sell_price": null,
+      "output_harvest_base": 2
+    },
+    {
+      "id": "eco_crop_mak",
+      "name": "Mák",
+      "kind": "crop",
+      "estate_level": 4,
+      "field": "malé i velké",
+      "harvest_method": "kombajn",
+      "min_growth": null,
+      "sell_price": null,
+      "output_harvest_base": 2
+    },
+    {
+      "id": "eco_item_zitna_mouka",
+      "name": "Žitná mouka",
+      "kind": "intermediate",
+      "workshop": "Mlýn",
+      "estate_level": 3,
+      "cooking_level": 1,
+      "inputs": [
+        {
+          "name": "Žito",
+          "quantity": 3
+        }
+      ],
+      "output_quantity": 1,
+      "duration_minutes_proposal": 5
+    },
+    {
+      "id": "eco_item_mlety_mak",
+      "name": "Mletý mák",
+      "kind": "intermediate",
+      "workshop": "Mlýn",
+      "estate_level": 4,
+      "cooking_level": 1,
+      "inputs": [
+        {
+          "name": "Mák",
+          "quantity": 3
+        }
+      ],
+      "output_quantity": 1,
+      "duration_minutes_proposal": 6
+    },
+    {
+      "id": "eco_item_tvaroh",
+      "name": "Tvaroh",
+      "kind": "intermediate",
+      "workshop": "Mlékárna",
+      "estate_level": 5,
+      "cooking_level": 1,
+      "inputs": [
+        {
+          "name": "Mléko",
+          "quantity": 2
+        }
+      ],
+      "output_quantity": 1,
+      "duration_minutes_proposal": 12
+    },
+    {
+      "id": "bait_meat",
+      "name": "Masová návnada",
+      "kind": "bait_recipe",
+      "workshop": "Krmivárna",
+      "estate_level": 7,
+      "cooking_level": 1,
+      "inputs": [
+        {
+          "name": "Maso",
+          "quantity": 1
+        }
+      ],
+      "output_quantity": 3,
+      "duration_minutes_proposal": 5
+    }
+  ]
+}

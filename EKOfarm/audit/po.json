@@ -1,11 +1,11 @@
 {
  "version": 23,
- "client": 46,
- "recipes": 115,
- "products": 110,
- "crops": 24,
+ "client": 47,
+ "recipes": 154,
+ "products": 149,
+ "crops": 26,
  "trees": 13,
- "fish": 14,
+ "fish": 24,
  "animals": 4,
  "factories": 17,
  "unused": [
@@ -83,17 +83,17 @@
    6
   ],
   [
-   "cibule",
-   3,
-   6
-  ],
-  [
-   "cesnek",
+   "cejnek",
    3,
    6
   ],
   [
    "jeseter",
+   3,
+   6
+  ],
+  [
+   "jezdik",
    3,
    6
   ],
@@ -118,9 +118,19 @@
    6
   ],
   [
+   "ouklej",
+   3,
+   6
+  ],
+  [
    "ovesne_vlocky",
    3,
    4
+  ],
+  [
+   "perlin",
+   3,
+   6
   ],
   [
    "plotice",
@@ -130,7 +140,7 @@
   [
    "pstruh",
    3,
-   8
+   6
   ],
   [
    "repka",
@@ -188,12 +198,17 @@
    6
   ],
   [
-   "dyne",
+   "hrach",
    5,
    6
   ],
   [
-   "hrach",
+   "jesen",
+   5,
+   6
+  ],
+  [
+   "tloust",
    5,
    6
   ],
@@ -218,11 +233,6 @@
    7
   ],
   [
-   "maso",
-   7,
-   8
-  ],
-  [
    "vlna",
    9,
    10
@@ -231,8 +241,8 @@
  "bySt": [
   {
    "st": 1,
-   "recipes": 1,
-   "products": 1,
+   "recipes": 2,
+   "products": 2,
    "bestZak": 162,
    "bestZakName": "Chléb",
    "bestSklad": 54,
@@ -240,8 +250,8 @@
   },
   {
    "st": 2,
-   "recipes": 7,
-   "products": 7,
+   "recipes": 9,
+   "products": 9,
    "bestZak": 315,
    "bestZakName": "Krmivo pro slepice",
    "bestSklad": 105,
@@ -249,35 +259,35 @@
   },
   {
    "st": 3,
-   "recipes": 20,
-   "products": 18,
-   "bestZak": 315,
-   "bestZakName": "Krmivo pro slepice",
-   "bestSklad": 105,
-   "bestSkladName": "Krmivo pro slepice"
+   "recipes": 28,
+   "products": 26,
+   "bestZak": 324,
+   "bestZakName": "Žitná mouka",
+   "bestSklad": 108,
+   "bestSkladName": "Žitná mouka"
   },
   {
    "st": 4,
-   "recipes": 36,
-   "products": 34,
-   "bestZak": 315,
-   "bestZakName": "Krmivo pro slepice",
-   "bestSklad": 105,
-   "bestSkladName": "Krmivo pro slepice"
+   "recipes": 46,
+   "products": 44,
+   "bestZak": 324,
+   "bestZakName": "Žitná mouka",
+   "bestSklad": 108,
+   "bestSkladName": "Žitná mouka"
   },
   {
    "st": 5,
-   "recipes": 44,
-   "products": 42,
-   "bestZak": 336,
-   "bestZakName": "Máslo",
-   "bestSklad": 112,
-   "bestSkladName": "Máslo"
+   "recipes": 60,
+   "products": 58,
+   "bestZak": 354,
+   "bestZakName": "Sýrová houska",
+   "bestSklad": 118,
+   "bestSkladName": "Sýrová houska"
   },
   {
    "st": 6,
-   "recipes": 76,
-   "products": 74,
+   "recipes": 103,
+   "products": 101,
    "bestZak": 369,
    "bestZakName": "Bolen na bylinkách",
    "bestSklad": 123,
@@ -285,39 +295,39 @@
   },
   {
    "st": 7,
-   "recipes": 89,
-   "products": 85,
-   "bestZak": 369,
-   "bestZakName": "Bolen na bylinkách",
-   "bestSklad": 123,
-   "bestSkladName": "Bolen na bylinkách"
+   "recipes": 118,
+   "products": 114,
+   "bestZak": 468,
+   "bestZakName": "Masová návnada",
+   "bestSklad": 156,
+   "bestSkladName": "Masová návnada"
   },
   {
    "st": 8,
-   "recipes": 108,
-   "products": 103,
-   "bestZak": 369,
-   "bestZakName": "Bolen na bylinkách",
-   "bestSklad": 123,
-   "bestSkladName": "Bolen na bylinkách"
+   "recipes": 141,
+   "products": 136,
+   "bestZak": 468,
+   "bestZakName": "Masová návnada",
+   "bestSklad": 156,
+   "bestSkladName": "Masová návnada"
   },
   {
    "st": 9,
-   "recipes": 109,
-   "products": 104,
-   "bestZak": 369,
-   "bestZakName": "Bolen na bylinkách",
-   "bestSklad": 123,
-   "bestSkladName": "Bolen na bylinkách"
+   "recipes": 142,
+   "products": 137,
+   "bestZak": 468,
+   "bestZakName": "Masová návnada",
+   "bestSklad": 156,
+   "bestSkladName": "Masová návnada"
   },
   {
    "st": 10,
-   "recipes": 115,
-   "products": 110,
-   "bestZak": 464,
-   "bestZakName": "Vlněná deka",
-   "bestSklad": 155,
-   "bestSkladName": "Vlněná deka"
+   "recipes": 154,
+   "products": 149,
+   "bestZak": 468,
+   "bestZakName": "Masová návnada",
+   "bestSklad": 156,
+   "bestSkladName": "Masová návnada"
   }
  ],
  "cycles": [],
@@ -346,7 +356,7 @@
    ]
   ]
  ],
- "maxSkladPerH": 155,
- "maxZakPerH": 464,
+ "maxSkladPerH": 156,
+ "maxZakPerH": 468,
  "medianZakPerH": 210
 }

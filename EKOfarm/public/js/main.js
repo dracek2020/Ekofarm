@@ -8,17 +8,18 @@ import {
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
   recipeOut, recipeName, AWARDS,
-} from './rules.js?v=46';
-import { PLAN_MAX_QTY } from './eco-config.js?v=46';
-import { preloadAssets, spriteName } from './sprites.js?v=46';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=46';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=46';
-import { iconize, ic } from './icons.js?v=46';
-import { NEWS } from './news.js?v=46';
-import { sfx, soundOn, setSound } from './sfx.js?v=46';
-import { TEAM } from './team-config.js?v=46';
-import { CHAPTERS } from './story.js?v=46';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=46';
+  FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, baitHave, activeHook, fightParams, fightNew, fightStep, zoneAt, pondStock, hasTool,
+} from './rules.js?v=47';
+import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=47';
+import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=47';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=47';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=47';
+import { iconize, ic } from './icons.js?v=47';
+import { NEWS } from './news.js?v=47';
+import { sfx, soundOn, setSound } from './sfx.js?v=47';
+import { TEAM } from './team-config.js?v=47';
+import { CHAPTERS } from './story.js?v=47';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=47';
 
 const $ = id => document.getElementById(id);
 
@@ -287,10 +288,13 @@ async function flush() {
   if (game.inflight || !game.queue.length) return;
   game.inflight = game.queue.splice(0, 50);
   try {
-    const res = await game.backend.send(game.inflight);
+    const sent = game.inflight;
+    const res = await game.backend.send(sent);
     game.inflight = null;
     applyServer(res);
-    const bad = res.results.find(r => !r.ok);
+    // v47: výsledky, na které někdo čeká (rybaření: nahození a vylovení) – ty si hlášku řeší samy
+    let bad = null;
+    sent.forEach((a, i) => { const w = a && a.k && waiters[a.k + ':' + a.type]; if (w) { delete waiters[a.k + ':' + a.type]; w(res.results[i]); } else if (res.results[i] && !res.results[i].ok && !bad) bad = res.results[i]; });
     if (bad) toast(ERRORS[bad.error] || 'Něco se nepovedlo, farma se srovnala se serverem.');
   } catch (e) {
     const sent = game.inflight; game.inflight = null;
@@ -669,10 +673,10 @@ $('lvlUp').addEventListener('click', e => { if (e.target.id === 'lvlUp') $('lvlU
 $('lvl').addEventListener('click', () => { cancelPlace(); openPanel({ kind: 'skills' }); });   // v38: úrovně a dovednosti
 function updateHud(keepPanel) {
   const f = game.farm;
-  // okno nové úrovně: i za úrovně, které mezitím vydělali vesničané; během dohánění nepřítomnosti počká a ukáže se jednou na konci
+  // okno nové úrovně: i za úrovně, které mezitím vydělali vesničané; během dohánění nepřítomnosti počká a ukáže se jednou na konci; během rybaření (v47) počká na zavření výsledku
   if (game.lastLvl === undefined || game.lastLvlFarm !== f.created) { game.lastLvl = f.level; game.lastLvlFarm = f.created; }
   else if (f.level < game.lastLvl) game.lastLvl = f.level;
-  else if (f.level > game.lastLvl && villLag(f, now()) < 60_000) { const from = game.lastLvl; game.lastLvl = f.level; showLevelUp(f.level, from); }
+  else if (f.level > game.lastLvl && villLag(f, now()) < 60_000 && !game.fish2) { const from = game.lastLvl; game.lastLvl = f.level; showLevelUp(f.level, from); }
   // v38: dovednosti (farmaření, rybaření, vaření) – hláška s tím, co nová úroveň odemkla
   const sk = Object.fromEntries(Object.keys(SKILLS).map(k => [k, skillLevel(f, k)]));
   if (!game.lastSk || game.lastSkFarm !== f.created) { game.lastSk = sk; game.lastSkFarm = f.created; }
@@ -813,6 +817,254 @@ function fishDown(e) {
 $('fishGame').addEventListener('pointerdown', fishDown);
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('fishGame').addEventListener(ev, () => { if (game.fishing) game.fishing.hold = false; });
 function closeFishing() { game.fishing = null; $('fishGame').hidden = true; updateHud(); }
+
+// =========================================================================================================
+// v47: nové rybaření – okénko „Vyber návnadu“ před nahozením, scéna s farmářem (5 póz), vlasec a splávek na plátně,
+// minihra se šipkou v zelené zóně (pevný krok 30/s jako na serveru), druh ryby až po potvrzení serverem.
+// =========================================================================================================
+// špička prutu a střed nohou v pózách public/img/r/rybar_0..4 (výstup tools/v47art.py → public/img/r/rybar.json)
+const FISHER = [{ w: 222, h: 432, tip: [221, 2] }, { w: 302, h: 371, tip: [0, 9] }, { w: 393, h: 373, tip: [392, 1] }, { w: 391, h: 386, tip: [390, 1] }, { w: 255, h: 480, tip: [254, 2] }];
+const POSE = { idle: 0, windup: 1, wait: 2, reel: 3, cheer: 4 };
+const reduceMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const waiters = {};   // klíč nahození → čeká na výsledek ze serveru
+function waitServer(key) { return new Promise(res => { waiters[key] = res; setTimeout(() => { if (waiters[key] === res) { delete waiters[key]; res(null); } }, 15000); }); }
+function baitDefault(f) {
+  const ok = b => !baitLock(f, b) && baitFree(f, b) > 0;
+  const last = BAITS_BY[game.bait] || BAITS_BY[f.fb];
+  return last && ok(last) ? last.id : (BAIT_LIST.find(ok) || {}).id || null;
+}
+function openBait(id) {
+  const f = game.farm, o = findObject(f, id);
+  if (!o) return;
+  const h = activeHook(f, now());
+  if (h) { closeSheets(); fish2Start(h.id, null, true); return; }   // rozběhnutý nához (třeba po výpadku) – pokračovat
+  game.baitPond = id;
+  game.bait = baitDefault(f);
+  renderBait();
+  closeSheets();
+  $('baitModal').hidden = false;
+}
+function renderBait() {
+  const f = game.farm, o = findObject(f, game.baitPond);
+  const cards = BAIT_LIST.map(b => {
+    const lock = baitLock(f, b), n = baitHave(f, b), free = baitFree(f, b), sel = b.id === game.bait;
+    const st = lock === 'statek' ? `:lock: Statek ${b.st}` : lock === 'skill' ? `:lock: Rybaření ${b.lv}` : n === 0 ? 'žádné' : free === 0 ? 'v rezervě' : `× ${free}`;
+    const off = !!lock || free < 1;
+    return `<button class="bm-card${sel ? ' on' : ''}${off ? ' off' : ''}" data-bait="${b.id}"${off ? ' disabled' : ''} aria-pressed="${sel}">
+      <span class="bm-ic">:${ITEMS[b.item].icon}:</span><b>${b.name}</b><small>${st}</small>${sel ? '<i class="bm-ok">✓</i>' : ''}</button>`;
+  }).join('');
+  const s = o && pondStock(o, now());
+  $('bmGrid').innerHTML = iconize(cards);
+  const b = BAITS_BY[game.bait];
+  $('bmNote').innerHTML = iconize(!hasTool(f, 'rod') ? 'Na rybaření potřebuješ udici z Prodejny strojů.' : !s || s.count < 1 ? 'V rybníku teď není co chytit.' : !b ? 'Nemáš žádnou návnadu. Těsto uděláš v Krmivárně, červy a třpytky koupíš ve Stánku (Zásoby).' : '');
+  $('bmCast').disabled = !b || !hasTool(f, 'rod') || !s || s.count < 1;
+}
+$('bmGrid').addEventListener('click', e => { const c = e.target.closest('[data-bait]'); if (!c || c.disabled) return; game.bait = c.dataset.bait; renderBait(); sfx('tap'); });
+function closeBait() {   // zrušení nic nestojí; vrátí hráče zpátky do okna rybníka
+  $('baitModal').hidden = true;
+  if (game.baitPond && findObject(game.farm, game.baitPond)) openPanel({ kind: 'obj', id: game.baitPond });
+}
+$('bmCancel').addEventListener('click', closeBait);
+$('bmClose').addEventListener('click', closeBait);
+$('baitModal').addEventListener('click', e => { if (e.target.id === 'baitModal') closeBait(); });
+$('bmCast').addEventListener('click', () => {
+  const id = game.baitPond, bait = game.bait;
+  if (!BAITS_BY[bait]) return;
+  $('baitModal').hidden = true;
+  fish2Start(id, bait, false);
+});
+
+// ---- scéna a minihra ----
+function fish2Start(id, bait, resume) {
+  const g = game.fish2 = { id, bait, phase: 'cast', t0: performance.now(), taps: [], key: '', s: null, P: null, pose: POSE.windup, bob: null, res: null, shake: 0 };
+  $('fish2').hidden = false; $('f2Result').hidden = true; $('f2Top').hidden = true; $('f2Bottom').hidden = true;
+  $('f2Scene').style.backgroundImage = `url("${assetUrl('r', 'scena')}")`;
+  for (const el of document.querySelectorAll('#fish2 [data-ic]')) el.innerHTML = ic(el.dataset.ic);
+  document.body.classList.add('fishing');
+  if (resume) {
+    const o = findObject(game.farm, id);
+    g.key = o.hook.k; g.bait = o.hook.b; g.phase = 'wait'; g.pose = POSE.wait; g.castAt = performance.now() - 400;
+    status(`Ryba je pořád na háčku… (návnada: ${(BAITS_BY[g.bait] || {}).name || ''})`);
+    fish2Session(o.hook);
+  } else {
+    g.key = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    const r = act({ type: 'fishCast', id, bait, k: g.key });
+    if (!r.ok) { fish2Close(); return; }
+    if (r.bait) toast(':navnada: Návnada zůstala na háčku – lepší udice ji ušetřila.');
+    status(`Použita návnada: ${BAITS_BY[bait].name}`);
+    g.castAt = performance.now() + 900;   // dopad splávku
+    const w = waitServer(g.key + ':fishCast');
+    flushAll();
+    w.then(res => {
+      if (game.fish2 !== g) return;
+      if (!res || !res.ok) { toast(res ? ERRORS[res.error] || 'Nahodit se nepovedlo.' : 'Spojení se serverem se nedaří, zkus to znovu.'); fish2Close(); return; }
+      fish2Session(res.session);
+    });
+  }
+  requestAnimationFrame(fish2Tick);
+}
+function fish2Session(sess) {
+  const g = game.fish2;
+  if (!g || !sess || sess.pend) return;
+  g.sess = sess;
+  g.P = fightParams(game.farm, sess);
+  g.biteAt = g.castAt + Math.max(300, sess.w || 0);
+}
+function status(t) { $('f2Status').innerHTML = iconize(t); $('f2Status').hidden = !t; }
+function fish2Tap(e) {
+  const g = game.fish2;
+  if (!g || e.target.closest('button')) return;
+  e.preventDefault();
+  if (g.phase === 'fight') { g.tap = true; g.reel = performance.now(); }
+}
+$('fish2').addEventListener('pointerdown', fish2Tap);
+document.addEventListener('keydown', e => {
+  if (!game.fish2 || (e.code !== 'Space' && e.key !== ' ')) return;
+  e.preventDefault();
+  if (!e.repeat && game.fish2.phase === 'fight') { game.fish2.tap = true; game.fish2.reel = performance.now(); }   // držení mezerníku se nepočítá
+});
+function fish2Tick(t) {
+  const g = game.fish2;
+  if (!g) return;
+  const dt = Math.min(0.1, (t - (g.last || t)) / 1000); g.last = t;
+  if (g.phase === 'cast') {
+    g.pose = t - g.t0 < 350 ? POSE.windup : POSE.wait;
+    if (t >= g.castAt) { g.phase = 'wait'; g.splash = t; if (!g.sess) status('Čekej, až ryba zabere…'); }
+  } else if (g.phase === 'wait') {
+    if (g.sess && t >= g.biteAt) { g.phase = 'bite'; g.biteT = t; g.splash = t; sfx('tap'); if (navigator.vibrate) try { navigator.vibrate(80); } catch { /* nevadí */ } $('f2Sign').textContent = 'Záběr!'; $('f2Top').hidden = false; $('f2Bottom').hidden = false; status(''); }
+    else if (g.sess) status('Čekej, až ryba zabere…');
+  } else if (g.phase === 'bite') {
+    g.pose = POSE.reel;
+    if (t - g.biteT >= FIGHT.biteShow) { g.phase = 'fight'; g.s = fightNew(); g.acc = 0; }
+  } else if (g.phase === 'fight') {
+    g.acc += dt;
+    while (g.acc >= 1 / FIGHT.hz && !g.s.res) {
+      g.acc -= 1 / FIGHT.hz;
+      const ok = g.tap && g.s.i - g.s.last >= FIGHT.gap;
+      if (ok) g.taps.push(g.s.i);
+      g.tap = false;
+      fightStep(g.s, g.P, ok);
+      if (g.s.pull && !g.pulling) g.splash = t;
+      g.pulling = !!g.s.pull;
+    }
+    fish2Ui(t);
+    if (g.s.res) fish2End(g.s.res === 'win');
+  }
+  fish2Draw(t);
+  if (game.fish2 === g) requestAnimationFrame(fish2Tick);
+}
+function fish2Ui() {
+  const g = game.fish2, s = g.s, c = zoneAt(g.P, s.i);
+  $('f2Zone').style.left = `${((c - g.P.width / 2) * 100).toFixed(2)}%`;
+  $('f2Zone').style.width = `${(g.P.width * 100).toFixed(2)}%`;
+  $('f2Arrow').style.left = `${(s.x * 100).toFixed(2)}%`;
+  $('f2Arrow').classList.toggle('in', !!s.in);
+  $('f2Prog').style.width = `${s.prog.toFixed(1)}%`;
+  $('f2ProgN').textContent = `${Math.floor(s.prog)} %`;
+  $('f2Tens').style.width = `${s.tens.toFixed(1)}%`;
+  $('f2Tens').className = s.tens > 70 ? 'hi' : s.tens > 40 ? 'mid' : '';
+  $('f2Instr').textContent = s.pull ? 'Ryba táhne – ťukej rychleji!' : 'Udrž šipku v zeleném poli!';
+}
+async function fish2End(win) {
+  const g = game.fish2;
+  if (!g || g.phase === 'end') return;
+  g.phase = 'end'; $('f2Top').hidden = true;
+  if (!win) {
+    act({ type: 'fishGiveUp', id: g.id, k: g.key }, true);
+    return fish2Result(null);
+  }
+  g.pose = POSE.reel; status('Vytahuju…');
+  const r = act({ type: 'fishLand', id: g.id, k: g.key, taps: g.taps }, true);
+  if (!r.ok) return fish2Result({ ok: false, error: r.error });
+  const w = waitServer(g.key + ':fishLand');
+  flushAll();
+  fish2Result(await w);
+}
+function fish2Result(r) {
+  const g = game.fish2;
+  if (!g) return;
+  status(''); $('f2Bottom').hidden = true; $('f2Top').hidden = true;
+  const caught = r && r.ok && r.fish && !r.lost, fsh = caught && FISH[r.fish];
+  g.pose = caught ? POSE.cheer : POSE.idle; g.res = caught ? 'win' : 'lose'; g.resT = performance.now();
+  if (caught) sfx('level'); else sfx('error');
+  const b = BAITS_BY[g.bait], left = b ? baitFree(game.farm, b) : 0;
+  $('f2ResultText').innerHTML = iconize(caught
+    ? `<div class="f2-rays"><span class="f2-catch">:${fsh.icon}:</span></div><b class="f2-big">Úlovek!</b><b>${fsh.name}</b><span>Hmotnost: ${fmtKg(r.kg)}</span>
+       ${r.record ? '<div class="fg-rec">:trophy: Nový rekord!</div>' : ''}
+       <small>${r.size === 'běžná' ? '' : `${r.size === 'obří' ? 'Obří' : 'Velká'} ryba: `}+${r.gained.items[0].qty} do skladu · ${fsh.price} :coin: za kus · +${r.gained.xp} :xp:</small>
+       ${(r.journal || []).map(j => `<div class="fg-rec">:denik_ryb: ${j.text} +${j.coins} :coin:</div>`).join('')}`
+    : r && r.error === 'silo_full' ? '<b class="f2-big">Plný sklad</b><span>Uvolni místo ve Skladu – ryba zatím čeká na háčku.</span>'
+    : r && !r.ok && r.error ? `<b class="f2-big">Nepovedlo se</b><span>${ERRORS[r.error] || 'Zkus to znovu.'}</span>`
+    : '<div class="f2-rays lost"><span class="f2-catch">:ryba_obecna:</span></div><b class="f2-big">Ryba unikla!</b><span>Zkus jinou návnadu nebo lepší udici.</span>');
+  $('f2Again').textContent = `Rybařit znovu${b ? ` (${b.name} × ${left})` : ''}`;
+  $('f2Result').hidden = false;
+  updateHud();
+}
+function fish2Close() {
+  const g = game.fish2;
+  if (g && g.phase !== 'end' && g.sess) act({ type: 'fishGiveUp', id: g.id, k: g.key }, true);
+  game.fish2 = null; $('fish2').hidden = true; document.body.classList.remove('fishing'); updateHud();
+}
+$('f2Close').addEventListener('click', () => fish2Close());
+$('f2Done').addEventListener('click', () => fish2Close());
+$('f2Again').addEventListener('click', () => { const id = game.fish2 && game.fish2.id; fish2Close(); if (id) openBait(id); });
+// kreslení: farmář (póza + jemný pohyb), vlasec z špičky prutu, splávek, vlnky a cákance
+function fish2Draw(t) {
+  const g = game.fish2, cv = $('f2Canvas'), W = innerWidth, H = innerHeight, rm = reduceMotion();
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  // farmář: dole vlevo, výška ~38 % obrazovky (na šířku menší)
+  const pose = FISHER[g.pose], fh = Math.min(H * 0.38, W * 0.62), k = fh / FISHER[0].h;
+  const footX = W * 0.2, baseY = H * 0.78;
+  const fx = footX - FISHER[0].w * k * 0.4 + (g.pose === POSE.windup ? -FISHER[1].w * k * 0.3 : 0), fy = baseY - pose.h * k;
+  let jx = 0, jy = 0;
+  if (!rm && g.phase === 'fight') { const pull = g.s && g.s.pull; jx = Math.sin(t / 45) * (pull ? 3 : 1.2); jy = Math.cos(t / 60) * (pull ? 2 : 0.8); }
+  if (!rm && g.res === 'win') jy = -Math.abs(Math.sin((t - g.resT) / 160)) * 10;
+  const img = $('f2Fisher');
+  const src = assetUrl('r', 'rybar_' + g.pose);
+  if (img.dataset.src !== src) { img.src = src; img.dataset.src = src; }
+  img.style.width = `${pose.w * k}px`; img.style.height = `${pose.h * k}px`;
+  img.style.transform = `translate(${fx + jx}px, ${fy + jy}px)`;
+  // vlasec a splávek
+  const tipX = fx + jx + pose.tip[0] * k, tipY = fy + jy + pose.tip[1] * k;
+  const bx = W * 0.66, by = H * 0.55;
+  if (g.phase === 'cast' && g.pose === POSE.wait) {
+    const p = Math.max(0, Math.min(1, 1 - (g.castAt - t) / 550)), x = tipX + (bx - tipX) * p, y = tipY + (by - tipY) * p - Math.sin(p * Math.PI) * H * 0.12;
+    line(ctx, tipX, tipY, x, y, 0.3); bobber(ctx, x, y, t, false);
+  } else if (['wait', 'bite', 'fight'].includes(g.phase) || (g.phase === 'end' && !g.res)) {
+    const fight = g.phase === 'fight' || g.phase === 'bite', tens = g.s ? g.s.tens / 100 : 0.4;
+    const dip = g.phase === 'bite' ? 8 : fight ? 4 + 4 * Math.sin(t / 90) : rm ? 0 : Math.sin(t / 400) * 2;
+    ripples(ctx, bx, by, t, fight);
+    line(ctx, tipX, tipY, bx, by + dip, fight ? 0.02 : 0.25, fight ? tens : 0);
+    bobber(ctx, bx, by + dip, t, fight);
+  }
+  if (g.splash && !rm && t - g.splash < 600) splash(ctx, bx, by, (t - g.splash) / 600);
+}
+function line(ctx, x1, y1, x2, y2, sag, tens = 0) {
+  ctx.strokeStyle = tens > 0.7 ? 'rgba(255,190,170,.95)' : 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo((x1 + x2) / 2, Math.max(y1, y2) + Math.abs(x2 - x1) * sag, x2, y2); ctx.stroke();
+}
+function bobber(ctx, x, y, t, fight) {
+  ctx.save(); ctx.translate(x, y); if (fight) ctx.rotate(Math.sin(t / 70) * 0.25);
+  ctx.fillStyle = '#d9472f'; ctx.beginPath(); ctx.ellipse(0, -5, 6, 7, 0, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, -5, 6, 6, 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = '#6e4a22'; ctx.fillRect(-1, -16, 2, 6); ctx.restore();
+}
+function ripples(ctx, x, y, t, fight) {
+  ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5;
+  for (let i = 0; i < 3; i++) {
+    const p = ((t / (fight ? 700 : 1400)) + i / 3) % 1;
+    ctx.globalAlpha = 1 - p; ctx.beginPath(); ctx.ellipse(x, y + 2, 10 + p * 40, 3 + p * 12, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+function splash(ctx, x, y, p) {
+  ctx.fillStyle = `rgba(230,245,255,${1 - p})`;
+  for (let i = 0; i < 9; i++) { const a = Math.PI * (0.15 + 0.7 * i / 8), r = 10 + p * 34; ctx.beginPath(); ctx.arc(x + Math.cos(a) * r * (i % 2 ? 1 : -1), y - Math.sin(a) * r * 0.9 + p * p * 30, 3 * (1 - p) + 1, 0, Math.PI * 2); ctx.fill(); }
+}
 $('fgQuit').addEventListener('click', () => { fishEnd(false); });
 $('fgClose').addEventListener('click', () => { if (game.fishing && game.fishing.phase !== 'end') fishEnd(false); closeFishing(); });
 $('fgDone').addEventListener('click', closeFishing);
@@ -861,6 +1113,8 @@ $('toast').addEventListener('click', () => { $('toast').className = ''; });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (game.fishing) { if (game.fishing.phase === 'end') closeFishing(); else fishEnd(false); return; }
+  if (!$('baitModal').hidden) { closeBait(); return; }
+  if (game.fish2) { fish2Close(); return; }
   if (game.visit) { $('visitBack').click(); return; }
   closeSheets(); cancelPlace(); setSow(null);
 });
@@ -1250,7 +1504,7 @@ $('panelBody').addEventListener('click', e => {
       break;
     }
     case 'visit': startVisit(v); break;
-    case 'fish': startFishing(Number(v)); break;
+    case 'fish': if (FISHING_V2) openBait(Number(v)); else startFishing(Number(v)); break;   // v47: okénko návnad + nová minihra
     case 'htab': game.panel.tab = v; renderPanel(); $('panel').scrollTop = 0; break;
     case 'tutRestart': act({ type: 'tutorial', n: 0, reset: true }); closeSheets(); toast(':farmer: Průvodce začíná znovu.'); break;
     case 'mtab': game.panel.tab = v; if (v !== 'prodat' || !game.market) loadMarket(); renderPanel(); break;

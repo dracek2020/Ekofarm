@@ -6,6 +6,8 @@ import {
   skillLevel, skillProgress, SKILL_XP, SKILL_MAX, machineLock, fishOk, recipeOk, pickFish, CLIENT_MIN, RULES_VERSION,
 } from '../public/js/rules.js';
 import { fakeD1 } from '../tools/fake-d1.mjs';
+import * as R from '../public/js/rules.js';
+import { fishOnce } from './fixtures/fish-bot.mjs';
 import worker from '../src/worker.js';
 
 const T0 = 1_700_000_000_000;
@@ -86,9 +88,9 @@ test('ryby: vzácnější druhy berou až s vyšším rybařením', () => {
   const g = pond(newFarm(T0)); g.coins = 1e6; g.silo.navnada = 3; g.objects.find(o => o.kind === 'statek').lvl = 3;
   assert.ok(applyAction(g, { type: 'buyMachine', model: 'udice' }, T0).ok);
   const po = g.objects.find(o => o.kind === 'rybnik');
-  const c = applyAction(g, { type: 'fishCast', id: po.id }, T0 + 3_600_000);
-  assert.ok(c.ok, c.error);
-  assert.ok(applyAction(g, { type: 'fishLand', id: po.id, ok: true }, T0 + 3_601_000).ok);
+  const c = fishOnce(R, g, po.id, T0 + 3_600_000);   // v47: nová minihra (serverový výběr ryby, přehrání klepnutí)
+  assert.ok(c.cast.ok, c.cast.error);
+  assert.ok(c.land.ok && c.land.fish, JSON.stringify(c.land));
   assert.ok(g.sk.r > 0);
   const seen = new Set();
   for (let i = 0; i < 2000; i++) seen.add(pickFish(f, i / 2000, T0));

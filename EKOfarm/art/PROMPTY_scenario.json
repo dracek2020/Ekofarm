@@ -1,7 +1,7 @@
 {
  "tool": "Scenario (app.scenario.com)",
  "model": "GPT Image 2.5 Flare",
- "date": "2026-11-12",
+ "date": "2026-11-13",
  "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (vygenerovaný statek, b/statek_1)",
  "note": "Prompty her v32 jsou z prohlížeče obrázků ve Scenario (zkrácené na prvních ~420 znaků); prompty UI v33 jsou celé. Prompty budov v35 jsou celé; nastavení: Background transparent, Quality auto, 1 obrázek, rozměry Auto (čtverec). Prompty v36 (rostliny po jedné, stroje, udice, pes, rybníky, ilustrace událostí) jsou celé.",
  "v32_game": [
@@ -1825,6 +1825,80 @@
    "reference": "asset_Xp2WokXQTmir7dL1J5oGLfnT (statek z v32, jen jako vzor stylu)",
    "background": "transparent",
    "prompt": "Wide landscape image. Three growth stages of ONE single dill plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small feathery sprout. MIDDLE = a tall clump of feathery green dill. RIGHT = a tall clump of feathery dill with flat yellow flower umbels. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  }
+ ],
+ "v47": [
+  {
+   "key": "ikony/ryby1",
+   "id": "asset_eHZSvJrgvsmj6JbkdSSfY2gp",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "i/: 10 nových ryb, červ, třpytka",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Every fish is drawn whole in side view facing left, one fish per cell, natural colors. Row 1 from left to right: a small rudd with a golden-bronze body and bright red fins; a tiny slim bleak, shiny silver with a greenish back; a small deep-bodied flat silver bream with greyish fins; a small olive-brown spotted ruffe with a spiny dorsal fin. Row 2 from left to right: a thick torpedo-shaped bronze-silver chub with dark-edged scales and orange fins; a stocky silver-bronze ide with reddish-orange fins; a big silvery silver carp with a large head and low-set eyes; a brook trout with a dark olive back, pale wavy markings, small red spots and an orange belly. Row 3 from left to right: a slim silver whitefish with a bluish back and a small head; a long mottled olive-brown burbot with a single barbel under its chin; a few pink earthworms on a small heap of dark soil; a shiny golden metal spoon fishing lure with a red stripe and a small hook. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/ryby2",
+   "id": "asset_hc1UFfzFCejoysRzuQ561f3P",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "i/: masová návnada, 11 rybích jídel",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a small dish of raw red meat cubes used as fishing bait; small open bread canapés topped with little silver fish pieces and green herbs; a plate with two small golden fried fish and garlic cloves; a plate of small fish fried in crispy golden batter. Row 2 from left to right: a bowl of clear fish soup with potato cubes and onion; a baked fish on a plate covered with caramelised onion rings; a small glass jar of creamy fish spread with chopped chives; a baked fish with colourful red pepper and carrot pieces on an oval plate. Row 3 from left to right: a whole pan-fried trout in a small black pan with a melting pat of butter; a round golden fish pie with one slice cut out showing the fish filling; a thick fish steak with tomato slices and onion on a plate; a golden-brown smoked fish lying on a wooden board. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/ryby3",
+   "id": "asset_AgfcbsqPAhuhozCComnuwhq9",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "i/: 5 rybích jídel, žitná mouka, mletý mák, tvaroh, žito, mák, neutrální ryba, cívka vlasce",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a trout-like fish with garlic and a pat of butter on a plate; two small golden smoked fish on a wooden board; a slim fish baked with onion and garlic in a small ceramic baking dish; a white fish fillet with melting butter and onion rings on a plate. Row 2 from left to right: a large festive wooden platter with three different cooked fish and boiled potatoes; a small burlap sack of grey-brown rye flour; a small wooden bowl of ground dark blue-grey poppy seeds; a small bowl of white crumbly farmer cheese. Row 3 from left to right: a bundle of rye ears with long whiskers tied with twine; a bunch of dry poppy seed heads with one pale lilac poppy flower; a plain simple blue-grey cartoon fish with a little water splash; a small wooden spool wound with fishing line. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/pecivo1",
+   "id": "asset_CnV8Xun44KhR8HkW8AxDMtev",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "i/: rohlík a 11 pečiv",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 3 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a long straight golden bread roll with a twisted top, sprinkled with salt and caraway seeds; a small braided white bread loaf; a round flatbread topped with golden onion pieces; a big soft pretzel with coarse salt. Row 2 from left to right: a round dark rye bread loaf dusted with flour; a round bun with garlic and green herbs on top; a bun topped with golden melted cheese; an orange pumpkin bun sprinkled with pumpkin seeds. Row 3 from left to right: a triangular folded pastry turnover with red cherry filling peeking out; a small round pastry with dark poppy-seed filling in the centre; a slice of cake topped with purple grapes; a triangular pastry with white sweet cheese filling dusted with powdered sugar. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "ikony/pecivo2",
+   "id": "asset_oSkuU76d6vnH5f5D1DJEPpuC",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "i/: 7 pečiv, rybářská bedna",
+   "prompt": "A sheet of separate game item icons for a cozy fairy-tale farm game, arranged in a neat grid of 4 columns and 2 rows with wide empty space between them, each icon centered in its own cell and never touching another. Row 1 from left to right: a croissant with fresh raspberries and a dollop of cream; a small stack of walnut cookies with walnut halves; a slice of sponge roll cake with a spiral of strawberry cream; a slice of poppy-seed strudel showing a dark spiral filling. Row 2 from left to right: a rectangular pastry pocket with dark red sour cherry filling; a braided sweet festive bread with almonds and raisins, shiny glaze; a ring-shaped braided wreath cake with walnuts and a honey glaze; a small open wooden tackle box with a red-and-white bobber and hooks inside. Cozy hand-painted storybook style like the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, no numbers, transparent background."
+  },
+  {
+   "key": "c1/zito",
+   "id": "asset_xNfegyd98feMis37qCej3foJ",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "c/zito_0..2 + i/s_zito",
+   "prompt": "Wide landscape image. Three growth stages of ONE single rye plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small green sprout. MIDDLE = a tall clump of blue-green rye stalks with young green ears. RIGHT = a tall ripe golden clump of rye stalks with long slender ears and long whiskers. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "c1/mak",
+   "id": "asset_uDsr6bcJoEsdYQsWrZyFsKLP",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "c/mak_0..2 + i/s_mak",
+   "prompt": "Wide landscape image. Three growth stages of ONE single poppy plant for a cozy fairy-tale farm game, side by side in ONE row with wide empty space between them, all three standing on the same baseline. LEFT = a small grey-green sprout. MIDDLE = a clump of grey-green poppy leaves with a few pale lilac poppy flowers. RIGHT = a clump of tall dry poppy stems with round grey-green seed capsules. Each stage is ONE plant only (never a group or a row), growing out of a small round mound of dark brown soil at its foot. Draw only the plant and its little soil mound - no field, no grass, no other ground. Keep the true size relation between the stages: the sprout is much smaller than the grown plant. Cozy hand-painted storybook style and the same isometric three-quarter camera from slightly above as the reference, soft shading, chunky rounded shapes, no outlines. No text, no letters, transparent background."
+  },
+  {
+   "key": "p/rybar",
+   "id": "asset_h5Xwkqg8ynAqSAfif9qAtZzP",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "transparent",
+   "used_as": "r/rybar_0..4 (5 póz farmáře s prutem) + r/rybar.json",
+   "prompt": "Wide landscape image. A sheet of FIVE poses of the SAME cozy farm game character in ONE row, all facing right, full body, same size and scale, feet on one baseline, wide empty space between the poses: a cheerful young farmer boy with a big yellow straw hat with a white feather, brown hair, red shirt, blue denim overalls and brown boots, slightly big head, cute proportions. He holds a long wooden fishing rod with a small brass reel near the handle. Pose 1: standing relaxed, holding the rod upright beside him. Pose 2: swinging the rod far back over his shoulder, ready to cast. Pose 3: rod pointing forward and up toward the right, waiting calmly. Pose 4: leaning back and cranking the reel, the rod strongly bent toward the right. Pose 5: cheering with both arms up, holding the rod high. Draw NO fishing line, no fish, no water, no ground, no shadow. Cozy hand-painted storybook style like the reference, soft shading, no outlines. No text, transparent background."
+  },
+  {
+   "key": "s/rybareni",
+   "id": "asset_zBNaF5Bz4iJCTBj6UAx5LD84",
+   "reference": "vlastní obrázek hry jako vzor stylu (stejný postup jako v46; ID reference se nezaznamenalo)",
+   "background": "opaque",
+   "used_as": "r/scena (pozadí minihry)",
+   "prompt": "Portrait image, taller than wide. A cozy hand-painted storybook fishing spot for a farm game, seen from a slightly elevated three-quarter view: a calm clear blue pond fills the right side and the middle, with lily pads, reeds and cattails along its edge and a small wooden pier on the far shore; a sunny grassy bank with a few wildflowers and round stones in the lower-left foreground, left EMPTY for a character to stand on; in the far background gentle green hills, a small farmhouse with a red roof, a windmill and an orchard under a soft blue sky with fluffy clouds. Warm golden afternoon light, soft painterly shading, same style as the reference. No characters, no people, no animals, no fish, no text, no letters, no user interface."
   }
  ]
 }

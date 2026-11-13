@@ -12,10 +12,15 @@ export const ECO_FLAGS_DEFAULT = {
   eco_straw: true,        // D – dobrovolné vylepšení ohrady slámou (jednorázově, malý bonus)
   eco_crops: true,        // E – oves, len, petržel, kopr (bez nové budovy)
   eco_mastery: true,      // F – mistrovské recepty (Vaření 25/30/40) a odznak Mistr údolní kuchyně (Vaření 50)
+  // v47 – rybaření a pečivo (balíček EKOfarm_Rybareni_8_navnad_a_pecivo)
+  fishing_minigame_v2: true,   // nová minihra: nahození, čekání, záběr, navíjení se šipkou v zelené zóně; druh ryby skrytý do vylovení (server)
+  fishing_baits_v2: true,      // 8 návnad ze skladu s preferencemi ryb, okénko „Vyber návnadu“ (jen s novou minihrou)
+  fishing_fish_pack_v2: true,  // 10 nových druhů ryb ve stávajících rybnících + 16 rybích receptů
+  bakery_extra_v2: true,       // 19 druhů pečiva, žito, mák, žitná mouka, mletý mák, tvaroh
 };
 const ECO_OVER = (typeof globalThis !== 'undefined' && globalThis.EKO_FLAGS) || {};
 export const ECO_FLAGS = Object.fromEntries(Object.keys(ECO_FLAGS_DEFAULT).map(k => [k, k in ECO_OVER ? !!ECO_OVER[k] : ECO_FLAGS_DEFAULT[k]]));
-export const ecoOn = flag => !flag || !!ECO_FLAGS[flag];
+export const ecoOn = flag => !flag || (Array.isArray(flag) ? flag.some(f => !!ECO_FLAGS[f]) : !!ECO_FLAGS[flag]);   // pole = stačí jedna ze skupin
 
 // Od kdy platí vedlejší produkty (effectiveAt): dávky, které začaly dřív, se nepočítají (žádná zpětná simulace).
 export const ECO_FROM = Date.UTC(2026, 10, 13, 0, 0, 0);
@@ -98,3 +103,109 @@ export const ECO_AWARDS = [
 export const PLAN_PREFS = [['cena', 'Nejlevněji'], ['cas', 'Nejrychleji'], ['rezervy', 'Šetřit rezervy']];
 export const PLAN_MAX_QTY = 999;
 export const PLAN_MAX_DEPTH = 12;
+
+// =========================================================================================================
+// v47: rybaření – 8 návnad, nová minihra, 10 ryb, 16 rybích receptů; pečivo – 19 receptů, žito, mák, tvaroh
+// =========================================================================================================
+const BAIT_F = 'fishing_baits_v2', FISH_F = 'fishing_fish_pack_v2', BAKE_F = 'bakery_extra_v2';
+
+// Nové druhy ryb (stávajících 14 zůstává). lv = Rybaření, pond = nejmenší vodní plocha (rybnik < rybnik2 < rybnik3 < rybnik4),
+// kg = rozpětí váhy. Cena, obtížnost a četnost se dopočítají z dosavadních ryb podle úrovně Rybaření (rules.js).
+export const ECO_FISH = [
+  { id: 'perlin',      name: 'Perlín ostrobřichý', lv: 2,  pond: 'rybnik',  kg: [0.1, 1],    color: '#c9a23a', flag: FISH_F },
+  { id: 'ouklej',      name: 'Ouklej obecná',      lv: 4,  pond: 'rybnik',  kg: [0.02, 0.08], color: '#c8d4dc', fem: true, flag: FISH_F },
+  { id: 'cejnek',      name: 'Cejnek malý',        lv: 6,  pond: 'rybnik',  kg: [0.1, 0.8],  color: '#b8bec4', flag: FISH_F },
+  { id: 'jezdik',      name: 'Ježdík obecný',      lv: 7,  pond: 'rybnik',  kg: [0.02, 0.15], color: '#8a8a4a', flag: FISH_F },
+  { id: 'tloust',      name: 'Jelec tloušť',       lv: 8,  pond: 'rybnik2', kg: [0.3, 4],    color: '#a89a6a', flag: FISH_F },
+  { id: 'jesen',       name: 'Jelec jesen',        lv: 12, pond: 'rybnik2', kg: [0.3, 3],    color: '#b0a070', flag: FISH_F },
+  { id: 'tolstolobik', name: 'Tolstolobik bílý',   lv: 15, pond: 'rybnik3', kg: [2, 30],     color: '#c0c8cc', flag: FISH_F },
+  { id: 'siven',       name: 'Siven americký',     lv: 20, pond: 'rybnik4', kg: [0.2, 2],    color: '#6a7a4a', flag: FISH_F },
+  { id: 'marena',      name: 'Síh maréna',         lv: 27, pond: 'rybnik4', kg: [0.3, 3],    color: '#9ab0c0', flag: FISH_F },
+  { id: 'mnik',        name: 'Mník jednovousý',    lv: 35, pond: 'rybnik4', kg: [0.5, 5],    color: '#7a6a3a', flag: FISH_F },
+];
+
+// Nové skladové věci, které se nevyrábí: kupují se ve Stánku (Zásoby) za běžné mince
+export const ECO_SUPPLY = [
+  { id: 'cerv',    name: 'Červ',    price: 4,  flag: BAIT_F },
+  { id: 'trpytka', name: 'Třpytka', price: 18, flag: BAIT_F },
+];
+
+// 8 návnad: item = skladová položka (jediná identita – Těsto je dosavadní „navnada“, Hrášek je plodina Hrách,
+// Rohlík je pečivo z Pekárny), st = Statek, lv = Rybaření, pref = ryby, které na ni berou častěji (nikdy jistě)
+export const BAITS = [
+  { id: 'cerv',    item: 'cerv',           name: 'Červ',           st: 3, lv: 1,  pref: ['plotice', 'karas', 'cejn', 'perlin', 'ouklej', 'jezdik', 'okoun'] },
+  { id: 'kukurice', item: 'corn',          name: 'Kukuřice',       st: 3, lv: 1,  pref: ['kapr', 'amur', 'cejn', 'tolstolobik', 'karas'] },
+  { id: 'testo',   item: 'navnada',        name: 'Těsto',          st: 3, lv: 1,  pref: ['plotice', 'karas', 'lin', 'cejnek', 'cejn', 'marena'] },
+  { id: 'rohlik',  item: 'rohlik',         name: 'Rohlík',         st: 3, lv: 2,  pref: ['kapr', 'perlin', 'tloust', 'jesen'] },
+  { id: 'hrasek',  item: 'hrach',          name: 'Hrášek',         st: 5, lv: 4,  pref: ['amur', 'kapr', 'tolstolobik', 'lin'] },
+  { id: 'syr',     item: 'syr',            name: 'Sýr',            st: 5, lv: 8,  pref: ['lin', 'tloust', 'jesen', 'mnik'] },
+  { id: 'maso',    item: 'masova_navnada', name: 'Masová návnada', st: 7, lv: 12, pref: ['sumec', 'uhor', 'mnik', 'jeseter'] },
+  { id: 'trpytka', item: 'trpytka',        name: 'Třpytka',        st: 7, lv: 12, pref: ['stika', 'okoun', 'candat', 'bolen', 'pstruh', 'siven'] },
+];
+export const BAIT_FLAG = BAIT_F;
+export const BAIT_PREF = { like: 1.6, other: 0.85 };   // násobek četnosti druhu: oblíbená návnada / ostatní (nikdy 0)
+export const BAIT_DEFAULT = 'testo';                  // dosavadní návnada (bez volby = jako dřív)
+
+// Minihra: pevný krok 30 za sekundu (nezávisí na FPS), stejný výpočet v prohlížeči i na serveru (přehrání klepnutí).
+// Šipka: klepnutí přidá rychlost, bez klepání sjíždí doleva. Zelená zóna se plynule pohybuje (ze serverového semínka).
+// p = profil obtížnosti 1–3 (neprozrazuje druh), tier = řada udice, sk = Rybaření.
+export const FIGHT = {
+  hz: 30, maxS: 35, startX: 0.3, tap: 0.55, damp: 3, drift: 0.3, gap: 2,   // gap = nejmenší odstup klepnutí v krocích (proti automatu)
+  width: [0.24, -0.035, 0.006, 0.0015], wMin: 0.13, wMax: 0.32,           // šířka = a + b·(p−1) + c·(tier−1) + d·min(sk, 40)
+  amp: [0.17, 0.06], speed: [0.55, 0.25],                                  // pohyb zóny: amplituda a rychlost podle profilu
+  gain: [11, -1.5, 0.3], loss: 3.5, tens0: 10, tensUp: [10, 3, -0.5], tensDown: 8,
+  bite: [1500, 4500], biteShow: 600, slack: 400,                           // čekání na záběr (ms, náhodně na serveru), „Záběr!“ před soubojem
+  pull: [0.25, 0.45, 0.7], pullLen: 0.7, pullGap: [2.5, 5],               // výpady ryby: navíc táhne šipku doleva (podle profilu), délka a rozestupy (s)
+};
+
+// Rybí recepty (16) – stejné pole jako ECO_RECIPES výš (rules.js je přidá stejně), skupina ryb
+export const FISH_RECIPES = [
+  { id: 'rybi_jednohubky',      name: 'Rybí jednohubky',          b: 'rybarna',    in: { ouklej: 2, chleb: 1 }, min: 12, st: 6, cook: 3, flag: FISH_F },
+  { id: 'perlin_cesnek',        name: 'Perlín na česneku',        b: 'rybarna',    in: { perlin: 2, cesnek: 1 }, min: 15, st: 6, cook: 5, flag: FISH_F },
+  { id: 'cejnek_testicko',      name: 'Cejnek v těstíčku',        b: 'rybarna',    in: { cejnek: 2, vejce: 1, mouka: 1 }, min: 15, st: 6, cook: 6, flag: FISH_F },
+  { id: 'polevka_jezdik',       name: 'Polévka z ježdíka',        b: 'rybarna',    in: { jezdik: 2, potato: 1, cibule: 1 }, min: 18, st: 6, cook: 7, flag: FISH_F },
+  { id: 'tloust_cibule',        name: 'Tloušť na cibuli',         b: 'rybarna',    in: { tloust: 1, cibule: 1 }, min: 20, st: 6, cook: 8, flag: FISH_F },
+  { id: 'rybi_pomazanka',       name: 'Rybí pomazánka',           b: 'rybarna',    in: { plotice: 2, smetana: 1, cibule: 1 }, min: 18, st: 6, cook: 9, flag: FISH_F },
+  { id: 'jesen_zelenina',       name: 'Jesen se zeleninou',       b: 'rybarna',    in: { jesen: 1, paprika: 1, carrot: 1 }, min: 22, st: 6, cook: 12, flag: FISH_F },
+  { id: 'pstruh_maslo',         name: 'Pstruh na másle',          b: 'rybarna',    in: { pstruh: 1, maslo: 1 }, min: 20, st: 6, cook: 13, flag: FISH_F },
+  { id: 'rybi_kolac',           name: 'Rybí koláč',               b: 'pekarna',    in: { pstruh: 1, mouka: 2, vejce: 1 }, min: 25, st: 6, cook: 14, flag: FISH_F },
+  { id: 'tolstolobik_zelenina', name: 'Tolstolobik na zelenině',  b: 'rybarna',    in: { tolstolobik: 1, rajce: 1, cibule: 1 }, min: 25, st: 7, cook: 15, flag: FISH_F },
+  { id: 'uzeny_tolstolobik',    name: 'Uzený tolstolobik',        b: 'uzenarstvi', in: { tolstolobik: 2 }, min: 28, st: 8, cook: 16, flag: FISH_F },
+  { id: 'siven_cesnek',         name: 'Siven na česneku',         b: 'rybarna',    in: { siven: 1, cesnek: 1, maslo: 1 }, min: 25, st: 10, cook: 21, flag: FISH_F },
+  { id: 'uzena_marena',         name: 'Uzená maréna',             b: 'uzenarstvi', in: { marena: 2 }, min: 30, st: 10, cook: 28, flag: FISH_F },
+  { id: 'pecena_marena',        name: 'Pečená maréna',            b: 'rybarna',    in: { marena: 1, cibule: 1, cesnek: 1 }, min: 30, st: 10, cook: 30, flag: FISH_F },
+  { id: 'mnik_maslo',           name: 'Mník na másle',            b: 'rybarna',    in: { mnik: 1, maslo: 1, cibule: 1 }, min: 30, st: 10, cook: 35, flag: FISH_F },
+  { id: 'rybi_misa',            name: 'Slavnostní rybí mísa',     b: 'rybarna',    in: { siven: 1, marena: 1, tolstolobik: 1, potato: 1 }, min: 45, st: 10, cook: 40, flag: FISH_F },
+  // návnady z výroby: masová návnada (Krmivárna) a Rohlík (Pekárna – zároveň pečivo, jediná skladová položka)
+  { id: 'masova_navnada', name: 'Masová návnada', b: 'krmivarna', in: { maso: 1 }, qty: 3, min: 5, st: 7, cook: 1, flag: BAIT_F },
+  { id: 'rohlik',         name: 'Rohlík',         b: 'pekarna',   in: { wheat: 2 }, min: 4, st: 1, cook: 1, flag: [BAIT_F, BAKE_F] },
+];
+
+// Pečivo (18 + Rohlík výš) a mezivýrobky; nové plodiny žito a mák
+export const BAKERY_CROPS = [
+  { id: 'zito', name: 'Žito', cat: 'obili', st: 3, min: 20, harvester: 'combine', flag: BAKE_F },
+  { id: 'mak',  name: 'Mák',  cat: 'obili', st: 4, min: 24, harvester: 'combine', flag: BAKE_F },
+];
+export const BAKERY_RECIPES = [
+  { id: 'zitna_mouka',        name: 'Žitná mouka',          b: 'mlyn',     in: { zito: 3 }, min: 5, st: 3, cook: 1, flag: BAKE_F },
+  { id: 'mlety_mak',          name: 'Mletý mák',            b: 'mlyn',     in: { mak: 3 }, min: 6, st: 4, cook: 1, flag: BAKE_F },
+  { id: 'tvaroh',             name: 'Tvaroh',               b: 'mlekarna', in: { mleko: 2 }, min: 12, st: 5, cook: 1, flag: BAKE_F },
+  { id: 'pletynka',           name: 'Pletýnka',             b: 'pekarna',  in: { wheat: 3, vejce: 1 }, min: 8, st: 2, cook: 4, flag: BAKE_F },
+  { id: 'cibulova_placka',    name: 'Cibulová placka',      b: 'pekarna',  in: { mouka: 1, cibule: 1 }, min: 10, st: 3, cook: 5, flag: BAKE_F },
+  { id: 'preclik',            name: 'Preclík',              b: 'pekarna',  in: { mouka: 2, vejce: 1 }, min: 12, st: 3, cook: 5, flag: BAKE_F },
+  { id: 'zitny_bochnik',      name: 'Žitný bochník',        b: 'pekarna',  in: { zitna_mouka: 2, wheat: 1 }, min: 14, st: 3, cook: 5, flag: BAKE_F },
+  { id: 'cesnekova_bulka',    name: 'Česneková bulka',      b: 'pekarna',  in: { mouka: 1, cesnek: 1 }, min: 10, st: 3, cook: 6, flag: BAKE_F },
+  { id: 'tresnovy_satecek',   name: 'Třešňový šáteček',     b: 'pekarna',  in: { mouka: 1, tresne: 2 }, min: 15, st: 3, cook: 6, flag: BAKE_F },
+  { id: 'makovy_kolacek',     name: 'Makový koláček',       b: 'pekarna',  in: { mouka: 1, mlety_mak: 1 }, min: 15, st: 4, cook: 8, flag: BAKE_F },
+  { id: 'syrova_houska',      name: 'Sýrová houska',        b: 'pekarna',  in: { mouka: 1, syr: 1 }, min: 15, st: 5, cook: 8, flag: BAKE_F },
+  { id: 'dynova_bulka',       name: 'Dýňová bulka',         b: 'pekarna',  in: { mouka: 1, dyne: 1 }, min: 15, st: 5, cook: 9, flag: BAKE_F },
+  { id: 'hroznovy_kolac',     name: 'Hroznový koláč',       b: 'pekarna',  in: { mouka: 2, hrozny: 2, vejce: 1 }, min: 18, st: 5, cook: 9, flag: BAKE_F },
+  { id: 'tvarohovy_satecek',  name: 'Tvarohový šáteček',    b: 'pekarna',  in: { mouka: 1, tvaroh: 1, vejce: 1 }, min: 18, st: 5, cook: 10, flag: BAKE_F },
+  { id: 'malinovy_croissant', name: 'Malinový croissant',   b: 'pekarna',  in: { mouka: 1, smetana: 1, maliny: 2 }, min: 20, st: 5, cook: 11, flag: BAKE_F },
+  { id: 'orechove_susenky',   name: 'Ořechové sušenky',     b: 'pekarna',  in: { mouka: 1, orech: 2, med: 1 }, min: 18, st: 6, cook: 13, flag: BAKE_F },
+  { id: 'jahodova_rolada',    name: 'Jahodová roláda',      b: 'pekarna',  in: { mouka: 2, jahody: 2, smetana: 1 }, min: 24, st: 6, cook: 14, flag: BAKE_F },
+  { id: 'makovy_zavin',       name: 'Makový závin',         b: 'pekarna',  in: { mouka: 2, mlety_mak: 2, cukr: 1 }, min: 22, st: 8, cook: 16, flag: BAKE_F },
+  { id: 'visnova_kapsa',      name: 'Višňová kapsa',        b: 'pekarna',  in: { mouka: 1, visne: 2, cukr: 1 }, min: 20, st: 8, cook: 17, flag: BAKE_F },
+  { id: 'vanocka',            name: 'Vánočka',              b: 'pekarna',  in: { mouka: 2, vejce: 1, mleko: 1, cukr: 1 }, min: 30, st: 8, cook: 20, flag: BAKE_F },
+  { id: 'orechovy_venec',     name: 'Mistrovský ořechový věnec', b: 'pekarna', in: { mouka: 2, tvaroh: 1, med: 1, orech: 2 }, min: 40, st: 10, cook: 30, flag: BAKE_F },
+];

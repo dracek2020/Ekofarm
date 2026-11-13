@@ -7,6 +7,8 @@ import {
   FISH_LIST, FJ_MASTER, normalize, CROPS,
 } from '../public/js/rules.js';
 import { EVENTS } from '../public/js/events.js';
+import * as R from '../public/js/rules.js';
+import { fishOnce } from './fixtures/fish-bot.mjs';
 import { fakeD1 } from '../tools/fake-d1.mjs';
 import worker from '../src/worker.js';
 
@@ -170,10 +172,11 @@ test('rybářský deník: první úlovek a mistr druhu dají odměnu jen jednou,
   let firstCoins = 0, masters = 0, catches = 0;
   for (let i = 0; i < 40 && catches < 30; i++) {
     const t = T0 + i * 3 * H;
-    const c = applyAction(f, { type: 'fishCast', id }, t);
-    if (!c.ok) continue;
-    const r = applyAction(f, { type: 'fishLand', id, ok: true }, t + 5000);
+    const x = fishOnce(R, f, id, t);   // v47: nová minihra
+    if (!x.cast.ok) continue;
+    const r = x.land;
     assert.ok(r.ok, r.error);
+    if (r.lost) continue;
     catches++;
     for (const j of r.journal) { if (j.text.startsWith('Nová')) firstCoins++; if (j.text.startsWith('Mistr rybář')) masters++; }
   }

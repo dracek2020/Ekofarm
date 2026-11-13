@@ -3,7 +3,7 @@
 //   snapshot          → obsah (recepty, ceny, plodiny, budovy) ve stejném tvaru jako fixtures/v45-obsah.json
 //   farm <ms>         → přečte farmu ze stdin, normalize + běžné akce (sebrat, prodat) v čase <ms>, vrátí farmu
 import { readFileSync } from 'node:fs';
-globalThis.EKO_FLAGS = { eco_recipes: false, eco_planner: false, eco_byproducts: false, eco_straw: false, eco_crops: false, eco_mastery: false };
+globalThis.EKO_FLAGS = new Proxy({}, { has: () => true, get: () => false });   // všechny skupiny (i budoucí) vypnuté
 const R = await import('../../public/js/rules.js');
 const mode = process.argv[2];
 if (mode === 'snapshot') {

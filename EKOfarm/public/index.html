@@ -10,7 +10,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
 <link rel="preload" href="/fonts/grandstander-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/style.css?v=46">
+<link rel="stylesheet" href="/css/style.css?v=47">
 </head>
 <body>
 <!--APP-->
@@ -51,6 +51,27 @@
       <p class="muted" id="fgHint"></p><button class="btn alt" id="fgQuit">Pustit rybu</button></div>
     <div id="fgResult" hidden><div id="fgResultText"></div><button class="btn" id="fgAgain">Rybařit znovu</button><button class="btn alt" id="fgDone">Hotovo</button></div>
   </div></div>
+  <!-- v47: malé okénko návnad (jen před nahozením) a nová rybářská minihra -->
+  <div id="baitModal" hidden><div class="bm-box" role="dialog" aria-label="Vyber návnadu">
+    <div class="bm-head"><span class="bm-tb" data-ic="rybarska_bedna"></span><b>Vyber návnadu</b><button class="x" id="bmClose" aria-label="Zavřít">✕</button></div>
+    <p class="bm-sub"><span data-ic="ryba_obecna"></span><span><b>Návnady máš ve skladu. Některé lákají určité ryby.</b><small>Co zabralo, zjistíš až po vylovení.</small></span></p>
+    <div class="bm-grid" id="bmGrid"></div>
+    <p class="bm-note" id="bmNote"></p>
+    <div class="bm-acts"><button class="btn alt" id="bmCancel">Zrušit</button><button class="btn" id="bmCast">Nahodit</button></div>
+  </div></div>
+  <div id="fish2" hidden><div class="f2-scene" id="f2Scene"></div><img id="f2Fisher" alt="" draggable="false"><canvas id="f2Canvas"></canvas>
+    <button class="x f2-x" id="f2Close" aria-label="Zavřít">✕</button>
+    <div class="f2-top" id="f2Top" hidden><div class="f2-sign"><span data-ic="ryba_obecna"></span><b id="f2Sign">Záběr!</b></div>
+      <div class="f2-card"><b id="f2Instr">Udrž šipku v zeleném poli!</b>
+        <div class="f2-bar"><div class="f2-zone" id="f2Zone"></div><div class="f2-arrow" id="f2Arrow"></div></div>
+        <div class="f2-tap">👆 Ťukej pro navíjení!</div></div></div>
+    <div class="f2-status" id="f2Status" hidden></div>
+    <div class="f2-bottom" id="f2Bottom" hidden>
+      <div class="f2-prog"><span class="f2-pi" data-ic="ryba_obecna"></span><div><span class="f2-pl"><b>Postup chytání</b><i id="f2ProgN">0 %</i></span><div class="f2-pbar"><div id="f2Prog"></div></div></div></div>
+      <div class="f2-tens"><span data-ic="vlasec"></span><b>Napětí vlasce</b><div class="f2-tbar"><div id="f2Tens"></div></div></div>
+    </div>
+    <div class="f2-result" id="f2Result" hidden><div id="f2ResultText"></div><div class="bm-acts"><button class="btn alt" id="f2Done">Hotovo</button><button class="btn" id="f2Again">Rybařit znovu</button></div></div>
+  </div>
   <div id="visitBar" hidden><span id="visitText"></span><button class="btn sm" id="visitHelp">:gift: Pomoct</button><button class="btn sm" id="visitBack">Zpět domů</button></div>
   <div id="banner" hidden><span id="bannerText"></span>
     <span id="bannerSize" hidden>
@@ -148,6 +169,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=46"></script>
+<script type="module" src="/js/main.js?v=47"></script>
 </body>
 </html>

@@ -18,19 +18,20 @@ import {
   bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
   recipeOut, recipeName, recipesFor, planChain, AWARDS, hasAward, farmAvail, BYPRODUCTS, BY_OF,
-} from './rules.js?v=46';
-import { PLAN_PREFS, PLAN_MAX_QTY, ECO_FLAGS, ECO_STRAW } from './eco-config.js?v=46';
+  FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, fishPool, activeHook,
+} from './rules.js?v=47';
+import { PLAN_PREFS, PLAN_MAX_QTY, ECO_FLAGS, ECO_STRAW } from './eco-config.js?v=47';
 const rIt = r => ITEMS[recipeOut(r)];   // v46: výrobek receptu (alternativní recept vyrábí existující předmět)
 // v46: vedlejší produkty – odkud se berou a nápověda u receptu
 const byDef = id => BYPRODUCTS.find(b => b.id === id);
 const byText = id => { const b = byDef(id); return `${b.n} ks za každých ${b.per} hotových dávek: ${b.from.map(x => ITEMS[x].name).join(', ')}`; };
 const itemLevelBy = id => Math.min(...byDef(id).from.map(x => recipesFor(x)[0].st));
 const byHint = r => (BY_OF[recipeOut(r)] || []).map(b => `<span class="byh" title="${esc(`Vedlejší produkt: ${b.name}, ${b.n} ks za ${b.per} dávek`)}">+:${ITEMS[b.id].icon}: /${b.per}</span>`).join('');
-import { fmtTime } from './render.js?v=46';
-import { TEAM } from './team-config.js?v=46';
-import { NEWS } from './news.js?v=46';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=46';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=46';
+import { fmtTime } from './render.js?v=47';
+import { TEAM } from './team-config.js?v=47';
+import { NEWS } from './news.js?v=47';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=47';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=47';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -751,7 +752,7 @@ function stallOffersHtml(farm, o, now) {
 }
 // Stánek → Zásoby: semena a sazenice (do zásob ve Statku) a krmivo (do Skladu) za mince
 export function suppliesShopHtml(farm) {
-  const ids = [...CROP_LIST.map(c => 's_' + c.id), ...TREE_LIST.map(t => 'z_' + t.id), ...ITEM_LIST.filter(it => it.id.startsWith('krmivo_')).map(it => it.id)]
+  const ids = [...CROP_LIST.map(c => 's_' + c.id), ...TREE_LIST.map(t => 'z_' + t.id), ...ITEM_LIST.filter(it => it.id.startsWith('krmivo_') || it.sup).map(it => it.id)]
     .filter(id => ITEMS[id] && supplyPrice(farm, id) !== null);
   const tiles = ids.map(id => {
     const p = supplyPrice(farm, id);
@@ -1205,6 +1206,7 @@ export function siloTitle(farm) {
 
 // ---------- v11: rybník a včelín ----------
 export function pondHtml(farm, o, now) {
+  if (FISHING_V2) return pondHtml2(farm, o, now);   // v47
   const s = pondStock(o, now);
   const rod = bestOwned(farm, 'rod');
   const bait = have(farm, 'navnada');
@@ -1225,6 +1227,27 @@ export function pondHtml(farm, o, now) {
     ${journalHtml(farm)}
     ${upgradeBlock(farm, o)}<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout rybník</button>`;
 }
+// v47: rybník s novou minihrou – návnady se vybírají v malém okénku až po klepnutí na Rybařit
+function pondHtml2(farm, o, now) {
+  const s = pondStock(o, now), rod = bestOwned(farm, 'rod'), w = weatherAt(now), h = activeHook(farm, now);
+  const baits = BAIT_LIST.filter(b => !baitLock(farm, b));
+  const total = baits.reduce((n, b) => n + baitFree(farm, b), 0);
+  const kinds = fishPool(farm, o).length;
+  const need = !rod ? '<div class="empty">:udice: Na rybaření potřebuješ <b>udici</b> – koupíš ji v Prodejně strojů v městečku.</div>'
+    : !total ? '<div class="empty">:navnada: Nemáš žádnou návnadu. <b>Těsto</b> uděláš v Krmivárně (1 pšenice + 1 kukuřice = 3 kusy), <b>červy</b> a <b>třpytky</b> koupíš ve Stánku (Zásoby). Na háček jde i kukuřice, hrách, sýr nebo rohlík.</div>' : '';
+  const fx = fxActive(farm, now).filter(f => f.k === 'fish').map(f => `<span class="chip ${f.m > 1 ? 'ok' : 'warn'}">${fxText(f)} · ${fmtTime(Math.ceil((f.u - now) / 1000))}</span>`).join('');
+  const deep = POND[o.kind] && POND[o.kind].rare > 1 ? ` · hluboká voda: vzácné ryby ${String(POND[o.kind].rare).replace('.', ',')}×` : '';
+  return `<div class="row"><span class="ico">:pond:</span><div class="info"><b>Ryby v rybníku: ${s.count}/${s.cap}</b>
+      <small>${s.count < s.cap ? `další ryba za ${fmtTime(Math.ceil(s.next / 1000))}` : 'rybník je plný'} · druhů, které tu berou: ${kinds} · návnad ${total} :navnada:${rod ? ` · ${rod.name}` : ''}${deep}</small></div></div>
+    ${need}
+    <button class="btn${rod && (total || h) && (s.count || h) ? '' : ' off'}" data-act="fish" data-v="${o.id}">:udice: ${h && h.id === o.id ? 'Ryba je na háčku – pokračovat' : 'Rybařit'}</button>
+    ${fx ? `<div class="chips">${fx}</div>` : ''}
+    <p class="muted">:${w.icon}: ${w.name}: ${w.fish > 1 ? 'ryby teď berou dobře a častěji zabere velká.' : w.fish < 1 ? 'ryby teď moc neberou.' : 'běžné rybaření.'}
+      Velká ryba dá 2 kusy, obří 3. Lepší udice a větší vodní plocha = vzácnější a větší ryby; některé druhy berou až ve větším rybníku nebo v jezeře.</p>
+    <p class="muted">Klepni na <b>Rybařit</b>, vyber návnadu a nahoď. Každá návnada láká jiné ryby, ale co zabralo, uvidíš až po vylovení. Když ryba zabere, <b>ťukáním</b> drž šipku v zeleném poli, dokud se postup nenaplní; mimo pole roste napětí vlasce. Při výpadu ryba táhne – ťukej rychleji.</p>
+    ${journalHtml(farm)}
+    ${upgradeBlock(farm, o)}<button class="btn alt" data-act="move" data-v="${o.id}">↔ Přesunout rybník</button>`;
+}
 // v36: rybářský deník – sbírka ryb, mistr druhu (10 úlovků) a odměny
 export function journalHtml(farm) {
   const fj = farm.fj || { c: {}, r: [] }, rec = farm.fishRec || {};
@@ -1235,7 +1258,7 @@ export function journalHtml(farm) {
     const st = lock ? `:lock: Rybaření ${f.fishLv}` : !n ? `první úlovek: +${r1.coins} :coin: +${r1.xp} :xp:`
       : n < FJ_MASTER ? `${n}/${FJ_MASTER} do mistra (+${rm.coins} :coin:)` : '★ mistr';
     return `<div class="row${n ? '' : ' dim'}"><span class="ico">:${f.icon}:</span><div class="info"><b>${f.name}${n ? ` × ${n}` : ''}</b>
-      <small>${st}${rec[f.id] ? ` · rekord :trophy: ${fmtKg(rec[f.id])}` : ''}</small></div></div>`;
+      <small>${st}${rec[f.id] ? ` · rekord :trophy: ${fmtKg(rec[f.id])}` : ''}${n && fj.b && fj.b[f.id] && fj.b[f.id].length ? ` · bral${f.fem ? 'a' : ''} na: ${fj.b[f.id].map(b => (BAITS_BY[b] || { name: b }).name.toLowerCase()).join(', ')}` : ''}</small></div></div>`;
   }).join('');
   return `<h3 class="sub">:denik_ryb: Rybářský deník</h3>
     <p class="muted">Ulovené druhy <b>${got}/${FISH_LIST.length}</b> · mistr <b>${masters}/${FISH_LIST.length}</b>.
@@ -1354,12 +1377,16 @@ export function helpHtml(farm, tab = 'zaklady') {
       + p('<b>:trophy: Žebříček</b> (Úkoly → Žebříček) řadí podle úrovně. Tlačítkem Navštívit se podíváš na cizí farmu.');
   } else if (tab === 'ryby') {
     body = p('<b>:pond: Rybníky:</b> Rybník (Statek 3, 5 ryb), Větší rybník (Statek 5, 8 ryb), Velký rybník (Statek 7, 15 ryb) a Jezero (Statek 10, 20 ryb). Čím větší voda, tím častěji zabere vzácná ryba. Vylepšení rybníku zrychlí, jak rychle ryby přibývají.')
-      + p('<b>:pond: Rybaření:</b> kup <b>udici</b> v Prodejně strojů (až když máš rybník) a vyrob <b>návnadu</b> v Krmivárně. Klepni na rybník → Rybařit. Vzácnější ryby začnou brát, až poroste tvoje dovednost <b>Rybaření</b> (číslo u ryby níže).')
-      + p('Až ryba <b>zabere</b>, rychle klepni. Pak <b>drž prst</b> na obrazovce – zelená čárka stoupá, pustíš – klesá. Drž rybu v čárce, dokud se ukazatel nenaplní. Když ukazatel spadne na nulu, ryba uteče. Lepší udice má širší čárku a častěji zabere vzácná ryba.')
+      + (FISHING_V2
+        ? p('<b>:pond: Rybaření:</b> kup <b>udici</b> v Prodejně strojů (až když máš rybník). Klepni na rybník → Rybařit a v okénku <b>vyber návnadu</b> – ukáže, kolik kusů máš ve skladu. Výběr nic nestojí, kus návnady se vezme až při nahození.')
+          + p('<b>:cerv: Návnady:</b> Červ a Třpytka ze Stánku (Zásoby), Těsto (dřívější „Návnada“) a Masová návnada z Krmivárny, Kukuřice, Hrášek, Sýr a Rohlík ze skladu. Každá láká jiné ryby víc – nic nezaručí a nikdy nepřivolá rybu, na kterou ještě nemáš Rybaření nebo dost velkou vodu. Co na co bralo, se zapíše do deníku.')
+          + p('<b>Chytání:</b> po záběru <b>ťukej</b> (nebo mezerník) a drž šipku v <b>zeleném poli</b> – šipka sama ujíždí doleva a ryba občas zabere. V zeleném se plní <b>postup chytání</b>, mimo něj roste <b>napětí vlasce</b>; když praskne nebo vyprší čas, ryba uteče a návnada je pryč. Jakou rybu držíš, uvidíš až po vylovení. Lepší udice má širší pole a pomaleji napíná vlasec.')
+        : p('<b>:pond: Rybaření:</b> kup <b>udici</b> v Prodejně strojů (až když máš rybník) a vyrob <b>návnadu</b> v Krmivárně. Klepni na rybník → Rybařit. Vzácnější ryby začnou brát, až poroste tvoje dovednost <b>Rybaření</b> (číslo u ryby níže).')
+          + p('Až ryba <b>zabere</b>, rychle klepni. Pak <b>drž prst</b> na obrazovce – zelená čárka stoupá, pustíš – klesá. Drž rybu v čárce, dokud se ukazatel nenaplní. Když ukazatel spadne na nulu, ryba uteče. Lepší udice má širší čárku a častěji zabere vzácná ryba.'))
       + p('V rybníku je jen pár ryb, každých 10 minut jedna přibude. Ryby prodáš, nebo z nich uděláš jídla v <b>Rybárně</b>.')
       + p('<b>Velikost:</b> každá ryba má váhu. Velká ryba dá do skladu 2 kusy, obří 3 a je těžší ji udržet. Největší úlovek každého druhu se ukazuje jako rekord. V dešti a s lepší udicí častěji zabere velká a vzácná ryba.')
       + p('<b>:denik_ryb: Rybářský deník</b> (v okně rybníku): za první úlovek každého druhu a za 10 úlovků (mistr) dostaneš mince a zkušenosti, za celou sbírku velkou odměnu.')
-      + `<div class="chips">${FISH_LIST.map(f => `<span class="chip">:${f.icon}: ${f.name} · rybaření ${f.fishLv} · ${fmtKg(f.kg[0])}–${fmtKg(f.kg[1])} · ${f.price} :coin:</span>`).join('')}</div>`
+      + `<div class="chips">${FISH_LIST.map(f => `<span class="chip">:${f.icon}: ${f.name} · rybaření ${f.fishLv}${f.pond && f.pond !== 'rybnik' ? ` · ${BUILDINGS[f.pond].name}${f.pond === 'rybnik4' ? '' : ' a větší'}` : ''} · ${fmtKg(f.kg[0])}–${fmtKg(f.kg[1])} · ${f.price} :coin:</span>`).join('')}</div>`
       + p('<b>:hive: Včelín</b> (od Statku 3): včely samy dělají <b>plástve medu</b>. Květiny, kvetoucí strom nebo sad do 4 políček je zrychlí. Sady blízko včelína dají při sklizni o 1 plod víc. <b>Medárna</b> z pláství udělá med a svíčky, Pekárna perník a medovník.');
   } else if (tab === 'udalosti') {
     body = p('<b>:bell: Události</b> (od úrovně 3): dvakrát denně – dopoledne a odpoledne – se na farmě něco přihodí (liška, bouřka, jarmark, potulný obchodník…). Vybereš jednu ze 4 odpovědí. Některé něco stojí, u některých (🎲) rozhoduje štěstí.')
