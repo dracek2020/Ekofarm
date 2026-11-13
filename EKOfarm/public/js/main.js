@@ -9,17 +9,18 @@ import {
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
   recipeOut, recipeName, AWARDS,
   FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, baitHave, activeHook, fightParams, fightNew, fightStep, zoneAt, pondStock, hasTool,
-} from './rules.js?v=47';
-import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=47';
-import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=47';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=47';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=47';
-import { iconize, ic } from './icons.js?v=47';
-import { NEWS } from './news.js?v=47';
-import { sfx, soundOn, setSound } from './sfx.js?v=47';
-import { TEAM } from './team-config.js?v=47';
-import { CHAPTERS } from './story.js?v=47';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=47';
+  BUI_V2, manualFree, recipeOk,
+} from './rules.js?v=48';
+import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=48';
+import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=48';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=48';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=48';
+import { iconize, ic } from './icons.js?v=48';
+import { NEWS } from './news.js?v=48';
+import { sfx, soundOn, setSound } from './sfx.js?v=48';
+import { TEAM } from './team-config.js?v=48';
+import { CHAPTERS } from './story.js?v=48';
+import { factoryHtml2, bldHero, HERO_TYPES, plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=48';
 
 const $ = id => document.getElementById(id);
 
@@ -1131,6 +1132,12 @@ function closeSheets() {
   game.panel = null;
 }
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
+  // v48: neuložený plán výrobny – první zavření jen upozorní, druhé změny zahodí
+  const pd = game.pd, p = game.panel;
+  if (b.dataset.close === 'panel' && pd && pd.dirty && p && p.kind === 'obj' && p.id === pd.id) {
+    if (!pd.warned) { pd.warned = true; toast('Plán výroby není uložený. Ulož ho, nebo zavři ještě jednou – změny se zahodí.', '', 3200); return; }
+    game.pd = null;
+  }
   $(b.dataset.close).hidden = true;
   if (b.dataset.close === 'panel') game.panel = null;
 }));
@@ -1157,6 +1164,34 @@ function openPanel(p) {
   renderPanel();
   $('panel').hidden = false;
   $('panel').scrollTop = 0;
+}
+// ---------- v48: koncept plánu výrobny – jen v prohlížeči, dokud ho hráč neuloží (Uložit plán → akce planSave) ----------
+// Když plán mezitím změní jiné zařízení (verze o.pv), neuložený koncept se nepřepíše, jen se ukáže upozornění.
+function bvDraft(o) {
+  let pd = game.pd;
+  const pv = o.pv || 0;
+  if (!pd || pd.id !== o.id || (!pd.dirty && pd.pv !== pv)) {
+    const ok = id => RECIPES[id] && RECIPES[id].building === o.kind && recipeOk(game.farm, RECIPES[id]);
+    pd = game.pd = { id: o.id, pv, plan: Object.fromEntries(Object.entries(o.plan || {}).filter(([k]) => ok(k))),
+      target: (o.target || []).filter(x => ok(x[0])).map(x => [x[0], x[1]]), auto: !!o.auto, dirty: false };
+  }
+  pd.conflict = pd.dirty && pd.pv !== pv;
+  return pd;
+}
+function bvEdit(pd, kind, v) {
+  const [id, d] = v.split('|'), n = Number(d), sum = planTotal(pd.plan);
+  if (kind === 'bvPct') { const cur = pd.plan[id] || 0; pd.plan[id] = Math.max(0, Math.min(100 - (sum - cur), cur + 5 * n)); }
+  else if (kind === 'bvTgt') {
+    const i = pd.target.findIndex(x => x[0] === id), nx = Math.min(9999, stepN(i >= 0 ? pd.target[i][1] : 0, n));
+    if (nx <= 0) { if (i >= 0) pd.target.splice(i, 1); } else if (i >= 0) pd.target[i][1] = nx; else pd.target.push([id, nx]);
+    if (!(id in pd.plan)) pd.plan[id] = 0;   // karta zůstane, i když cíl smaže
+  } else if (kind === 'bvOrd') {
+    const i = pd.target.findIndex(x => x[0] === id), j = i + n;
+    if (i >= 0 && j >= 0 && j < pd.target.length) [pd.target[i], pd.target[j]] = [pd.target[j], pd.target[i]];
+  } else if (kind === 'bvDel') { delete pd.plan[id]; pd.target = pd.target.filter(x => x[0] !== id); }
+  else if (kind === 'bvAdd') pd.plan[id] = Math.min(10, 100 - sum);
+  else if (kind === 'bvAuto') pd.auto = !pd.auto;
+  pd.dirty = true; pd.warned = false;
 }
 function renderPanel() {
   const p = game.panel, f = game.farm;
@@ -1195,7 +1230,8 @@ function renderPanel() {
     const d = BUILDINGS[o.kind];
     title = `:${d.icon}: ${d.name}`;
     img = bImg(o.kind);
-    body = d.type === 'factory' ? factoryHtml(f, o, now())
+    if (d.type === 'factory' && BUI_V2) { title = ''; img = null; }   // v48: název a obrázek jsou v hlavičce okna výrobny
+    body = d.type === 'factory' ? (BUI_V2 ? factoryHtml2(f, o, now(), p, bvDraft(o)) : factoryHtml(f, o, now()))
       : d.type === 'pen' ? penHtml(f, o, now())
       : d.type === 'main' ? statekHtml(f, game.name, now(), p.tab, o)
       : d.type === 'garage' ? garageHtml(f, o, now())
@@ -1207,8 +1243,10 @@ function renderPanel() {
       : d.type === 'hive' ? hiveHtml(f, o, now())
       : d.type === 'house' ? houseHtml(f, o)
       : decoHtml(f, o);
+    if (BUI_V2 && HERO_TYPES.has(d.type)) { title = ''; img = null; body = bldHero(f, o, now()) + body; }   // v48: společná hlavička budov
   }
   setTitle(title, img);
+  $('panel').classList.toggle('bvp', !title && p.kind === 'obj');   // v48: okno výrobny má vlastní hlavičku
   $('panelBody').innerHTML = iconize(body);
 }
 // hlavička okna: kulatý medailon s ikonou (u budov obrázek budovy) a velký název
@@ -1217,6 +1255,7 @@ function setTitle(title, img) {
   const key = `${img}|${title}`;
   if ($('panelTitle').dataset.k === key) return;   // panel se překresluje každou sekundu – hlavičku jen při změně
   $('panelTitle').dataset.k = key;
+  if (!title) { $('panelTitle').innerHTML = ''; return; }
   const medal = img ? `<span class="medal pic"><img src="${img}" alt=""></span>` : m[1] ? `<span class="medal">${ic(m[1])}</span>` : '';
   $('panelTitle').innerHTML = medal + `<span class="ttl">${iconize(m[2])}</span>`;
 }
@@ -1231,7 +1270,7 @@ setInterval(() => {
 const stepN = (n, d) => { const sc = x => (x < 20 ? 5 : x < 100 ? 10 : x < 500 ? 50 : 100); return d > 0 ? n + sc(n) : n - sc(n - 1); };
 // posuvník procent v plánu: během tažení se panel nepřekresluje, změna se pošle až po puštění
 const panelBusy = () => game.sliding || performance.now() - panelTouch < 700;
-$('panelBody').addEventListener('pointerdown', e => { if (e.target.closest('.pslide')) { game.sliding = true; game.panelDirty = false; } });
+$('panelBody').addEventListener('pointerdown', e => { if (e.target.closest('.pslide, .bv-slide')) { game.sliding = true; game.panelDirty = false; } });
 const slideEnd = () => {
   if (!game.sliding) return;
   game.sliding = false; panelTouch = performance.now();
@@ -1241,6 +1280,16 @@ document.addEventListener('pointerup', slideEnd);
 document.addEventListener('pointercancel', slideEnd);
 const slideVal = s => Math.max(5, Math.min(Number(s.dataset.max), Math.round(Number(s.value) / 5) * 5));
 $('panelBody').addEventListener('input', e => {
+  const bs = e.target.closest('.bv-slide');   // v48: posuvník v konceptu plánu výrobny – jen ukáže hodnotu, koncept se změní po puštění
+  if (bs) {
+    panelTouch = performance.now();
+    const val = Math.max(0, Math.min(Number(bs.dataset.max), Math.round(Number(bs.value) / 5) * 5));
+    if (String(val) !== bs.value) bs.value = val;
+    bs.style.setProperty('--p', val + '%');
+    const pc = bs.closest('.bv-rc') && bs.closest('.bv-rc').querySelector('.bv-pct');
+    if (pc) pc.textContent = val + ' %';
+    return;
+  }
   const s = e.target.closest('.pslide');
   if (!s) return;
   panelTouch = performance.now();
@@ -1252,6 +1301,17 @@ $('panelBody').addEventListener('input', e => {
 $('panelBody').addEventListener('change', e => {
   const ps = e.target.closest('.plansel');   // v46: plán výroby – výběr výrobku
   if (ps && game.panel) { game.panel.pi = ps.value; game.panel.pk = {}; renderPanel(); return; }
+  const bs = e.target.closest('.bv-slide');
+  if (bs) {
+    game.sliding = false; game.panelDirty = false;
+    const o = game.panel && findObject(game.farm, game.panel.id), pd = o && bvDraft(o);
+    if (pd) {
+      const key = bs.dataset.key, val = Math.max(0, Math.min(Number(bs.dataset.max), Math.round(Number(bs.value) / 5) * 5));
+      if ((pd.plan[key] || 0) !== val) { pd.plan[key] = val; pd.dirty = true; pd.warned = false; }
+    }
+    renderPanel();
+    return;
+  }
   const s = e.target.closest('.pslide');
   if (!s) return;
   game.sliding = false; game.panelDirty = false;
@@ -1289,6 +1349,43 @@ $('panelBody').addEventListener('click', e => {
       if (act({ type: 'upgradeSilo' }).ok) toast(`:barn: Sklad má teď ${f.siloCap} míst`);
       break;
     case 'produce': act({ type: 'produce', id: game.panel.id, recipe: v }); break;
+    // ---- v48: okno výrobny ----
+    case 'bvTab': game.panel.tab = v; renderPanel(); $('panel').scrollTop = 0; break;
+    case 'bvMode': game.panel.mode = v; renderPanel(); break;
+    case 'bvGo': game.panel.tab = 'plan'; game.panel.mode = v; renderPanel(); $('panel').scrollTop = 0; break;
+    case 'bvFilt': game.panel.filt = v; renderPanel(); break;
+    case 'bvSel': {   // vybraný recept nahoru, ať je vidět Zařadit do výroby
+      game.panel.sel = v; game.panel.n = 1; renderPanel();
+      const pk = $('panel').querySelector('.bv-pick');
+      if (pk) pk.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      break;
+    }
+    case 'bvN': { const [, d] = v.split('|'); game.panel.n = Math.max(1, (game.panel.n || 1) + Number(d)); renderPanel(); break; }
+    case 'bvEnq': {
+      const [rid, n] = v.split('|'), o = findObject(f, game.panel.id);
+      if (!o) break;
+      const r = act({ type: 'produce', id: o.id, recipe: rid, n: Number(n), k: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) });
+      if (r.ok) { toast(`Zařazeno do tvé fronty: ${n}× :${ITEMS[recipeOut(RECIPES[rid])].icon}: ${recipeName(RECIPES[rid])}`); game.panel.n = 1; }
+      break;
+    }
+    case 'bvPct': case 'bvTgt': case 'bvOrd': case 'bvDel': case 'bvAdd': case 'bvAuto': {
+      const o = findObject(f, game.panel.id), pd = o && bvDraft(o);
+      if (!pd) break;
+      bvEdit(pd, b.dataset.act, v);
+      renderPanel();
+      break;
+    }
+    case 'bvReload': game.pd = null; renderPanel(); break;
+    case 'bvSave': {
+      const o = findObject(f, game.panel.id), pd = o && bvDraft(o);
+      if (!pd || !pd.dirty) break;
+      const plan = {};
+      for (const [k, x] of Object.entries(pd.plan)) if (x > 0) plan[k] = x;
+      const r = act({ type: 'planSave', id: o.id, pv: pd.pv, plan, target: pd.target.map(x => [x[0], x[1]]), auto: !!pd.auto });
+      if (r.ok) { game.pd = null; toast('✓ Plán uložen – tým podle něj pokračuje'); }
+      renderPanel();
+      break;
+    }
     case 'plantTree': {
       const r = act({ type: 'plantTree', id: game.panel.id, tree: v });
       if (r.ok) { const o = findObject(f, game.panel.id); floatAt(o.x, o.y, r.sapling ? `−1 :z_${v}:` : `−${TREES[v].cost} :coin:`); closeSheets(); }

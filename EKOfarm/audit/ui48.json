@@ -1,0 +1,279 @@
+{
+ "date": "2026-11-13",
+ "commit": "1e5d8ca",
+ "runs": {
+  "iphone13": {
+   "viewport": "390 × 664",
+   "tabs": {
+    "prehled": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "tym": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_auto": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_manual": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "suroviny": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    }
+   },
+   "errs": []
+  },
+  "iphone_se1": {
+   "viewport": "320 × 568",
+   "tabs": {
+    "prehled": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "tym": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_auto": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_manual": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "suroviny": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    }
+   },
+   "errs": []
+  },
+  "pixel7": {
+   "viewport": "412 × 839",
+   "tabs": {
+    "prehled": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "tym": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_auto": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_manual": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "suroviny": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    }
+   },
+   "errs": []
+  },
+  "tablet": {
+   "viewport": "1180 × 820",
+   "tabs": {
+    "prehled": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "tym": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_auto": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "plan_manual": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    },
+    "suroviny": {
+     "ov": [],
+     "tabsOk": true,
+     "smallButtons": []
+    }
+   },
+   "errs": []
+  }
+ },
+ "flow": {
+  "s0": {
+   "plan": "{\"chleb\":60,\"kolac\":40}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 1,
+   "manual": 0,
+   "team": 4,
+   "chleb": 0,
+   "wheat": 99,
+   "xp": 49702,
+   "cook": 12000,
+   "vjob": "rest",
+   "made": 0
+  },
+  "s1": {
+   "plan": "{\"chleb\":60,\"kolac\":40}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 1,
+   "manual": 1,
+   "team": 4,
+   "chleb": 0,
+   "wheat": 96,
+   "xp": 49702,
+   "cook": 12000,
+   "vjob": "rest",
+   "made": 0
+  },
+  "s2": {
+   "plan": "{\"chleb\":60,\"kolac\":40}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 1,
+   "manual": 1,
+   "team": 4,
+   "chleb": 1,
+   "wheat": 90,
+   "xp": 49702,
+   "cook": 12000.75,
+   "vjob": "rest",
+   "made": 1
+  },
+  "s3": {
+   "plan": "{\"chleb\":60,\"kolac\":40}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 1,
+   "manual": 0,
+   "team": 4,
+   "chleb": 2,
+   "wheat": 90,
+   "xp": 49705,
+   "cook": 12003.75,
+   "vjob": "rest",
+   "made": 2
+  },
+  "s4": {
+   "plan": "{\"chleb\":60,\"kolac\":35}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 2,
+   "manual": 0,
+   "team": 4,
+   "chleb": 2,
+   "wheat": 90,
+   "xp": 49705,
+   "cook": 12003.75,
+   "vjob": "rest",
+   "made": 2
+  },
+  "s5": {
+   "plan": "{\"chleb\":60,\"kolac\":35}",
+   "target": "[[\"chleb\",100]]",
+   "pv": 2,
+   "manual": 0,
+   "team": 2,
+   "chleb": 30,
+   "wheat": 21,
+   "xp": 49726,
+   "cook": 12024.75,
+   "vjob": "inputs",
+   "made": 30
+  },
+  "dirty": true,
+  "kbd": true,
+  "pond": {
+   "bv": false,
+   "fish": true
+  },
+  "errs": []
+ },
+ "flagOff": {
+  "bv": false,
+  "old": true
+ },
+ "others": {
+  "kurnik": {
+   "hero": true,
+   "status": "⚠ Čeká na krmivo",
+   "care": true,
+   "feed": true,
+   "collect": true,
+   "fish": false,
+   "plan": false,
+   "ov": []
+  },
+  "vcelin": {
+   "hero": true,
+   "status": "⚠ Plno – vyber plástve",
+   "care": false,
+   "feed": false,
+   "collect": true,
+   "fish": false,
+   "plan": false,
+   "ov": []
+  },
+  "rybnik": {
+   "hero": true,
+   "status": "✓ Ryb v rybníku: 5",
+   "care": false,
+   "feed": false,
+   "collect": false,
+   "fish": true,
+   "plan": false,
+   "ov": []
+  },
+  "chatrc": {
+   "hero": true,
+   "status": "• 2 lůžka",
+   "care": false,
+   "feed": false,
+   "collect": false,
+   "fish": false,
+   "plan": false,
+   "ov": []
+  },
+  "collectManual": {
+   "button": false,
+   "before": 34,
+   "after": 34,
+   "chovatel": true
+  },
+  "errs": []
+ },
+ "noWorker": {
+  "head": "• Bez pracovníka",
+  "ban": true,
+  "manual": 1
+ },
+ "reduced": {
+  "rm": true,
+  "manual": 1
+ }
+}

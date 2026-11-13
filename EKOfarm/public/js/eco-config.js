@@ -17,6 +17,9 @@ export const ECO_FLAGS_DEFAULT = {
   fishing_baits_v2: true,      // 8 návnad ze skladu s preferencemi ryb, okénko „Vyber návnadu“ (jen s novou minihrou)
   fishing_fish_pack_v2: true,  // 10 nových druhů ryb ve stávajících rybnících + 16 rybích receptů
   bakery_extra_v2: true,       // 19 druhů pečiva, žito, mák, žitná mouka, mletý mák, tvaroh
+  // v48 – správa budov (balíček EKOfarm_UI_sprava_budov)
+  building_ui_v2: true,        // nové okno výrobny (Přehled / Tým / Plán výroby / Suroviny), ruční výroba i při zaměstnanci:
+                               // ruční fronta a dávky týmu mají vlastní místa ve frontě, jedna výrobní linka (žádná dvojí kapacita)
 };
 const ECO_OVER = (typeof globalThis !== 'undefined' && globalThis.EKO_FLAGS) || {};
 export const ECO_FLAGS = Object.fromEntries(Object.keys(ECO_FLAGS_DEFAULT).map(k => [k, k in ECO_OVER ? !!ECO_OVER[k] : ECO_FLAGS_DEFAULT[k]]));

@@ -1,10 +1,10 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=47';
-import { EVENTS } from './events.js?v=47';
-import { STORY, CHAPTERS } from './story.js?v=47';
+import { TEAM } from './team-config.js?v=48';
+import { EVENTS } from './events.js?v=48';
+import { STORY, CHAPTERS } from './story.js?v=48';
 import { ECO_FLAGS, ecoOn, ECO_FROM, ECO_CROPS, ECO_BYPRODUCTS, BYPRODUCT_WORTH, ECO_RECIPES, ECO_STRAW, ECO_AWARDS, PLAN_PREFS, PLAN_MAX_QTY, PLAN_MAX_DEPTH,
-  ECO_FISH, ECO_SUPPLY, BAITS, BAIT_FLAG, BAIT_PREF, BAIT_DEFAULT, FIGHT, FISH_RECIPES, BAKERY_CROPS, BAKERY_RECIPES } from './eco-config.js?v=47';
+  ECO_FISH, ECO_SUPPLY, BAITS, BAIT_FLAG, BAIT_PREF, BAIT_DEFAULT, FIGHT, FISH_RECIPES, BAKERY_CROPS, BAKERY_RECIPES } from './eco-config.js?v=48';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -900,7 +900,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 47;   // v47: starší aplikace se samy načtou znovu (rybaření se serverovým tajemstvím ryby, 8 návnad, nové ryby, recepty a pečivo)
+export const CLIENT_MIN = 48;   // v48: starší aplikace se samy načtou znovu (okno výroben, ruční výroba vedle týmu, planSave)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -1370,6 +1370,23 @@ export function statekLevel(farm) {
 }
 export const speedMult = o => 1 - 0.05 * (objLevel(o) - 1);          // −5 % času za úroveň
 export const queueSize = o => QUEUE_SIZE + Math.floor((objLevel(o) - 1) / 3);
+// v48: ruční výroba a dávky týmu ve stejné výrobně. Jedna výrobní linka (dávky jdou po sobě – žádná dvojí kapacita),
+// ale každý zdroj má vlastní místa ve frontě: hráč queueSize(o) míst pro své dávky, tým stejně pro své.
+// Zdroj dávky: q.t = tým (worker), bez t = hráč (manual). Hotové ruční dávky čekají na hráče – tým je neodnáší.
+export const BUI_V2 = ecoOn('building_ui_v2');
+export const jobDur = q => q.d || RECIPES[q.r].time * 1000;
+export const manualJobs = o => (o.queue || []).filter(q => !q.t);
+export const teamJobs = o => (o.queue || []).filter(q => q.t);
+export const manualFree = o => Math.max(0, queueSize(o) - (BUI_V2 ? manualJobs(o) : o.queue || []).length);
+const teamLane = o => (BUI_V2 ? teamJobs(o) : o.queue);   // co počítá tým jako svoje místa ve frontě
+// zařadí ruční dávku: předběhne dávky týmu, které ještě nezačaly (ty se posunou dál), čas linky se nezdvojí
+function insertManual(o, r, now, k = 1) {
+  const q = o.queue, d = Math.round(r.time * 1000 * speedMult(o) * k);
+  let i = q.length;
+  while (i > 0 && q[i - 1].t && q[i - 1].end - jobDur(q[i - 1]) > now) i--;
+  q.splice(i, 0, { r: r.id, end: Math.max(now, i ? q[i - 1].end : 0) + d, d });
+  for (let j = i + 1; j < q.length; j++) q[j].end = Math.max(now, q[j - 1].end) + jobDur(q[j]);
+}
 export const penMax = o => ANIMALS[BUILDINGS[o.kind].animal].max + Math.floor((objLevel(o) - 1) / 3);
 export const garageSlots = farm => farm.objects.filter(o => o.kind === 'stodola').reduce((n, o) => n + 1 + objLevel(o), 0);
 export const vehicleCount = farm => farm.machines.filter(m => isVehicle(m.model)).length;
@@ -2047,7 +2064,7 @@ const VILL_TASK = {
   },
   // výrobna: odnést hotové do skladu, pak naložit další výrobek podle podílů v plánu
   factory(farm, e, t) {
-    const o = e.o, q = o.queue;
+    const o = e.o, q = teamLane(o);   // v48: tým odnáší a počítá jen svoje dávky; ruční čekají na hráče
     let w = 'rest', wake = Infinity, room = false, seedRoom = false, hauling = false, loading = 0;
     for (const x of e.mates) {   // co dělají kolegové: hotové odnáší jen jeden, nakládá se jen do volných míst ve frontě
       const j = x.v.job;
@@ -2247,7 +2264,7 @@ function finishJob(farm, e, j, t, live) {
     }
     case 'load': {
       const r = getRecipe(j.x);
-      if (!r || r.building !== o.kind || o.queue.length >= queueSize(o)) return null;
+      if (!r || r.building !== o.kind || teamLane(o).length >= queueSize(o)) return null;
       const d = Math.round(r.time * 1000 * speedMult(o));
       // procenta pod 100 % bez „přerozdělit“: budova po dávce stojí v poměru nevyužité kapacity
       const sum = planTotal(o.plan), pause = !j.tg && !o.auto && sum > 0 && sum < 100 ? Math.round(d * (100 - sum) / sum) : 0;
@@ -2803,6 +2820,7 @@ export const ERRORS = {
   vill_lvl_max: 'Vesničan už má nejvyšší úroveň.',
   bad_job: 'Tady vesničan pracovat nemůže.',
   plan_over: 'Dohromady to nejde přes 100 %. Nejdřív uber jinde.',
+  plan_conflict: 'Plán mezitím změnilo jiné zařízení – ukazuju aktuální. Uprav ho a ulož znovu.',
   team_search: 'Pracovníci se nekupují – najdi je na Nástěnce v Městečku.',
   helper_gone: 'Pomocník na hodiny už není – pracovníky najdeš na Nástěnce v Městečku.',
   no_bed: 'Nemáš volné lůžko. Postav nebo přestav domek.',
@@ -2847,6 +2865,63 @@ function applyAction0(farm, a, now, lim) {
   weekTick(farm);
   return r;
 }
+// ---------- v48: ruční výroba („Vyrobit sám“) – i když v budově pracuje tým ----------
+// n dávek (každá zabere jedno místo ruční fronty); suroviny se berou hned při zařazení jako dřív, i z rezervy skladu
+// (rezerva chrání jen automatiku a skladníka – stejně jako v předchozích verzích). Klíč k: opakovaný požadavek
+// (výpadek sítě, dvojklik) se nezapočítá podruhé.
+const MK_KEEP = 12;
+function produceManual(farm, o, r, a, now) {
+  const n = a.n === undefined ? 1 : a.n;
+  if (!isInt(n) || n < 1 || n > queueSize(o)) return fail('bad_action');
+  const k = typeof a.k === 'string' && a.k.length > 0 && a.k.length <= 40 ? a.k : null;
+  if (k && o.mk && o.mk.includes(k)) return { ok: true, again: true };
+  if (manualJobs(o).length + n > queueSize(o)) return fail('queue_full');
+  for (const [id, m] of Object.entries(r.in)) if (have(farm, id) < m * n) return fail('no_inputs');
+  for (const [id, m] of Object.entries(r.in)) takeItem(farm, id, m * n);
+  const fx = fxMult(farm, 'prod', now);
+  for (let i = 0; i < n; i++) insertManual(o, r, now, fx);
+  if (k) { (o.mk || (o.mk = [])).push(k); if (o.mk.length > MK_KEEP) o.mk.shift(); }
+  return { ok: true, n };
+}
+// v48: náhled pro okno výrobny – za kolik ms by byla hotová poslední z n ručních dávek (nic nemění)
+export function manualEta(farm, o, r, n, now) {
+  const copy = { ...o, queue: (o.queue || []).map(q => ({ ...q })) }, fx = fxMult(farm, 'prod', now);
+  for (let i = 0; i < n; i++) insertManual(copy, r, now, fx);
+  let end = now;
+  for (const q of copy.queue) if (!q.t && q.end > end) end = q.end;
+  return end - now;
+}
+// v48: uložení celého plánu výrobny najednou (procenta, cílové zásoby a jejich pořadí, přerozdělení). pv = verze plánu,
+// kterou hráč upravoval – když ji mezitím změnilo jiné zařízení, nic se nepřepíše (plan_conflict). Ruční fronty se netýká.
+function planSave(farm, a) {
+  const o = findObject(farm, a.id);
+  if (!o || BUILDINGS[o.kind].type !== 'factory') return fail('no_object');
+  if (!isInt(a.pv) || a.pv !== (o.pv || 0)) return fail('plan_conflict');
+  if (!a.plan || typeof a.plan !== 'object' || Array.isArray(a.plan) || !Array.isArray(a.target) || a.target.length > PLAN_ROWS) return fail('bad_action');
+  const wp = { o, g: null, type: 'factory' }, plan = {}, T = [], seen = new Set();
+  let sum = 0;
+  for (const [key, pct] of Object.entries(a.plan)) {
+    if (!isInt(pct) || pct < 0 || pct > 100 || pct % 5) return fail('bad_action');
+    if (!pct) continue;
+    const err = planKeyErr(farm, wp, 'recipe', key);
+    if (err) return fail(err);
+    plan[key] = pct; sum += pct;
+  }
+  if (sum > 100) return fail('plan_over');
+  if (Object.keys(plan).length > PLAN_ROWS) return fail('plan_rows');
+  for (const x of a.target) {
+    if (!Array.isArray(x) || typeof x[0] !== 'string' || !isInt(x[1]) || x[1] < 1 || x[1] > 9999 || seen.has(x[0])) return fail('bad_action');
+    const err = planKeyErr(farm, wp, 'recipe', x[0]);
+    if (err) return fail(err);
+    seen.add(x[0]); T.push([x[0], x[1]]);
+  }
+  o.plan = plan; o.target = T;
+  if (a.auto === true) o.auto = true; else delete o.auto;
+  o.pv = (o.pv || 0) + 1;
+  return { ok: true, pv: o.pv };
+}
+const bumpPv = wp => { if (BUI_V2 && wp && wp.o && wp.type === 'factory') wp.o.pv = (wp.o.pv || 0) + 1; };   // i staré akce plánu mění verzi
+
 // ---------- v47: nová minihra – nahození a vylovení ----------
 // nához: ověří rybník, udici, návnadu nad rezervou a ryby v rybníku (jinak nic nespotřebuje); jeden nához na hráče,
 // opakovaný požadavek se stejným klíčem k vrátí původní nához (žádná druhá návnada). Ryba se z rybníku „rezervuje“
@@ -3088,6 +3163,7 @@ function doAction(farm, a, now) {
       const r = getRecipe(a.recipe);
       if (!r || r.building !== o.kind) return fail('bad_action');
       if (!recipeOk(farm, r)) return fail('locked');
+      if (BUI_V2) return produceManual(farm, o, r, a, now);
       if (o.queue.length >= queueSize(o)) return fail('queue_full');
       if (!hasInputs(farm, r)) return fail('no_inputs');
       for (const [id, n] of Object.entries(r.in)) takeItem(farm, id, n);
@@ -3102,9 +3178,13 @@ function doAction(farm, a, now) {
       let xp = 0, xpTeam = 0, full = false, anyReady = false, seedsFull = false;
       if (d.type === 'factory') {
         // dávka od týmu (q.n kusů) se odnáší po částech, kolik se vejde; XP za ni dostane hráč jen z části (TEAM.playerXp)
-        while (o.queue.length && o.queue[0].end <= now) {
+        // v48: tým (a.team) odnáší jen dávky týmu – hotové ruční dávky nechá hráči; hráč vybere všechno hotové
+        const skip = BUI_V2 && a.team;
+        for (let i = 0; i < o.queue.length && o.queue[i].end <= now;) {
+          const q = o.queue[i];
+          if (skip && !q.t) { i++; continue; }
           anyReady = true;
-          const q = o.queue[0], rq = RECIPES[q.r], out = recipeOut(rq), per = recipeQty(rq), left = q.n || 1;   // v46: výrobek receptu (out)
+          const rq = RECIPES[q.r], out = recipeOut(rq), per = recipeQty(rq), left = q.n || 1;   // v46: výrobek receptu (out)
           const fit = Math.min(left, Math.floor(spaceFor(farm, out) / per));
           if (fit < 1) { full = true; seedsFull = isSeedItem(out); break; }
           addItem(farm, out, fit * per, !!q.t || !!villHook);
@@ -3113,7 +3193,7 @@ function doAction(farm, a, now) {
           for (const b of byproductTick(farm, rq, q, fit)) items.push(b);   // v46: vedlejší produkty za hotové dávky
           if (q.t) xpTeam += rq.xp * fit; else xp += rq.xp * fit;
           if (fit < left) { q.n = left - fit; full = true; break; }
-          o.queue.shift();
+          o.queue.splice(i, 1);
         }
       } else if (d.type === 'pen') {
         const an = ANIMALS[d.animal];
@@ -3471,25 +3551,31 @@ function doAction(farm, a, now) {
       const kind = planKindW(wp);
       if (!kind) return fail('bad_job');
       const plan = wpPlan(wp);
-      if (!a.pct) { if (has(plan, a.key)) delete plan[a.key]; return { ok: true }; }
+      if (!a.pct) { if (has(plan, a.key)) { delete plan[a.key]; bumpPv(wp); } return { ok: true }; }
       const err = planKeyErr(farm, wp, kind, a.key);
       if (err) return fail(err);
       if (!has(plan, a.key) && Object.keys(plan).length >= (kind === 'item' ? TEAM.trade.rows[TEAM.maxLvl] : PLAN_ROWS)) return fail('plan_rows');
       if (kind !== 'item' && planTotal(plan) - (plan[a.key] || 0) + a.pct > 100) return fail('plan_over');   // sklad: každé zboží zvlášť
       plan[a.key] = a.pct;
+      bumpPv(wp);
       return { ok: true };
+    }
+    case 'planSave': {     // v48: celý plán výrobny najednou (tlačítko Uložit plán), s kontrolou verze
+      if (!BUI_V2) return fail('bad_action');
+      return planSave(farm, a);
     }
     case 'planTarget': {   // výrobna: cílová zásoba výrobku (n = kolik kusů mít, 0 = vyřadit); cíle mají přednost před procenty
       const wp = wpGet(farm, a.w);
       if (!wp || typeof a.key !== 'string' || !isInt(a.n) || a.n < 0 || a.n > 9999) return fail('bad_action');
       if (wp.type !== 'factory') return fail('bad_job');
       const T = wp.o.target || (wp.o.target = []), i = T.findIndex(x => x[0] === a.key);
-      if (!a.n) { if (i >= 0) T.splice(i, 1); return { ok: true }; }
+      if (!a.n) { if (i >= 0) { T.splice(i, 1); bumpPv(wp); } return { ok: true }; }
       const err = planKeyErr(farm, wp, 'recipe', a.key);
       if (err) return fail(err);
       if (i >= 0) T[i][1] = a.n;
       else if (T.length >= PLAN_ROWS) return fail('plan_rows');
       else T.push([a.key, a.n]);
+      bumpPv(wp);
       return { ok: true };
     }
     case 'planApply': {   // v46 (etapa C): potvrzený plán řetězce → cílové zásoby výroben (atomicky: buď všechny, nebo nic)
@@ -3533,12 +3619,14 @@ function doAction(farm, a, now) {
       const T = wp.o.target || [], i = T.findIndex(x => x[0] === a.key), j = i + a.d;
       if (i < 0 || j < 0 || j >= T.length) return fail('bad_action');
       [T[i], T[j]] = [T[j], T[i]];
+      bumpPv(wp);
       return { ok: true };
     }
     case 'planAuto': {     // výrobna: přerozdělit nevyužitou kapacitu (procenta pod 100 %) mezi výrobky v plánu
       const wp = wpGet(farm, a.w);
       if (!wp || wp.type !== 'factory' || typeof a.on !== 'boolean') return fail('bad_action');
       if (a.on) wp.o.auto = true; else delete wp.o.auto;
+      bumpPv(wp);
       return { ok: true };
     }
     case 'planReplant': {  // oblast: znovu osazovat volná místa (vypnuto = jen sklízí a pole nechá ladem)

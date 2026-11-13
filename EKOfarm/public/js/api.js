@@ -1,6 +1,6 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo, publicFarm } from './rules.js?v=47';
-export const APP_VERSION = 47;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
+import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo, publicFarm } from './rules.js?v=48';
+export const APP_VERSION = 48;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';

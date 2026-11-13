@@ -1,6 +1,6 @@
 # EKOfarm – ekonomický audit (vygenerováno: `node tools/eco-audit.mjs`)
 
-Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v47), zapnuté skupiny rozšíření: `eco_recipes`, `eco_planner`, `eco_byproducts`, `eco_straw`, `eco_crops`, `eco_mastery`, `fishing_minigame_v2`, `fishing_baits_v2`, `fishing_fish_pack_v2`, `bakery_extra_v2`.
+Zdroj: skutečná pravidla `public/js/rules.js` (RULES_VERSION 23, aplikace v48), zapnuté skupiny rozšíření: `eco_recipes`, `eco_planner`, `eco_byproducts`, `eco_straw`, `eco_crops`, `eco_mastery`, `fishing_minigame_v2`, `fishing_baits_v2`, `fishing_fish_pack_v2`, `bakery_extra_v2`, `building_ui_v2`.
 
 ## Jak se počítá
 - **Cena výrobku** se v kódu dopočítává z receptu: `(Σ cena surovin × 1,2 + čas v min + 2) / kusů` – ceny se nevyplňují ručně.

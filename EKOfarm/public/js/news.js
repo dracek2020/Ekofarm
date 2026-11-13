@@ -1,5 +1,13 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 48, title: 'Nové okno výroben: vyráběj sám i s pracovníkem', items: [
+    'Výrobny mají nové okno se záložkami Přehled, Tým, Plán výroby a Suroviny – stav budovy, pracovníci, odhady a upozornění na jednom místě.',
+    'Vyrobit sám funguje vždycky, i když v budově pracuje Řemeslník: vybereš recept a počet dávek, uvidíš suroviny a čas a zařadíš do své fronty. Tvoje dávka jde na řadu hned po té, která se právě vyrábí.',
+    'Tvoje hotové výrobky na tebe počkají – Řemeslník je neodnáší, vyzvedneš je sám. Tým mezitím vyrábí dál podle svého plánu.',
+    'Plán týmu (procenta a cílové zásoby) se upravuje v klidu a platí až po „Uložit plán“. Když ho mezitím změníš na jiném zařízení, nic se tiše nepřepíše.',
+    'Suroviny ukazují zásobu, rezervu, co zbývá pro tým, spotřebu za hodinu a jak dlouho to vydrží. Ohrady, včelín, rybník a domky mají stejnou hlavičku; v ohradě je karta „Postarat se sám“.',
+    'Recepty, ceny ani odemykání se nemění.',
+  ] },
   { v: 47, title: 'Nové rybaření, 8 návnad, nové ryby a pečivo', items: [
     'Nové rybaření: farmář nahodí prut, počká na záběr a pak ťukáním (nebo mezerníkem) držíš šipku v zeleném poli. V zeleném se plní postup chytání, mimo něj se napíná vlasec. Jakou rybu držíš, uvidíš až po vylovení.',
     'Před nahozením si v malém okénku vybereš návnadu – ukáže, kolik kusů máš ve skladu. Výběr nic nestojí, kus se vezme až při nahození. Návnady: Červ, Kukuřice, Těsto (dřívější Návnada – tvoje zásoby zůstávají), Rohlík, Hrášek, Sýr, Masová návnada a Třpytka.',

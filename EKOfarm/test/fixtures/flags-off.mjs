@@ -22,4 +22,22 @@ if (mode === 'snapshot') {
   for (const id of Object.keys(f.silo)) if (!R.ITEMS[id]) res.push('neznámé ' + id);
   const { ECO_FLAGS } = await import('../../public/js/eco-config.js');
   process.stdout.write(JSON.stringify({ farm: f, res, flags: ECO_FLAGS }));
+} else if (mode === 'v48') {
+  // v48 vypnuté: tým a hráč sdílí jednu frontu výrobny a tým odnáší i ruční dávky (jako do v47); planSave neexistuje
+  const { TEAM } = await import('../../public/js/team-config.js');
+  const T0 = 1_800_000_000_000, f = R.newFarm(T0);
+  f.objects.find(o => o.kind === 'statek').lvl = 10; f.level = 40; f.coins = 1e6; f.siloCap = 5000; f.silo.wheat = 300;
+  let o = null;
+  for (let y = 0; y < 17 && !o; y++) for (let x = 0; x < 17 && !o; x++) if (R.fits(f, x, y, 3, 3)) { const r = R.applyAction(f, { type: 'place', kind: 'pekarna', x, y }, T0); if (r.ok) o = R.findObject(f, r.id); }
+  const v = { id: f.nextId++, prof: 'vyroba', trait: null, xp: { vyroba: TEAM.xpLvl[6] }, hist: [], at: 0, area: null, t: T0, n: 0 };
+  f.vill.push(v); R.applyAction(f, { type: 'assignVill', id: v.id, at: o.id }, T0);
+  const planSave = R.applyAction(f, { type: 'planSave', id: o.id, pv: 0, plan: { chleb: 100 }, target: [] }, T0).error || 'ok';
+  R.applyAction(f, { type: 'plan', w: 'b' + o.id, key: 'chleb', pct: 100 }, T0);
+  R.applyAction(f, { type: 'produce', id: o.id, recipe: 'chleb' }, T0);
+  for (let i = 0; i < 50; i++) R.applyAction(f, { type: 'tick' }, T0 + 2000);
+  const fourth = (() => { for (let i = 0; i < 3; i++) { const r = R.applyAction(f, { type: 'produce', id: o.id, recipe: 'chleb' }, T0 + 2000); if (!r.ok) return r.error; } return 'ok'; })();
+  for (let i = 0; i < 400; i++) R.applyAction(f, { type: 'tick' }, T0 + 3 * 3600_000);
+  const manualLeft = o.queue.filter(q => !q.t && q.end <= T0 + 3 * 3600_000).length;
+  process.stdout.write(JSON.stringify({ flag: ECO_FLAGS_V48(), fourth, manualLeft, planSave }));
 }
+function ECO_FLAGS_V48() { return !!R.BUI_V2; }
