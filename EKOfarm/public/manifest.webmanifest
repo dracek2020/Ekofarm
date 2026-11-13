@@ -1,13 +1,21 @@
 {
+  "id": "/",
   "name": "EKOfarm",
   "short_name": "EKOfarm",
+  "description": "Vlastní farma: pěstuj, chovej, vyráběj a obchoduj s kamarády.",
+  "lang": "cs",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#5b9e3e",
   "theme_color": "#5b9e3e",
+  "categories": ["games"],
   "icons": [
-    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

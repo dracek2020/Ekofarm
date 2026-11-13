@@ -1,0 +1,25 @@
+# v49: hlavičky pro statické soubory (Cloudflare Workers Static Assets). Na odpovědi z /api/ se nevztahují.
+# JS a CSS se načítají s ?v=<verze> (tools/version.mjs), takže je prohlížeč může mít uložené napořád –
+# každé vydání má nové adresy. Písmo se od v33 nemění (nové písmo = nový název souboru).
+# Obrázky drží hlavně service worker (sw.js, cache-first, číslo IMG_CACHE); prohlížeč je bez ověření bere jen hodinu,
+# protože nová grafika občas přepíše soubor se stejným jménem.
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/img/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+# stránka hry, service worker a manifest se vždy ověří (aby nové vydání přišlo hned)
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: same-origin

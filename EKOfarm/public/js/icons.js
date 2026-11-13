@@ -1,6 +1,6 @@
 // EKOfarm – ikony: malované předměty z public/img/i (assets.js), zbytek vlastní SVG (UI, nové ryby a jídla).
 // V textu se píšou jako :klic: a funkce iconize() je nahradí obrázkem.
-import { hasAsset, assetUrl } from './sprites.js?v=48';
+import { hasAsset, assetUrl } from './sprites.js?v=49';
 
 const S = (body, bg = '') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${bg}${body}</svg>`;
 

@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=48';
-import { TW, TH } from './render.js?v=48';
-import { drawIcon } from './icons.js?v=48';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=48';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=49';
+import { TW, TH } from './render.js?v=49';
+import { drawIcon } from './icons.js?v=49';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=49';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }

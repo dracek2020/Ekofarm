@@ -61,6 +61,11 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v49 (13. 11. 2026) – kontrola serveru, dat hráčů a výkon na telefonech** (report `EKOFARM_V49_SERVER_A_VYKON.md`, testy `test/v49.test.js` = V01–V08)
+  - Data: `tools/farm-check.mjs` (jen čte výpis farem z D1) – ID, `normalize` a dopočet týmu nic neuberou; ostrá data 11/11 OK.
+  - Server: klíč dávky `b` v `POST /api/actions` (posledních 8 v `farm.bk`, opakování → `dup: true`, nic se neprovede podruhé; tick bez klíče); `cleanup(env)` v cronu jednou za hodinu maže prošlá přihlášení.
+  - Klient: `frameGap` (60 / 30 / ~15 / 4 snímky za s), `poke()` po doteku, kolečku a klávese; okno `renderPanel` přepisuje HTML jen při změně (`pb._html`); na pozadí (`document.hidden`) žádný chat, tým ani překreslování; `flushNow` při skrytí a `pagehide`, `fetch` s `keepalive`; `game.retry` = opakovaná dávka se stejným klíčem. PC: šipky/WASD a +/−.
+  - Statické soubory: `public/_headers` (js/css/písmo rok immutable, obrázky hodina, stránka a sw.js no-cache); sw.js stahuje chybějící obrázek s `cache: 'no-cache'`; manifest s maskable ikonami `img/icon-maskable-192/512.png`; meta značky pro iPhone.
 - **v48 (13. 11. 2026) – správa budov: nové okno výrobny, ruční výroba i s pracovníkem** (zadání `EKOfarm_UI_sprava_budov_pro_Claude`; testy `test/v48.test.js` = U01–U32, report `EKOFARM_BUILDING_UI_TEST_REPORT.md`, popis a rollback `EKOFARM_BUILDING_UI_CHANGELOG.md`, původ grafiky `EKOFARM_BUILDING_UI_ASSET_AUDIT.md`):
   - Přepínač `building_ui_v2` (eco-config). Výrobna má **dvě sady míst ve frontě** – `queueSize(o)` pro hráče (dávky bez `t`) a stejně pro tým (`t: 1`) – ale **jednu linku**: `insertManual` zařadí ruční dávku před nezačaté dávky týmu a ty posune. Tým (`JOBS.factory`, `teamLane`) počítá a odnáší jen svoje dávky (`collect` s `team` přeskočí ruční); hráč vybere vše hotové.
   - `produce` + `n` (dávky) + `k` (idempotence, `o.mk`); `planSave` (celý plán najednou, verze `o.pv`, chyba `plan_conflict`; i staré akce plánu zvedají verzi); `manualEta` pro „hotovo asi za“.
@@ -254,6 +259,9 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `tools/fish-sim.mjs`, `tools/fish-docs.mjs`, `tools/test-report-v47.mjs`, `tools/ui-check-v47.cjs` | v47: simulace (návnady, úspěšnost, ekonomika, výkon serveru), analýza a grafický manifest, test report, kontrola UI v prohlížeči |
 | `test/v48.test.js`, `test/fixtures/v47-ceny.json` | v48: akceptační testy správy budov U01–U32 (ruční výroba vedle týmu, plán s verzí, API, smoketest všech výroben, ceny a recepty beze změny proti v47) |
 | `tools/ui-check-v48.cjs`, `tools/test-report-v48.mjs` | v48: kontrola okna výrobny v prohlížeči a test report |
+| `test/v49.test.js` | v49: klíč dávky, úklid přihlášení, `_headers`, manifest, šetření na pozadí, `farm-check` |
+| `tools/farm-check.mjs` | v49: kontrola uložených farem z D1 (jen čte) – nic se neztratí, neznámá ID; kód 1 při problému |
+| `public/_headers` | v49: hlavičky mezipaměti a bezpečnosti pro statické soubory (Workers Static Assets) |
 | `tools/artifact-shrink.py` | v47: zmenšené kopie velkých obrázků (`build/img-small`) pro testovací verzi pod 16 MB; hra sama používá originály |
 | `test/v45.test.js` | v45: ovoce (Sušárna, Cukrárna, recepty, každé ovoce zpracovatelné) |
 | `tools/v45art.py` | v45: ikony ovocných výrobků a budovy Sušárna a Cukrárna ze Scenario |
@@ -284,6 +292,7 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 
 ## Jak to funguje
 - Klient provede akci hned u sebe (okamžitá odezva). Akce posílá po dávkách každých ~350 ms, server je přepočítá a vrátí skutečný stav. Neodeslané akce se pak znovu použijí nad stavem ze serveru.
+- v49: každá dávka má klíč `b`; když se odpověď ztratí, jde znovu se stejným klíčem a server ji podruhé neprovede. Při skrytí stránky nebo zamčení telefonu se fronta odešle hned (`keepalive`).
 - Růst se počítá z času zasazení (ms) a času serveru, takže plodiny rostou i se zavřenou hrou a posunutí hodin v telefonu nepomůže.
 - U sklizně má server toleranci 2 s kvůli rozdílu hodin.
 

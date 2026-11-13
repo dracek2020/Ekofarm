@@ -1,5 +1,14 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 49, title: 'Rychlejší a úspornější hra na telefonu', items: [
+    'Hra na telefonu méně zatěžuje procesor a baterii: když se na farmě nic neděje, kreslí se pomaleji, při dotyku a posouvání zase naplno.',
+    'Když něco uděláš a hned zamkneš telefon, akce se odešle hned a neztratí se. Při výpadku signálu se nic neprovede dvakrát.',
+    'Na pozadí (zamčený telefon, jiná karta) hra nic nestahuje. Po návratu se farma i chat hned načtou.',
+    'Hra se po vydání načítá rychleji – prohlížeč si pamatuje skripty a styly.',
+    'Android: ikona na ploše už se neořízne. iPhone: hezčí horní lišta po přidání na plochu.',
+    'Na počítači: šipky nebo WASD posouvají farmu, + a − přibližují.',
+    'Zkontrolovali jsme všechny farmy – nikdo nepřišel o pole, budovy ani postup.',
+  ] },
   { v: 48, title: 'Nové okno výroben: vyráběj sám i s pracovníkem', items: [
     'Výrobny mají nové okno se záložkami Přehled, Tým, Plán výroby a Suroviny – stav budovy, pracovníci, odhady a upozornění na jednom místě.',
     'Vyrobit sám funguje vždycky, i když v budově pracuje Řemeslník: vybereš recept a počet dávek, uvidíš suroviny a čas a zařadíš do své fronty. Tvoje dávka jde na řadu hned po té, která se právě vyrábí.',

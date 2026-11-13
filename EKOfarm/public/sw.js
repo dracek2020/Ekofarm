@@ -6,7 +6,7 @@ self.addEventListener('fetch', e => {
   e.respondWith(caches.open(IMG_CACHE).then(async c => {
     const hit = await c.match(e.request);
     if (hit) return hit;
-    const res = await fetch(e.request);
+    const res = await fetch(e.request, { cache: 'no-cache' });   // v49: po zvýšení IMG_CACHE vždy čerstvá grafika (ověří se jen ETag)
     if (res.ok) c.put(e.request, res.clone());
     return res;
   }));

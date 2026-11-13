@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#5b9e3e">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EKOfarm">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
 <title>EKOfarm</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icon-192.png">
 <link rel="preload" href="/fonts/grandstander-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/style.css?v=48">
+<link rel="stylesheet" href="/css/style.css?v=49">
 </head>
 <body>
 <!--APP-->
@@ -169,6 +173,6 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) { showFatal((e.reason && e.reason.message) || e.reason); });
 window.__ekoFatal = setTimeout(function () { showFatal('Server neodpovídá nebo se hra nenačetla. Zkontroluj připojení.'); }, 15000);
 </script>
-<script type="module" src="/js/main.js?v=48"></script>
+<script type="module" src="/js/main.js?v=49"></script>
 </body>
 </html>

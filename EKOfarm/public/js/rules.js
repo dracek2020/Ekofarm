@@ -1,10 +1,10 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=48';
-import { EVENTS } from './events.js?v=48';
-import { STORY, CHAPTERS } from './story.js?v=48';
+import { TEAM } from './team-config.js?v=49';
+import { EVENTS } from './events.js?v=49';
+import { STORY, CHAPTERS } from './story.js?v=49';
 import { ECO_FLAGS, ecoOn, ECO_FROM, ECO_CROPS, ECO_BYPRODUCTS, BYPRODUCT_WORTH, ECO_RECIPES, ECO_STRAW, ECO_AWARDS, PLAN_PREFS, PLAN_MAX_QTY, PLAN_MAX_DEPTH,
-  ECO_FISH, ECO_SUPPLY, BAITS, BAIT_FLAG, BAIT_PREF, BAIT_DEFAULT, FIGHT, FISH_RECIPES, BAKERY_CROPS, BAKERY_RECIPES } from './eco-config.js?v=48';
+  ECO_FISH, ECO_SUPPLY, BAITS, BAIT_FLAG, BAIT_PREF, BAIT_DEFAULT, FIGHT, FISH_RECIPES, BAKERY_CROPS, BAKERY_RECIPES } from './eco-config.js?v=49';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -900,7 +900,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 48;   // v48: starší aplikace se samy načtou znovu (okno výroben, ruční výroba vedle týmu, planSave)
+export const CLIENT_MIN = 49;   // v49: klíč dávky (nic se nezdvojí po výpadku sítě), odeslání před zamčením telefonu, šetření baterie
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));

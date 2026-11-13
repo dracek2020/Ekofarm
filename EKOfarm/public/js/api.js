@@ -1,6 +1,6 @@
 // EKOfarm – spojení se serverem. Lokální režim (testovací verze) hraje bez serveru.
-import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo, publicFarm } from './rules.js?v=48';
-export const APP_VERSION = 48;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
+import { newFarm, applyAction, normalize, VILL_BUDGET, isOldSeason, weekNo, publicFarm } from './rules.js?v=49';
+export const APP_VERSION = 49;   // v38: verze aplikace (posílá se serveru; tools/version.mjs ji mění spolu s main.js)
 
 const TOKEN_KEY = 'ekofarm_token';
 const LOCAL_KEY = 'ekofarm_local_v1';
@@ -29,7 +29,9 @@ function onlineBackend() {
     if (t) headers.authorization = 'Bearer ' + t;
     let res;
     try {
-      res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+      const data = body ? JSON.stringify(body) : undefined;
+      // v49: keepalive – požadavek doběhne, i když se telefon zamkne nebo se stránka zavře (limit prohlížeče 64 kB)
+      res = await fetch(path, { method, headers, body: data, keepalive: !!data && data.length < 60000 });
     } catch {
       throw new ApiError(0, { error: 'offline', message: 'Bez připojení k internetu.' });
     }
@@ -59,7 +61,7 @@ function onlineBackend() {
       try { await req('POST', '/api/logout'); } catch { /* nevadí */ }
       lsSet(TOKEN_KEY, null);
     },
-    send(actions) { return req('POST', '/api/actions', { actions }); },
+    send(actions, b) { return req('POST', '/api/actions', b ? { actions, b } : { actions }); },
     async config() {
       try { return await req('GET', '/api/config'); } catch { return {}; }
     },

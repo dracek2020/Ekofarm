@@ -13,6 +13,7 @@ export default {
   // časovač (wrangler.toml [triggers] crons) – rozešle upozornění, co je na farmách hotové
   async scheduled(event, env, ctx) {
     ctx.waitUntil(pushRound(env));
+    if (new Date(event.scheduledTime || Date.now()).getUTCMinutes() < 10) ctx.waitUntil(cleanup(env));   // v49: jednou za hodinu úklid prošlých přihlášení
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -302,8 +303,11 @@ async function actions(req, env, user) {
   const list = Array.isArray(body.actions) ? body.actions.slice(0, MAX_BATCH) : [];
   // optimistické zamykání – když farmu mezitím změnilo jiné zařízení, zkusíme znovu
   const onlyTick = list.length > 0 && list.every(a => a && a.type === 'tick');
+  // v49: klíč dávky – opakované odeslání téže dávky (telefon ztratil odpověď) se neprovede podruhé
+  const b = !onlyTick && typeof body.b === 'string' && /^[a-z0-9]{6,32}$/.test(body.b) ? body.b : null;
   for (let attempt = 0; attempt < 3; attempt++) {
     const row = await loadFarm(env, user.id, true);
+    if (b && Array.isArray(row.farm.bk) && row.farm.bk.includes(b)) return json({ farm: row.farm, now: Date.now(), results: list.map(() => ({ ok: true, dup: true })), dup: true });
     const sales = row.sales;
     const now = Date.now();
     const rolled = await rollWeek(env, row.farm, now);   // v36
@@ -313,6 +317,7 @@ async function actions(req, env, user) {
     const results = list.map(a => applyAction(row.farm, a, a && a.type === 'harvest' ? now + HARVEST_GRACE_MS : now, lim, SRV));   // v47: SRV = tajný výběr ryby
     // nic se nezměnilo (žádná akce neprošla; nebo jen tick, při kterém tým nic nedokončil ani nezačal) → neukládat
     if ((!results.some(r => r.ok) || (before !== null && sig(row.farm) === before)) && !sales.length && !row.reset && !rolled) return json({ farm: row.farm, now, results });
+    if (b) row.farm.bk = [...(Array.isArray(row.farm.bk) ? row.farm.bk : []), b].slice(-8);
     if (await saveFarm(env, user.id, row, now, extra)) return json({ farm: row.farm, now, results, sales });
   }
   return BUSY();
@@ -438,6 +443,11 @@ async function pushToUser(env, userId, data) {
   }
 }
 // jedno kolo časovače: každému hráči s odběrem pošle, co se od minula dokončilo
+// v49: prošlá přihlášení se jen hromadí (auth je stejně odmítne) – cron je jednou za 10 min smaže
+export async function cleanup(env, now = Date.now()) {
+  const r = await env.DB.prepare('DELETE FROM sessions WHERE expires < ?').bind(now).run();
+  return (r.meta && r.meta.changes) || 0;
+}
 export async function pushRound(env, now = Date.now()) {
   if (!pushReady(env)) return 0;
   const r = await env.DB.prepare('SELECT user_id, MIN(last) AS last FROM push_subs GROUP BY user_id LIMIT 500').all();

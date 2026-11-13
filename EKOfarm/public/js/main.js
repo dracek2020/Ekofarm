@@ -10,17 +10,17 @@ import {
   recipeOut, recipeName, AWARDS,
   FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, baitHave, activeHook, fightParams, fightNew, fightStep, zoneAt, pondStock, hasTool,
   BUI_V2, manualFree, recipeOk,
-} from './rules.js?v=48';
-import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=48';
-import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=48';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=48';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=48';
-import { iconize, ic } from './icons.js?v=48';
-import { NEWS } from './news.js?v=48';
-import { sfx, soundOn, setSound } from './sfx.js?v=48';
-import { TEAM } from './team-config.js?v=48';
-import { CHAPTERS } from './story.js?v=48';
-import { factoryHtml2, bldHero, HERO_TYPES, plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=48';
+} from './rules.js?v=49';
+import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=49';
+import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=49';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=49';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=49';
+import { iconize, ic } from './icons.js?v=49';
+import { NEWS } from './news.js?v=49';
+import { sfx, soundOn, setSound } from './sfx.js?v=49';
+import { TEAM } from './team-config.js?v=49';
+import { CHAPTERS } from './story.js?v=49';
+import { factoryHtml2, bldHero, HERO_TYPES, plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=49';
 
 const $ = id => document.getElementById(id);
 
@@ -62,8 +62,15 @@ function resize() {
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
 }
-window.addEventListener('resize', resize);
+window.addEventListener('resize', () => { resize(); poke(); });
 resize();
+// v49: snímková frekvence podle toho, co se na mapě děje (šetří baterii telefonu): při dotyku, posouvání, stavění
+// a letících číslech 60/s, když někdo chodí 30/s, jinak klidná mapa 15/s (bubliny a kouř se hýbou dál)
+function poke(ms = 1500) { game.activeUntil = performance.now() + ms; }
+document.addEventListener('pointerdown', () => poke(), { passive: true, capture: true });   // i tlačítka v oknech (posun kamery na budovu…)
+canvas.addEventListener('pointermove', () => poke(), { passive: true });
+canvas.addEventListener('wheel', () => poke(), { passive: true });
+document.addEventListener('keydown', () => poke());
 
 function centerCamera() {
   const [x, y] = cellCenter(9, 8);
@@ -94,10 +101,17 @@ function ghostView() {
 
 // když telefon nestíhá, kreslí se 30× za sekundu místo 60× (šetří baterii)
 const perf = game.perf = { avg: 16, slow: false, last: 0 };
+const sheetOpen = () => !$('panel').hidden || !$('picker').hidden || !$('menuPanel').hidden;
+function frameGap(t) {
+  if (game.fish2) return 250;                                   // v47: minihra zakrývá celou mapu
+  const busy = t < (game.activeUntil || 0) || game.place || game.floats.length || game.bubble || game.sliding || game.visit;
+  if (busy) return perf.slow ? 30 : 14;                         // nejvýš 60 snímků/s i na 120Hz displejích
+  return (game.moving || game.rain) && !sheetOpen() ? 30 : 64;
+}
 function frame(t) {
   requestAnimationFrame(frame);
   const gap = t - perf.last;
-  if (gap < (perf.slow ? 30 : 14)) return;   // nejvýš 60 snímků/s i na 120Hz displejích
+  if (gap < frameGap(t)) return;
   perf.last = t;
   if (game.farm && !document.hidden) {
     const t0 = performance.now();
@@ -111,10 +125,13 @@ function frame(t) {
     const people = game.visit ? [] : [stepWalker(game.farmer, dt, t, 'farmar')];
     if (!game.visit && helperActive(game.farm, now())) people.push(stepWalker(game.helperW, dt, t, 'pomocnik'));
     if (!game.visit && game.farm.dog) people.push(stepDog(dt, t));   // v36: pes chodí s farmářem
+    game.moving = people.some(x => x.walking);
+    const weather = weatherAt(now()).id;
+    game.rain = weather === 'dest';
     try {
       drawScene(ctx, {
         farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
-        ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather: weatherAt(now()).id, debug: game.debug,
+        ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather, debug: game.debug,
       });
     } catch (e) {                               // chyba v kreslení nesmí hru zastavit; ukáže se dole, ať jde poslat
       for (let i = 0; i < 24; i++) ctx.restore();
@@ -172,7 +189,7 @@ function stepDog(dt, t) {
 }
 // práce pomocníka a vesničanů se dopočítává průběžně
 setInterval(() => {
-  if (!game.farm || game.visit) return;
+  if (!game.farm || game.visit || document.hidden) return;   // v49: na pozadí nic nepočítat (návrat = refresh ze serveru)
   let changed = false;
   if (game.farm.helper) {
     const touched = runHelper(game.farm, now());
@@ -287,12 +304,17 @@ function reloadApp() {
 }
 async function flush() {
   if (game.inflight || !game.queue.length) return;
-  game.inflight = game.queue.splice(0, 50);
+  // v49: dávka, která po výpadku sítě jde znovu, má stejný klíč → server ji podruhé neprovede (nic se nezdvojí ani neztratí)
+  const rt = game.retry && game.retry.acts.every((a, i) => game.queue[i] === a) ? game.retry : null;
+  game.retry = null;
+  game.inflight = game.queue.splice(0, rt ? rt.acts.length : 50);
+  const b = rt ? rt.b : Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   try {
     const sent = game.inflight;
-    const res = await game.backend.send(sent);
+    const res = await game.backend.send(sent, b);
     game.inflight = null;
     applyServer(res);
+    if (res.dup) { for (const a of sent) { const w = a && a.k && waiters[a.k + ':' + a.type]; if (w) { delete waiters[a.k + ':' + a.type]; w(null); } } if (game.queue.length) scheduleFlush(50); return; }
     // v47: výsledky, na které někdo čeká (rybaření: nahození a vylovení) – ty si hlášku řeší samy
     let bad = null;
     sent.forEach((a, i) => { const w = a && a.k && waiters[a.k + ':' + a.type]; if (w) { delete waiters[a.k + ':' + a.type]; w(res.results[i]); } else if (res.results[i] && !res.results[i].ok && !bad) bad = res.results[i]; });
@@ -303,6 +325,7 @@ async function flush() {
     if (e instanceof ApiError && e.code === 'old_client') { game.queue = sent.concat(game.queue); reloadApp(); return; }
     if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 409) { toast(e.message); await refresh(); return; }
     game.queue = sent.concat(game.queue);
+    game.retry = { b, acts: sent };
     toast(e.message + ' Zkouším znovu…');
     scheduleFlush(3000);
     return;
@@ -485,6 +508,17 @@ function zoomAt(sx, sy, factor) {
   clampCam();
 }
 canvas.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
+// v49: počítač – šipky nebo WASD posouvají mapu, + a − přibližují (jen když není otevřené okno ani psaní)
+const KEY_PAN = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1] };
+document.addEventListener('keydown', e => {
+  if (!game.farm || game.fish2 || game.fishing || e.ctrlKey || e.metaKey || e.altKey || sheetOpen() || !$('login').hidden) return;
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key, mv = KEY_PAN[k];
+  if (mv) { e.preventDefault(); game.cam.x += mv[0] * 70 / game.cam.zoom; game.cam.y += mv[1] * 50 / game.cam.zoom; clampCam(); return; }
+  if (k === '+' || k === '=') { e.preventDefault(); zoomAt(W / 2, H / 2, 1.15); }
+  else if (k === '-') { e.preventDefault(); zoomAt(W / 2, H / 2, 1 / 1.15); }
+});
 
 function onTap([gx, gy]) {
   if (game.visit) return;
@@ -1247,7 +1281,9 @@ function renderPanel() {
   }
   setTitle(title, img);
   $('panel').classList.toggle('bvp', !title && p.kind === 'obj');   // v48: okno výrobny má vlastní hlavičku
-  $('panelBody').innerHTML = iconize(body);
+  // v49: okno se překresluje každou vteřinu – do stránky se sahá jen při skutečné změně (méně práce, žádné blikání obrázků)
+  const html = iconize(body), pb = $('panelBody');
+  if (pb._html !== html) { pb.innerHTML = html; pb._html = html; }
 }
 // hlavička okna: kulatý medailon s ikonou (u budov obrázek budovy) a velký název
 function setTitle(title, img) {
@@ -1263,6 +1299,7 @@ function setTitle(title, img) {
 let panelTouch = 0;
 $('panel').addEventListener('pointerdown', () => { panelTouch = performance.now(); });
 setInterval(() => {
+  if (document.hidden) return;
   if (game.panel && ['obj', 'silo', 'town', 'team', 'center', 'event', 'plot'].includes(game.panel.kind) && !panelBusy()) renderPanel();
 }, 1000);
 
@@ -1951,6 +1988,7 @@ function renderChat() {
   const body = $('panelBody');
   if (!$('chatList')) {
     setTitle(':chat: Chat všech farmářů');
+    body._html = null;   // v49: obsah okna se změnil mimo renderPanel
     body.innerHTML = game.backend.mode !== 'online'
       ? '<div class="empty">Chat funguje jen v online hře.</div>'
       : '<div id="chatList" class="chat-list"></div><form id="chatForm" class="chat-form"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Napiš zprávu…"><button class="btn sm" type="submit">Poslat</button></form><p class="muted">Buď na ostatní hodný. Zprávy se po 7 dnech mažou.</p>';
@@ -1979,8 +2017,9 @@ $('chatBtn').addEventListener('click', () => {
   openPanel({ kind: 'chat' });
   chatPoll();
 });
-setInterval(() => { if (game.panel && game.panel.kind === 'chat') chatPoll(); }, 4000);
-setInterval(() => { if (!game.panel || game.panel.kind !== 'chat') chatPoll(); }, 20000);
+// v49: skrytá karta / zamčený telefon = žádné dotazy (šetří baterii a data); po návratu se chat načte hned
+setInterval(() => { if (!document.hidden && game.panel && game.panel.kind === 'chat') chatPoll(); }, 4000);
+setInterval(() => { if (!document.hidden && (!game.panel || game.panel.kind !== 'chat')) chatPoll(); }, 20000);
 $('newsBtn').addEventListener('click', () => {
   cancelPlace();
   if (game.panel && game.panel.kind === 'news') { closeSheets(); return; }
@@ -2006,7 +2045,7 @@ $('centerBtn').addEventListener('click', () => { cancelPlace(); openPanel({ kind
 // v34: tečka u Centra = kritické upozornění; zpráva o nepřítomnosti se po dohnání práce týmu ukáže jednou sama
 setInterval(() => {
   const f = game.farm;
-  if (!f || game.visit) return;
+  if (!f || game.visit || document.hidden) return;
   $('centerDot').hidden = !farmAlerts(f, now()).some(a => a.lvl === 0);
   const a = f.away;
   if (a && a.done && !a.seen && !game.panel && !game.place && !game.fishing && game.awayShown !== a.from && villLag(f, now()) < 60_000) {
@@ -2163,7 +2202,13 @@ async function initGoogle() {
   renderGoogleButton('gBtn', 'continue_with');
 }
 
-document.addEventListener('visibilitychange', () => { if (!document.hidden && game.farm) refresh(); });
+// v49: telefon se zamyká / karta jde na pozadí → neodeslané akce odejdou hned (iOS a Android stránku jinak uspí a můžou ji zavřít)
+function flushNow() { if (!game.queue.length) return; clearTimeout(flushTimer); flushTimer = null; flush(); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { flushNow(); return; }
+  if (game.farm) { refresh(); chatPoll(); poke(); }
+});
+window.addEventListener('pagehide', flushNow);
 
 // Grafika se načítá hned při startu. Na spuštění hry se čeká jen na to, co je vidět hned (země, lidé, zvířata, les
 // a co má hráč na farmě), nejdéle 6 s – pak se hra spustí tak jako tak a zbytek se dokreslí, až dorazí.
