@@ -1,8 +1,8 @@
 // EKOfarm – kreslení budov, ohrad, sadu, velkého pole, strojů a lidí z obrázků (public/img).
-import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=49';
-import { TW, TH } from './render.js?v=49';
-import { drawIcon } from './icons.js?v=49';
-import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=49';
+import { BUILDINGS, ANIMALS, ITEMS, TREES, CROPS, MACHINES, UPGRADABLE, RECIPES, recipeOut, objectStatus, animalState, queueState, treeState, fieldState, objSize, objLevel, pondStock, bestOwned } from './rules.js?v=51';
+import { TW, TH } from './render.js?v=51';
+import { drawIcon } from './icons.js?v=51';
+import { asset, spriteName, spriteTop, ANIMAL_W } from './sprites.js?v=51';
 
 // izometrický bod pro (i zlomkové) souřadnice mřížky
 function iso(gx, gy) { return [(gx - gy) * TW / 2, (gx + gy) * TH / 2]; }
@@ -313,7 +313,9 @@ export function drawObject(ctx, o, now, t, farm) {
   const by = b.top + b.h * spriteTop(im) + 6 + Math.sin(t / 300) * 2;
   if (d.type === 'factory' && st.done) {
     const first = queueState(o, now).find(q => q.state === 'done');
-    bubble(ctx, b.cx, by, ITEMS[first.r].icon, st.done);
+    // v50: alternativní recept (např. krmivo_slepice__oves) vyrábí jiný předmět než své id → ikona výrobku přes recipeOut
+    const it = first && (ITEMS[first.r] || (RECIPES[first.r] && ITEMS[recipeOut(RECIPES[first.r])]));
+    if (it) bubble(ctx, b.cx, by, it.icon, st.done);
   } else if (d.type === 'pen') {
     drawPenAnimals(ctx, o, d, now, t);
     const an = ANIMALS[d.animal];

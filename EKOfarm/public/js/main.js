@@ -10,17 +10,17 @@ import {
   recipeOut, recipeName, AWARDS,
   FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, baitHave, activeHook, fightParams, fightNew, fightStep, zoneAt, pondStock, hasTool,
   BUI_V2, manualFree, recipeOk,
-} from './rules.js?v=49';
-import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=49';
-import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=49';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=49';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=49';
-import { iconize, ic } from './icons.js?v=49';
-import { NEWS } from './news.js?v=49';
-import { sfx, soundOn, setSound } from './sfx.js?v=49';
-import { TEAM } from './team-config.js?v=49';
-import { CHAPTERS } from './story.js?v=49';
-import { factoryHtml2, bldHero, HERO_TYPES, plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=49';
+} from './rules.js?v=51';
+import { PLAN_MAX_QTY, FIGHT } from './eco-config.js?v=51';
+import { preloadAssets, spriteName, assetUrl } from './sprites.js?v=51';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=51';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=51';
+import { iconize, ic } from './icons.js?v=51';
+import { NEWS } from './news.js?v=51';
+import { sfx, soundOn, setSound } from './sfx.js?v=51';
+import { TEAM } from './team-config.js?v=51';
+import { CHAPTERS } from './story.js?v=51';
+import { factoryHtml2, bldHero, HERO_TYPES, plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=51';
 
 const $ = id => document.getElementById(id);
 
@@ -108,6 +108,10 @@ function frameGap(t) {
   if (busy) return perf.slow ? 30 : 14;                         // nejvýš 60 snímků/s i na 120Hz displejích
   return (game.moving || game.rain) && !sheetOpen() ? 30 : 64;
 }
+function drawError(e) {
+  if (!perf.err && window.showError) window.showError('kreslení: ' + (e && e.message));
+  perf.err = (perf.err || 0) + 1;
+}
 function frame(t) {
   requestAnimationFrame(frame);
   const gap = t - perf.last;
@@ -132,11 +136,11 @@ function frame(t) {
       drawScene(ctx, {
         farm: game.visit ? game.visit.farm : game.farm, now: now(), t, cam: game.cam, W, H, dpr: DPR,
         ghost: game.visit ? null : ghostView(), hoverCell: game.hover, bubble: game.bubble, floats: game.floats, hour: game.hour, people, weather, debug: game.debug,
+        onError: drawError,   // v51: chyba jedné věci – zbytek farmy se nakreslí, hláška jednou
       });
     } catch (e) {                               // chyba v kreslení nesmí hru zastavit; ukáže se dole, ať jde poslat
       for (let i = 0; i < 24; i++) ctx.restore();
-      if (!perf.err && window.showError) window.showError('kreslení: ' + (e && e.message));
-      perf.err = (perf.err || 0) + 1;
+      drawError(e);
     }
     perf.avg = perf.avg * 0.95 + (performance.now() - t0) * 0.05;
     if (!perf.slow && perf.avg > 14) perf.slow = true;

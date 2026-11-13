@@ -1,5 +1,12 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 51, title: 'Pole a domy už při oddalování nemizí', items: [
+    'Opraveno: u některých farem při oddalování nebo posouvání zmizela pole, stromy a domy. Způsobovala to hotová krmná směs v Krmivárně (opraveno ve v50).',
+    'Nově: kdyby se někdy nějaká věc nepovedla nakreslit, zbytek farmy se nakreslí normálně.',
+  ] },
+  { v: 50, title: 'Oprava chyby kreslení', items: [
+    'Opravena chyba „Chyba hry – kreslení“, která se objevila, když byla v Krmivárně hotová krmná směs z ovsa, otrub, pokrutin, řízků nebo výlisků. Hotové směsi zůstaly ve frontě a vyzvedneš je normálně.',
+  ] },
   { v: 49, title: 'Rychlejší a úspornější hra na telefonu', items: [
     'Hra na telefonu méně zatěžuje procesor a baterii: když se na farmě nic neděje, kreslí se pomaleji, při dotyku a posouvání zase naplno.',
     'Když něco uděláš a hned zamkneš telefon, akce se odešle hned a neztratí se. Při výpadku signálu se nic neprovede dvakrát.',

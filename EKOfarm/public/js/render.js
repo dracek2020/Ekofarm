@@ -1,8 +1,8 @@
 // EKOfarm – izometrické vykreslování farmy na canvas (dlaždice, pole, plodiny a stromy z obrázků).
-import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=49';
-import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=49';
-import { drawIconText, drawIcon } from './icons.js?v=49';
-import { asset } from './sprites.js?v=49';
+import { GRID_W, GRID_H, CROPS, plotState, objSize, WORLD, LAND_PARCELS, landOwned, landReachable, landPrice, landLevel, TOWN, TOWN_BUILDINGS, TOWN_HOUSES, isRoad, isPlaza, townAt, townObject, villAt, workAreas, areaOf, isFarmer } from './rules.js?v=51';
+import { drawObject, drawGhost, objectDepth, drawPerson, drawTownHouse, drawCropImg, cropStage, bubble } from './objects.js?v=51';
+import { drawIconText, drawIcon } from './icons.js?v=51';
+import { asset } from './sprites.js?v=51';
 
 export const TW = 96;   // šířka dlaždice
 export const TH = 48;   // výška dlaždice
@@ -295,10 +295,8 @@ function drawAreas(ctx, farm, view, t, seen) {
 // view = { farm, now, t, cam, W, H, dpr, ghost, hoverCell, bubble, floats, hour, people, weather }
 export function drawScene(ctx, view) {
   const { farm, cam, W, H, t } = view;
-  ctx.save();
-  ctx.translate(W / 2, H / 2);
-  ctx.scale(cam.zoom, cam.zoom);
-  ctx.translate(-cam.x, -cam.y);
+  const camera = () => { ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(cam.zoom, cam.zoom); ctx.translate(-cam.x, -cam.y); };
+  camera();
   drawGround(ctx, farm, cam, W, H, view.dpr || 1);
 
   // co je na obrazovce: políčko (gx, gy) s půdorysem w × h; rezerva nahoru na vysoké budovy pod spodním okrajem
@@ -326,7 +324,16 @@ export function drawScene(ctx, view) {
     if (!farm.land.includes(p.id) && landReachable(farm, p)) items.push({ d: p.x + p.y + (p.w + p.h) / 2 + 0.5, sign: p });
   }
   items.sort((a, b) => a.d - b.d);
-  for (const it of items) {
+  // v51: chyba u jedné věci (např. chybějící ikona) nesmí schovat všechno, co se kreslí po ní (pole a domy vpředu);
+  // stav plátna se vrátí na kameru a kreslí se dál, chyba se nahlásí jednou (view.onError)
+  const recover = e => {
+    for (let i = 0; i < 32; i++) ctx.restore();
+    const k = view.dpr || 1;
+    ctx.setTransform(k, 0, 0, k, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; ctx.shadowColor = 'transparent';
+    camera();
+    if (view.onError) view.onError(e); else throw e;
+  };
+  for (const it of items) try {
     if (it.p) drawPlot(ctx, it.p, view.now, t);
     else if (it.tree) drawTree(ctx, it.tree);
     else if (it.person) {
@@ -355,7 +362,7 @@ export function drawScene(ctx, view) {
         });
       }
     }
-  }
+  } catch (e) { recover(e); }
   for (const it of items) if (it.o && it.o.town) townLabel(ctx, it.o);   // popisky městečka až navrch (domky je nezakryjí)
   if (farm.vill && farm.vill.some(isFarmer)) drawAreas(ctx, farm, view, t, seen);
   if (ghost) drawGhost(ctx, ghost, view.now, t);

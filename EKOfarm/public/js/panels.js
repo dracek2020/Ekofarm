@@ -20,19 +20,19 @@ import {
   recipeOut, recipeName, recipesFor, planChain, AWARDS, hasAward, farmAvail, BYPRODUCTS, BY_OF,
   FISHING_V2, BAIT_LIST, BAITS_BY, baitLock, baitFree, fishPool, activeHook,
   BUI_V2, manualJobs, teamJobs, manualFree, manualEta, availFor, siloFree, spaceFor, FISH,
-} from './rules.js?v=49';
-import { PLAN_PREFS, PLAN_MAX_QTY, ECO_FLAGS, ECO_STRAW } from './eco-config.js?v=49';
+} from './rules.js?v=51';
+import { PLAN_PREFS, PLAN_MAX_QTY, ECO_FLAGS, ECO_STRAW } from './eco-config.js?v=51';
 const rIt = r => ITEMS[recipeOut(r)];   // v46: výrobek receptu (alternativní recept vyrábí existující předmět)
 // v46: vedlejší produkty – odkud se berou a nápověda u receptu
 const byDef = id => BYPRODUCTS.find(b => b.id === id);
 const byText = id => { const b = byDef(id); return `${b.n} ks za každých ${b.per} hotových dávek: ${b.from.map(x => ITEMS[x].name).join(', ')}`; };
 const itemLevelBy = id => Math.min(...byDef(id).from.map(x => recipesFor(x)[0].st));
 const byHint = r => (BY_OF[recipeOut(r)] || []).map(b => `<span class="byh" title="${esc(`Vedlejší produkt: ${b.name}, ${b.n} ks za ${b.per} dávek`)}">+:${ITEMS[b.id].icon}: /${b.per}</span>`).join('');
-import { fmtTime } from './render.js?v=49';
-import { TEAM } from './team-config.js?v=49';
-import { NEWS } from './news.js?v=49';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=49';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=49';
+import { fmtTime } from './render.js?v=51';
+import { TEAM } from './team-config.js?v=51';
+import { NEWS } from './news.js?v=51';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=51';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=51';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -263,7 +263,7 @@ function villDoing(farm, v, type) {
       case 'dig': return 'Vykopává suchý strom';
       case 'sapling': return (TREES[j.x] ? `Sází :z_${j.x}: ${TREES[j.x].name.toLowerCase()}` : 'Sází strom') + cnt(j, 'stromy', 'stromů');
       case 'haul': return 'Nese hotové do skladu';
-      case 'load': return ITEMS[j.x] ? `Chystá výrobu: :${ITEMS[j.x].icon}: ${ITEMS[j.x].name.toLowerCase()}` : 'Chystá výrobu';
+      case 'load': { const it = ITEMS[j.x] || (RECIPES[j.x] && rIt(RECIPES[j.x])); return it ? `Chystá výrobu: :${it.icon}: ${it.name.toLowerCase()}` : 'Chystá výrobu'; }
       case 'feed': return 'Krmí zvířata' + cnt(j, 'zvířata', 'zvířat');
       case 'gather': return 'Sbírá od zvířat' + cnt(j, 'zvířata', 'zvířat');
       case 'comb': return 'Vybírá plástve';

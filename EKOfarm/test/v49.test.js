@@ -141,5 +141,6 @@ test('V07 kontrola uložených farem: nic se neztratí, chybějící věc se poz
 
 test('V08 verze: klient i server chtějí v49', () => {
   assert.ok(R.CLIENT_MIN >= 49);
-  assert.match(src('public/js/main.js'), /from '\.\/rules\.js\?v=49'/);
+  const v = Number(src('public/js/main.js').match(/from '\.\/rules\.js\?v=(\d+)'/)[1]);
+  assert.ok(v >= 49 && v >= R.CLIENT_MIN, 'adresy modulů mají aktuální verzi');
 });
