@@ -1,5 +1,10 @@
 // EKOfarm – novinky pro hráče (nejnovější nahoře). v = číslo verze.
 export const NEWS = [
+  { v: 42, title: 'Setí ze zásob, nebo za mince', items: [
+    'V okně „Co zasadit?“ jsou dvě skupiny: nahoře „Ze zásob osiva“ (nestojí mince, osivo ubude ze zásob) a pod tím „Za mince“ (osivo ve zásobách zůstane tvému týmu).',
+    'Setí tažením prstu pokračuje tak, jak jsi začal. Když dojde osivo nebo mince, setí skončí s hláškou.',
+    'U velkého pole a u setí malých polí traktorem si přepneš „Nejdřív osivo ze zásob“, nebo „Jen za mince“. Hra si volbu pamatuje.',
+  ] },
   { v: 41, title: 'Hra chce jen to, co můžeš mít', items: [
     'Zakázky, Stánek, dárky z událostí a pohoštění na nástěnce chtějí jen zboží, které ti už odemkl Statek a tvoje dovednosti Vaření a Rybaření – a které se dá vyrobit ze surovin, ke kterým se dostaneš. Například uzeného pstruha až s Rybařením 7.',
     'Zakázky, které chtěly něco, co ještě nemůžeš mít, se samy vyměnily za nové.',

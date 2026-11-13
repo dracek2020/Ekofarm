@@ -1,8 +1,8 @@
 // EKOfarm – herní pravidla. Sdílí je server (Worker) i prohlížeč.
 // Čisté funkce bez DOM a bez přístupu k síti. Čas se vždy předává zvenku (ms).
-import { TEAM } from './team-config.js?v=41';
-import { EVENTS } from './events.js?v=41';
-import { STORY, CHAPTERS } from './story.js?v=41';
+import { TEAM } from './team-config.js?v=42';
+import { EVENTS } from './events.js?v=42';
+import { STORY, CHAPTERS } from './story.js?v=42';
 
 export const RULES_VERSION = 23;
 // v34: nová sezóna – farmy uložené ve starší verzi než RESET_V server při načtení nahradí novou farmou (účet zůstává)
@@ -734,7 +734,7 @@ export const isVehicle = model => ['tractor', 'combine'].includes(MACHINES[model
 // farmy přepočítá stejným poměrem (normalize), takže úroveň i postup v ní zůstanou
 export const XP_K = 8;
 // v38: nejnižší verze aplikace v prohlížeči, kterou server přijme (starší se musí znovu načíst)
-export const CLIENT_MIN = 41;   // v41: starší aplikace se samy načtou znovu (hra chce jen dostupné zboží)
+export const CLIENT_MIN = 42;   // v42: starší aplikace se samy načtou znovu (setí ze zásob, nebo za mince)
 export const LEVEL_XP = (() => {
   const a = [0, 0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100, 1300, 1550, 1800, 2100];
   for (let l = 21; l <= 200; l++) a.push(a[l - 1] + 300 + 20 * (l - 20));
@@ -962,8 +962,11 @@ function setTree(o, t, now, paid) {
 }
 export const have = (farm, id) => storeOf(farm, id)[id] || 0;
 // zaplatí osivo na n políček: nejdřív semena ze skladu, zbytek mincemi; null = nemá na to
-function payCrop(farm, c, n) {
-  const seeds = Math.min(n, have(farm, 's_' + c.id));
+// zaplatit setí n políček: pay = 'seed' jen osivem ze zásob (musí stačit), 'coin' jen mincemi (osivo zůstane týmu),
+// jinak nejdřív osivo a zbytek mincemi (v42: hráč si vybírá v okně setí)
+function payCrop(farm, c, n, pay) {
+  const seeds = pay === 'coin' ? 0 : Math.min(n, have(farm, 's_' + c.id));
+  if (pay === 'seed' && seeds < n) return null;
   const coins = (n - seeds) * c.cost;
   if (farm.coins < coins) return null;
   if (seeds) takeItem(farm, 's_' + c.id, seeds);
@@ -2362,6 +2365,7 @@ export const ERRORS = {
   not_ready: 'Ještě to není hotové.',
   locked: 'Tohle odemkneš na vyšší úrovni.',
   no_coins: 'Nemáš dost mincí.',
+  no_seeds: 'Došlo ti osivo této plodiny. Vyrob ho v Semenárně, nebo zasaď za mince.',
   silo_full: 'Sklad je plný – něco prodej nebo ho rozšiř.',
   occupied: 'Tohle místo je obsazené.',
   out_of_farm: 'Tady už farma končí.',
@@ -2441,8 +2445,8 @@ function doAction(farm, a, now) {
       const c = getCrop(a.crop);
       if (!c) return fail('bad_action');
       if (!stOk(farm, c)) return fail('locked');
-      const pay = payCrop(farm, c, 1);
-      if (!pay) return fail('no_coins');
+      const pay = payCrop(farm, c, 1, a.pay === 'seed' || a.pay === 'coin' ? a.pay : undefined);   // v42: ze zásob, nebo za mince
+      if (!pay) return fail(a.pay === 'seed' ? 'no_seeds' : 'no_coins');
       addStat(farm, 'plant', 1);
       p.crop = c.id;
       p.planted = now;
@@ -2486,7 +2490,7 @@ function doAction(farm, a, now) {
       if (!empty.length) return fail('nothing');
       let n = 0;
       for (const p of empty) {
-        if (!payCrop(farm, c, 1)) break;
+        if (!payCrop(farm, c, 1, a.pay === 'coin' ? 'coin' : undefined)) break;   // v42: 'coin' = osivo nechat týmu
         p.crop = c.id; p.planted = now; p.d = growMs(c, now, farm); n++;
       }
       if (!n) return fail('no_coins');
@@ -2745,7 +2749,7 @@ function doAction(farm, a, now) {
       if (machineJob(farm, m.id, now)) return fail('machine_busy');
       const cells = o.w * o.h;
       const sd = bestOwned(farm, 'seeder');   // v36: lepší secí stroj seje rychleji a šetří osivo
-      const pay = payCrop(farm, c, Math.max(1, Math.ceil(cells * (1 - ((sd && sd.save) || 0) / 100))));
+      const pay = payCrop(farm, c, Math.max(1, Math.ceil(cells * (1 - ((sd && sd.save) || 0) / 100))), a.pay === 'coin' ? 'coin' : undefined);
       if (!pay) return fail('no_coins');
       addStat(farm, 'plant', cells);
       const sec = Math.ceil(jobSeconds(cells, m.model) / (sd ? sd.sow : 1) * fxMult(farm, 'mach', now));

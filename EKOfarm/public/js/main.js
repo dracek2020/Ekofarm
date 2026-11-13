@@ -7,16 +7,16 @@ import {
   MACHINES, MACHINE_LIST, CROP_CATS, runHelper, runVillagers, villName, findVill, wpGet, wpPlan, planKindW, planTotal, keepOf, villLag, VILL_BUDGET, helperActive, stallOffers, stallLeft, sellPrice, freeMachine, fieldState, objSize, FIELD_MIN, FIELD_MAX, FIELD_CELL_PRICE, maxBigFields,
   TOWN, TOWN_HOUSES, townAt, townObject, statekLevel, marketMaxPrice, marketBase, FISH, TUTORIAL_DONE, weatherAt, nextWeather, fmtKg, fishSize, farmAlerts,
   bestOwned, eventNow, EVENTS_BY, evDef, STORY_BY, fxActive, helpUsed, DOG, stOk, EV_LEVEL, SKILLS, skillLevel,
-} from './rules.js?v=41';
-import { preloadAssets, spriteName } from './sprites.js?v=41';
-import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=41';
-import { createBackend, ApiError, APP_VERSION } from './api.js?v=41';
-import { iconize, ic } from './icons.js?v=41';
-import { NEWS } from './news.js?v=41';
-import { sfx, soundOn, setSound } from './sfx.js?v=41';
-import { TEAM } from './team-config.js?v=41';
-import { CHAPTERS } from './story.js?v=41';
-import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=41';
+} from './rules.js?v=42';
+import { preloadAssets, spriteName } from './sprites.js?v=42';
+import { drawScene, screenToCell, cellCenter, fmtTime, groundInfo } from './render.js?v=42';
+import { createBackend, ApiError, APP_VERSION } from './api.js?v=42';
+import { iconize, ic } from './icons.js?v=42';
+import { NEWS } from './news.js?v=42';
+import { sfx, soundOn, setSound } from './sfx.js?v=42';
+import { TEAM } from './team-config.js?v=42';
+import { CHAPTERS } from './story.js?v=42';
+import { plotHtml, skillsHtml, skillUnlocks, eventHtml, weeklyHtml, pondHtml, hiveHtml, helpHtml, teamHtml, boardHtml, houseHtml, bedsText, GUIDE, guideStep, centerHtml, marketHtml, claimableQuests, garageHtml, stallHtml, newsHtml, landHtml, tasksHtml, canClaimDaily, claimableAch, shopHtml, buildHtml, statekHtml, orchardHtml, dealerHtml, bigfieldHtml, factoryHtml, penHtml, decoHtml, siloHtml, siloTitle, bImg, wikiHtml, itemHtml } from './panels.js?v=42';
 
 const $ = id => document.getElementById(id);
 
@@ -43,7 +43,9 @@ const game = {
 };
 const now = () => Date.now() + game.offset;
 window.__eko = game; // pro testy a ladění
+try { game.seedPay = localStorage.getItem('ekofarm_pay') === '1' ? 'coin' : 'seed'; } catch { game.seedPay = 'seed'; }   // v42: velká pole – osivo, nebo jen mince
 window.__ekoPanel = p => openPanel(p);   // v36: pro testy – otevře okno (např. { kind: 'town', t: 'prodejna', tab: 'udice' })
+window.__ekoPicker = i => openPicker(game.farm.plots[i]);   // v42: pro testy – výběr plodiny pro i-té pole
 game.ground = groundInfo;
 
 // ---------- canvas ----------
@@ -376,7 +378,7 @@ canvas.addEventListener('pointerdown', e => {
     game.hover = cell;
   } else if (game.sowCrop && st && st.state === 'empty') {
     gesture.mode = 'sow';
-    act({ type: 'plant', x: cell[0], y: cell[1], crop: game.sowCrop });
+    sowAt(cell, false);
     game.hover = cell;
   }
 });
@@ -412,10 +414,7 @@ canvas.addEventListener('pointermove', e => {
         const r = act({ type: 'harvestTree', id: tree.id }, true);
         if (!r.ok && r.error === 'silo_full') toast(ERRORS.silo_full);
       }
-      if (gesture.mode === 'sow' && st && st.state === 'empty') {
-        const r = act({ type: 'plant', x: cell[0], y: cell[1], crop: game.sowCrop }, true);
-        if (!r.ok && r.error === 'no_coins') toast(ERRORS.no_coins);
-      }
+      if (gesture.mode === 'sow' && game.sowCrop && st && st.state === 'empty') sowAt(cell, true);
     }
   }
   gesture.lx = e.clientX; gesture.ly = e.clientY;
@@ -925,7 +924,7 @@ function renderPanel() {
     const o = townObject(f, p.t);
     title = `:${BUILDINGS[p.t].icon}: ${BUILDINGS[p.t].name}`;
     img = bImg(p.t);
-    body = p.t === 'prodejna' ? dealerHtml(f, now(), o, p.tab) : p.t === 'stanek' ? stallHtml(f, o, now(), p.tab) : p.t === 'nastenka' ? boardHtml(f, now(), game.adProf)
+    body = p.t === 'prodejna' ? dealerHtml(f, now(), o, p.tab, game.seedPay) : p.t === 'stanek' ? stallHtml(f, o, now(), p.tab) : p.t === 'nastenka' ? boardHtml(f, now(), game.adProf)
       : marketHtml(f, game.market, p.tab, game.mform, now());
   }
   else {
@@ -938,10 +937,10 @@ function renderPanel() {
       : d.type === 'pen' ? penHtml(f, o, now())
       : d.type === 'main' ? statekHtml(f, game.name, now(), p.tab, o)
       : d.type === 'garage' ? garageHtml(f, o, now())
-      : d.type === 'dealer' ? dealerHtml(f, now(), o, p.tab)
+      : d.type === 'dealer' ? dealerHtml(f, now(), o, p.tab, game.seedPay)
       : d.type === 'stall' ? stallHtml(f, o, now())
       : d.type === 'orchard' ? orchardHtml(f, o, now(), p.ask)
-      : d.type === 'bigfield' ? bigfieldHtml(f, o, now(), !!p.ask)
+      : d.type === 'bigfield' ? bigfieldHtml(f, o, now(), !!p.ask, game.seedPay)
       : d.type === 'pond' ? pondHtml(f, o, now())
       : d.type === 'hive' ? hiveHtml(f, o, now())
       : d.type === 'house' ? houseHtml(f, o)
@@ -1280,10 +1279,11 @@ $('panelBody').addEventListener('click', e => {
       if (r.ok) toast(`:${MACHINES[v].icon}: ${MACHINES[v].name} ${vt === 'tractor' || vt === 'combine' ? 'je ve stodole!' : 'je tvoje!'}`);
       break;
     }
+    case 'seedPay': game.seedPay = v === 'coin' ? 'coin' : 'seed'; lsSetN('ekofarm_pay', game.seedPay === 'coin' ? 1 : 0); renderPanel(); break;   // v42
     case 'fieldSow': {
       const m = freeMachine(f, 'tractor', now());
       if (!m) return toast(ERRORS.no_machine);
-      if (act({ type: 'fieldSow', id: game.panel.id, crop: v, machine: m.id }).ok) { toast(`:tractor: ${MACHINES[m.model].name} vyjel sít`); closeSheets(); }
+      if (act({ type: 'fieldSow', id: game.panel.id, crop: v, machine: m.id, pay: game.seedPay }).ok) { toast(`:tractor: ${MACHINES[m.model].name} vyjel sít`); closeSheets(); }
       break;
     }
     case 'fieldHarvest':
@@ -1301,7 +1301,7 @@ $('panelBody').addEventListener('click', e => {
     }
     case 'discard': act({ type: 'discard', slot: Number(v) }); break;
     case 'sowAll': {
-      const r = act({ type: 'sowAll', crop: v });
+      const r = act({ type: 'sowAll', crop: v, pay: game.seedPay });
       if (r.ok) { toast(`:tractor: Zaseto ${r.count} polí: ${CROPS[v].name}`); closeSheets(); }
       break;
     }
@@ -1333,35 +1333,49 @@ function openPicker(plot) {
   renderPicker();
   $('picker').hidden = false;
 }
+// v42: dvě skupiny – „Ze zásob osiva“ (zaplatí se osivem ze Statku) a „Za mince“ (osivo zůstane týmu)
 function renderPicker() {
   const f = game.farm;
   const groups = Object.entries(CROP_CATS).map(([cat, title]) => [title, CROP_LIST.filter(c => c.cat === cat)]);
-  $('cropList').innerHTML = iconize(groups.map(([title, list]) => `<div class="cat">${title}</div>` + list.map(c => {
+  const card = (c, pay) => {
     const locked = !stOk(f, c);   // v37: plodiny odemyká Statek
     const seeds = have(f, 's_' + c.id);
-    return `<button class="crop${locked ? ' locked' : ''}" data-crop="${c.id}">
+    return `<button class="crop${locked ? ' locked' : ''}${pay === 'seed' ? ' seedpay' : ''}" data-crop="${c.id}" data-pay="${pay}">
       <div class="ico">:${c.icon}:</div>
       <div class="nm">${c.name}</div>
-      <div class="meta">${locked ? `:lock: Statek ${c.st}` : `${seeds ? `:s_${c.id}: ${seeds}` : `${c.cost} :coin:`} · :clock: ${fmtTime(c.time)}`}</div>
+      <div class="meta">${locked ? `:lock: Statek ${c.st}` : `${pay === 'seed' ? `:s_${c.id}: ${seeds} ks` : `${c.cost} :coin:`} · :clock: ${fmtTime(c.time)}`}</div>
       <div class="meta">${locked ? '&nbsp;' : `sklizeň ${c.yield}× · ${c.price} :coin:/ks`}</div>
     </button>`;
-  }).join('')).join(''));
+  };
+  const mine = CROP_LIST.filter(c => stOk(f, c) && have(f, 's_' + c.id) > 0);
+  $('cropList').innerHTML = iconize(`<div class="cat sec">:s_wheat: Ze zásob osiva <small>nestojí mince, osivo ubude ze zásob</small></div>`
+    + (mine.length ? mine.map(c => card(c, 'seed')).join('') : '<div class="cat-empty">Osivo teď nemáš. Vyrábí ho <b>Semenárna</b> – nebo zasaď za mince níž.</div>')
+    + `<div class="cat sec">:coin: Za mince <small>osivo ve zásobách zůstane týmu</small></div>`
+    + groups.map(([title, list]) => `<div class="cat">${title}</div>` + list.map(c => card(c, 'coin')).join('')).join(''));
 }
 $('cropList').addEventListener('click', e => {
   const b = e.target.closest('[data-crop]');
   if (!b || !game.pickPlot) return;
-  const c = CROPS[b.dataset.crop];
+  const c = CROPS[b.dataset.crop], pay = b.dataset.pay === 'seed' ? 'seed' : 'coin';
   if (!stOk(game.farm, c)) { toast(ERRORS.locked); return; }
   const p = game.pickPlot;
-  const r = act({ type: 'plant', x: p.x, y: p.y, crop: c.id });
+  const r = act({ type: 'plant', x: p.x, y: p.y, crop: c.id, pay });
   $('picker').hidden = true;
   game.pickPlot = null;
-  if (r.ok) setSow(c.id);
+  if (r.ok) setSow(c.id, pay);
 });
 
-function setSow(id) {
+// v42: setí tažením prstu pokračuje stejně, jak hráč začal – osivem ze zásob, nebo za mince
+function setSow(id, pay = 'coin') {
   game.sowCrop = id;
+  game.sowPay = pay;
   updateBanner();
+}
+// sít na další políčko (tažením); když dojde osivo nebo mince, setí skončí s hláškou
+function sowAt(cell, quiet) {
+  const r = act({ type: 'plant', x: cell[0], y: cell[1], crop: game.sowCrop, pay: game.sowPay }, quiet);
+  if (!r.ok && (r.error === 'no_seeds' || r.error === 'no_coins')) { if (quiet) toast(ERRORS[r.error]); setSow(null); }
+  else if (r.ok) updateBanner();
 }
 
 function updateBanner() {
@@ -1381,7 +1395,9 @@ function updateBanner() {
     else if (f.pending.includes(p.kind)) text = `:${BUILDINGS[p.kind].icon}: ${BUILDINGS[p.kind].name} zdarma – posuň, kam chceš, a potvrď`;
     else text = `:${BUILDINGS[p.kind].icon}: ${BUILDINGS[p.kind].name} za ${BUILDINGS[p.kind].cost} :coin: – posuň a potvrď`;
   } else if (game.sowCrop) {
-    text = `:${CROPS[game.sowCrop].icon}: Setí: ${CROPS[game.sowCrop].name} – táhni prstem přes prázdná pole`;
+    const c = CROPS[game.sowCrop];
+    text = game.sowPay === 'seed' ? `:${c.icon}: Setí: ${c.name} ze zásob (:s_${c.id}: ${have(f, 's_' + c.id)}) – táhni prstem přes prázdná pole`
+      : `:${c.icon}: Setí: ${c.name} za ${c.cost} :coin: – táhni prstem přes prázdná pole`;
   }
   $('bannerText').innerHTML = iconize(text);
   $('bannerSize').hidden = !(p && p.kind === 'velkepole' && !p.moveId);

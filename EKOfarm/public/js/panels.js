@@ -17,12 +17,12 @@ import {
   beds, teamCap, teamFree, centerData, LEDGER_SRC, ALERT_LVL, AWAY_MIN, repTier, repNext, adOffers, adWaitMs, statekMerits, TOWN_HOUSES,
   bestOwned, stOk, recipeOk, fishOk, machineLock, SKILLS, SKILL_MAX, skillLevel, skillProgress, levelProgress, POND, DOG, eventNow, EVENTS_BY, evDef, STORY_BY, answerShown, storyText, chapterOf, chapterReward, answerNeed, evCoins, fxActive, fxText, FX_INFO, FJ_MASTER, FJ_ALL, FJ_ALL_MASTER, fjFirst, fjMaster,
   weekNo, weekStart, weekTask, WEEK_PRIZES, WEEK_MS, helpUsed, HELP,
-} from './rules.js?v=41';
-import { fmtTime } from './render.js?v=41';
-import { TEAM } from './team-config.js?v=41';
-import { NEWS } from './news.js?v=41';
-import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=41';
-import { assetUrl, hasAsset, spriteName } from './sprites.js?v=41';
+} from './rules.js?v=42';
+import { fmtTime } from './render.js?v=42';
+import { TEAM } from './team-config.js?v=42';
+import { NEWS } from './news.js?v=42';
+import { STORY, CHAPTERS, STORY_PEOPLE } from './story.js?v=42';
+import { assetUrl, hasAsset, spriteName } from './sprites.js?v=42';
 
 const FRUITS_OF = it => !!TREE_LIST.find(t => t.fruit === it.id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -640,8 +640,8 @@ export function orchardHtml(farm, o, now, ask) {
 }
 
 // cena osiva pro n políček: semena ze skladu + zbytek v mincích
-function seedCost(farm, c, n) {
-  const s = Math.min(n, have(farm, 's_' + c.id));
+function seedCost(farm, c, n, pay) {
+  const s = pay === 'coin' ? 0 : Math.min(n, have(farm, 's_' + c.id));
   return (s ? `${s}× :s_${c.id}:` : '') + (n - s ? `${s ? ' + ' : ''}${(n - s) * c.cost} :coin:` : '');
 }
 
@@ -668,7 +668,9 @@ export function machinePerks(m) {
   return out;
 }
 const mImg = id => (hasAsset('m', id + '_l') ? assetUrl('m', id + '_l') : hasAsset('i', id) ? assetUrl('i', id) : null);
-export function dealerHtml(farm, now, o, tab = 'traktory') {
+// v42: přepínač, čím platit setí strojem (osivo ze zásob a zbytek mince / jen mince – osivo zůstane týmu)
+export const payToggle = pay => `<div class="paysw"><button class="${pay !== 'coin' ? 'on' : ''}" data-act="seedPay" data-v="seed">:s_wheat: Nejdřív osivo ze zásob</button><button class="${pay === 'coin' ? 'on' : ''}" data-act="seedPay" data-v="coin">:coin: Jen za mince</button></div>`;
+export function dealerHtml(farm, now, o, tab = 'traktory', pay = 'seed') {
   if (!DEALER_TYPES[tab]) tab = 'traktory';
   const slots = garageSlots(farm), used = vehicleCount(farm);
   const types = DEALER_TYPES[tab];
@@ -690,8 +692,8 @@ export function dealerHtml(farm, now, o, tab = 'traktory') {
   let small = '';
   if (tab === 'traktory' && hasMachine(farm, 'tractor')) {
     const empty = farm.plots.filter(p => !p.crop).length;
-    small = `<p class="muted"><b>Malá pole</b> – traktor je zaseje najednou.</p><div class="crops">${CROP_LIST.filter(c => stOk(farm, c)).map(c => card({ icon: c.icon, name: `Zasít: ${c.name}`, act: 'sowAll', v: c.id, disabled: !empty,
-      lines: [seedCost(farm, c, empty)] })).join('')}</div>`;
+    small = `<p class="muted"><b>Malá pole</b> – traktor je zaseje najednou.</p>${payToggle(pay)}<div class="crops">${CROP_LIST.filter(c => stOk(farm, c)).map(c => card({ icon: c.icon, name: `Zasít: ${c.name}`, act: 'sowAll', v: c.id, disabled: !empty,
+      lines: [seedCost(farm, c, empty, pay)] })).join('')}</div>`;
   }
   if (tab === 'kombajny' && hasMachine(farm, 'combine')) {
     const ready = farm.plots.filter(p => plotState(p, now).state === 'ready').length;
@@ -807,7 +809,7 @@ export function newsHtml() {
   return NEWS.map(n => `<div class="news"><b>Verze ${n.v}: ${esc(n.title)}</b><ul>${n.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('');
 }
 
-export function bigfieldHtml(farm, o, now, ask = false) {
+export function bigfieldHtml(farm, o, now, ask = false, pay = 'seed') {
   const st = fieldState(o, now);
   const cells = o.w * o.h;
   const head = `<p class="muted">Velikost ${o.w}×${o.h} = <b>${cells} políček</b>.</p>`;
@@ -828,11 +830,11 @@ export function bigfieldHtml(farm, o, now, ask = false) {
     if (soil !== 'plowed' && pl) tools += `<button class="btn alt" data-act="fieldPlow" data-v="${tr.id}">:${pl.icon}: Zorat pole (úroda ${String(pl.mult).replace('.', ',')}×)</button>`;
     const hint = !pl && soil !== 'plowed' ? '<small>Tip: s pluhem z prodejny strojů bude úroda větší.</small>' : '';
     const cards = CROP_LIST.map(c => card({ icon: c.icon, name: c.name, locked: !stOk(farm, c), act: 'fieldSow', v: c.id,
-      disabled: farm.coins < (cells - Math.min(cells, have(farm, 's_' + c.id))) * c.cost,
+      disabled: farm.coins < (cells - (pay === 'coin' ? 0 : Math.min(cells, have(farm, 's_' + c.id)))) * c.cost,
       lines: !stOk(farm, c) ? [`:lock: Statek ${c.st}`]
-        : [`osivo ${seedCost(farm, c, cells)}`, `úroda ${Math.round(cells * c.yield * (o.soil === 'plowed' ? pm : 1))} :${c.icon}:`, `sklízí ${MACHINE_TYPE_NAME[c.harvester]}`] }));
+        : [`osivo ${seedCost(farm, c, cells, pay)}`, `úroda ${Math.round(cells * c.yield * (o.soil === 'plowed' ? pm : 1))} :${c.icon}:`, `sklízí ${MACHINE_TYPE_NAME[c.harvester]}`] }));
     const mult = soil === 'plowed' ? 1.5 : 1;
-    return head + `<p class="muted">${soilTxt} ${hint}</p>${tools}<p class="muted">Seje <b>${MACHINES[tr.model].name}</b>${hasTool(farm, 'seeder') ? ' se secím strojem' : ''} (${fmtTime(sec)}). Vyber plodinu:</p><div class="crops">${cards.join('')}</div>` + move;
+    return head + `<p class="muted">${soilTxt} ${hint}</p>${tools}<p class="muted">Seje <b>${MACHINES[tr.model].name}</b>${hasTool(farm, 'seeder') ? ' se secím strojem' : ''} (${fmtTime(sec)}). Čím zaplatit osivo:</p>${payToggle(pay)}<p class="muted">Vyber plodinu:</p><div class="crops">${cards.join('')}</div>` + move;
   }
   const m = farm.machines.find(x => o.job && x.id === o.job.m);
   if (['sowing', 'harvesting', 'plowing', 'baling'].includes(st.state)) {

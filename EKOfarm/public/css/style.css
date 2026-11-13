@@ -781,3 +781,14 @@ h3.sub .ic { width: 24px; height: 24px; vertical-align: -5px; }
 .mile .decoimg { width: 48px; height: 48px; }
 .mile small { color: var(--muted); font-size: 10px; }
 .mile.got { border-color: #bfe6a0; background: #f1f9e6; }
+/* v42: setí ze zásob osiva, nebo za mince */
+.cat.sec { font-family: var(--display); font-size: 18px; margin-top: 10px; padding-top: 6px; border-top: 2px dashed #e0cfa8; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.cat.sec:first-child { border-top: 0; margin-top: 2px; padding-top: 0; }
+.cat.sec small { font-family: inherit; font-size: 12px; font-weight: 600; color: var(--muted); }
+.cat.sec .ic { width: 22px; height: 22px; vertical-align: -4px; }
+.cat-empty { grid-column: 1 / -1; font-size: 13px; color: var(--muted); padding: 6px 4px; }
+.crop.seedpay { border-color: #9fd27a; background: linear-gradient(#fbfff4, #eef8e2); }
+.paysw { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0 8px; }
+.paysw button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 7px 6px; font-weight: 800; font-size: 13px; color: var(--wood-d); }
+.paysw button.on { border-color: var(--green); background: #eaf7dd; box-shadow: 0 0 0 2px #bfe6a0; }
+.paysw .ic { width: 18px; height: 18px; vertical-align: -4px; }

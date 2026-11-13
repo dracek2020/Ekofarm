@@ -61,6 +61,10 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
   - Rozpočet: jedno dopočítání udělá nejvýš `VILL_BUDGET` (800) úkonů; server má jeden rozpočet `lim = { left }` na celý požadavek (`worker.js`, stejně `api.js` v testovací verzi), prohlížeč mezi dvěma odpověďmi serveru také (`game.lim`). Když nestačí (`behind`), prohlížeč pošle akci `tick` a po odpovědi hned pokračuje (`villStep` v `applyServer`) – tak se dožene i den nepřítomnosti (nejvýš 24 h). `farm.vt` = kam až je práce dopočítaná, `villLag`. `applyAction` vesničany nepouští znovu ve stejném čase (`now <= farm.vt`). Výsledek nezávisí na tom, jak se čas rozkrájí (test).
   - UI (`panels.js`): `workerBlock(farm, o, now)` a `farmersHtml(farm, now)` – stav `villStatus`, tabulka `planRow` s přepínači (`planPct`, `planAdd`, `planDel`, `planLim` v `main.js`; `planAdd` při 100 % půlí největší řádek), součet `sumLine`, přehled úrovní `levelTable`. Mapa (`render.js`): farmář chodí k políčku, na kterém pracuje (`villPos`), `drawVillMark` kreslí kolečko průběhu nebo vykřičník. Proužek `#catchUp` při dohánění; okno nové úrovně počká na konec dohánění (`game.lastLvlFarm = f.created`). Dlouhá čísla v horní liště se zmenší (`.pill b.long`).
   - Měření: po zahřátí asi 1,7 µs na úkon; studená dávka 800 úkonů do 30 ms na tomto stroji. Na zařízeních neměřeno.
+- **v42 (13. 11. 2026) – setí ze zásob, nebo za mince** (testy `test/v42.test.js`):
+  - `payCrop(farm, c, n, pay)`: `'seed'` jen osivem (musí stačit, jinak `no_seeds`), `'coin'` jen mincemi, jinak jako dřív (nejdřív osivo). Akce `plant { pay }`, `sowAll { pay }`, `fieldSow { pay }` (u strojů jen `'coin'` mění chování).
+  - Okno „Co zasadit?“ (`renderPicker` v main.js): skupina „Ze zásob osiva“ (jen plodiny s osivem) a „Za mince“ (všechny podle kategorií); `setSow(id, pay)` + `sowAt` – tažení pokračuje stejnou platbou, při `no_seeds` / `no_coins` setí skončí. Lišta ukazuje zbývající osivo.
+  - Velké pole a Zasít vše traktorem: přepínač `payToggle(pay)` (panels.js), volba `game.seedPay` v `localStorage` `ekofarm_pay`. `CLIENT_MIN` 42.
 - **v41 (13. 11. 2026) – hra chce jen to, co hráč může mít** (testy `test/v41.test.js`):
   - **`availableItems(st, cook, fish)`** (rules.js, s mezipamětí): co jde získat se Statkem `st`, Vařením `cook` a Rybařením `fish` – plodiny, ovoce, od zvířat, ryby (`fishLv`), plástve (Včelín), sláma (velké pole) a recepty (`r.st`, `r.cook`), jejichž všechny suroviny jsou taky dostupné (opakovaně). Budovu může hráč ještě muset postavit. `farmAvail(farm)`, `itemAvail(farm, id)`.
   - `orderableItems(st, cook, fish)` = jen zboží k prodeji z `availableItems`; `farmOrderable(farm)`. Používají ho zakázky (`genOrder`), Stánek (snímek `farm.stall.rk`), dárky `pick: 'product'` a náhrady pohoštění.
@@ -207,6 +211,7 @@ Mobilní farmářská hra pro kamarády. Hraje se v prohlížeči (dá se přida
 | `tools/v36art.py` | v36: rostliny po jedné, stroje, udice, pes a ilustrace událostí ze Scenario → `public/img` |
 | `public/js/story.js` | v39: hlavní příběh (kapitoly, díly, postavy) – jen data |
 | `tools/v39art.py` | v39: ilustrace dílů příběhu a vzácné ozdoby ze Scenario → `public/img` |
+| `test/v42.test.js` | v42: setí ze zásob / za mince (políčko, traktor, velké pole) |
 | `test/v41.test.js` | v41: dostupné zboží (zakázky, Stánek, pohoštění, odpovědi v událostech), týdenní soutěž |
 | `test/v39.test.js` | v39/v40: příběh (data, kdy přijde díl, kapitoly podle Statku, paměť voleb, odměna kapitoly), denní série, suroviny na vylepšení |
 | `test/v38.test.js` | v38: dovednosti, udice a rybník, ryby a recepty podle dovedností, zrušení výsevu, `old_client` |
